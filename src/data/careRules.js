@@ -1,0 +1,221 @@
+import { getBreedAppearance } from "./breedAppearance";
+
+// 실제 개별 수의사에게 자문받은 데이터가 아니라, AAHA/WSAVA 등 공신력 있는 수의학 기구가
+// 공개 발행한 가이드라인과 임상에서 실제로 쓰이는 공개 평가 도구(퓨리나 대변 점수표 등)를
+// 근거로 구성한 데이터다. 항목마다 source를 명시해 투명성을 유지한다.
+// AI는 이 데이터를 설명하는 데 사용하고, 일정 자체를 임의로 만들지 않는다.
+//
+// minWeek/maxWeek: 생후 몇 주부터 몇 주까지 해당 항목이 적용되는지 (경계 포함)
+// frequency: "daily" 오늘의 할 일로 매일 생성 / "weekly" 이번 주 핵심으로 노출 / "info" 정보 화면 참고용
+// suggestedTimes: daily 항목의 알림 발송 권장 시각(24시간, "HH:MM")
+// appliesTo(appearance): 특정 견종 특성(대형견/단두종 등)에만 적용할 때만 지정. 없으면 전 견종 공통.
+export const CARE_RULES = [
+  {
+    id: "vac-1",
+    category: "예방접종",
+    minWeek: 6,
+    maxWeek: 16,
+    title: "핵심 종합백신(DHPP/DHLPP) 접종",
+    why: "모체 이행항체가 사라지는 시기에 파보·디스템퍼 등 전염병에 취약해집니다.",
+    how: "생후 6~8주에 시작해 3~4주 간격으로 총 3회, 14~16주까지 접종합니다. 2024년 개정 기준 렙토스피라도 핵심 백신에 포함됩니다.",
+    frequency: "weekly",
+    source: "AAHA 2022 Canine Vaccination Guidelines (2024 개정)",
+  },
+  {
+    id: "vac-2",
+    category: "예방접종",
+    minWeek: 12,
+    maxWeek: 16,
+    title: "광견병 예방접종",
+    why: "생후 12~16주 사이 1회 접종이 권장되며, 대부분의 지역에서 법적 의무입니다.",
+    how: "종합백신 마지막 차수와 함께 또는 그 전후로 수의사와 일정을 잡습니다.",
+    frequency: "weekly",
+    source: "AAHA/AVMA 공동 권고안",
+  },
+  {
+    id: "vac-3",
+    category: "예방접종",
+    minWeek: 52,
+    maxWeek: 60,
+    title: "1년차 종합백신 부스터",
+    why: "puppy 시리즈로 형성된 면역을 1년 시점에 한 번 더 강화해야 장기 면역이 유지됩니다.",
+    how: "1년 부스터 이후에는 DHPP 3년, 광견병은 지역 규정에 따라 1~3년 주기로 재접종합니다.",
+    frequency: "weekly",
+    source: "AAHA 2022 Canine Vaccination Guidelines",
+  },
+  {
+    id: "soc-1",
+    category: "사회화",
+    minWeek: 3,
+    maxWeek: 14,
+    title: "사회화 결정기 경험 쌓기",
+    why: "생후 3~14주는 새로운 자극(사람, 소리, 촉감)을 두려움 없이 받아들이는 결정적 시기입니다.",
+    how: "매일 짧게 새로운 소리, 사람, 표면(카펫/타일 등)을 안전하게 경험시켜 주세요. 접종 전이면 외부 지면 접촉은 피합니다.",
+    frequency: "daily",
+    suggestedTimes: ["10:00", "16:00"],
+    caution: "접종이 끝나기 전에는 다른 개의 배설물과 접촉할 수 있는 장소는 피하세요.",
+    source: "일반 수의학 행동학 권장 기준 (사회화 결정기 개념)",
+  },
+  {
+    id: "potty-1",
+    category: "배변훈련",
+    minWeek: 8,
+    maxWeek: 24,
+    title: "배변 패드/장소 훈련",
+    why: "이 시기에 규칙적인 배변 습관을 들이면 이후 문제 행동을 크게 줄일 수 있습니다.",
+    how: "자고 일어난 직후, 식사 후 15~20분 이내에 정해진 장소로 데려가고 성공하면 즉시 칭찬합니다.",
+    frequency: "daily",
+    suggestedTimes: ["08:00", "13:30", "19:30"],
+    source: "일반 수의학 행동학 권장 기준",
+  },
+  {
+    id: "feed-1",
+    category: "식사",
+    minWeek: 8,
+    maxWeek: 16,
+    title: "하루 3~4회 소량 급여",
+    why: "어린 강아지는 위가 작아 한 번에 많이 먹지 못하고 저혈당 위험도 있습니다.",
+    how: "하루 3~4회로 나눠 정해진 시간에 급여하고, 사료 급여량은 제품 권장량을 기준으로 체중에 맞춰 조절합니다.",
+    frequency: "daily",
+    suggestedTimes: ["08:00", "12:30", "17:00", "21:00"],
+    source: "일반 소동물 영양학 권장 기준 (Purina Institute 계열 자료 참고)",
+  },
+  {
+    id: "feed-2",
+    category: "식사",
+    minWeek: 17,
+    maxWeek: 26,
+    title: "하루 3회 급여로 전환",
+    why: "생후 4개월 전후로 소화 기능이 발달하면서 급여 횟수를 줄여갈 수 있습니다.",
+    how: "하루 3회로 점진적으로 줄이고 체중 변화를 관찰합니다.",
+    frequency: "weekly",
+    source: "일반 소동물 영양학 권장 기준",
+  },
+  {
+    id: "teeth-1",
+    category: "이갈이",
+    minWeek: 12,
+    maxWeek: 28,
+    title: "이갈이 시기 관리",
+    why: "생후 3~7개월 사이 유치가 빠지고 영구치가 나면서 잇몸이 가렵고 무는 행동이 늘 수 있습니다.",
+    how: "안전한 치아 장난감을 제공해 무는 욕구를 분산시키고, 손이나 가구를 물지 않도록 대체 자극으로 유도합니다.",
+    frequency: "weekly",
+    source: "일반 수의학 치과 권장 기준",
+  },
+  {
+    id: "walk-1",
+    category: "산책",
+    minWeek: 16,
+    maxWeek: 9999,
+    title: "규칙적인 산책",
+    why: "접종이 끝난 이후부터는 외부 산책으로 사회화와 운동량을 채워줘야 합니다.",
+    how: "견종/체구에 맞춰 짧게 시작해 점진적으로 시간을 늘려갑니다.",
+    frequency: "daily",
+    suggestedTimes: ["08:00", "18:30"],
+    caution: "접종이 모두 끝나기 전 외부 지면 산책은 수의사와 먼저 상담하세요.",
+    source: "AAHA 계열 일반 운동 권장 기준",
+  },
+  {
+    id: "sleep-1",
+    category: "수면",
+    minWeek: 0,
+    maxWeek: 20,
+    title: "충분한 수면 보장",
+    why: "어린 강아지는 성장을 위해 하루 18~20시간가량 잠을 자야 합니다.",
+    how: "낮에도 조용히 쉴 수 있는 안정된 공간을 마련해 주세요.",
+    frequency: "info",
+    source: "일반 수의학 권장 기준",
+  },
+  {
+    id: "groom-1",
+    category: "목욕/미용",
+    minWeek: 8,
+    maxWeek: 9999,
+    title: "목욕과 브러싱",
+    why: "피부/피모 건강 관리와 위생을 위해 필요합니다.",
+    how: "목욕은 2~4주 간격, 브러싱은 견종 털 길이에 맞춰 주 2~3회 이상 진행합니다.",
+    frequency: "weekly",
+    source: "일반 수의 피부과 권장 기준",
+  },
+  {
+    id: "train-1",
+    category: "행동/훈련",
+    minWeek: 24,
+    maxWeek: 78,
+    title: "청소년기 기본 훈련 강화",
+    why: "생후 6개월~1년 반은 활동량과 독립심이 늘어 훈련 일관성이 특히 중요한 시기입니다.",
+    how: "앉아/기다려 등 기본 명령을 매일 짧게 반복 연습하고 긍정 강화를 사용합니다.",
+    frequency: "weekly",
+    source: "일반 수의학 행동학 권장 기준",
+  },
+  {
+    id: "health-1",
+    category: "건강/응급상황",
+    minWeek: 0,
+    maxWeek: 9999,
+    title: "이상 증상 관찰",
+    why: "구토, 설사, 식욕 저하, 무기력이 24시간 이상 지속되면 위급 신호일 수 있습니다.",
+    how: "증상이 지속되거나 악화되면 즉시 동물병원 진료를 받으세요.",
+    frequency: "info",
+    caution: "이 앱은 진단이나 치료를 대신하지 않습니다. 응급 상황이 의심되면 반드시 수의사에게 문의하세요.",
+    source: "일반 수의학 권장 기준",
+  },
+  {
+    id: "health-2",
+    category: "건강/응급상황",
+    minWeek: 0,
+    maxWeek: 9999,
+    title: "변 상태로 소화기 건강 확인하기",
+    why: "대변의 굳기와 모양은 소화기 건강을 보여주는 대표적인 신호입니다.",
+    how: "퓨리나 대변 점수표(1~7점) 기준 2점(단단하지만 딱딱하지 않고 형태가 뚜렷함)이 이상적입니다. 3~7점 상태가 하루 이상 이어지면 병원 상담을 권장합니다. AI 케어 화면의 '변 상태 확인' 기능으로 사진을 찍어 참고 소견을 받을 수 있어요.",
+    frequency: "info",
+    caution: "혈변, 검은 타르색 변, 기생충이 보이면 지체 말고 동물병원에 방문하세요.",
+    source: "Purina Fecal Scoring Chart (임상 통용 평가 도구)",
+  },
+  {
+    id: "brachy-1",
+    category: "건강/응급상황",
+    minWeek: 0,
+    maxWeek: 9999,
+    title: "단두종 호흡 관리",
+    why: "코가 짧은 견종은 기도가 좁아 더위나 흥분 시 호흡곤란(BOAS)이 생기기 쉽습니다.",
+    how: "더운 날 산책·운동을 피하고, 헐떡임이 심하거나 코골이가 과하면 병원에서 기도 상태를 확인하세요. 목줄보다 하네스를 사용하는 것이 기도 압박을 줄여줍니다.",
+    frequency: "weekly",
+    caution: "심한 청색증(잇몸/혀가 파랗게 변함)이나 실신은 응급 상황입니다.",
+    source: "일반 수의학 자료 기반 (단두종 기도폐쇄증후군, BOAS)",
+    appliesTo: (a) => a.brachycephalic,
+  },
+  {
+    id: "joint-1",
+    category: "행동/훈련",
+    minWeek: 8,
+    maxWeek: 78,
+    title: "대형견 관절 관리",
+    why: "대형견은 성장기에 고관절/팔꿈치 이형성증 위험이 상대적으로 높습니다.",
+    how: "과도한 점프나 계단 오르내리기를 성장기 동안 줄이고, 미끄러운 바닥엔 매트를 깔아주세요. 성장기용 사료로 칼슘·칼로리 과다 섭취를 피합니다.",
+    frequency: "weekly",
+    source: "일반 수의학 자료 기반 (고관절/팔꿈치 이형성증)",
+    appliesTo: (a) => a.sizeCategory === "large",
+  },
+];
+
+function matchesAppearance(rule, breed) {
+  if (!rule.appliesTo) return true;
+  return rule.appliesTo(getBreedAppearance(breed));
+}
+
+export function getRulesForAge(ageInWeeks, breed) {
+  return CARE_RULES.filter((r) => ageInWeeks >= r.minWeek && ageInWeeks <= r.maxWeek && matchesAppearance(r, breed));
+}
+
+export function getDailyRules(ageInWeeks, breed) {
+  return getRulesForAge(ageInWeeks, breed).filter((r) => r.frequency === "daily");
+}
+
+export function getWeeklyHighlights(ageInWeeks, breed) {
+  return getRulesForAge(ageInWeeks, breed).filter((r) => r.frequency === "weekly");
+}
+
+export function getInfoRules(ageInWeeks, breed) {
+  return getRulesForAge(ageInWeeks, breed).filter((r) => r.frequency === "info");
+}

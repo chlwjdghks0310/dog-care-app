@@ -1,0 +1,9 @@
+{
+  "name": "멍케어",
+  "short_name": "멍케어",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f1",
+  "theme_color": "#e07a3f",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
