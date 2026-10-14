@@ -1,3 +1,13 @@
+// 이름 끝 글자에 받침이 있으면 "~이야", 없으면 "~야"를 붙인다.
+// (한글 완성형 글자는 코드값이 0xAC00~0xD7A3이고, 그 안에서 (code - 0xAC00) % 28 이
+// 0이면 받침 없는 글자다. 한글이 아닌 이름은 받침이 없다고 보고 "야"를 붙인다.)
+export function nameCall(name) {
+  const last = name.trim().slice(-1);
+  const code = last.charCodeAt(0);
+  const hasBatchim = code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
+  return hasBatchim ? `${name}이야` : `${name}야`;
+}
+
 // AI 응답을 "핵심 한 줄(헤드라인) + 부가 설명"으로 나눈다.
 // 서버 쪽 프롬프트가 "핵심 문장 \n\n 부가 설명" 형식을 지키도록 지시하지만,
 // 혹시 지켜지지 않아도 최대한 자연스럽게 나눠서 보여준다.

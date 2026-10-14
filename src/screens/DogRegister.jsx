@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createDog } from "../models/dog";
 import { saveDog } from "../services/dogRepository";
+import { BREEDS } from "../data/breeds";
 
 const DEV_TEST_DOG = {
   name: "여름",
@@ -11,7 +12,7 @@ const DEV_TEST_DOG = {
   notes: "색상: 블랙탄",
 };
 
-export default function DogRegister({ onRegistered }) {
+export default function DogRegister({ onRegistered, onCancel }) {
   const [form, setForm] = useState({
     name: "",
     birthDate: "",
@@ -36,11 +37,11 @@ export default function DogRegister({ onRegistered }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!form.name.trim() || !form.birthDate || !form.breed.trim() || !form.gender || !form.weight) {
-      setError("이름, 생년월일, 견종, 성별, 체중은 필수 항목이에요.");
+    if (!form.name.trim() || !form.birthDate || !form.breed.trim() || !form.gender) {
+      setError("이름, 생년월일, 견종, 성별은 필수 항목이에요.");
       return;
     }
-    if (Number(form.weight) <= 0) {
+    if (form.weight && Number(form.weight) <= 0) {
       setError("체중은 0보다 큰 값으로 입력해 주세요.");
       return;
     }
@@ -51,6 +52,11 @@ export default function DogRegister({ onRegistered }) {
 
   return (
     <div className="screen">
+      {onCancel && (
+        <button type="button" className="btn-ghost" style={{ marginBottom: 12 }} onClick={onCancel}>
+          ← 취소
+        </button>
+      )}
       <div className="h1">강아지 등록</div>
       <p className="subtle" style={{ marginBottom: 18 }}>
         기본 정보를 입력하면 지금 우리 강아지에게 필요한 케어를 알려드려요.
@@ -74,7 +80,16 @@ export default function DogRegister({ onRegistered }) {
 
         <div className="field">
           <label>견종 *</label>
-          <input value={form.breed} onChange={(e) => update("breed", e.target.value)} placeholder="예: 포메라니안" />
+          <select value={form.breed} onChange={(e) => update("breed", e.target.value)}>
+            <option value="" disabled>
+              선택해주세요
+            </option>
+            {BREEDS.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="field">
@@ -86,13 +101,13 @@ export default function DogRegister({ onRegistered }) {
         </div>
 
         <div className="field">
-          <label>체중 (kg) *</label>
+          <label>체중 (kg)</label>
           <input
             type="number"
             step="0.1"
             value={form.weight}
             onChange={(e) => update("weight", e.target.value)}
-            placeholder="예: 1.8"
+            placeholder="모르면 나중에 적어도 돼요"
           />
         </div>
 

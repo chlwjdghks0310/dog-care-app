@@ -50,10 +50,28 @@ export async function analyzePhoto(dog, file) {
   return data.answer;
 }
 
+// 메인 채팅(아바타)에서 보내는 사진용 — 변 사진으로 단정하지 않고 사진에 보이는 대로 분석한다.
+// (HealthCheck 화면의 "변 상태 확인"은 여전히 위 analyzePhoto를 그대로 쓴다.)
+export async function analyzeGeneralPhoto(dog, file, signal) {
+  const imageBase64 = await fileToBase64(file);
+  const res = await fetch(`${API_BASE}/api/analyze-general-photo`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type }),
+    signal,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `status ${res.status}`);
+  }
+  const data = await res.json();
+  return data.answer;
+}
+
 // 영상 분석은 Gemini(구글)로 처리한다 — 영상을 통째로 이해할 수 있어 프레임 추출이 필요 없다.
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.
-export async function analyzeBehavior(dog, file) {
+export async function analyzeBehavior(dog, file, signal) {
   const formData = new FormData();
   formData.append("video", file);
   formData.append("dogContext", JSON.stringify(toDogContext(dog)));
@@ -61,6 +79,7 @@ export async function analyzeBehavior(dog, file) {
   const res = await fetch(`${API_BASE}/api/analyze-behavior`, {
     method: "POST",
     body: formData,
+    signal,
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));

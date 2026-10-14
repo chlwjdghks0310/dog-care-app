@@ -197,6 +197,91 @@ export const CARE_RULES = [
     source: "일반 수의학 자료 기반 (고관절/팔꿈치 이형성증)",
     appliesTo: (a) => a.sizeCategory === "large",
   },
+  {
+    id: "ivdd-1",
+    category: "행동/훈련",
+    minWeek: 8,
+    maxWeek: 9999,
+    title: "추간판 탈출증(IVDD) 예방 관리",
+    why: "허리가 길고 다리가 짧은 연골무형성 체형 견종은 추간판(디스크)이 탈출하기 쉽다고 알려져 있습니다.",
+    how: "소파·침대 오르내릴 때 계단/경사로를 놓아주고, 뒷다리로 서는 자세나 높은 곳에서 뛰어내리는 걸 피하게 해주세요. 목줄보다 하네스가 목/등 부담을 줄여줍니다.",
+    frequency: "weekly",
+    source: "일반 수의 정형외과 자료 기반 (연골무형성 품종의 추간판 탈출증 위험)",
+    appliesTo: (a) => a.chondrodystrophic,
+  },
+  {
+    id: "gdv-1",
+    category: "식사",
+    minWeek: 26,
+    maxWeek: 9999,
+    title: "위장 염전(GDV/Bloat) 예방 급여 습관",
+    why: "흉심이 깊은 대형견은 빠르게 먹거나 식후 격한 운동을 하면 위가 꼬이는 위장 염전(GDV) 위험이 있다고 알려져 있습니다. 치명적일 수 있는 응급 상황입니다.",
+    how: "한 번에 많이 주지 말고 하루 2회 이상 나눠 급여하고, 식사 전후 1시간은 격한 운동·뛰어놀기를 피하세요.",
+    frequency: "weekly",
+    source: "ACVS(미국수의외과학회) 계열 자료 기반 (위장 염전/GDV)",
+    caution: "배가 갑자기 부풀고 안절부절못하며 토하려 해도 안 나오면 응급 상황입니다. 즉시 동물병원(야간이면 응급동물병원)으로 가세요.",
+    appliesTo: (a) => a.deepChested,
+  },
+  {
+    id: "patella-1",
+    category: "행동/훈련",
+    minWeek: 8,
+    maxWeek: 9999,
+    title: "슬개골 탈구 예방 관리",
+    why: "소형/토이 품종은 무릎뼈(슬개골)가 빠지는 슬개골 탈구가 흔하다고 알려져 있습니다.",
+    how: "소파 등 높은 곳에서 뛰어내리는 습관을 줄이고, 미끄러운 바닥엔 매트를 깔아주세요. 걸을 때 한쪽 뒷다리를 들고 깡충거리는 모습이 보이면 병원에서 확인받으세요.",
+    frequency: "weekly",
+    source: "일반 수의 정형외과 자료 기반 (소형견 슬개골 탈구)",
+    appliesTo: (a) => a.patellarRisk,
+  },
+  {
+    id: "cavalier-1",
+    category: "건강/응급상황",
+    minWeek: 26,
+    maxWeek: 9999,
+    title: "카발리에 킹 찰스 스패니얼 — 심장(승모판) 정기 검진",
+    why: "이 품종은 다른 품종보다 이른 나이에 승모판막 질환(MVD)이 흔하다고 보고되어 있습니다.",
+    how: "1년에 한 번 이상 수의사의 청진으로 심장 잡음 여부를 확인받고, 기침이 잦아지거나 쉽게 지치면 바로 진료를 받으세요.",
+    frequency: "weekly",
+    source: "ACVIM(미국수의내과학회) 합의 성명 기반 (카발리에 승모판막 질환)",
+    appliesTo: (a) => a.tag === "cavalier",
+  },
+  {
+    id: "dalmatian-1",
+    category: "식사",
+    minWeek: 26,
+    maxWeek: 9999,
+    title: "달마시안 — 요산염 결석 예방",
+    why: "이 품종은 퓨린 대사 특성상 요산염 결석이 흔하다고 알려져 있습니다.",
+    how: "신선한 물을 항상 충분히 마실 수 있게 해주고, 저퓨린 식단에 대해 수의사와 상담하세요. 배뇨 횟수가 잦아지거나 힘들어하면 바로 진료를 받으세요.",
+    frequency: "weekly",
+    source: "일반 수의 비뇨기과 자료 기반 (달마시안 요산염 결석)",
+    appliesTo: (a) => a.tag === "dalmatian",
+  },
+  {
+    id: "sharpei-1",
+    category: "목욕/미용",
+    minWeek: 8,
+    maxWeek: 9999,
+    title: "샤페이 — 피부 주름 관리",
+    why: "피부 주름이 많아 그 사이에 습기·세균이 쌓이기 쉽고, 원인 모를 발열을 반복하는 샤페이 열병도 보고되어 있습니다.",
+    how: "주름 사이를 자주 마르게 닦아주고 통풍을 신경 써주세요. 이유 없이 열이 나고 관절이 붓는 증상이 반복되면 병원에서 확인받으세요.",
+    frequency: "weekly",
+    source: "일반 수의 피부과/내과 자료 기반 (샤페이 피부주름염·반복열)",
+    appliesTo: (a) => a.tag === "sharpei",
+  },
+  {
+    id: "dcm-1",
+    category: "건강/응급상황",
+    minWeek: 52,
+    maxWeek: 9999,
+    title: "확장성 심근병증(DCM) 주의 품종 — 심장 체크",
+    why: "도베르만·복서 등 일부 품종은 확장성 심근병증(DCM) 발생이 다른 품종보다 흔하다고 보고되어 있습니다.",
+    how: "1년에 한 번 이상 심장 검진(청진, 필요 시 심초음파)을 받고, 기침·쉽게 지침·실신 같은 증상이 보이면 바로 진료받으세요.",
+    frequency: "weekly",
+    source: "ACVIM 계열 자료 기반 (품종별 확장성 심근병증)",
+    appliesTo: (a) => a.tag === "doberman" || a.tag === "boxer",
+  },
 ];
 
 function matchesAppearance(rule, breed) {
@@ -218,4 +303,8 @@ export function getWeeklyHighlights(ageInWeeks, breed) {
 
 export function getInfoRules(ageInWeeks, breed) {
   return getRulesForAge(ageInWeeks, breed).filter((r) => r.frequency === "info");
+}
+
+export function getRuleById(id) {
+  return CARE_RULES.find((r) => r.id === id) || null;
 }

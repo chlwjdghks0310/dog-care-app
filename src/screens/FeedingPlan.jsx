@@ -62,7 +62,7 @@ export default function FeedingPlan({ dog, onBack }) {
         {settings.times.length === 0 && <p className="subtle">아직 설정한 급여 시각이 없어요.</p>}
         {settings.times.map((t, i) => (
           <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <input type="time" value={t} onChange={(e) => updateTime(i, e.target.value)} style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px" }} />
+            <input type="time" value={t} onChange={(e) => updateTime(i, e.target.value)} style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 16 }} />
             <button className="btn-ghost" style={{ padding: "6px 10px" }} onClick={() => removeTime(i)}>
               삭제
             </button>
@@ -112,7 +112,7 @@ export default function FeedingPlan({ dog, onBack }) {
             setSettings((s) => ({ ...s, kcalPer100g: e.target.value ? Number(e.target.value) : null }));
             setSaved(false);
           }}
-          style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px" }}
+          style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 16 }}
         />
       </div>
 

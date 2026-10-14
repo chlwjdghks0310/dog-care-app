@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "test": "node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/weight-logic.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",

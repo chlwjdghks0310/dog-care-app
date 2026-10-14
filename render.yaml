@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: dogcare-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # 프론트엔드(앱 화면) — 와이파이 상관없이 다른 사람도 이 주소로 접속할 수 있게 해주는 부분.
+  - type: web
+    name: dogcare-web
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      # dogcare-api 서비스가 실제로 배포된 뒤 URL이 다르면(이름이 겹쳐 바뀐 경우 등)
+      # Render 대시보드에서 이 값만 실제 주소로 바꿔주면 된다.
+      - key: VITE_API_BASE
+        value: https://dogcare-api.onrender.com

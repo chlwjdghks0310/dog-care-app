@@ -9,6 +9,7 @@ export const CATEGORY_ICONS = {
   "건강/응급상황": "🩺",
   예방접종: "💉",
   수면: "😴",
+  체중관리: "⚖️",
 };
 
 export function getCategoryIcon(category) {

@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { calculateAge, formatAge } from "../utils/age";
+import { calculateAge } from "../utils/age";
 import { todayKey, formatKoreanDate } from "../utils/date";
-import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
+import { getTodayChecklist, getThisWeekHighlights, getUpcoming, getWeightCheckItem } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
-import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
 import { getCategoryIcon } from "../data/categoryIcons";
-import { resizeImageFile } from "../utils/image";
-import { saveDog } from "../services/dogRepository";
+import { getWeightAssessment, getWeightStatusShortText } from "../data/weightGuide";
+import { getLatestWeightRecord } from "../services/weightLog";
 
-export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onUpdateDog }) {
+export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenWeight, onOpenMain }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
-  const [notifPermission, setNotifPermission] = useState(getPermission());
 
   // 날짜가 자정을 넘어가면 새로운 오늘 일정을 다시 불러온다.
   useEffect(() => {
@@ -23,10 +21,17 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   }, []);
 
   useEffect(() => {
-    setChecklist(getTodayChecklist(dog, dateKey));
+    const items = getTodayChecklist(dog, dateKey);
+    const weightItem = getWeightCheckItem(dog, dateKey);
+    setChecklist(weightItem ? [...items, weightItem] : items);
   }, [dog, dateKey]);
 
-  const age = useMemo(() => calculateAge(dog.birthDate, new Date(dateKey)), [dog.birthDate, dateKey]);
+  const weightText = useMemo(() => {
+    const age = calculateAge(dog.birthDate, new Date(dateKey));
+    const latestRecord = getLatestWeightRecord(dog.id);
+    const currentWeight = latestRecord ? latestRecord.weightKg : dog.weight;
+    return getWeightStatusShortText(getWeightAssessment({ ...dog, weight: currentWeight }, age.ageInMonths));
+  }, [dog, dateKey]);
   const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog]);
   const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog]);
 
@@ -46,85 +51,8 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
 
   const doneCount = checklist.filter((i) => i.completed).length;
 
-  async function handleEnableNotifications() {
-    const result = await requestPermission();
-    setNotifPermission(result);
-  }
-
-  async function handlePhotoChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const photo = await resizeImageFile(file);
-    const updated = saveDog({ ...dog, photo });
-    onUpdateDog?.(updated);
-  }
-
   return (
     <div className="screen">
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-          <label style={{ position: "relative", cursor: "pointer", flexShrink: 0 }}>
-            {dog.photo ? (
-              <img
-                src={dog.photo}
-                alt={`${dog.name} 사진`}
-                style={{ width: 84, height: 84, borderRadius: 20, objectFit: "cover" }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: 20,
-                  background: "var(--accent-soft)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 40,
-                }}
-                aria-hidden="true"
-              >
-                🐶
-              </div>
-            )}
-            <span
-              style={{
-                position: "absolute",
-                bottom: -4,
-                right: -4,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "50%",
-                width: 24,
-                height: 24,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-              }}
-            >
-              📷
-            </span>
-            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
-          </label>
-
-          <div style={{ flex: 1 }}>
-            <div className="h1" style={{ marginBottom: 4 }}>{dog.name}</div>
-            <span className="chip">{formatAge(age)}</span>
-            <span className="faint" style={{ marginLeft: 8 }}>{dog.breed}</span>
-          </div>
-
-          {isNotificationSupported() && notifPermission !== "granted" && (
-            <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={handleEnableNotifications}>
-              🔔
-            </button>
-          )}
-          {isNotificationSupported() && notifPermission === "granted" && (
-            <span className="faint" title="정해진 시간에 케어 알림을 보내드려요">🔔</span>
-          )}
-        </div>
-      </div>
-
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenHealth}>
           <span className="quick-tile-icon" aria-hidden="true">🩺</span>
@@ -139,6 +67,22 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
           <span className="quick-tile-label">알림·알람</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onOpenWeight}
+        className="card"
+        style={{ marginBottom: 14, width: "100%", textAlign: "left", display: "block" }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div className="h2">⚖️ 체중 체크</div>
+          <span className="subtle">›</span>
+        </div>
+        <p className="subtle" style={{ margin: "2px 0 0" }}>
+          {weightText || "아직 체중 기록이 없어요. 눌러서 체중 관리를 시작해보세요."}
+        </p>
+        <p className="faint" style={{ margin: "4px 0 0" }}>체중은 건강 변화를 가장 쉽게 알아챌 수 있는 신호예요.</p>
+      </button>
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -156,15 +100,35 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                   <span aria-hidden="true">{getCategoryIcon(category)}</span>
                   <span>{category}</span>
                 </div>
-                {items.map((item) => (
-                  <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
-                    <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
-                    <div>
-                      <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
-                      {item.description && <div className="subtle">{item.description}</div>}
-                    </div>
-                  </label>
-                ))}
+                {items.map((item) =>
+                  item.ruleId === "weight-check" ? (
+                    // 체중 측정은 체크박스로 직접 완료 처리하지 않는다 — 완료 표시는 실제로
+                    // 체중을 기록해야만 바뀌고, 여기서는 그 화면으로 이동만 시킨다.
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={onOpenWeight}
+                      className={`checklist-item${item.completed ? " completed" : ""}`}
+                      style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
+                    >
+                      <span aria-hidden="true" style={{ fontSize: 18, width: 20, flexShrink: 0 }}>
+                        {item.completed ? "✅" : "⚖️"}
+                      </span>
+                      <div>
+                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
+                        <div className="subtle">{item.description}</div>
+                      </div>
+                    </button>
+                  ) : (
+                    <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
+                      <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
+                      <div>
+                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
+                        {item.description && <div className="subtle">{item.description}</div>}
+                      </div>
+                    </label>
+                  )
+                )}
               </div>
             ))}
           </>
@@ -204,6 +168,14 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       <button className="btn-ghost" style={{ width: "100%" }} onClick={onOpenInfo}>
         📖 월령별 케어 정보 더 보기
       </button>
+
+      <p
+        className="subtle"
+        style={{ textAlign: "center", marginTop: 14, marginBottom: 0, cursor: "pointer" }}
+        onClick={onOpenMain}
+      >
+        궁금한 점은 메인에 있는 강아지한테 물어보세요!
+      </p>
     </div>
   );
 }

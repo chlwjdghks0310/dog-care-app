@@ -2,6 +2,12 @@ export function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+export function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 export function toDateKey(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }

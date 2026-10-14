@@ -1,6 +1,19 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { getBreedAppearance } from "../data/breedAppearance";
+
+// 커스텀 캐릭터 모델 경로. 이 파일이 없으면(404) 조용히 절차적(견종 프리셋) 아바타로만 보여준다.
+const CUSTOM_MODEL_URL = "/dog-model.glb";
+
+// ⚠️ 하이브리드 보정값: 모델은 뼈대/관절이 없어서, 꼬리·입은 우리가 직접 만든
+// 단순 도형을 모델 위에 겹쳐서 애니메이션한다. 실제로 화면에 띄워보고 조정해야 한다.
+const HYBRID_TUNING = {
+  targetHeight: 1.7,
+  tailOffset: { x: 0, y: 0.55, z: -0.85 },
+  mouthOffset: { x: 0, y: 0.35, z: 0.85 },
+};
 
 function buildDog(appearance) {
   const { color, size, earStyle, fluffy, curlyTail, snoutLength, shortLegs, longBody, patchColor } = appearance;
@@ -114,6 +127,44 @@ function buildDog(appearance) {
   return { root, headGroup, mouth, tail };
 }
 
+// 커스텀 GLB(뼈대 없는 정적 메쉬) + 우리가 만든 단순 꼬리/입을 합친 "하이브리드" 아바타.
+// 모양/색은 불러온 모델을 쓰고, 애니메이션이 필요한 부분만 절차적으로 덧붙인다.
+function buildHybridDog(gltfScene) {
+  const root = new THREE.Group();
+
+  const box = new THREE.Box3().setFromObject(gltfScene);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+
+  const scale = HYBRID_TUNING.targetHeight / Math.max(size.y, 0.001);
+  gltfScene.position.sub(center);
+  gltfScene.scale.setScalar(scale);
+  root.add(gltfScene);
+
+  const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x2b2320, roughness: 0.6 });
+  const tailMaterial = new THREE.MeshStandardMaterial({ color: 0xcaa06a, roughness: 0.85 });
+
+  const headGroup = new THREE.Group();
+  headGroup.position.set(
+    HYBRID_TUNING.mouthOffset.x,
+    HYBRID_TUNING.mouthOffset.y,
+    HYBRID_TUNING.mouthOffset.z
+  );
+  root.add(headGroup);
+
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.04), darkMaterial);
+  headGroup.add(mouth);
+
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.45, 10), tailMaterial);
+  tail.position.set(HYBRID_TUNING.tailOffset.x, HYBRID_TUNING.tailOffset.y, HYBRID_TUNING.tailOffset.z);
+  tail.rotation.x = Math.PI * 0.6;
+  root.add(tail);
+
+  return { root, headGroup, mouth, tail };
+}
+
 export default function DogAvatar3D({ breed, state = "idle", photoColor = null, height = 200 }) {
   const mountRef = useRef(null);
   const stateRef = useRef(state);
@@ -144,9 +195,29 @@ export default function DogAvatar3D({ breed, state = "idle", photoColor = null, 
     scene.add(dirLight);
 
     const appearance = { ...getBreedAppearance(breed), ...(photoColor != null ? { color: photoColor } : {}) };
-    const { root, headGroup, mouth, tail } = buildDog(appearance);
-    root.rotation.y = -0.5;
-    scene.add(root);
+    let parts = buildDog(appearance);
+    parts.root.rotation.y = -0.5;
+    scene.add(parts.root);
+
+    // 커스텀 모델(GLB)이 있으면 불러와서 절차적 아바타를 교체한다.
+    // 로딩 중이거나 파일이 없으면(404 등) 절차적 아바타를 그대로 보여준다.
+    let cancelled = false;
+    const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+    loader.load(
+      CUSTOM_MODEL_URL,
+      (gltf) => {
+        if (cancelled) return;
+        scene.remove(parts.root);
+        parts = buildHybridDog(gltf.scene);
+        parts.root.rotation.y = -0.5;
+        scene.add(parts.root);
+      },
+      undefined,
+      () => {
+        // 모델 파일이 없거나 로드 실패 — 절차적 아바타 유지, 별도 에러 처리 불필요.
+      }
+    );
 
     let frameId;
     const clock = new THREE.Clock();
@@ -155,6 +226,7 @@ export default function DogAvatar3D({ breed, state = "idle", photoColor = null, 
       frameId = requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
       const current = stateRef.current;
+      const { headGroup, mouth, tail } = parts;
 
       const idleBob = Math.sin(t * 1.6) * 0.03;
       headGroup.position.y = headGroup.userData.baseY ?? (headGroup.userData.baseY = headGroup.position.y);
@@ -185,6 +257,7 @@ export default function DogAvatar3D({ breed, state = "idle", photoColor = null, 
     resizeObserver.observe(container);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       scene.traverse((obj) => {
