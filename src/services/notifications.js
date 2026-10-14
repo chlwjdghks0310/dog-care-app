@@ -132,9 +132,11 @@ export async function getPushSubscription() {
 async function postSubscription(subscription, alarms) {
   const res = await fetch(`${API_BASE}/api/push/subscribe`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // keepalive: 앱을 닫는 순간 보내는 요청도 끝까지 전송되게. 단 keepalive는 CORS 사전요청(preflight)을
+    // 못 거치므로(사파리 "Load failed") application/json 대신 text/plain으로 보내고 서버가 직접 파싱한다.
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ subscription, alarms, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
-    keepalive: true, // 앱을 닫는 순간 보내는 요청도 끝까지 전송되게
+    keepalive: true,
   });
   if (!res.ok) throw new Error("서버에 구독 정보를 등록하지 못했어요.");
 }

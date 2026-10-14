@@ -400,8 +400,16 @@ app.get("/api/push/public-key", (req, res) => {
 // 기기가 앱을 열거나 닫을 때마다 구독 정보 + 매일 울릴 알람 목록을 통째로 보내온다.
 // ponytail: 메모리에만 저장 — 서버 재시작(배포 등) 후엔 사용자가 앱을 한 번 열어야 다시 등록된다.
 // 여러 사용자/확실한 보존이 필요해지면 DB(Postgres 등)로 옮길 것.
-app.post("/api/push/subscribe", (req, res) => {
-  const { subscription, alarms, timeZone } = req.body || {};
+app.post("/api/push/subscribe", express.text({ limit: "1mb" }), (req, res) => {
+  let body = req.body || {};
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return res.status(400).json({ error: "invalid JSON" });
+    }
+  }
+  const { subscription, alarms, timeZone } = body;
   if (!subscription?.endpoint) {
     return res.status(400).json({ error: "subscription is required" });
   }
