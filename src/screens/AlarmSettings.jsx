@@ -6,7 +6,14 @@ import {
   deleteCustomSchedule,
 } from "../services/customSchedules";
 import { ALARM_SOUND_LIST, playAlarmSound, resumeAudioContext } from "../services/alarmSounds";
-import { isNotificationSupported, getPermission, requestPermission } from "../services/notifications";
+import {
+  isNotificationSupported,
+  getPermission,
+  requestPermission,
+  isPushSupported,
+  subscribeToPush,
+  sendTestPush,
+} from "../services/notifications";
 
 const SOUND_GROUPS = [...new Set(ALARM_SOUND_LIST.map((s) => s.group))];
 
@@ -16,6 +23,8 @@ export default function AlarmSettings({ dog, onBack }) {
   const [time, setTime] = useState("09:00");
   const [sound, setSound] = useState(ALARM_SOUND_LIST[0].id);
   const [notifPermission, setNotifPermission] = useState(getPermission());
+  const [pushStatus, setPushStatus] = useState("");
+  const [pushBusy, setPushBusy] = useState(false);
 
   function refresh() {
     setSchedules(getCustomSchedules(dog.id));
@@ -46,6 +55,32 @@ export default function AlarmSettings({ dog, onBack }) {
     setNotifPermission(result);
   }
 
+  async function handleEnablePush() {
+    setPushBusy(true);
+    setPushStatus("");
+    try {
+      await subscribeToPush();
+      setPushStatus("ok");
+    } catch (err) {
+      setPushStatus(err.message);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleTestPush() {
+    setPushBusy(true);
+    setPushStatus("");
+    try {
+      const { sent, total } = await sendTestPush();
+      setPushStatus(sent > 0 ? `${total}개 기기로 보냈어요. 잠시 후 알림이 뜨는지 확인해보세요.` : "보낼 수 있는 기기가 없어요.");
+    } catch (err) {
+      setPushStatus(err.message);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
@@ -60,6 +95,29 @@ export default function AlarmSettings({ dog, onBack }) {
         <button className="btn-ghost" style={{ width: "100%", marginBottom: 14 }} onClick={handleEnableNotifications}>
           🔔 알림 권한 켜기 (팝업 알림도 함께 받기)
         </button>
+      )}
+
+      {isPushSupported() && (
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div className="h2">백그라운드 푸시 (실험 중)</div>
+          <p className="subtle" style={{ marginBottom: 10 }}>
+            브라우저를 완전히 꺼놔도 알림이 뜨는지 확인하는 단계예요. 아이폰이면 사파리 공유 버튼 →
+            "홈 화면에 추가"로 설치한 상태에서만 동작해요.
+          </p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <button className="btn-ghost" style={{ flex: 1 }} onClick={handleEnablePush} disabled={pushBusy}>
+              푸시 알림 켜기
+            </button>
+            <button className="btn-ghost" style={{ flex: 1 }} onClick={handleTestPush} disabled={pushBusy}>
+              테스트 알림 보내기
+            </button>
+          </div>
+          {pushStatus && (
+            <p className={pushStatus === "ok" ? "subtle" : "error-text"} style={{ margin: 0 }}>
+              {pushStatus === "ok" ? "푸시 알림이 켜졌어요!" : pushStatus}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="card" style={{ marginBottom: 14 }}>

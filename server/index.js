@@ -8,6 +8,7 @@ import cors from "cors";
 import multer from "multer";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
+import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
@@ -21,6 +22,21 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 if (!process.env.GEMINI_API_KEY) {
   console.warn("[server] GEMINI_API_KEY가 설정되지 않았어요. 영상 분석 기능(활동 상태 확인)은 동작하지 않아요.");
+}
+
+// 웹 푸시(VAPID) — 1단계: 구독을 메모리에만 들고 있다가 "테스트 알림 보내기"로 실제로
+// 뜨는지부터 확인한다. 서버 재시작하면 날아가고, 여러 서버 인스턴스 간에도 공유되지 않는다 —
+// 진짜 일정 기반 알림을 붙이려면 이건 DB로 바꿔야 한다(지금은 동작 검증 단계).
+const pushSubscriptions = [];
+const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
+if (vapidConfigured) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || "mailto:example@example.com",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+} else {
+  console.warn("[server] VAPID 키가 설정되지 않았어요. 푸시 알림 기능은 동작하지 않아요.");
 }
 
 const client = new Anthropic();
@@ -373,6 +389,46 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
   } finally {
     fs.unlink(req.file.path).catch(() => {});
   }
+});
+
+app.get("/api/push/public-key", (req, res) => {
+  if (!vapidConfigured) return res.status(503).json({ error: "푸시 알림이 아직 설정되지 않았어요." });
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+// 브라우저가 알림 구독을 신청하면 받아서 메모리에 저장한다. 같은 구독(endpoint 동일)이면
+// 덮어써서 중복으로 쌓이지 않게 한다.
+app.post("/api/push/subscribe", (req, res) => {
+  const { subscription } = req.body || {};
+  if (!subscription?.endpoint) {
+    return res.status(400).json({ error: "subscription is required" });
+  }
+  const idx = pushSubscriptions.findIndex((s) => s.endpoint === subscription.endpoint);
+  if (idx === -1) pushSubscriptions.push(subscription);
+  else pushSubscriptions[idx] = subscription;
+  res.json({ ok: true, count: pushSubscriptions.length });
+});
+
+// 1단계 동작 확인용 — 지금까지 구독된 모든 기기에 즉시 테스트 알림을 보낸다.
+app.post("/api/push/test", async (req, res) => {
+  if (!vapidConfigured) return res.status(503).json({ error: "푸시 알림이 아직 설정되지 않았어요." });
+  if (pushSubscriptions.length === 0) {
+    return res.status(400).json({ error: "구독된 기기가 없어요. 먼저 알림을 켜주세요." });
+  }
+  const payload = JSON.stringify({ title: "🐾 멍케어 테스트 알림", body: "브라우저가 꺼져 있어도 이 알림이 보이면 성공이에요!" });
+
+  const results = await Promise.allSettled(pushSubscriptions.map((sub) => webpush.sendNotification(sub, payload)));
+  // 만료되었거나 더 이상 유효하지 않은 구독(410/404)은 목록에서 정리한다.
+  const deadEndpoints = new Set(
+    results
+      .map((r, i) => (r.status === "rejected" && [404, 410].includes(r.reason?.statusCode) ? pushSubscriptions[i].endpoint : null))
+      .filter(Boolean)
+  );
+  if (deadEndpoints.size > 0) {
+    pushSubscriptions.splice(0, pushSubscriptions.length, ...pushSubscriptions.filter((s) => !deadEndpoints.has(s.endpoint)));
+  }
+  const sent = results.filter((r) => r.status === "fulfilled").length;
+  res.json({ sent, total: results.length });
 });
 
 app.use((err, req, res, next) => {

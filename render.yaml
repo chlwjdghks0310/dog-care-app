@@ -12,6 +12,13 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      # 웹 푸시용 VAPID 키 — 공개키는 비밀이 아니지만 서버 설정이 간단하도록 같이 둔다.
+      - key: VAPID_PUBLIC_KEY
+        value: BB3QsK-mqm4MOKUfaEZW-dwaq2sLPPISuyHFOEUQ4mCxVlk_ecPtRBVe8av87ltL5s5EpE1agX7NcKyJC6npaR0
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:dogcare-app@example.com
 
   # 프론트엔드(앱 화면) — 와이파이 상관없이 다른 사람도 이 주소로 접속할 수 있게 해주는 부분.
   - type: web
@@ -22,3 +29,5 @@ services:
     envVars:
       - key: VITE_API_BASE
         value: https://dog-care-app.onrender.com
+      - key: VITE_VAPID_PUBLIC_KEY
+        value: BB3QsK-mqm4MOKUfaEZW-dwaq2sLPPISuyHFOEUQ4mCxVlk_ecPtRBVe8av87ltL5s5EpE1agX7NcKyJC6npaR0

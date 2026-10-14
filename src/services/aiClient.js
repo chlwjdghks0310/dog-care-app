@@ -1,7 +1,7 @@
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
+export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
 
 function toDogContext(dog) {
   const age = calculateAge(dog.birthDate);
