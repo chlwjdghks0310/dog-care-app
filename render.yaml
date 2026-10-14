@@ -14,7 +14,7 @@ services:
         sync: false
       # 웹 푸시용 VAPID 키 — 공개키는 비밀이 아니지만 서버 설정이 간단하도록 같이 둔다.
       - key: VAPID_PUBLIC_KEY
-        value: BB3QsK-mqm4MOKUfaEZW-dwaq2sLPPISuyHFOEUQ4mCxVlk_ecPtRBVe8av87ltL5s5EpE1agX7NcKyJC6npaR0
+        value: BPeGQmvWEHsIdUpEtzf_mBtYnH1dk-jCQ3IRSMAtsCZM_t7d_UcsxP8bRaX4LwqWrldPym0X95FzJsxVKQD9wTQ
       - key: VAPID_PRIVATE_KEY
         sync: false
       - key: VAPID_SUBJECT
