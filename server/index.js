@@ -27,7 +27,8 @@ if (!process.env.GEMINI_API_KEY) {
 // 웹 푸시(VAPID) — 1단계: 구독을 메모리에만 들고 있다가 "테스트 알림 보내기"로 실제로
 // 뜨는지부터 확인한다. 서버 재시작하면 날아가고, 여러 서버 인스턴스 간에도 공유되지 않는다 —
 // 진짜 일정 기반 알림을 붙이려면 이건 DB로 바꿔야 한다(지금은 동작 검증 단계).
-const pushSubscriptions = [];
+// endpoint → { subscription, alarms: [{ time: "HH:MM", title, body }], timeZone, sentDate, sent: Set }
+const pushDevices = new Map();
 const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
 if (vapidConfigured) {
   webpush.setVapidDetails(
@@ -396,40 +397,81 @@ app.get("/api/push/public-key", (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
-// 브라우저가 알림 구독을 신청하면 받아서 메모리에 저장한다. 같은 구독(endpoint 동일)이면
-// 덮어써서 중복으로 쌓이지 않게 한다.
+// 기기가 앱을 열거나 닫을 때마다 구독 정보 + 매일 울릴 알람 목록을 통째로 보내온다.
+// ponytail: 메모리에만 저장 — 서버 재시작(배포 등) 후엔 사용자가 앱을 한 번 열어야 다시 등록된다.
+// 여러 사용자/확실한 보존이 필요해지면 DB(Postgres 등)로 옮길 것.
 app.post("/api/push/subscribe", (req, res) => {
-  const { subscription } = req.body || {};
+  const { subscription, alarms, timeZone } = req.body || {};
   if (!subscription?.endpoint) {
     return res.status(400).json({ error: "subscription is required" });
   }
-  const idx = pushSubscriptions.findIndex((s) => s.endpoint === subscription.endpoint);
-  if (idx === -1) pushSubscriptions.push(subscription);
-  else pushSubscriptions[idx] = subscription;
-  res.json({ ok: true, count: pushSubscriptions.length });
+  const prev = pushDevices.get(subscription.endpoint);
+  pushDevices.set(subscription.endpoint, {
+    subscription,
+    alarms: Array.isArray(alarms) ? alarms : prev?.alarms || [],
+    timeZone: timeZone || prev?.timeZone || "Asia/Seoul",
+    sentDate: prev?.sentDate,
+    sent: prev?.sent || new Set(),
+  });
+  res.json({ ok: true, alarms: pushDevices.get(subscription.endpoint).alarms.length });
 });
 
-// 1단계 동작 확인용 — 지금까지 구독된 모든 기기에 즉시 테스트 알림을 보낸다.
+async function sendPush(device, title, body) {
+  try {
+    await webpush.sendNotification(device.subscription, JSON.stringify({ title, body }));
+    return true;
+  } catch (err) {
+    // 만료되었거나 더 이상 유효하지 않은 구독(410/404)은 목록에서 정리한다.
+    if ([404, 410].includes(err.statusCode)) pushDevices.delete(device.subscription.endpoint);
+    else console.error("[server] push error:", err.statusCode, err.message);
+    return false;
+  }
+}
+
+// 요청한 기기에만 즉시 테스트 알림을 보낸다.
 app.post("/api/push/test", async (req, res) => {
   if (!vapidConfigured) return res.status(503).json({ error: "푸시 알림이 아직 설정되지 않았어요." });
-  if (pushSubscriptions.length === 0) {
-    return res.status(400).json({ error: "구독된 기기가 없어요. 먼저 알림을 켜주세요." });
-  }
-  const payload = JSON.stringify({ title: "🐾 멍케어 테스트 알림", body: "브라우저가 꺼져 있어도 이 알림이 보이면 성공이에요!" });
-
-  const results = await Promise.allSettled(pushSubscriptions.map((sub) => webpush.sendNotification(sub, payload)));
-  // 만료되었거나 더 이상 유효하지 않은 구독(410/404)은 목록에서 정리한다.
-  const deadEndpoints = new Set(
-    results
-      .map((r, i) => (r.status === "rejected" && [404, 410].includes(r.reason?.statusCode) ? pushSubscriptions[i].endpoint : null))
-      .filter(Boolean)
-  );
-  if (deadEndpoints.size > 0) {
-    pushSubscriptions.splice(0, pushSubscriptions.length, ...pushSubscriptions.filter((s) => !deadEndpoints.has(s.endpoint)));
-  }
-  const sent = results.filter((r) => r.status === "fulfilled").length;
-  res.json({ sent, total: results.length });
+  const subscription = req.body?.subscription;
+  if (!subscription?.endpoint) return res.status(400).json({ error: "구독된 기기가 없어요. 먼저 알림을 켜주세요." });
+  const ok = await sendPush({ subscription }, "🐾 멍케어 테스트 알림", "브라우저가 꺼져 있어도 이 알림이 보이면 성공이에요!");
+  res.json({ sent: ok ? 1 : 0, total: 1 });
 });
+
+// 기기 시간대 기준 "YYYY-MM-DD", "HH:MM"
+function localNow(timeZone) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date())
+      .map((p) => [p.type, p.value])
+  );
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
+
+// 20초마다 각 기기의 현재 시각과 알람 시각을 비교해 푸시를 보낸다. 같은 날 같은 알람은 한 번만.
+// ponytail: Render 무료 서버는 15분간 요청이 없으면 잠들어 이 타이머도 멈춘다 — 외부 핑(UptimeRobot 등)으로 깨워둬야 한다.
+function checkPushAlarms() {
+  if (!vapidConfigured) return;
+  for (const device of pushDevices.values()) {
+    let now;
+    try {
+      now = localNow(device.timeZone);
+    } catch {
+      now = localNow("Asia/Seoul");
+    }
+    if (device.sentDate !== now.date) {
+      device.sentDate = now.date;
+      device.sent = new Set();
+    }
+    for (const alarm of device.alarms) {
+      const key = `${alarm.time}|${alarm.title}|${alarm.body}`;
+      if (alarm.time === now.time && !device.sent.has(key)) {
+        device.sent.add(key);
+        sendPush(device, alarm.title, alarm.body);
+      }
+    }
+  }
+}
+setInterval(checkPushAlarms, 20 * 1000);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {

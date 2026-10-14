@@ -108,7 +108,8 @@ export default function Main({ dog, resetSignal }) {
     e.target.value = "";
     if (!file || pending) return;
     const isVideo = file.type.startsWith("video/");
-    const mediaUrl = URL.createObjectURL(file);
+    // 영상은 채팅에 미리보기를 띄우지 않으므로 사진만 URL을 만든다.
+    const mediaUrl = isVideo ? null : URL.createObjectURL(file);
     setMode("chat");
     setMessages((m) => [
       ...m,
@@ -214,9 +215,6 @@ export default function Main({ dog, resetSignal }) {
                   {m.mediaUrl && m.mediaType === "image" && (
                     <img src={m.mediaUrl} alt="보낸 사진" style={{ maxWidth: "100%", borderRadius: 10, marginBottom: 6, display: "block" }} />
                   )}
-                  {m.mediaUrl && m.mediaType === "video" && (
-                    <video src={m.mediaUrl} muted style={{ maxWidth: "100%", borderRadius: 10, marginBottom: 6, display: "block" }} />
-                  )}
                   {m.text}
                 </div>
               );
@@ -238,9 +236,6 @@ export default function Main({ dog, resetSignal }) {
               >
                 {m.mediaUrl && m.mediaType === "image" && (
                   <img src={m.mediaUrl} alt="분석한 사진" style={{ maxWidth: 140, borderRadius: 10, marginBottom: 10, display: "block" }} />
-                )}
-                {m.mediaUrl && m.mediaType === "video" && (
-                  <video src={m.mediaUrl} muted style={{ maxWidth: 140, borderRadius: 10, marginBottom: 10, display: "block" }} />
                 )}
                 <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.35, marginBottom: detail ? 6 : 0 }}>
                   {renderEmphasized(headline)}
