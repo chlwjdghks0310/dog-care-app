@@ -129,15 +129,13 @@ export async function getPushSubscription() {
 // 브라우저가 꺼져 있어도 울리는 알림을 받으려면: 알림 권한 허용 + 이 구독 과정을 거쳐야 한다.
 // 구독 정보를 서버에 보내두면, 서버가 그 기기로 직접 푸시를 보낼 수 있게 된다.
 // 서버에 이 기기의 구독 + 매일 울릴 알람 목록을 보낸다. 서버가 그 시각에 푸시를 쏜다.
-async function postSubscription(subscription, alarms) {
-  const res = await fetch(`${API_BASE}/api/push/subscribe`, {
-    method: "POST",
-    // keepalive: 앱을 닫는 순간 보내는 요청도 끝까지 전송되게. 단 keepalive는 CORS 사전요청(preflight)을
-    // 못 거치므로(사파리 "Load failed") application/json 대신 text/plain으로 보내고 서버가 직접 파싱한다.
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ subscription, alarms, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
-    keepalive: true,
-  });
+// text/plain으로 보내 CORS 사전요청(preflight)을 피한다 — sendBeacon은 text/plain만 교차 출처로 보낼 수 있다.
+async function postSubscription(subscription, alarms, { beacon = false } = {}) {
+  const body = JSON.stringify({ subscription, alarms, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const url = `${API_BASE}/api/push/subscribe`;
+  // 앱을 닫는 순간엔 일반 fetch가 끊길 수 있어 sendBeacon을 쓴다(사파리는 fetch keepalive가 "Load failed"로 실패).
+  if (beacon && navigator.sendBeacon?.(url, new Blob([body], { type: "text/plain" }))) return;
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body });
   if (!res.ok) throw new Error("서버에 구독 정보를 등록하지 못했어요.");
 }
 
@@ -159,9 +157,18 @@ export function buildPushAlarms() {
 }
 
 // 푸시가 켜진 기기라면 최신 알람 목록을 서버에 다시 보낸다(앱 열 때/닫을 때 호출).
-export async function syncPushAlarms() {
+export async function syncPushAlarms({ beacon = false } = {}) {
   const subscription = await getPushSubscription().catch(() => null);
-  if (subscription) await postSubscription(subscription, buildPushAlarms()).catch(() => {});
+  if (subscription) await postSubscription(subscription, buildPushAlarms(), { beacon }).catch(() => {});
+}
+
+// 어느 단계에서 실패했는지 오류 문구에 붙인다.
+async function step(label, fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    throw new Error(`${label} 실패: ${err.message}`);
+  }
 }
 
 export async function subscribeToPush() {
@@ -171,20 +178,18 @@ export async function subscribeToPush() {
   if (permission !== "granted") throw new Error("알림 권한을 허용해야 켤 수 있어요.");
 
   // 공개키는 서버에서 받아온다 — 프론트 빌드 환경변수에 따로 넣으면 서버 키와 어긋나기 쉽다.
-  const keyRes = await fetch(`${API_BASE}/api/push/public-key`);
-  const { publicKey } = await keyRes.json().catch(() => ({}));
+  const { publicKey } = await step("공개키 받기", () => fetch(`${API_BASE}/api/push/public-key`).then((r) => r.json()));
   if (!publicKey) throw new Error("서버에 VAPID 공개키가 설정되지 않았어요.");
 
   const registration = await navigator.serviceWorker.ready;
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
+    subscription = await step("기기 등록", () =>
+      registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) })
+    );
   }
 
-  await postSubscription(subscription, buildPushAlarms());
+  await step("서버에 알람 등록", () => postSubscription(subscription, buildPushAlarms()));
   return subscription;
 }
 

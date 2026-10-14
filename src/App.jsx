@@ -131,7 +131,7 @@ export default function App() {
     }, 30 * 1000);
     // 앱을 열 때와 백그라운드로 보낼 때마다 최신 알람 목록을 서버에 보내, 앱이 꺼져 있어도 서버가 푸시를 쏘게 한다.
     syncPushAlarms();
-    const onVisibility = () => document.visibilityState === "hidden" && syncPushAlarms();
+    const onVisibility = () => document.visibilityState === "hidden" && syncPushAlarms({ beacon: true });
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       clearInterval(timer);
