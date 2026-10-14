@@ -29,5 +29,3 @@ services:
     envVars:
       - key: VITE_API_BASE
         value: https://dog-care-app.onrender.com
-      - key: VITE_VAPID_PUBLIC_KEY
-        value: BB3QsK-mqm4MOKUfaEZW-dwaq2sLPPISuyHFOEUQ4mCxVlk_ecPtRBVe8av87ltL5s5EpE1agX7NcKyJC6npaR0

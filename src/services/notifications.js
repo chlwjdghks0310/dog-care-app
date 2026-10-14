@@ -168,7 +168,9 @@ export async function subscribeToPush() {
   const permission = await requestPermission();
   if (permission !== "granted") throw new Error("알림 권한을 허용해야 켤 수 있어요.");
 
-  const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  // 공개키는 서버에서 받아온다 — 프론트 빌드 환경변수에 따로 넣으면 서버 키와 어긋나기 쉽다.
+  const keyRes = await fetch(`${API_BASE}/api/push/public-key`);
+  const { publicKey } = await keyRes.json().catch(() => ({}));
   if (!publicKey) throw new Error("서버에 VAPID 공개키가 설정되지 않았어요.");
 
   const registration = await navigator.serviceWorker.ready;
