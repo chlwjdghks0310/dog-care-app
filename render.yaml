@@ -1,4 +1,6 @@
 services:
+  # 실제 배포명은 Render 대시보드에서 수동으로 두 서비스를 만들 때 정해졌다(Blueprint 미사용):
+  # 백엔드 = https://dog-care-app.onrender.com, 프론트엔드 = https://dog-care-app-1.onrender.com
   - type: web
     name: dogcare-api
     runtime: node
@@ -18,7 +20,5 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
-      # dogcare-api 서비스가 실제로 배포된 뒤 URL이 다르면(이름이 겹쳐 바뀐 경우 등)
-      # Render 대시보드에서 이 값만 실제 주소로 바꿔주면 된다.
       - key: VITE_API_BASE
-        value: https://dogcare-api.onrender.com
+        value: https://dog-care-app.onrender.com
