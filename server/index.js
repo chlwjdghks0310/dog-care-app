@@ -41,6 +41,8 @@ if (vapidConfigured) {
 }
 
 const client = new Anthropic();
+// 안전 필터가 건강 질문을 잘못 거절하면, 서버가 Anthropic 권장 모델로 자동 재시도한다(fallbacks: "default").
+const CLAUDE_MODEL = { model: "claude-opus-5-5", betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
 const gemini = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const app = express();
 app.use(cors());
@@ -244,8 +246,8 @@ app.post("/api/ask", async (req, res) => {
       { role: "user", content: question },
     ];
 
-    const response = await client.messages.create({
-      model: "claude-opus-5",
+    const response = await client.beta.messages.create({
+      ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildChatSystemPrompt(dogContext),
@@ -274,8 +276,8 @@ app.post("/api/analyze-photo", async (req, res) => {
   const type = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
 
   try {
-    const response = await client.messages.create({
-      model: "claude-opus-5",
+    const response = await client.beta.messages.create({
+      ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildPhotoAnalysisSystemPrompt(dogContext),
@@ -311,8 +313,8 @@ app.post("/api/analyze-general-photo", async (req, res) => {
   const type = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
 
   try {
-    const response = await client.messages.create({
-      model: "claude-opus-5",
+    const response = await client.beta.messages.create({
+      ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildGeneralPhotoAnalysisSystemPrompt(dogContext),
