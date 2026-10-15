@@ -33,23 +33,31 @@ const KEY_DEFAULT = { min: 150, full: 210 };
 // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 밝기만으로는 털까지 지워진다 → flood 방식(테두리에서 이어진 배경만 지움).
 const KEY_BY_BREED = {
   retriever: { min: 160, full: 188 },
-  bordercollie: { flood: { lo: 140, hi: 226, satMax: 0.04, step: 18 }, watermarkFill: "rgb(208,208,206)" },
+  // 위쪽은 엄격하게(흰 털이 배경에 닿아도 안 지워지게), 아래 22%(바닥 그림자)만 느슨하게 — 실측값 기준.
+  bordercollie: {
+    flood: { lo: 140, hi: 218, satMax: 0.035, step: 10, floor: { from: 0.78, hi: 224, satMax: 0.06, step: 16 } },
+    watermarkFill: "rgb(208,208,206)",
+  },
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
 // 테두리에서 이어진 "배경색 비슷한" 픽셀만 투명하게 (마술봉처럼). 캐릭터 안쪽의 흰 털은 테두리와 끊겨 있어 남는다.
-function keyOutByFlood(imageData, { lo, hi, satMax, step }) {
+// floor: 화면 아래쪽(바닥 그림자·워터마크 근처)은 털이 배경에 닿지 않아 더 느슨한 기준(hi·step)으로 지운다.
+function keyOutByFlood(imageData, { lo, hi, satMax, step, floor }) {
   const { data, width: w, height: h } = imageData;
   const n = w * h;
   const bg = new Uint8Array(n);
+  const floorStart = floor ? Math.floor(h * floor.from) * w : n;
   const isBgColor = (p) => {
     const i = p * 4, r = data[i], g = data[i + 1], b = data[i + 2];
     const br = (r + g + b) / 3, mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    return br >= lo && br <= hi && (mx === 0 ? 0 : (mx - mn) / mx) <= satMax;
+    const inFloor = p >= floorStart;
+    return br >= lo && br <= (inFloor ? floor.hi : hi) && (mx === 0 ? 0 : (mx - mn) / mx) <= (inFloor ? floor.satMax : satMax);
   };
   const close = (p, q) => {
     const i = p * 4, j = q * 4;
-    return Math.abs(data[i] - data[j]) + Math.abs(data[i + 1] - data[j + 1]) + Math.abs(data[i + 2] - data[j + 2]) <= step;
+    const d = Math.abs(data[i] - data[j]) + Math.abs(data[i + 1] - data[j + 1]) + Math.abs(data[i + 2] - data[j + 2]);
+    return d <= (q >= floorStart ? floor.step : step);
   };
   const stack = new Int32Array(n);
   let sp = 0;
