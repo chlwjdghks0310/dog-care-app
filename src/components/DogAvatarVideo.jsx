@@ -30,8 +30,65 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 // min: 이보다 어두우면 무조건 캐릭터 / full: 이보다 밝으면 완전히 투명 / 채도가 SATURATION_MAX보다 높으면 캐릭터.
 // 견종 영상마다 배경 회색의 밝기가 달라 따로 맞춘다(실측: 기본 배경 밝기 217~225, 리트리버 201~216).
 const KEY_DEFAULT = { min: 150, full: 210 };
-const KEY_BY_BREED = { retriever: { min: 160, full: 188 } };
+// 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 밝기만으로는 털까지 지워진다 → flood 방식(테두리에서 이어진 배경만 지움).
+const KEY_BY_BREED = {
+  retriever: { min: 160, full: 188 },
+  bordercollie: { flood: { lo: 140, hi: 226, satMax: 0.04, step: 18 }, watermarkFill: "rgb(208,208,206)" },
+};
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
+
+// 테두리에서 이어진 "배경색 비슷한" 픽셀만 투명하게 (마술봉처럼). 캐릭터 안쪽의 흰 털은 테두리와 끊겨 있어 남는다.
+function keyOutByFlood(imageData, { lo, hi, satMax, step }) {
+  const { data, width: w, height: h } = imageData;
+  const n = w * h;
+  const bg = new Uint8Array(n);
+  const isBgColor = (p) => {
+    const i = p * 4, r = data[i], g = data[i + 1], b = data[i + 2];
+    const br = (r + g + b) / 3, mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return br >= lo && br <= hi && (mx === 0 ? 0 : (mx - mn) / mx) <= satMax;
+  };
+  const close = (p, q) => {
+    const i = p * 4, j = q * 4;
+    return Math.abs(data[i] - data[j]) + Math.abs(data[i + 1] - data[j + 1]) + Math.abs(data[i + 2] - data[j + 2]) <= step;
+  };
+  const stack = new Int32Array(n);
+  let sp = 0;
+  const seed = (p) => { if (!bg[p] && isBgColor(p)) { bg[p] = 1; stack[sp++] = p; } };
+  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+  while (sp) {
+    const p = stack[--sp], x = p % w;
+    const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w];
+    for (const q of nb) if (q >= 0 && q < n && !bg[q] && isBgColor(q) && close(p, q)) { bg[q] = 1; stack[sp++] = q; }
+  }
+  // 압축 노이즈로 생긴 배경 속 작은 얼룩 제거: 캐릭터가 아닌(배경으로 안 잡힌) 덩어리 중
+  // 가장 큰 것(캐릭터)의 2%보다 작은 조각은 배경으로 돌린다.
+  const label = new Int32Array(n);
+  const sizes = [0];
+  for (let s0 = 0; s0 < n; s0++) {
+    if (bg[s0] || label[s0]) continue;
+    const id = sizes.length;
+    let size = 0;
+    label[s0] = id;
+    stack[sp++] = s0;
+    while (sp) {
+      const p = stack[--sp], x = p % w;
+      size++;
+      const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w];
+      for (const q of nb) if (q >= 0 && q < n && !bg[q] && !label[q]) { label[q] = id; stack[sp++] = q; }
+    }
+    sizes.push(size);
+  }
+  const minKeep = Math.max(...sizes) * 0.02;
+  for (let p = 0; p < n; p++) if (!bg[p] && sizes[label[p]] < minKeep) bg[p] = 1;
+
+  for (let p = 0; p < n; p++) {
+    if (bg[p]) { data[p * 4 + 3] = 0; continue; }
+    const x = p % w; // 경계 1px은 반투명으로 부드럽게
+    if ((x > 0 && bg[p - 1]) || (x < w - 1 && bg[p + 1]) || (p >= w && bg[p - w]) || (p + w < n && bg[p + w])) data[p * 4 + 3] = 140;
+  }
+  return imageData;
+}
 
 function keyOutLightBackground(imageData, { min: BRIGHTNESS_MIN, full: BRIGHTNESS_FULL_TRANSPARENT }) {
   const data = imageData.data;
@@ -96,7 +153,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       ctx.drawImage(video, 0, 0, vw, vh, 0, 0, PROCESS_SIZE, PROCESS_SIZE);
 
       // 워터마크 자리를 배경과 비슷한 밝은 색으로 덮는다 — 아래 키잉 단계에서 자연스럽게 투명해진다.
-      ctx.fillStyle = "#eeeeee";
+      ctx.fillStyle = keySettings.watermarkFill || "#eeeeee";
       ctx.fillRect(
         PROCESS_SIZE * WATERMARK_RECT.x,
         PROCESS_SIZE * WATERMARK_RECT.y,
@@ -105,7 +162,8 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       );
 
       const frame = ctx.getImageData(0, 0, PROCESS_SIZE, PROCESS_SIZE);
-      keyOutLightBackground(frame, keySettings);
+      if (keySettings.flood) keyOutByFlood(frame, keySettings.flood);
+      else keyOutLightBackground(frame, keySettings);
       ctx.putImageData(frame, 0, 0);
     }
 
