@@ -37,8 +37,10 @@ const KEY_BY_BREED = {
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
-// 배경을 미리 순수 초록으로 칠해 둔 영상(scripts/avatar/bakegreen.swift로 처리)용. 초록이 강한 픽셀은 투명하게,
-// 경계의 초록 번짐은 회색으로 되돌린다(despill). 흰 털과 초록은 확연히 달라 기기별 색 차이에도 안전하다.
+// 배경을 미리 초록과 섞어 둔 영상(scripts/avatar/bakegreen.swift로 처리)용. 영상 픽셀 = a·캐릭터 + (1-a)·초록 이므로
+// 초록이 섞인 정도로 투명도 a를 되살리고, 초록을 빼서 원래 색을 복원한다(꼬리 모션블러 같은 반투명 유지).
+// 흰 털과 초록은 확연히 달라 기기별 색 차이에도 안전하다. 디코딩된 초록 배경 실측: (0, 249, 0).
+const GREEN_FULL = 249;
 function keyOutGreen(imageData) {
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
@@ -46,13 +48,16 @@ function keyOutGreen(imageData) {
     const g = data[i + 1];
     const b = data[i + 2];
     const greenness = g - Math.max(r, b);
-    if (greenness <= 0) continue;
-    if (greenness >= 90) {
+    if (greenness <= 6) continue;
+    const a = greenness >= 215 ? 0 : 1 - greenness / GREEN_FULL;
+    if (a <= 0.02) {
       data[i + 3] = 0;
       continue;
     }
-    if (greenness > 30) data[i + 3] = Math.min(data[i + 3], Math.round(((90 - greenness) / 60) * 255));
-    data[i + 1] = Math.max(r, b);
+    data[i] = Math.min(255, r / a);
+    data[i + 1] = Math.min(255, Math.max(0, (g - (1 - a) * 255) / a));
+    data[i + 2] = Math.min(255, b / a);
+    data[i + 3] = Math.round(a * data[i + 3]);
   }
   return imageData;
 }
