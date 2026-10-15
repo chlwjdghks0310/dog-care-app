@@ -23,6 +23,7 @@ import AlarmSettings from "./screens/AlarmSettings";
 import Contact from "./screens/Contact";
 import Help from "./screens/Help";
 import WeightTracker from "./screens/WeightTracker";
+import Budget from "./screens/Budget";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import { applyTheme, getTheme } from "./services/themeSettings";
 
@@ -185,6 +186,7 @@ export default function App() {
       {tab === "week" && <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />}
       {tab === "weight" && <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("home")} />}
       {tab === "calendar" && <Calendar dog={dog} />}
+      {tab === "budget" && <Budget key={dog.id} dog={dog} />}
       {tab === "feeding" && <FeedingPlan dog={dog} onBack={() => setTab("home")} />}
       {tab === "alarms" && <AlarmSettings dog={dog} onBack={() => setTab("home")} />}
       {tab === "info" && <Info dog={dog} onBack={() => setTab("home")} />}

@@ -7,8 +7,7 @@ import { getEventsByDog, addEvent, updateEventColor, deleteEvent, EVENT_COLORS }
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
 import { getCategoryIcon } from "../data/categoryIcons";
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+import MonthGrid from "../components/MonthGrid";
 
 function Dot({ color }) {
   return <span style={{ width: 5, height: 5, borderRadius: "50%", background: color, display: "inline-block" }} />;
@@ -31,7 +30,6 @@ export default function Calendar({ dog }) {
 
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
-  const firstWeekday = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   // 달력 그리드에는 사용자가 직접 기록한 일정만 표시한다(앱 추천 일정은 아래 별도 박스에서만 보여줌).
@@ -85,63 +83,24 @@ export default function Calendar({ dog }) {
     setEvents(getEventsByDog(dog.id));
   }
 
-  const cells = [];
-  for (let i = 0; i < firstWeekday; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
   return (
     <div className="screen">
       <div className="h1" style={{ marginBottom: 14 }}>일정표</div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <button className="btn-ghost" style={{ padding: "4px 10px" }} onClick={() => setMonthDate(new Date(year, month - 1, 1))}>
-            ‹
-          </button>
-          <div className="h2" style={{ margin: 0 }}>{year}년 {month + 1}월</div>
-          <button className="btn-ghost" style={{ padding: "4px 10px" }} onClick={() => setMonthDate(new Date(year, month + 1, 1))}>
-            ›
-          </button>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
-          {WEEKDAYS.map((w) => (
-            <div key={w} className="faint" style={{ textAlign: "center" }}>{w}</div>
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-          {cells.map((d, i) => {
-            if (!d) return <div key={`blank-${i}`} />;
-            const key = toDateKey(new Date(year, month, d));
-            const marker = dayMarkers[key] || {};
-            const isSelected = key === selectedDateKey;
-            const isToday = key === today;
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedDateKey(key)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 3,
-                  padding: "6px 0",
-                  borderRadius: 10,
-                  border: isSelected ? "2px solid var(--accent)" : "2px solid transparent",
-                  background: isToday ? "var(--accent-soft)" : "none",
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400 }}>{d}</span>
-                <div style={{ display: "flex", gap: 2, height: 5 }}>
-                  {(marker.colors || []).map((c) => (
-                    <Dot key={c} color={c} />
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <MonthGrid
+          monthDate={monthDate}
+          onMonthChange={setMonthDate}
+          selectedDateKey={selectedDateKey}
+          onSelect={setSelectedDateKey}
+          renderMarker={(key) => (
+            <div style={{ display: "flex", gap: 2, height: 5 }}>
+              {(dayMarkers[key]?.colors || []).map((c) => (
+                <Dot key={c} color={c} />
+              ))}
+            </div>
+          )}
+        />
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
