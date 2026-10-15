@@ -16,17 +16,26 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
+// **강조** → 굵은 강조색, *행동* (수다 모드의 "*꼬리 붕붕*") → 기울임 흐린 글씨
 function renderEmphasized(text) {
   if (!text) return text;
-  return text.split(/\*\*(.+?)\*\*/g).map((part, i) =>
-    i % 2 === 1 ? (
-      <strong key={i} style={{ color: "var(--accent-strong)", fontWeight: 800 }}>
-        {part}
-      </strong>
-    ) : (
-      part
-    )
-  );
+  return text.split(/(\*\*.+?\*\*|\*[^*\n]+?\*)/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <strong key={i} style={{ color: "var(--accent-strong)", fontWeight: 800 }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return (
+        <em key={i} style={{ color: "var(--text-soft)", fontWeight: 500 }}>
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
 }
 
 export default function Main({ dog, resetSignal }) {
