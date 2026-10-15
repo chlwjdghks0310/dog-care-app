@@ -12,10 +12,18 @@ const VIDEO_SRC = {
 
 // 채팅 모드(견종)별 영상은 public/avatar/<breed>/idle.mp4, thinking.mp4 에 둔다.
 // 파일이 없으면(재생 오류) 기본 영상(public/avatar/*.mp4)으로 대신 보여준다.
-function breedSrc(breed, state) {
-  const file = state === "thinking" ? "thinking.mp4" : "idle.mp4";
-  return breed ? `/avatar/${breed}/${file}` : null;
+function breedSrc(breed, state, ext = "mp4") {
+  const file = state === "thinking" ? "thinking" : "idle";
+  return breed ? `/avatar/${breed}/${file}.${ext}` : null;
 }
+
+// 사파리/iOS(모든 iOS 브라우저는 WebKit)는 투명 배경 HEVC(.mov)를 그대로 투명하게 재생한다 → 색으로 배경을
+// 지울 필요가 없어 기기별 색 차이·압축 번짐과 무관하게 깨끗하다. 크롬 등은 알파를 무시하므로 초록 .mp4 + 캔버스 키잉.
+const UA = typeof navigator === "undefined" ? "" : navigator.userAgent;
+const PLAYS_ALPHA_VIDEO =
+  /iPad|iPhone|iPod/.test(UA) ||
+  (UA.includes("Macintosh") && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1) ||
+  /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(UA);
 
 const PROCESS_SIZE = 360; // 처리 해상도 (화질/성능 타협 — 폰 성능 고려해 낮춤)
 
@@ -32,8 +40,9 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 const KEY_DEFAULT = { min: 150, full: 210 };
 const KEY_BY_BREED = {
   retriever: { min: 160, full: 188 },
-  // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라, 배경을 미리 초록으로 칠한 영상을 쓴다(워터마크도 이미 지워짐).
-  bordercollie: { green: true },
+  // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 scripts/avatar/bakealpha.swift로 미리 투명 처리한 영상을 쓴다:
+  // 사파리는 .mov(투명 배경) 직접 재생, 그 외는 .mp4(초록 배경)를 캔버스에서 키잉. 워터마크도 이미 지워짐.
+  bordercollie: { green: true, alphaMov: true },
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
@@ -88,7 +97,8 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const frameIdRef = useRef(null);
   const [missing, setMissing] = useState({});
   const [readySrc, setReadySrc] = useState(null); // 첫 프레임을 그린 영상 — 그 전(강아지 바꾸는 사이)엔 로딩 표시
-  const preferred = breedSrc(breed, state);
+  const direct = PLAYS_ALPHA_VIDEO && Boolean(KEY_BY_BREED[breed]?.alphaMov); // 투명 .mov를 그대로 보여줌
+  const preferred = breedSrc(breed, state, direct ? "mov" : "mp4");
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
   useEffect(() => {
@@ -100,6 +110,22 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
     const onVideoError = () => src === preferred && setMissing((m) => ({ ...m, [src]: true }));
     video.addEventListener("error", onVideoError);
     if (video.error) onVideoError();
+
+    if (direct && src === preferred) {
+      // 투명 영상은 캔버스 처리 없이 <video>를 그대로 보여준다.
+      const onReady = () => setReadySrc(src);
+      video.addEventListener("loadeddata", onReady);
+      if (video.readyState >= 2) onReady();
+      video.play().catch(() => {});
+      const watchdog = setInterval(() => {
+        if (video.paused && document.visibilityState !== "hidden") video.play().catch(() => {});
+      }, 500);
+      return () => {
+        clearInterval(watchdog);
+        video.removeEventListener("error", onVideoError);
+        video.removeEventListener("loadeddata", onReady);
+      };
+    }
     const keySettings = (src === preferred && KEY_BY_BREED[breed]) || KEY_DEFAULT;
     let shown = false;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -187,8 +213,9 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       clearInterval(watchdog);
       video.removeEventListener("error", onVideoError);
     };
-  }, [src, preferred, breed]);
+  }, [src, preferred, breed, direct]);
 
+  const showVideo = direct && src === preferred;
   return (
     <div style={{ position: "relative", width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {readySrc !== src && (
@@ -203,9 +230,9 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
         loop
         autoPlay
         playsInline
-        style={{ display: "none" }}
+        style={showVideo ? { height: "100%", width: "auto", maxWidth: "100%" } : { display: "none" }}
       />
-      <canvas ref={canvasRef} style={{ height: "100%", width: "auto", maxWidth: "100%" }} />
+      <canvas ref={canvasRef} style={showVideo ? { display: "none" } : { height: "100%", width: "auto", maxWidth: "100%" }} />
     </div>
   );
 }
