@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
+import { renderEmphasized } from "../components/RichText";
 import { analyzePhoto } from "../services/aiClient";
 
 export default function HealthCheck({ dog, onBack }) {
@@ -7,6 +9,7 @@ export default function HealthCheck({ dog, onBack }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const timer = useAnalysisTimer("dogcare-timing-stool-v1", [50, 60]);
 
   function handleFileChange(e) {
     const f = e.target.files?.[0];
@@ -21,11 +24,15 @@ export default function HealthCheck({ dog, onBack }) {
     if (!file || pending) return;
     setPending(true);
     setError("");
+    setResult(null);
+    timer.start();
     try {
       const answer = await analyzePhoto(dog, file);
       setResult(answer);
-    } catch {
-      setError("AI 서버에 연결하지 못했어요. server/.env에 API 키를 넣고 서버를 켠 뒤 다시 시도해 주세요.");
+      timer.stop(true);
+    } catch (err) {
+      timer.stop(false);
+      setError(err instanceof TypeError ? "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요." : err.message);
     } finally {
       setPending(false);
     }
@@ -38,8 +45,8 @@ export default function HealthCheck({ dog, onBack }) {
       </button>
       <div className="h1">변 상태 확인</div>
       <p className="faint" style={{ marginBottom: 16 }}>
-        퓨리나 대변 점수표(임상에서 실제 쓰이는 평가 도구) 기준의 참고 소견이며, 수의사의 진단을 대신하지 않아요.
-        이상이 지속되면 반드시 동물병원에 방문하세요.
+        수의 임상 기준(퓨리나 대변 점수표 등)과 최신 자료를 찾아 수의사 관점으로 자세히 분석해요. 사진만으로는 한계가
+        있어 진단을 대신하지 않으니, 이상이 지속되면 반드시 동물병원에 방문하세요.
       </p>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -70,6 +77,7 @@ export default function HealthCheck({ dog, onBack }) {
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>
           {pending ? "분석 중…" : "확인하기"}
         </button>
+        <AnalysisTimeInfo timer={timer} />
       </div>
 
       {error && (
@@ -80,8 +88,8 @@ export default function HealthCheck({ dog, onBack }) {
 
       {result && (
         <div className="card">
-          <div className="h2">참고 소견</div>
-          <p className="subtle" style={{ whiteSpace: "pre-wrap" }}>{result}</p>
+          <div className="h2">🩺 수의사 관점 소견 (참고용)</div>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
         </div>
       )}
     </div>

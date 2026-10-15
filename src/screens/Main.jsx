@@ -6,18 +6,11 @@ import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
 import { readJSON, writeJSON } from "../services/storage";
+import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 
-const IDLE_HEIGHT = 340;
-const CORNER_SIZE = 76;
-// 말풍선이 들어갈 공간을 위쪽에 남겨두기 위해 화면 맨 위보다 조금 내리고,
-// 노치/상태바(safe-area-inset-top)가 있는 폰에서는 그만큼 더 내린다.
-const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
-
-// AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
-// **강조** → 굵은 강조색, *행동* (수다 모드의 "*꼬리 붕붕*") → 기울임 흐린 글씨
 const CHAT_MODES = [
   { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
   { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
@@ -26,26 +19,13 @@ const CHAT_MODES = [
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
 
-function renderEmphasized(text) {
-  if (!text) return text;
-  return text.split(/(\*\*.+?\*\*|\*[^*\n]+?\*)/g).map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-      return (
-        <strong key={i} style={{ color: "var(--accent-strong)", fontWeight: 800 }}>
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-      return (
-        <em key={i} style={{ color: "var(--text-soft)", fontWeight: 500 }}>
-          {part.slice(1, -1)}
-        </em>
-      );
-    }
-    return part;
-  });
-}
+const IDLE_HEIGHT = 340;
+const CORNER_SIZE = 76;
+// 말풍선이 들어갈 공간을 위쪽에 남겨두기 위해 화면 맨 위보다 조금 내리고,
+// 노치/상태바(safe-area-inset-top)가 있는 폰에서는 그만큼 더 내린다.
+const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
+
+// AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
 export default function Main({ dog, resetSignal }) {
   const [dateKey, setDateKey] = useState(todayKey());

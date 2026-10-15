@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
+import { renderEmphasized } from "../components/RichText";
 import { analyzeBehavior } from "../services/aiClient";
 
 const MAX_SIZE_MB = 500;
@@ -9,6 +11,7 @@ export default function BehaviorCheck({ dog, onBack }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const timer = useAnalysisTimer("dogcare-timing-video-v1", [35, 60]);
 
   function handleFileChange(e) {
     const f = e.target.files?.[0];
@@ -27,11 +30,15 @@ export default function BehaviorCheck({ dog, onBack }) {
     if (!file || pending) return;
     setPending(true);
     setError("");
+    setResult(null);
+    timer.start();
     try {
-      const answer = await analyzeBehavior(dog, file);
+      const answer = await analyzeBehavior(dog, file, undefined, "vet");
       setResult(answer);
-    } catch {
-      setError("AI 서버에 연결하지 못했어요. server/.env에 GEMINI_API_KEY를 넣고 서버를 켠 뒤 다시 시도해 주세요.");
+      timer.stop(true);
+    } catch (err) {
+      timer.stop(false);
+      setError(err instanceof TypeError ? "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요." : err.message);
     } finally {
       setPending(false);
     }
@@ -44,8 +51,8 @@ export default function BehaviorCheck({ dog, onBack }) {
       </button>
       <div className="h1">활동 상태 확인</div>
       <p className="faint" style={{ marginBottom: 16 }}>
-        영상 속 자세·걸음걸이·소리를 참고 소견으로 알려드려요. 수의사의 진단을 대신하지 않으니, 이상이 지속되면
-        병원에 방문하세요. 영상은 분석을 위해 서버를 거쳐 Google Gemini API로 전송돼요.
+        영상 속 자세·걸음걸이·호흡·소리를 수의 임상 기준과 최신 자료로 수의사 관점에서 자세히 분석해요. 영상만으로는
+        한계가 있어 진단을 대신하지 않으니, 이상이 지속되면 병원에 방문하세요. 영상은 분석을 위해 서버를 거쳐 Google Gemini API로 전송돼요.
       </p>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -74,8 +81,9 @@ export default function BehaviorCheck({ dog, onBack }) {
         </label>
 
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>
-          {pending ? "분석 중… (영상은 시간이 조금 더 걸려요)" : "확인하기"}
+          {pending ? "분석 중…" : "확인하기"}
         </button>
+        <AnalysisTimeInfo timer={timer} note="영상이 길거나 크면 업로드 때문에 더 걸려요" />
       </div>
 
       {error && (
@@ -86,8 +94,8 @@ export default function BehaviorCheck({ dog, onBack }) {
 
       {result && (
         <div className="card">
-          <div className="h2">참고 소견</div>
-          <p className="subtle" style={{ whiteSpace: "pre-wrap" }}>{result}</p>
+          <div className="h2">🩺 수의사 관점 소견 (참고용)</div>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
         </div>
       )}
     </div>

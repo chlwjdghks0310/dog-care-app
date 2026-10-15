@@ -192,9 +192,33 @@ const FECAL_COLOR_GUIDE = `변 색깔·상태로 보는 참고 의미(수의 임
 
 const RED_FLAGS = `다음이 보이면 반드시 "즉시 동물병원 방문"을 권고하세요: 혈변(선명한 피 또는 검붉은 피), 검은 타르색 변(흑변), 점액이 과도함, 기생충(하얀 알갱이/실 모양)이 육안으로 보임, 아주 심한 악취를 동반한 급격한 변화.`;
 
+// 체크리스트의 "변 상태 확인"·"활동 상태 확인" 전용 — 강아지 말투가 아니라 수의사 진료 소견서처럼 답한다.
+const VET_REPORT_RULES = `당신은 20년 경력의 소동물 임상 수의사(내과·정형외과·행동의학)입니다. 보호자가 보낸 사진/영상으로 원격 1차 상담을 합니다.
+수의학 교과서와 임상 가이드라인(Merck Veterinary Manual, WSAVA, AAHA, ACVIM 합의문), 학술 연구, 동물병원 보호자 교육 자료(VCA, BluePearl 등), 사료회사 영양 자료(Purina, Royal Canin, Hill's), 국내외 수의사 칼럼과 시중 자료까지 종합해 판단합니다. 검색 도구가 있으면 핵심 판단(점수 기준, 감별 질환, 견종 위험요인)을 최신 자료로 교차 확인합니다.
+
+분석 원칙:
+- 사진/영상은 병원 검사보다 정보가 적다는 한계를 인정하되, 보이는 것에서 최대한 많은 정보를 뽑아냅니다. 색·질감·모양·크기 비율·표면·광택·점액·혈액·이물질·주변 환경(바닥, 다른 흔적)까지, 영상이면 자세·체중 분배·보폭·머리와 엉덩이 움직임·꼬리·호흡수(보이면 직접 세기)·피모·체형(BCS 추정)·표정·소리까지 하나하나 짚습니다.
+- 각 소견 옆에 확신도(높음/보통/낮음)를 붙이고, 화면에 안 보이는 것은 지어내지 않습니다.
+- 확정 진단처럼 단정하지 않고 "가능성이 높습니다/낮습니다"로 말합니다. 약 이름·용량은 제시하지 않습니다(사람 약 금지 경고는 가능).
+- 보호자가 이해할 수 있게 전문 용어 뒤에 괄호로 쉬운 말을 붙입니다.
+
+답변 형식(한국어, 마크다운 # 제목·표 금지, 강조는 **두 개 별표**만, 각 항목명은 한 줄에 쓰고 그 아래 "• " 목록, 항목 사이 빈 줄):
+첫 줄: 긴급도 표시와 한 줄 결론 — 🟢 집에서 관찰 / 🟡 2~3일 내 진료 권장 / 🔴 지금 바로 병원
+🔬 관찰 소견 (확신도 포함)
+📊 평가 (해당 평가 척도 점수와 그 근거)
+🩺 감별 가능성 — 가능성 높은 순 3~5개, 각각 지지하는 근거·맞지 않는 근거, 이 강아지의 견종·나이·체중 위험요인
+🏠 집에서 추가로 확인할 것 — 구체적인 방법과 정상 기준 수치
+🍚 집에서의 관리 — 식이·환경·활동 조절
+🏥 병원에 가야 하는 기준 — 증상·기간 기준, 병원에서 받게 될 검사, 가져가면 좋은 것(변 샘플 보관법, 영상 등)
+📷 이 자료만으로 한계 — 판단이 어려운 점과 더 찍어 주면 좋은 사진/영상
+마지막 줄: "📚 참고: " 뒤에 참고한 자료 이름만 짧게.
+분량: 보호자가 바로 써먹을 정보 위주로 전체 2,500자 안팎. 같은 말을 항목마다 반복하지 않습니다.`;
+
 function buildPhotoAnalysisSystemPrompt(dogContext) {
   return [
-    "당신은 반려견 보호자를 돕는 케어 어시스턴트입니다. 사용자가 강아지의 변(대변) 사진을 보내면 아래 기준으로 자세한 참고 소견을 제공합니다.",
+    VET_REPORT_RULES,
+    "",
+    "지금은 보호자가 강아지 변(대변) 사진을 보낸 상황입니다. 아래 기준을 기본 척도로 씁니다.",
     "",
     FECAL_CHART,
     "",
@@ -202,12 +226,23 @@ function buildPhotoAnalysisSystemPrompt(dogContext) {
     "",
     RED_FLAGS,
     "",
-    "반드시 지킬 원칙:",
-    "- 질병을 확정 진단하지 않습니다. 이 분석은 참고용 소견이며 수의사의 진단을 대신하지 않습니다.",
-    "- 사진에서 실제로 관찰되는 특징만 설명합니다 (색상, 굳기로 보이는 정도, 표면 상태 등).",
-    "- 임의의 약물이나 복용량을 제시하지 않습니다.",
-    "- 답변은 한국어로, 다음 항목을 순서대로 작성합니다(항목명 한 줄, 그 아래 \"• \" 목록): '관찰된 특징'(색, 굳기, 모양, 표면, 점액·피·이물질), '추정 점수(1~7점)와 이유', '생각해볼 수 있는 원인'(흔한 것부터 2~4가지), '집에서 확인할 것'(식욕, 활력, 구토 여부, 횟수, 최근 사료·간식 변화 등), '집에서 해줄 수 있는 관리', '병원에 가야 하는 기준'. 위 레드플래그에 해당하면 맨 위에 즉시 병원 방문을 명시합니다.",
-    "- 강아지 사진이 아니거나 상태를 판별하기 어려운 사진이면, 억지로 추정하지 말고 다시 촬영해달라고 안내합니다.",
+    "- 레드플래그에 해당하면 첫 줄을 🔴로 하고 즉시 병원 방문을 분명히 말합니다.",
+    "- 변 사진이 아니거나 판별이 어려우면 억지로 추정하지 말고 어떻게 다시 찍으면 되는지 안내합니다(밝은 곳, 가까이, 바닥 색과 대비되게, 크기 비교용 물체 옆).",
+    "",
+    buildSystemPrompt(dogContext),
+  ].join("\n");
+}
+
+function buildVetVideoSystemPrompt(dogContext) {
+  return [
+    VET_REPORT_RULES,
+    "",
+    "지금은 보호자가 강아지의 활동(걸음걸이, 자세, 행동, 호흡 등) 영상을 보낸 상황입니다. 아래 공개 평가 도구를 기본 척도로 씁니다(파행 등급, 신체충실지수, 스트레스·진정 신호 등).",
+    "",
+    BEHAVIOR_REFERENCE,
+    "",
+    "- 열사병 신호, 4~5등급 파행, 호흡곤란, 경련, 응급성 눈 이상이 보이면 첫 줄을 🔴로 하고 즉시 병원 방문을 분명히 말합니다.",
+    "- 강아지가 잘 안 보이거나 판별이 어려우면 억지로 추정하지 말고 어떻게 다시 찍으면 되는지 안내합니다(옆에서 전신, 미끄럽지 않은 바닥에서 걷는 모습 10~20초, 정면·뒤에서도).",
     "",
     buildSystemPrompt(dogContext),
   ].join("\n");
@@ -279,6 +314,15 @@ function claudeText(response) {
   return text && response.stop_reason === "max_tokens" ? text + CUT_OFF_NOTE : text;
 }
 
+// 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
+async function createWithContinuation(params, messages) {
+  let response = await client.beta.messages.create({ ...params, messages });
+  for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
+    response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
+  }
+  return response;
+}
+
 app.post("/api/ask", async (req, res) => {
   const { dogContext, question, history, mode } = req.body || {};
   const chatMode = getChatMode(mode);
@@ -302,11 +346,7 @@ app.post("/api/ask", async (req, res) => {
       system: buildChatSystemPrompt(dogContext, mode),
       ...(chatMode.webSearch && { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] }),
     };
-    let response = await client.beta.messages.create({ ...params, messages });
-    // 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
-    for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
-      response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
-    }
+    const response = await createWithContinuation(params, messages);
 
     if (response.stop_reason === "refusal") {
       return res.json({
@@ -330,21 +370,25 @@ app.post("/api/analyze-photo", async (req, res) => {
   const type = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
 
   try {
-    const response = await client.beta.messages.create({
-      ...CLAUDE_MODEL,
-      max_tokens: 16000,
-      output_config: { effort: "medium" },
-      system: buildPhotoAnalysisSystemPrompt(dogContext),
-      messages: [
+    // ponytail: 검색 2회·effort high·분량 제한으로 정확도와 대기시간(1분 안쪽)을 맞춤 — 더 느려도 되면 max_uses를 올릴 것
+    const response = await createWithContinuation(
+      {
+        ...CLAUDE_MODEL,
+        max_tokens: 16000,
+        output_config: { effort: "high" },
+        system: buildPhotoAnalysisSystemPrompt(dogContext),
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 2 }],
+      },
+      [
         {
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: type, data: imageBase64 } },
-            { type: "text", text: "이 사진을 보고 위 기준에 따라 참고 소견을 알려주세요." },
+            { type: "text", text: "이 변 사진을 수의사로서 분석해 주세요." },
           ],
         },
-      ],
-    });
+      ]
+    );
 
     if (response.stop_reason === "refusal") {
       return res.json({ answer: "이 사진은 분석하기 어려워요. 변이 잘 보이는 사진으로 다시 찍어주세요." });
@@ -428,6 +472,8 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
     // dogContext 파싱 실패 시 컨텍스트 없이 진행
   }
   const type = ALLOWED_VIDEO_TYPES.includes(req.file.mimetype) ? req.file.mimetype : "video/mp4";
+  // 체크리스트 "활동 상태 확인" 화면은 mode=vet — 수의사 소견서 형식 + 구글 검색으로 자료 확인
+  const isVet = req.body.mode === "vet";
 
   try {
     let uploaded = await gemini.files.upload({ file: req.file.path, config: { mimeType: type } });
@@ -443,10 +489,11 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
       model: "gemini-3.8-flash",
       contents: [
         { fileData: { fileUri: uploaded.uri, mimeType: uploaded.mimeType } },
-        { text: "이 영상을 보고 위 기준에 따라 참고 소견을 알려주세요." },
+        { text: isVet ? "이 영상을 수의사로서 분석해 주세요." : "이 영상을 보고 위 기준에 따라 참고 소견을 알려주세요." },
       ],
       config: {
-        systemInstruction: buildBehaviorAnalysisSystemPrompt(dogContext, req.body.mode),
+        systemInstruction: isVet ? buildVetVideoSystemPrompt(dogContext) : buildBehaviorAnalysisSystemPrompt(dogContext, req.body.mode),
+        ...(isVet && { tools: [{ googleSearch: {} }] }),
         maxOutputTokens: 16384, // 생각(thinking) 토큰도 이 한도에 포함돼서 작으면 답이 중간에 잘린다
       },
     });
