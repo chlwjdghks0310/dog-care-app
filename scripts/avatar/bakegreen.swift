@@ -6,7 +6,9 @@ import CoreVideo
 // → 흔들리는 꼬리의 모션블러가 뚝뚝 끊기지 않는다. 앱은 초록 섞인 정도로 투명도를 되살린다(DogAvatarVideo keyOutGreen).
 let a = CommandLine.arguments
 let src = AVURLAsset(url: URL(fileURLWithPath: a[1])); let outURL = URL(fileURLWithPath: a[2]); let S = Int(a[3])!
-let lo = 140.0, hi = 218.0, satMax = 0.035, step = 10, floorFrom = 0.78, floorHi = 224.0, floorSat = 0.06, floorStep = 16
+// 기준값은 프레임마다 테두리 배경의 밝기·채도(중앙값)에 맞춰 정한다 — 클립마다 배경 회색이 조금씩 달라서.
+// (예: 배경 밝기 208·채도 0.015일 때 hi 218, floorHi 224, satMax 0.035, floorSat 0.06 — 처음 튜닝한 값과 같음)
+let lo = 140.0, step = 10, floorFrom = 0.78, floorStep = 16
 let wm = (x: 0.8, y: 0.93, w: 0.2, h: 0.08); let wmColor: (UInt8, UInt8, UInt8) = (208, 208, 206)
 
 let SOFT_BAND = 40, SOFT_FROM = 9.0, SOFT_RANGE = 22.0
@@ -19,6 +21,13 @@ func key(_ px: UnsafeMutablePointer<UInt8>, _ w: Int, _ h: Int, _ rowBytes: Int,
     px[i] = wmColor.2; px[i + 1] = wmColor.1; px[i + 2] = wmColor.0 } }
   let n = w * h; let floorStart = Int(Double(h) * floorFrom) * w
   func rgb(_ p: Int) -> (Int, Int, Int) { let i = (p / w) * rowBytes + (p % w) * 4; return (Int(px[i + 2]), Int(px[i + 1]), Int(px[i])) }
+  var bright: [Double] = [], sats: [Double] = []
+  for p in (0..<w).map({ $0 }) + (0..<h).map({ $0 * w }) + (0..<h).map({ $0 * w + w - 1 }) {
+    let (r, g, b) = rgb(p); let mx = max(r, g, b), mn = min(r, g, b)
+    bright.append(Double(r + g + b) / 3); sats.append(mx == 0 ? 0 : Double(mx - mn) / Double(mx)) }
+  bright.sort(); sats.sort()
+  let B0 = bright[bright.count / 2], S0 = sats[sats.count / 2]
+  let hi = B0 + 10, floorHi = B0 + 16, satMax = max(0.035, S0 + 0.03), floorSat = satMax + 0.025
   func isBg(_ p: Int) -> Bool { let (r, g, b) = rgb(p); let br = Double(r + g + b) / 3; let mx = max(r, g, b), mn = min(r, g, b)
     let sat = mx == 0 ? 0 : Double(mx - mn) / Double(mx); let f = p >= floorStart
     return br >= lo && br <= (f ? floorHi : hi) && sat <= (f ? floorSat : satMax) }
