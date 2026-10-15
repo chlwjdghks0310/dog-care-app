@@ -26,3 +26,6 @@ server/.env
 *.njsproj
 *.sln
 *.sw?
+
+# 아바타 영상 원본(합치기 전 클립) — 배포 대상 아님
+avatar-sources/

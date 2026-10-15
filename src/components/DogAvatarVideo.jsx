@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // AI(Kling/Runway/Pika/DomoAI 등)로 만든 짧은 반복 영상을 상태에 따라 바꿔 재생한다.
 // 영상 배경이 순수 그린스크린은 아니지만 밝은 회색/흰색 배경이라, "밝고 채도 낮은 픽셀을
@@ -10,6 +10,13 @@ const VIDEO_SRC = {
   talking: "/avatar/idle.mp4", // talking.mp4 준비되면 이 줄만 바꾸면 됨
 };
 
+// 채팅 모드(견종)별 영상은 public/avatar/<breed>/idle.mp4, thinking.mp4 에 둔다.
+// 파일이 없으면(재생 오류) 기본 영상(public/avatar/*.mp4)으로 대신 보여준다.
+function breedSrc(breed, state) {
+  const file = state === "thinking" ? "thinking.mp4" : "idle.mp4";
+  return breed ? `/avatar/${breed}/${file}` : null;
+}
+
 const PROCESS_SIZE = 360; // 처리 해상도 (화질/성능 타협 — 폰 성능 고려해 낮춤)
 
 // 캐릭터 발끝이 화면 거의 맨 아래까지 닿아 있어서, 확대/크롭으로 워터마크를 밀어내면
@@ -20,11 +27,13 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 
 // 밝기(brightness)가 높고 채도(saturation)가 낮은 픽셀(흰색/회색 계열)을 배경으로 간주해
 // 투명하게 만든다. 경계는 부드럽게(서서히 투명해지게) 처리해 가장자리가 딱 잘린 티가 덜 나게 한다.
-const BRIGHTNESS_MIN = 150; // 이보다 어두우면 무조건 캐릭터로 간주
-const BRIGHTNESS_FULL_TRANSPARENT = 210; // 이보다 밝으면 완전히 투명
-const SATURATION_MAX = 0.15; // 이보다 채도가 높으면(색이 있으면) 캐릭터로 간주
+// min: 이보다 어두우면 무조건 캐릭터 / full: 이보다 밝으면 완전히 투명 / 채도가 SATURATION_MAX보다 높으면 캐릭터.
+// 견종 영상마다 배경 회색의 밝기가 달라 따로 맞춘다(실측: 기본 배경 밝기 217~225, 리트리버 201~216).
+const KEY_DEFAULT = { min: 150, full: 210 };
+const KEY_BY_BREED = { retriever: { min: 160, full: 188 } };
+const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
-function keyOutLightBackground(imageData) {
+function keyOutLightBackground(imageData, { min: BRIGHTNESS_MIN, full: BRIGHTNESS_FULL_TRANSPARENT }) {
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
@@ -44,16 +53,24 @@ function keyOutLightBackground(imageData) {
   return imageData;
 }
 
-export default function DogAvatarVideo({ state = "idle", height = 200 }) {
+export default function DogAvatarVideo({ state = "idle", height = 200, breed }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const frameIdRef = useRef(null);
-  const src = VIDEO_SRC[state] || VIDEO_SRC.idle;
+  const [missing, setMissing] = useState({});
+  const preferred = breedSrc(breed, state);
+  const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
+    // 견종 영상이 없으면(404·HTML 응답 등 재생 오류) 기본 영상으로 바꾼다. 리스너를 달기 전에 이미
+    // 오류가 났을 수도 있어 video.error도 바로 확인한다.
+    const onVideoError = () => src === preferred && setMissing((m) => ({ ...m, [src]: true }));
+    video.addEventListener("error", onVideoError);
+    if (video.error) onVideoError();
+    const keySettings = (src === preferred && KEY_BY_BREED[breed]) || KEY_DEFAULT;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     canvas.width = PROCESS_SIZE;
     canvas.height = PROCESS_SIZE;
@@ -88,7 +105,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200 }) {
       );
 
       const frame = ctx.getImageData(0, 0, PROCESS_SIZE, PROCESS_SIZE);
-      keyOutLightBackground(frame);
+      keyOutLightBackground(frame, keySettings);
       ctx.putImageData(frame, 0, 0);
     }
 
@@ -114,6 +131,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200 }) {
         active = false;
         video.cancelVideoFrameCallback?.(frameIdRef.current);
         clearInterval(watchdog);
+        video.removeEventListener("error", onVideoError);
       };
     }
 
@@ -129,12 +147,21 @@ export default function DogAvatarVideo({ state = "idle", height = 200 }) {
     return () => {
       cancelAnimationFrame(frameIdRef.current);
       clearInterval(watchdog);
+      video.removeEventListener("error", onVideoError);
     };
-  }, [src]);
+  }, [src, preferred, breed]);
 
   return (
     <div style={{ width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <video ref={videoRef} src={src} muted loop autoPlay playsInline style={{ display: "none" }} />
+      <video
+        ref={videoRef}
+        src={src}
+        muted
+        loop
+        autoPlay
+        playsInline
+        style={{ display: "none" }}
+      />
       <canvas ref={canvasRef} style={{ height: "100%", width: "auto", maxWidth: "100%" }} />
     </div>
   );

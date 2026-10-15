@@ -188,7 +188,7 @@ export default function Main({ dog, resetSignal }) {
           zIndex: 5,
         }}
       >
-        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : IDLE_HEIGHT} />
+        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : IDLE_HEIGHT} breed={chatMode} />
       </div>
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={CORNER_TOP} />}
