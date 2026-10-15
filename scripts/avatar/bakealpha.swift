@@ -15,6 +15,7 @@ let lo = 140.0, step = 10, floorFrom = 0.78, floorStep = 16
 let wm = (x: 0.8, y: 0.93, w: 0.2, h: 0.08)
 let SOFT_BAND = 40, SOFT_FROM = 6.0, SOFT_RANGE = 10.0
 let PLATE_TOL = 6.0, PLATE_TOL_FLOOR = 12.0
+let EDGE = 3, MATTE_MIN_CONTRAST = 40.0
 
 struct Frame { let w: Int; let h: Int; var rgb: [UInt8] }  // RGB packed, w*h*3
 
@@ -128,6 +129,7 @@ Task {
 
   // 프레임별 알파(0~1)
   var alphas: [[Double]] = []
+  var outRGB: [[UInt8]] = []  // 가장자리는 배경색을 빼낸(unmix) 털 색으로 바꿔 회색 테두리가 안 생기게
   for (fi, (f, bg)) in zip(frames, masks2).enumerated() {
     var dist = [Int](repeating: Int.max, count: n); var queue: [Int] = []
     for p in 0..<n where !bg[p] { dist[p] = 0; queue.append(p) }
@@ -143,6 +145,43 @@ Task {
         var d = 0.0; for c in 0..<3 { let diff = Double(f.rgb[p * 3 + c]) - (plate[p * 3 + c] + levels[fi]); d = max(d, onFloor ? diff : abs(diff)) }
         v = min(1, max(0, (d - SOFT_FROM) / SOFT_RANGE)) }
       al[p] = v }
+
+    // 가장자리 매팅: 경계 근처(EDGE px) 픽셀은 "털 색 F와 배경색 B가 몇 대 몇으로 섞였나"로 투명도를 계산한다.
+    // F = 가장 가까운 안쪽(경계에서 EDGE px 이상 들어간) 털 픽셀의 색. 대비(|F-B|)가 작으면(흰 털 vs 회색) 기존 값 유지.
+    var rgbOut = f.rgb
+    var inDist = [Int](repeating: Int.max, count: n); var q2: [Int] = []
+    for p in 0..<n where bg[p] { inDist[p] = 0; q2.append(p) }
+    var h2 = 0
+    while h2 < q2.count { let p = q2[h2]; h2 += 1; if inDist[p] > EDGE { continue }; let x = p % w
+      for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && inDist[q] == Int.max { inDist[q] = inDist[p] + 1; q2.append(q) } }
+    var src = [Int](repeating: -1, count: n); var q3: [Int] = []
+    for p in 0..<n where !bg[p] && inDist[p] > EDGE { src[p] = p; q3.append(p) }
+    var h3 = 0, reach = [Int](repeating: 0, count: n)
+    while h3 < q3.count { let p = q3[h3]; h3 += 1; if reach[p] >= 2 * EDGE + 2 { continue }; let x = p % w
+      for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && src[q] == -1 { src[q] = src[p]; reach[q] = reach[p] + 1; q3.append(q) } }
+    for p in 0..<n {
+      let nearEdge = (!bg[p] && inDist[p] <= EDGE) || (bg[p] && dist[p] <= EDGE)
+      guard nearEdge, src[p] >= 0 else { continue }
+      var F = [0.0, 0.0, 0.0], B = [0.0, 0.0, 0.0], P = [0.0, 0.0, 0.0]
+      for c in 0..<3 { F[c] = Double(f.rgb[src[p] * 3 + c]); B[c] = plate[p * 3 + c] + levels[fi]; P[c] = Double(f.rgb[p * 3 + c]) }
+      let fb = (0..<3).reduce(0.0) { $0 + (F[$1] - B[$1]) * (F[$1] - B[$1]) }
+      if fb < MATTE_MIN_CONTRAST * MATTE_MIN_CONTRAST { continue }
+      let a = min(1, max(0, (0..<3).reduce(0.0) { $0 + (P[$1] - B[$1]) * (F[$1] - B[$1]) } / fb))
+      al[p] = bg[p] ? max(al[p], a) : a
+      if a > 0.05 { for c in 0..<3 { rgbOut[p * 3 + c] = UInt8(max(0, min(255, a >= 0.25 ? (P[c] - (1 - a) * B[c]) / a : F[c]))) } }
+    }
+    // 계단 모양 경계를 없애려고 알파를 살짝 흐린다(3x3 평균 2번 ≈ 반경 1~2px). 원래 투명이던 자리가 새로 반투명이 되면
+    // 그 자리 색은 배경 회색이 아니라 가까운 털 색(F)으로 채워 회색 테두리가 생기지 않게 한다.
+    var sm = al
+    for _ in 0..<2 {
+      var nx = sm
+      for y in 1..<(h - 1) { for x in 1..<(w - 1) { let p = y * w + x
+        var sum = 0.0; for dy in -1...1 { for dx in -1...1 { sum += sm[p + dy * w + dx] } }; nx[p] = sum / 9 } }
+      sm = nx }
+    for p in 0..<n where sm[p] != al[p] {
+      if al[p] < 0.05 && sm[p] > 0.02 && src[p] >= 0 { for c in 0..<3 { rgbOut[p * 3 + c] = f.rgb[src[p] * 3 + c] } }
+      al[p] = (al[p] >= 0.999 && sm[p] > 0.9) ? 1 : sm[p] }
+    outRGB.append(rgbOut)
     // 워터마크 자리는 무조건 투명
     for y in Int(Double(h) * wm.y)..<h { for x in Int(Double(w) * wm.x)..<w { al[y * w + x] = 0 } }
     alphas.append(al)
@@ -171,7 +210,7 @@ Task {
       CVPixelBufferLockBaseAddress(pb, []); let rb = CVPixelBufferGetBytesPerRow(pb)
       let px = CVPixelBufferGetBaseAddress(pb)!.assumingMemoryBound(to: UInt8.self)
       for y in 0..<h { for x in 0..<w { let p = y * w + x, o = y * rb + x * 4, al = filled[i][p]
-        let r = Double(frames[i].rgb[p * 3]), g = Double(frames[i].rgb[p * 3 + 1]), b = Double(frames[i].rgb[p * 3 + 2])
+        let r = Double(outRGB[i][p * 3]), g = Double(outRGB[i][p * 3 + 1]), b = Double(outRGB[i][p * 3 + 2])
         if green { px[o] = UInt8(b * al); px[o + 1] = UInt8(g * al + 255 * (1 - al)); px[o + 2] = UInt8(r * al); px[o + 3] = 255 }
         else { px[o] = UInt8(b * al); px[o + 1] = UInt8(g * al); px[o + 2] = UInt8(r * al); px[o + 3] = UInt8(al * 255) } } } // 알파는 premultiplied
       CVPixelBufferUnlockBaseAddress(pb, [])
