@@ -30,70 +30,29 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 // min: 이보다 어두우면 무조건 캐릭터 / full: 이보다 밝으면 완전히 투명 / 채도가 SATURATION_MAX보다 높으면 캐릭터.
 // 견종 영상마다 배경 회색의 밝기가 달라 따로 맞춘다(실측: 기본 배경 밝기 217~225, 리트리버 201~216).
 const KEY_DEFAULT = { min: 150, full: 210 };
-// 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 밝기만으로는 털까지 지워진다 → flood 방식(테두리에서 이어진 배경만 지움).
 const KEY_BY_BREED = {
   retriever: { min: 160, full: 188 },
-  // 위쪽은 엄격하게(흰 털이 배경에 닿아도 안 지워지게), 아래 22%(바닥 그림자)만 느슨하게 — 실측값 기준.
-  bordercollie: {
-    flood: { lo: 140, hi: 218, satMax: 0.035, step: 10, floor: { from: 0.78, hi: 224, satMax: 0.06, step: 16 } },
-    watermarkFill: "rgb(208,208,206)",
-  },
+  // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라, 배경을 미리 초록으로 칠한 영상을 쓴다(워터마크도 이미 지워짐).
+  bordercollie: { green: true },
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
-// 테두리에서 이어진 "배경색 비슷한" 픽셀만 투명하게 (마술봉처럼). 캐릭터 안쪽의 흰 털은 테두리와 끊겨 있어 남는다.
-// floor: 화면 아래쪽(바닥 그림자·워터마크 근처)은 털이 배경에 닿지 않아 더 느슨한 기준(hi·step)으로 지운다.
-function keyOutByFlood(imageData, { lo, hi, satMax, step, floor }) {
-  const { data, width: w, height: h } = imageData;
-  const n = w * h;
-  const bg = new Uint8Array(n);
-  const floorStart = floor ? Math.floor(h * floor.from) * w : n;
-  const isBgColor = (p) => {
-    const i = p * 4, r = data[i], g = data[i + 1], b = data[i + 2];
-    const br = (r + g + b) / 3, mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    const inFloor = p >= floorStart;
-    return br >= lo && br <= (inFloor ? floor.hi : hi) && (mx === 0 ? 0 : (mx - mn) / mx) <= (inFloor ? floor.satMax : satMax);
-  };
-  const close = (p, q) => {
-    const i = p * 4, j = q * 4;
-    const d = Math.abs(data[i] - data[j]) + Math.abs(data[i + 1] - data[j + 1]) + Math.abs(data[i + 2] - data[j + 2]);
-    return d <= (q >= floorStart ? floor.step : step);
-  };
-  const stack = new Int32Array(n);
-  let sp = 0;
-  const seed = (p) => { if (!bg[p] && isBgColor(p)) { bg[p] = 1; stack[sp++] = p; } };
-  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
-  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
-  while (sp) {
-    const p = stack[--sp], x = p % w;
-    const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w];
-    for (const q of nb) if (q >= 0 && q < n && !bg[q] && isBgColor(q) && close(p, q)) { bg[q] = 1; stack[sp++] = q; }
-  }
-  // 압축 노이즈로 생긴 배경 속 작은 얼룩 제거: 캐릭터가 아닌(배경으로 안 잡힌) 덩어리 중
-  // 가장 큰 것(캐릭터)의 2%보다 작은 조각은 배경으로 돌린다.
-  const label = new Int32Array(n);
-  const sizes = [0];
-  for (let s0 = 0; s0 < n; s0++) {
-    if (bg[s0] || label[s0]) continue;
-    const id = sizes.length;
-    let size = 0;
-    label[s0] = id;
-    stack[sp++] = s0;
-    while (sp) {
-      const p = stack[--sp], x = p % w;
-      size++;
-      const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w];
-      for (const q of nb) if (q >= 0 && q < n && !bg[q] && !label[q]) { label[q] = id; stack[sp++] = q; }
+// 배경을 미리 순수 초록으로 칠해 둔 영상(scripts/avatar/bakegreen.swift로 처리)용. 초록이 강한 픽셀은 투명하게,
+// 경계의 초록 번짐은 회색으로 되돌린다(despill). 흰 털과 초록은 확연히 달라 기기별 색 차이에도 안전하다.
+function keyOutGreen(imageData) {
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const greenness = g - Math.max(r, b);
+    if (greenness <= 0) continue;
+    if (greenness >= 90) {
+      data[i + 3] = 0;
+      continue;
     }
-    sizes.push(size);
-  }
-  const minKeep = Math.max(...sizes) * 0.02;
-  for (let p = 0; p < n; p++) if (!bg[p] && sizes[label[p]] < minKeep) bg[p] = 1;
-
-  for (let p = 0; p < n; p++) {
-    if (bg[p]) { data[p * 4 + 3] = 0; continue; }
-    const x = p % w; // 경계 1px은 반투명으로 부드럽게
-    if ((x > 0 && bg[p - 1]) || (x < w - 1 && bg[p + 1]) || (p >= w && bg[p - w]) || (p + w < n && bg[p + w])) data[p * 4 + 3] = 140;
+    if (greenness > 30) data[i + 3] = Math.min(data[i + 3], Math.round(((90 - greenness) / 60) * 255));
+    data[i + 1] = Math.max(r, b);
   }
   return imageData;
 }
@@ -123,6 +82,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const canvasRef = useRef(null);
   const frameIdRef = useRef(null);
   const [missing, setMissing] = useState({});
+  const [readySrc, setReadySrc] = useState(null); // 첫 프레임을 그린 영상 — 그 전(강아지 바꾸는 사이)엔 로딩 표시
   const preferred = breedSrc(breed, state);
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
@@ -136,6 +96,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
     video.addEventListener("error", onVideoError);
     if (video.error) onVideoError();
     const keySettings = (src === preferred && KEY_BY_BREED[breed]) || KEY_DEFAULT;
+    let shown = false;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     canvas.width = PROCESS_SIZE;
     canvas.height = PROCESS_SIZE;
@@ -161,18 +122,24 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       ctx.drawImage(video, 0, 0, vw, vh, 0, 0, PROCESS_SIZE, PROCESS_SIZE);
 
       // 워터마크 자리를 배경과 비슷한 밝은 색으로 덮는다 — 아래 키잉 단계에서 자연스럽게 투명해진다.
-      ctx.fillStyle = keySettings.watermarkFill || "#eeeeee";
-      ctx.fillRect(
-        PROCESS_SIZE * WATERMARK_RECT.x,
-        PROCESS_SIZE * WATERMARK_RECT.y,
-        PROCESS_SIZE * WATERMARK_RECT.w,
-        PROCESS_SIZE * WATERMARK_RECT.h
-      );
+      if (!keySettings.green) {
+        ctx.fillStyle = "#eeeeee";
+        ctx.fillRect(
+          PROCESS_SIZE * WATERMARK_RECT.x,
+          PROCESS_SIZE * WATERMARK_RECT.y,
+          PROCESS_SIZE * WATERMARK_RECT.w,
+          PROCESS_SIZE * WATERMARK_RECT.h
+        );
+      }
 
       const frame = ctx.getImageData(0, 0, PROCESS_SIZE, PROCESS_SIZE);
-      if (keySettings.flood) keyOutByFlood(frame, keySettings.flood);
+      if (keySettings.green) keyOutGreen(frame);
       else keyOutLightBackground(frame, keySettings);
       ctx.putImageData(frame, 0, 0);
+      if (!shown) {
+        shown = true;
+        setReadySrc(src);
+      }
     }
 
     // 실제로 새 영상 프레임이 디코딩될 때만 처리한다(지원 브라우저) — 영상은 24fps인데
@@ -218,7 +185,12 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   }, [src, preferred, breed]);
 
   return (
-    <div style={{ width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {readySrc !== src && (
+        <span className="avatar-loading" role="img" aria-label="강아지 불러오는 중">
+          🐾
+        </span>
+      )}
       <video
         ref={videoRef}
         src={src}
