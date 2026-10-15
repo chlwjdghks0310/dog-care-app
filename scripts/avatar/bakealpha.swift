@@ -7,15 +7,15 @@ import VideoToolbox
 //
 // 배경 찾기: 테두리에 이어진 "배경색 비슷한" 픽셀(flood). 기준은 프레임마다 테두리 배경의 밝기·채도 중앙값에 맞춘다.
 //   위쪽은 엄격하게(흰 털이 배경에 닿아도 안 넘어가게), 아래 22%(바닥 그림자)는 느슨하게. 작은 얼룩은 배경으로.
-// 반투명: 배경으로 잡혀도 캐릭터 근처(SOFT_BAND px)는 "배경판(전 프레임 평균 배경색)과 다른 정도"만큼 남긴다(꼬리 모션블러).
+// 알파: 포메라니안처럼 픽셀마다 "배경판과 다른 정도"를 부드러운 비율로(KEY_FROM~KEY_RANGE). 몸 안쪽(경계에서 PROTECT px 이상)은 항상 보임.
 // 깜빡임 방지: 앞뒤 프레임 모두 보이는데 이번 프레임만 빠진 픽셀은 메운다(hole fill) — 얼굴 경계·꼬리가 한 프레임씩 사라지는 것 방지.
 let a = CommandLine.arguments
 let src = AVURLAsset(url: URL(fileURLWithPath: a[1])); let base = a[2]; let S = Int(a[3])!
 let lo = 140.0, step = 10, floorFrom = 0.78, floorStep = 16
 let wm = (x: 0.8, y: 0.93, w: 0.2, h: 0.08)
-let SOFT_BAND = 40, SOFT_FROM = 6.0, SOFT_RANGE = 10.0
+let SOFT_BAND = 40 // 캐릭터에서 이 거리(px)보다 먼 배경은 완전 투명
 let PLATE_TOL = 6.0, PLATE_TOL_FLOOR = 12.0
-let EDGE = 3, MATTE_MIN_CONTRAST = 40.0
+let PROTECT = 4, KEY_FROM = 5.0, KEY_RANGE = 16.0
 
 struct Frame { let w: Int; let h: Int; var rgb: [UInt8] }  // RGB packed, w*h*3
 
@@ -136,51 +136,33 @@ Task {
     var head = 0
     while head < queue.count { let p = queue[head]; head += 1; if dist[p] >= SOFT_BAND { continue }; let x = p % w
       for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && dist[q] == Int.max { dist[q] = dist[p] + 1; queue.append(q) } }
-    var al = [Double](repeating: 1, count: n)
-    for p in 0..<n where bg[p] {
-      var v = 0.0
-      if dist[p] <= SOFT_BAND && cnt[p] > 0 {
-        // 바닥에서는 배경보다 "밝은" 차이만 센다 — 그림자(어두움)는 지우고 흰 꼬리 끝(밝음)은 남긴다.
-        let onFloor = p / w >= floorStartRow
-        var d = 0.0; for c in 0..<3 { let diff = Double(f.rgb[p * 3 + c]) - (plate[p * 3 + c] + levels[fi]); d = max(d, onFloor ? diff : abs(diff)) }
-        v = min(1, max(0, (d - SOFT_FROM) / SOFT_RANGE)) }
-      al[p] = v }
-
-    // 가장자리 매팅: 경계 근처(EDGE px) 픽셀은 "털 색 F와 배경색 B가 몇 대 몇으로 섞였나"로 투명도를 계산한다.
-    // F = 가장 가까운 안쪽(경계에서 EDGE px 이상 들어간) 털 픽셀의 색. 대비(|F-B|)가 작으면(흰 털 vs 회색) 기존 값 유지.
-    var rgbOut = f.rgb
+    // 포메라니안 방식(픽셀마다 "배경과 얼마나 다른가"를 부드러운 비율로)으로 알파를 정하되,
+    // 흰 털이 배경과 비슷한 몸 안쪽(경계에서 PROTECT px 이상 들어간 곳)만은 무조건 보이게 보호한다.
+    // 장면마다 "경계선"을 새로 긋지 않으니 가장자리(귀·꼬리·털끝)가 프레임마다 들쭉날쭉 깨지지 않는다.
     var inDist = [Int](repeating: Int.max, count: n); var q2: [Int] = []
     for p in 0..<n where bg[p] { inDist[p] = 0; q2.append(p) }
     var h2 = 0
-    while h2 < q2.count { let p = q2[h2]; h2 += 1; if inDist[p] > EDGE { continue }; let x = p % w
+    while h2 < q2.count { let p = q2[h2]; h2 += 1; if inDist[p] > PROTECT { continue }; let x = p % w
       for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && inDist[q] == Int.max { inDist[q] = inDist[p] + 1; q2.append(q) } }
+    // 가장 가까운 안쪽 털 색(F): 반투명 픽셀의 색을 복원할 때 쓴다
     var src = [Int](repeating: -1, count: n); var q3: [Int] = []
-    for p in 0..<n where !bg[p] && inDist[p] > EDGE { src[p] = p; q3.append(p) }
+    for p in 0..<n where !bg[p] && inDist[p] > PROTECT { src[p] = p; q3.append(p) }
     var h3 = 0, reach = [Int](repeating: 0, count: n)
-    while h3 < q3.count { let p = q3[h3]; h3 += 1; if reach[p] >= 2 * EDGE + 2 { continue }; let x = p % w
+    while h3 < q3.count { let p = q3[h3]; h3 += 1; if reach[p] >= 3 * PROTECT { continue }; let x = p % w
       for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && src[q] == -1 { src[q] = src[p]; reach[q] = reach[p] + 1; q3.append(q) } }
+    var al = [Double](repeating: 0, count: n)
+    var rgbOut = f.rgb
     for p in 0..<n {
-      let nearEdge = (!bg[p] && inDist[p] <= EDGE) || (bg[p] && dist[p] <= EDGE)
-      guard nearEdge, src[p] >= 0 else { continue }
-      var F = [0.0, 0.0, 0.0], B = [0.0, 0.0, 0.0], P = [0.0, 0.0, 0.0]
-      for c in 0..<3 { F[c] = Double(f.rgb[src[p] * 3 + c]); B[c] = plate[p * 3 + c] + levels[fi]; P[c] = Double(f.rgb[p * 3 + c]) }
-      let fb = (0..<3).reduce(0.0) { $0 + (F[$1] - B[$1]) * (F[$1] - B[$1]) }
-      if fb < MATTE_MIN_CONTRAST * MATTE_MIN_CONTRAST { continue }
-      let a = min(1, max(0, (0..<3).reduce(0.0) { $0 + (P[$1] - B[$1]) * (F[$1] - B[$1]) } / fb))
-      al[p] = bg[p] ? max(al[p], a) : a
-      if a > 0.05 { for c in 0..<3 { rgbOut[p * 3 + c] = UInt8(max(0, min(255, a >= 0.25 ? (P[c] - (1 - a) * B[c]) / a : F[c]))) } }
+      if !bg[p] && inDist[p] > PROTECT { al[p] = 1; continue }
+      if bg[p] && dist[p] > SOFT_BAND { continue }  // 캐릭터에서 먼 배경은 완전 투명(압축 얼룩 방지)
+      let onFloor = p / w >= floorStartRow
+      var d = 0.0, B = [0.0, 0.0, 0.0], P = [0.0, 0.0, 0.0]
+      for c in 0..<3 { B[c] = plate[p * 3 + c] + levels[fi]; P[c] = Double(f.rgb[p * 3 + c]); let diff = P[c] - B[c]; d = max(d, onFloor ? diff : abs(diff)) }
+      let a = min(1, max(0, (d - KEY_FROM) / KEY_RANGE))
+      al[p] = a
+      if a > 0 && a < 1 {
+        for c in 0..<3 { rgbOut[p * 3 + c] = UInt8(max(0, min(255, a >= 0.3 ? (P[c] - (1 - a) * B[c]) / a : (src[p] >= 0 ? Double(f.rgb[src[p] * 3 + c]) : P[c])))) } }
     }
-    // 계단 모양 경계를 없애려고 알파를 살짝 흐린다(3x3 평균 2번 ≈ 반경 1~2px). 원래 투명이던 자리가 새로 반투명이 되면
-    // 그 자리 색은 배경 회색이 아니라 가까운 털 색(F)으로 채워 회색 테두리가 생기지 않게 한다.
-    var sm = al
-    for _ in 0..<2 {
-      var nx = sm
-      for y in 1..<(h - 1) { for x in 1..<(w - 1) { let p = y * w + x
-        var sum = 0.0; for dy in -1...1 { for dx in -1...1 { sum += sm[p + dy * w + dx] } }; nx[p] = sum / 9 } }
-      sm = nx }
-    for p in 0..<n where sm[p] != al[p] {
-      if al[p] < 0.05 && sm[p] > 0.02 && src[p] >= 0 { for c in 0..<3 { rgbOut[p * 3 + c] = f.rgb[src[p] * 3 + c] } }
-      al[p] = (al[p] >= 0.999 && sm[p] > 0.9) ? 1 : sm[p] }
     outRGB.append(rgbOut)
     // 워터마크 자리는 무조건 투명
     for y in Int(Double(h) * wm.y)..<h { for x in Int(Double(w) * wm.x)..<w { al[y * w + x] = 0 } }
