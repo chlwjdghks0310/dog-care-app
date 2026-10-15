@@ -18,12 +18,12 @@ function toDogContext(dog) {
 
 // 실제 Claude API 프록시(server/)에 먼저 물어보고, 서버가 꺼져있거나 오류가 나면
 // 규칙 기반 mock 응답으로 조용히 대체한다 (UI가 끊기지 않도록).
-export async function askAI(dog, question, history) {
+export async function askAI(dog, question, history, mode) {
   try {
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dogContext: toDogContext(dog), question, history }),
+      body: JSON.stringify({ dogContext: toDogContext(dog), question, history, mode }),
     });
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
@@ -52,12 +52,12 @@ export async function analyzePhoto(dog, file) {
 
 // 메인 채팅(아바타)에서 보내는 사진용 — 변 사진으로 단정하지 않고 사진에 보이는 대로 분석한다.
 // (HealthCheck 화면의 "변 상태 확인"은 여전히 위 analyzePhoto를 그대로 쓴다.)
-export async function analyzeGeneralPhoto(dog, file, signal) {
+export async function analyzeGeneralPhoto(dog, file, signal, mode) {
   const imageBase64 = await fileToBase64(file);
   const res = await fetch(`${API_BASE}/api/analyze-general-photo`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type }),
+    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type, mode }),
     signal,
   });
   if (!res.ok) {
@@ -71,8 +71,9 @@ export async function analyzeGeneralPhoto(dog, file, signal) {
 // 영상 분석은 Gemini(구글)로 처리한다 — 영상을 통째로 이해할 수 있어 프레임 추출이 필요 없다.
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.
-export async function analyzeBehavior(dog, file, signal) {
+export async function analyzeBehavior(dog, file, signal, mode) {
   const formData = new FormData();
+  if (mode) formData.append("mode", mode);
   formData.append("video", file);
   formData.append("dogContext", JSON.stringify(toDogContext(dog)));
 

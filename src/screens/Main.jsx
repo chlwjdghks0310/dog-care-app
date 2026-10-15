@@ -5,6 +5,7 @@ import { getTodayChecklist } from "../services/careEngine";
 import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
+import { readJSON, writeJSON } from "../services/storage";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
@@ -17,6 +18,14 @@ const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 // **강조** → 굵은 강조색, *행동* (수다 모드의 "*꼬리 붕붕*") → 기울임 흐린 글씨
+const CHAT_MODES = [
+  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
+  { key: "retriever", icon: "🦮", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
+];
+const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
+const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
+
 function renderEmphasized(text) {
   if (!text) return text;
   return text.split(/(\*\*.+?\*\*|\*[^*\n]+?\*)/g).map((part, i) => {
@@ -43,6 +52,7 @@ export default function Main({ dog, resetSignal }) {
   const [checklist, setChecklist] = useState([]);
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
+  const [chatMode, setChatMode] = useState(() => findChatMode(readJSON(CHAT_MODE_KEY, null)).key);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
@@ -105,8 +115,8 @@ export default function Main({ dog, resetSignal }) {
     setPendingKind("text");
     setAvatarState("thinking");
 
-    const { answer, source } = await askAI(dog, question, history);
-    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock" }]);
+    const { answer, source } = await askAI(dog, question, history, chatMode);
+    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode }]);
     setPending(false);
     setPendingKind(null);
     speak(answer.length);
@@ -133,9 +143,9 @@ export default function Main({ dog, resetSignal }) {
 
     try {
       const answer = isVideo
-        ? await analyzeBehavior(dog, file, controller.signal)
-        : await analyzeGeneralPhoto(dog, file, controller.signal);
-      setMessages((m) => [...m, { role: "ai", text: answer, mediaUrl, mediaType: isVideo ? "video" : "image" }]);
+        ? await analyzeBehavior(dog, file, controller.signal, chatMode)
+        : await analyzeGeneralPhoto(dog, file, controller.signal, chatMode);
+      setMessages((m) => [...m, { role: "ai", text: answer, mediaUrl, mediaType: isVideo ? "video" : "image", chatMode }]);
       speak(answer.length);
     } catch (err) {
       // 서버까지는 연결됐는데 분석 자체가 실패한 경우(Gemini 과부하/쿼터 초과 등)엔
@@ -243,6 +253,11 @@ export default function Main({ dog, resetSignal }) {
                   boxShadow: "var(--shadow)",
                 }}
               >
+                {m.chatMode && (
+                  <div className="faint" style={{ marginBottom: 6 }}>
+                    {findChatMode(m.chatMode).icon} {findChatMode(m.chatMode).name}
+                  </div>
+                )}
                 {m.mediaUrl && m.mediaType === "image" && (
                   <img src={m.mediaUrl} alt="분석한 사진" style={{ maxWidth: 140, borderRadius: 10, marginBottom: 10, display: "block" }} />
                 )}
@@ -258,7 +273,7 @@ export default function Main({ dog, resetSignal }) {
           })}
           {pending && (
             <div className="faint" style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 10 }}>
-              음... 생각 중이야…
+              {findChatMode(chatMode).pending}
               {pendingKind === "media" && (
                 <button
                   type="button"
@@ -276,12 +291,46 @@ export default function Main({ dog, resetSignal }) {
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
+      <div role="radiogroup" aria-label="채팅 스타일" style={{ display: "flex", gap: 6, marginTop: 12 }}>
+        {CHAT_MODES.map((cm) => {
+          const selected = chatMode === cm.key;
+          return (
+            <button
+              key={cm.key}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={pending}
+              onClick={() => {
+                setChatMode(cm.key);
+                writeJSON(CHAT_MODE_KEY, cm.key);
+              }}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: "6px 4px",
+                borderRadius: 12,
+                fontSize: 13,
+                fontWeight: selected ? 700 : 500,
+                border: selected ? "2px solid var(--accent)" : "1px solid var(--border)",
+                background: selected ? "var(--accent-soft)" : "var(--surface)",
+                color: selected ? "var(--accent-strong)" : "var(--text-soft)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {cm.icon} {cm.name}
+            </button>
+          );
+        })}
+      </div>
+      <p className="faint" style={{ textAlign: "center", margin: "6px 0 0" }}>{findChatMode(chatMode).desc}</p>
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
         }}
-        style={{ display: "flex", gap: 8, marginTop: 12 }}
+        style={{ display: "flex", gap: 8, marginTop: 8 }}
       >
         <button
           type="button"

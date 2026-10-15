@@ -140,8 +140,43 @@ const PERSONA_INSTRUCTIONS = `대화창에서는 수의학 정보를 전달하�
   - 형식은 첫 줄에 짧은 리액션 한 문장, 빈 줄, 그 아래 1~3문장. 짧고 귀엽게.
 - 수다 중에도 건강 이상 신호(아파, 토했어 등)가 나오면 정보 모드로 바꿔 답합니다.`;
 
-function buildChatSystemPrompt(dogContext) {
-  return [PERSONA_INSTRUCTIONS, "", buildSystemPrompt(dogContext)].join("\n");
+// 메인 채팅에서 사용자가 고르는 답변 스타일. style은 위 형식 지시보다 우선한다.
+const CHAT_MODES = {
+  bordercollie: {
+    effort: "high",
+    webSearch: true,
+    style: `🐕 지금은 "보더콜리 모드"(꼼꼼 박사)야. 아래 지시가 위 답변 형식보다 우선해.
+- 정보 질문이면 가장 정교하고 자세하게 답한다. 강아지를 처음 키우는 초보 보호자도 이해할 수 있게 전문 용어는 쉬운 말로 풀어 주고(예: "모세혈관 재충전 시간 = 잇몸을 눌렀다 뗐을 때 색이 돌아오는 시간"), 왜 그런지 이유와 순서대로 따라 할 수 있는 단계를 알려준다.
+- 소제목을 상황에 맞게 모두 활용하고, 각 항목을 숫자·기준·예시까지 넣어 구체적으로 쓴다.`,
+  },
+  pomeranian: {
+    effort: "low",
+    style: `🐶 지금은 "포메라니안 모드"(빠른 요약)야. 아래 지시가 위 답변 형식보다 우선해.
+- 보호자가 강아지를 어느 정도 안다고 보고, 기본 용어 풀이는 생략하고 핵심만 빠르게 말한다.
+- 첫 줄 핵심 한 문장 → 빈 줄 → 꼭 필요한 소제목 2~3개만, 각 소제목 아래 "• " 항목 2~3개. 전체 12줄 이내로 짧게.
+- 친숙하고 편한 말투, 가독성이 최우선. 응급이면 첫 줄에서 바로 병원을 말한다.
+- 더 깊은 설명이 필요해 보이면 마지막에 "더 자세히 알고 싶으면 보더콜리한테 물어봐!" 한 줄을 붙인다.`,
+  },
+  retriever: {
+    effort: "low",
+    style: `🦮 지금은 "리트리버 모드"(수다 친구)야. 아래 지시가 위 답변 형식보다 우선해.
+- 기본은 수다 모드. 보호자 얘기를 잘 들어주고, 공감하고, 맞장구치고, 같이 놀자고 하고, 되물어서 대화를 이어간다. 보호자 기분(피곤함, 심심함, 속상함, 기쁨)에 먼저 반응한다.
+- 정보 질문이 와도 친구처럼 대화체로 핵심 2~3가지만 짧게 말하고, 소제목·목록은 쓰지 않는다. 자세한 건 "보더콜리한테 물어보면 꼼꼼하게 알려줄 거야!"라고 권한다.
+- 응급 신호(호흡곤란, 경련, 혈변·흑변, 반복 구토, 중독 의심 등)가 나오면 수다를 멈추고 바로 병원에 가라고 분명히 말한다.`,
+  },
+};
+
+function getChatMode(mode) {
+  return CHAT_MODES[mode] || CHAT_MODES.bordercollie;
+}
+
+const SEARCH_HINT = `- 정보 질문이면 web_search 도구로 수의학 자료, 동물병원·사료회사·전문가 자료를 찾아 교차 확인한다. 마지막 줄에 "📚 참고: " 뒤에 참고한 출처 이름만 짧게 적는다. 잡담에는 검색하지 않는다.`;
+
+function buildChatSystemPrompt(dogContext, mode) {
+  const chatMode = getChatMode(mode);
+  return [PERSONA_INSTRUCTIONS, "", chatMode.style, chatMode.webSearch ? SEARCH_HINT : null, "", buildSystemPrompt(dogContext)]
+    .filter((line) => line !== null)
+    .join("\n");
 }
 
 const FECAL_CHART = `퓨리나 대변 점수표(Purina Fecal Scoring Chart, 1~7점, 임상 통용 평가 도구):
@@ -186,9 +221,11 @@ function buildPhotoAnalysisSystemPrompt(dogContext) {
 const EMPHASIS_RULE =
   "- 가장 중요한 한 가지(병원에 가야 하는 경고가 있으면 그 경고, 없으면 가장 핵심적인 소견)는 문장 하나만 **별표 두 개로 감싸서** 강조합니다. 두 군데 이상 강조하지 않습니다.";
 
-function buildGeneralPhotoAnalysisSystemPrompt(dogContext) {
+function buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode) {
   return [
     PERSONA_INSTRUCTIONS,
+    "",
+    getChatMode(mode).style,
     "",
     "단, 지금은 사용자가 보낸 사진을 분석하는 상황입니다. 사진에 실제로 보이는 것(자세, 표정, 눈/귀/피부, 걸음걸이를 유추할 수 있는 자세, 또는 대변 등 무엇이든)을 아래 공개된 평가 기준으로 설명하세요. 사진 내용을 미리 변이나 특정 상태로 단정하지 않고, 보이는 그대로 관찰합니다.",
     "",
@@ -212,9 +249,11 @@ function buildGeneralPhotoAnalysisSystemPrompt(dogContext) {
   ].join("\n");
 }
 
-function buildBehaviorAnalysisSystemPrompt(dogContext) {
+function buildBehaviorAnalysisSystemPrompt(dogContext, mode) {
   return [
     PERSONA_INSTRUCTIONS,
+    "",
+    getChatMode(mode).style,
     "",
     "단, 지금은 사용자가 보낸 영상을 분석하는 상황입니다. 아래 공개된 평가 기준과 수의학·시중 자료 지식을 함께 써서 자세한 참고 소견을 말하세요.",
     "",
@@ -241,7 +280,8 @@ function claudeText(response) {
 }
 
 app.post("/api/ask", async (req, res) => {
-  const { dogContext, question, history } = req.body || {};
+  const { dogContext, question, history, mode } = req.body || {};
+  const chatMode = getChatMode(mode);
   if (!question || typeof question !== "string") {
     return res.status(400).json({ error: "question is required" });
   }
@@ -255,13 +295,18 @@ app.post("/api/ask", async (req, res) => {
       { role: "user", content: question },
     ];
 
-    const response = await client.beta.messages.create({
+    const params = {
       ...CLAUDE_MODEL,
       max_tokens: 16000,
-      output_config: { effort: "medium" },
-      system: buildChatSystemPrompt(dogContext),
-      messages,
-    });
+      output_config: { effort: chatMode.effort },
+      system: buildChatSystemPrompt(dogContext, mode),
+      ...(chatMode.webSearch && { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] }),
+    };
+    let response = await client.beta.messages.create({ ...params, messages });
+    // 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
+    for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
+      response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
+    }
 
     if (response.stop_reason === "refusal") {
       return res.json({
@@ -314,7 +359,7 @@ app.post("/api/analyze-photo", async (req, res) => {
 
 // 메인 채팅(아바타)에서 보내는 사진용 — 변 사진 전용 프롬프트와 분리해, 무엇이든 사진에 보이는 대로 분석한다.
 app.post("/api/analyze-general-photo", async (req, res) => {
-  const { dogContext, imageBase64, mediaType } = req.body || {};
+  const { dogContext, imageBase64, mediaType, mode } = req.body || {};
   if (!imageBase64 || typeof imageBase64 !== "string") {
     return res.status(400).json({ error: "imageBase64 is required" });
   }
@@ -325,8 +370,8 @@ app.post("/api/analyze-general-photo", async (req, res) => {
     const response = await client.beta.messages.create({
       ...CLAUDE_MODEL,
       max_tokens: 16000,
-      output_config: { effort: "medium" },
-      system: buildGeneralPhotoAnalysisSystemPrompt(dogContext),
+      output_config: { effort: getChatMode(mode).effort },
+      system: buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode),
       messages: [
         {
           role: "user",
@@ -401,7 +446,7 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
         { text: "이 영상을 보고 위 기준에 따라 참고 소견을 알려주세요." },
       ],
       config: {
-        systemInstruction: buildBehaviorAnalysisSystemPrompt(dogContext),
+        systemInstruction: buildBehaviorAnalysisSystemPrompt(dogContext, req.body.mode),
         maxOutputTokens: 16384, // 생각(thinking) 토큰도 이 한도에 포함돼서 작으면 답이 중간에 잘린다
       },
     });
