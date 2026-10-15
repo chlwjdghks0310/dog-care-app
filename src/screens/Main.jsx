@@ -241,7 +241,7 @@ export default function Main({ dog, resetSignal }) {
                   {renderEmphasized(headline)}
                 </div>
                 {detail && (
-                  <div style={{ fontSize: 14, color: "var(--text-soft)", lineHeight: 1.5 }}>{renderEmphasized(detail)}</div>
+                  <div style={{ fontSize: 14, color: "var(--text-soft)", lineHeight: 1.5, whiteSpace: "pre-line" }}>{renderEmphasized(detail)}</div>
                 )}
                 {m.mock && <div className="faint" style={{ marginTop: 6 }}>(AI 서버 연결 안 됨)</div>}
               </div>

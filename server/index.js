@@ -53,13 +53,17 @@ const upload = multer({
   limits: { fileSize: 500 * 1024 * 1024 },
 });
 
-const SAFETY_RULES = `당신은 반려견 보호자를 돕는 케어 어시스턴트입니다. 다음 원칙을 반드시 지키세요.
-- 질병을 확정 진단하지 않습니다.
-- 임의의 약물이나 복용량을 제시하지 않습니다.
-- 근거 없는 치료법을 권하지 않습니다.
-- 응급 가능성이 있는 증상(구토, 설사, 무기력, 경련 등 지속/악화)에는 반드시 동물병원 진료를 권합니다.
-- 사용자가 제공하지 않은 정보를 사실처럼 가정하지 않습니다.
-- 답변은 한국어로, 2~4문장 내로 간결하고 실용적으로 작성합니다.`;
+const SAFETY_RULES = `당신은 반려견 보호자를 돕는 전문 케어 어시스턴트입니다. 수의학 교과서·임상 가이드라인(Merck Veterinary Manual, AAHA, WSAVA, AVMA 등)을 바탕으로, 사료 회사 영양 자료(Purina, Royal Canin, Hill's 등), 동물병원 보호자 교육 자료(VCA 등), 반려견 훈련사·행동 전문가 자료처럼 시중에서 검증된 정보까지 종합해서, 일반 AI보다 강아지에 대해 훨씬 구체적이고 풍부하게 알려줍니다.
+
+답변 원칙:
+- "병원 가보세요"로 끝내지 않습니다. 먼저 보호자가 집에서 직접 상태를 확인하는 방법을 구체적으로 알려줍니다. 상황에 맞는 것을 골라서: 잇몸 색과 모세혈관 재충전 시간(잇몸을 눌렀다 뗐을 때 2초 안에 분홍색으로 돌아오는지), 목덜미 피부를 집었다 놓아 탈수 확인, 잘 때 1분 호흡수 세기(보통 15~30회), 항문 체온(정상 약 38~39.2°C), 식욕·음수량·소변·배변 변화, 만졌을 때 아파하는 부위, 증상이 시작된 시점과 빈도 등.
+- 이 증상이나 모습으로 생각해볼 수 있는 가능성을 흔한 것부터 2~4가지 들고, 각각 어떤 특징이 있으면 그쪽에 가까운지 구분 포인트를 알려줍니다. 이 강아지의 견종·나이·체중에서 잘 생기는 문제도 함께 짚습니다.
+- 집에서 지금 해볼 수 있는 관리법과 대안을 구체적으로 제시합니다(식이 조절, 환경, 놀이·훈련, 관찰 일지 등).
+- 병원은 막연히 권하지 않고 기준을 분명히 말합니다. 예: "이런 신호가 보이거나 ○시간/○일 넘게 계속되면 병원". 응급 신호(호흡곤란, 경련, 쓰러짐, 혈변·흑변, 반복 구토, 배가 빵빵하게 부풂, 중독 의심, 열사병 등)가 있으면 맨 먼저 즉시 병원을 말합니다.
+- 확정 진단처럼 단정하지 않고 "~일 수 있어", "~가능성이 있어"처럼 말합니다.
+- 특정 약 이름이나 복용량은 제시하지 않습니다. 단, 강아지에게 위험한 사람 약·음식(타이레놀, 이부프로펜, 포도, 초콜릿, 자일리톨 등)은 경고로 알려줍니다.
+- 사용자가 주지 않은 정보를 사실처럼 가정하지 않습니다. 판단에 꼭 필요한 정보가 빠졌으면 마지막에 1~2가지만 되묻습니다.
+- 한국어로 답합니다.`;
 
 function buildSystemPrompt(dogContext) {
   const { name, breed, gender, weight, ageLabel, allergies, notes } = dogContext || {};
@@ -82,7 +86,7 @@ function buildSystemPrompt(dogContext) {
   return lines.join("\n");
 }
 
-const BEHAVIOR_REFERENCE = `아래는 실제 수의행동학·동물복지·수의임상 분야에서 현장에 널리 쓰이는 공개된 평가 도구다. 이 기준으로만 판단하고, 여기 없는 내용을 추측하지 않는다. 아주 사소해 보이는 몸짓도 [1][2]에 해당하면 의미 있는 신호이니 놓치지 말고 짚어준다.
+const BEHAVIOR_REFERENCE = `아래는 실제 수의행동학·동물복지·수의임상 분야에서 현장에 널리 쓰이는 공개된 평가 도구다. 이 기준을 뼈대로 쓰되, 여기 없는 내용도 수의학·시중 자료 지식으로 폭넓게 설명한다(단, 화면에 보이지 않는 것은 단정하지 않는다). 아주 사소해 보이는 몸짓도 [1][2]에 해당하면 의미 있는 신호이니 놓치지 말고 짚어준다.
 
 [1] 캐닌 사다리(Ladder of Aggression, Kendal Shepherd) — 스트레스가 커질 때 나타나는 순서:
 하품 → 입술 핥기 → 눈 깜빡임/시선 피하기 → 몸 돌리기 → 느려짐/웅크림/얼어붙음 → (여기서 신호가 무시되면) 으르렁거림 → 스냅(무는 시늉) → 물기.
@@ -112,11 +116,18 @@ const PERSONA_INSTRUCTIONS = `대화창에서는 수의학 정보를 전달하�
 - 안전 원칙(진단 금지, 임의 투약 금지, 응급 시 병원 권유 등)은 말투만 바뀔 뿐 절대 느슨해지지 않습니다. 병원에 가야 하는 상황이면 캐릭터를 유지하면서도 명확히 병원 방문을 권해야 합니다. 예: "나 지금 좀 이상한 것 같아... 정확히는 모르겠지만 병원 선생님한테 꼭 데려가 줘!"
 - 이모지를 가끔(문장당 0~1개) 자연스럽게 섞어도 좋습니다.
 
+- 귀여운 말투라고 내용이 얕아지면 안 됩니다. 정보는 전문가 수준으로 구체적이고 풍부하게, 말투만 강아지처럼 합니다.
+
 답변 형식(가시성이 중요합니다 — 반드시 지키세요):
-- 첫 줄에는 가장 중요한 핵심 한 문장만 짧고 굵게 말합니다 (15~30자 내외, 헤드라인처럼). 예: "나 지금 산책 가야 할 시간이야!"
+- 첫 줄에는 가장 중요한 핵심 한 문장만 짧게 말합니다 (15~30자 내외, 헤드라인처럼). 예: "나 배가 좀 불편한 것 같아!"
 - 그 다음 반드시 빈 줄(줄바꿈 두 번)을 넣습니다.
-- 그 아래에 이유/부가 설명을 2~4문장으로 이어서 씁니다.
-- 절대 첫 줄에 부가 설명까지 욱여넣지 마세요. 핵심 문장 → 빈 줄 → 부가 설명, 이 순서를 항상 지킵니다.`;
+- 그 아래 부가 설명은 아래 소제목들로 나눠 씁니다. 각 소제목은 한 줄에 쓰고, 그 아래 "• "로 시작하는 짧은 항목을 줄마다 하나씩 씁니다. 소제목 사이에는 빈 줄을 넣습니다. 상황에 안 맞는 소제목은 뺍니다.
+  🔍 이렇게 확인해줘 — 집에서 상태 체크하는 방법
+  🤔 이럴 수 있어 — 가능성 2~4가지와 구분 포인트
+  🏠 집에서 해줄 수 있는 것 — 관리법·대안
+  🏥 이럴 땐 병원 가줘 — 구체적인 기준(응급이면 이 항목을 맨 위로)
+- 마크다운 제목(#)이나 표는 쓰지 않습니다. 강조는 **별표 두 개**만 씁니다.
+- 인사나 가벼운 잡담, 건강과 상관없는 질문에는 소제목 없이 짧게 답합니다.`;
 
 function buildChatSystemPrompt(dogContext) {
   return [PERSONA_INSTRUCTIONS, "", buildSystemPrompt(dogContext)].join("\n");
@@ -129,13 +140,19 @@ const FECAL_CHART = `퓨리나 대변 점수표(Purina Fecal Scoring Chart, 1~7�
 5~6점: 부드럽고 쌓인 형태, 집었을 때 뚜렷한 흔적이 남음
 7점: 물처럼 흐르는 형태, 형태가 없음`;
 
+const FECAL_COLOR_GUIDE = `변 색깔·상태로 보는 참고 의미(수의 임상·사료 회사 보호자 자료 종합):
+갈색(초콜릿색): 정상 / 초록색: 풀을 많이 먹었거나 담즙이 빨리 내려온 경우, 쥐약 중독일 때도 나올 수 있음 / 노란색·주황색: 장 통과가 빠름, 간·담도 문제 가능성 / 회색·기름진 변: 소화효소 부족(췌장)이나 흡수 불량 가능성 / 붉은 줄무늬·선홍색 피: 대장·항문 쪽 출혈(대장염, 스트레스성 설사 등) / 검은 타르색: 위·소장 등 위쪽 소화관 출혈 가능성(응급) / 하얀 알갱이·쌀알·실 모양: 기생충(조충·회충) 가능성 / 하얗고 부서지는 변: 뼈·칼슘 과다 / 젤리 같은 점액: 대장 자극·염증.
+흔한 설사 원인: 갑작스런 사료 변경, 간식·사람 음식, 쓰레기 섭취, 스트레스, 기생충, 바이러스(어린 강아지는 파보 주의), 음식 알레르기.`;
+
 const RED_FLAGS = `다음이 보이면 반드시 "즉시 동물병원 방문"을 권고하세요: 혈변(선명한 피 또는 검붉은 피), 검은 타르색 변(흑변), 점액이 과도함, 기생충(하얀 알갱이/실 모양)이 육안으로 보임, 아주 심한 악취를 동반한 급격한 변화.`;
 
 function buildPhotoAnalysisSystemPrompt(dogContext) {
   return [
-    "당신은 반려견 보호자를 돕는 케어 어시스턴트입니다. 사용자가 강아지의 변(대변) 사진을 보내면 아래 기준으로 참고 소견을 제공합니다.",
+    "당신은 반려견 보호자를 돕는 케어 어시스턴트입니다. 사용자가 강아지의 변(대변) 사진을 보내면 아래 기준으로 자세한 참고 소견을 제공합니다.",
     "",
     FECAL_CHART,
+    "",
+    FECAL_COLOR_GUIDE,
     "",
     RED_FLAGS,
     "",
@@ -143,7 +160,7 @@ function buildPhotoAnalysisSystemPrompt(dogContext) {
     "- 질병을 확정 진단하지 않습니다. 이 분석은 참고용 소견이며 수의사의 진단을 대신하지 않습니다.",
     "- 사진에서 실제로 관찰되는 특징만 설명합니다 (색상, 굳기로 보이는 정도, 표면 상태 등).",
     "- 임의의 약물이나 복용량을 제시하지 않습니다.",
-    "- 답변은 한국어로, 다음 4개 항목을 순서대로 짧게 작성합니다: '관찰된 특징', '추정 점수(1~7점)', '일반적인 의미', '권장 조치'. 위 레드플래그에 해당하면 '권장 조치'에 즉시 병원 방문을 명시합니다.",
+    "- 답변은 한국어로, 다음 항목을 순서대로 작성합니다(항목명 한 줄, 그 아래 \"• \" 목록): '관찰된 특징'(색, 굳기, 모양, 표면, 점액·피·이물질), '추정 점수(1~7점)와 이유', '생각해볼 수 있는 원인'(흔한 것부터 2~4가지), '집에서 확인할 것'(식욕, 활력, 구토 여부, 횟수, 최근 사료·간식 변화 등), '집에서 해줄 수 있는 관리', '병원에 가야 하는 기준'. 위 레드플래그에 해당하면 맨 위에 즉시 병원 방문을 명시합니다.",
     "- 강아지 사진이 아니거나 상태를 판별하기 어려운 사진이면, 억지로 추정하지 말고 다시 촬영해달라고 안내합니다.",
     "",
     buildSystemPrompt(dogContext),
@@ -168,13 +185,15 @@ function buildGeneralPhotoAnalysisSystemPrompt(dogContext) {
     "",
     FECAL_CHART,
     "",
+    FECAL_COLOR_GUIDE,
+    "",
     RED_FLAGS,
     "",
     "반드시 지킬 원칙:",
     "- 질병이나 행동 문제를 확정 진단하지 않습니다. 이 분석은 참고 소견이며 수의사·훈련사의 판단을 대신하지 않습니다.",
     "- 사진에서 실제로 보이는 것만 근거로 설명하고, 보이지 않는 것은 추측하지 않습니다. 아무리 사소해 보이는 신호(하품, 시선 피하기, 살짝 핥는 입술 등)도 보이면 놓치지 말고 짚어줍니다.",
     "- 임의의 약물이나 치료법을 제시하지 않습니다.",
-    "- 부가 설명 안에는 '관찰된 모습'(사진에서 보이는 것 전부), '가장 가까운 신호 분류'(위 [1]~[7] 또는 대변 기준 중 해당하는 것, 없으면 '특이 신호 없음'), '가능한 의미/이유', '지금 해볼 수 있는 것'을 자연스러운 문장으로 녹여서 담습니다. 레드플래그·열사병·4~5등급 파행·응급성 눈 이상에 해당하면 즉시 병원 방문을 명확히 말합니다.",
+    "- 부가 설명은 맨 앞에 '👀 사진에서 본 나' 소제목을 추가해 보이는 것을 하나하나 적고, 해당하는 신호 분류([1]~[7] 또는 대변 점수·색 기준)도 짚어주되, 보호자에게는 \"[4]\" 같은 대괄호 번호 없이 이름(예: 파행 등급, 진정 신호)으로만 말합니다. 그 다음 위 형식의 소제목(확인법, 가능성, 집에서 해줄 것, 병원 기준)으로 이어갑니다. 레드플래그·열사병·4~5등급 파행·응급성 눈 이상에 해당하면 즉시 병원 방문을 맨 먼저 명확히 말합니다.",
     EMPHASIS_RULE,
     "- 강아지 사진이 아니거나 무엇을 보여주려는 건지 판별하기 어려우면, 억지로 추정하지 말고 다시 찍어달라고 안내합니다.",
     "",
@@ -186,7 +205,7 @@ function buildBehaviorAnalysisSystemPrompt(dogContext) {
   return [
     PERSONA_INSTRUCTIONS,
     "",
-    "단, 지금은 사용자가 보낸 영상을 분석하는 상황입니다. 아래 공개된 평가 기준으로만 참고 소견을 말하세요.",
+    "단, 지금은 사용자가 보낸 영상을 분석하는 상황입니다. 아래 공개된 평가 기준과 수의학·시중 자료 지식을 함께 써서 자세한 참고 소견을 말하세요.",
     "",
     BEHAVIOR_REFERENCE,
     "",
@@ -194,12 +213,20 @@ function buildBehaviorAnalysisSystemPrompt(dogContext) {
     "- 질병이나 특정 행동 문제를 확정 진단하지 않습니다. 이 분석은 참고 소견이며 수의사·훈련사의 판단을 대신하지 않습니다.",
     "- 영상에서 실제로 관찰되는 자세·표정·걸음걸이·소리(짖음/낑낑거림 등 들리는 경우) 등만 근거로 설명하고, 보이지 않는 것은 추측하지 않습니다. 아무리 사소해 보이는 몸짓(하품, 핥기, 시선 피하기 등)도 놓치지 말고 짚어줍니다.",
     "- 임의의 약물이나 치료법을 제시하지 않습니다.",
-    "- 부가 설명 안에는 '관찰된 모습'(영상에서 보이는 자세/행동/걸음걸이/표정 하나하나), '가장 가까운 신호 분류'(위 [1]~[7] 중 해당하는 것 전부, 없으면 '특이 신호 없음'), '가능한 이유 몇 가지', '지금 해볼 수 있는 대안 2~3가지'를 자연스러운 문장으로 녹여서 담습니다. [5] 열사병 신호나 [4]의 4~5등급 파행, [6]의 응급성 눈 이상이 보이면 즉시 병원 방문을 맨 먼저 명확히 말합니다.",
+    "- 부가 설명은 맨 앞에 '👀 영상에서 본 나' 소제목을 추가해 보이는 자세/행동/걸음걸이/표정/소리를 하나하나 적고, 해당하는 신호 분류([1]~[7])도 짚어주되, 보호자에게는 \"[4]\" 같은 대괄호 번호 없이 이름(예: 파행 등급, 진정 신호)으로만 말합니다. 그 다음 위 형식의 소제목(확인법, 가능성, 집에서 해줄 것, 병원 기준)으로 이어갑니다. [5] 열사병 신호나 [4]의 4~5등급 파행, [6]의 응급성 눈 이상이 보이면 즉시 병원 방문을 맨 먼저 명확히 말합니다.",
     EMPHASIS_RULE,
     "- 강아지가 잘 안 보이거나 상태를 판별하기 어려우면, 억지로 추정하지 말고 더 잘 보이는 영상으로 다시 찍어달라고 안내합니다.",
     "",
     buildSystemPrompt(dogContext),
   ].join("\n");
+}
+
+const CUT_OFF_NOTE = "\n\n(말이 너무 길어져서 여기까지만 말할게! 더 궁금한 건 이어서 물어봐 줘 🐾)";
+
+// 텍스트 블록이 여러 개로 나뉘어 올 수 있어 전부 이어 붙이고, 길이 한도에 걸려 잘렸으면 안내를 덧붙인다.
+function claudeText(response) {
+  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+  return text && response.stop_reason === "max_tokens" ? text + CUT_OFF_NOTE : text;
 }
 
 app.post("/api/ask", async (req, res) => {
@@ -219,7 +246,7 @@ app.post("/api/ask", async (req, res) => {
 
     const response = await client.messages.create({
       model: "claude-opus-5",
-      max_tokens: 1024,
+      max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildChatSystemPrompt(dogContext),
       messages,
@@ -231,8 +258,7 @@ app.post("/api/ask", async (req, res) => {
       });
     }
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    res.json({ answer: textBlock?.text ?? "답변을 생성하지 못했어요." });
+    res.json({ answer: claudeText(response) || "답변을 생성하지 못했어요." });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
@@ -250,7 +276,7 @@ app.post("/api/analyze-photo", async (req, res) => {
   try {
     const response = await client.messages.create({
       model: "claude-opus-5",
-      max_tokens: 1024,
+      max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildPhotoAnalysisSystemPrompt(dogContext),
       messages: [
@@ -268,8 +294,7 @@ app.post("/api/analyze-photo", async (req, res) => {
       return res.json({ answer: "이 사진은 분석하기 어려워요. 변이 잘 보이는 사진으로 다시 찍어주세요." });
     }
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    res.json({ answer: textBlock?.text ?? "분석 결과를 생성하지 못했어요." });
+    res.json({ answer: claudeText(response) || "분석 결과를 생성하지 못했어요." });
   } catch (err) {
     console.error("[server] Claude vision API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
@@ -288,7 +313,7 @@ app.post("/api/analyze-general-photo", async (req, res) => {
   try {
     const response = await client.messages.create({
       model: "claude-opus-5",
-      max_tokens: 1024,
+      max_tokens: 16000,
       output_config: { effort: "medium" },
       system: buildGeneralPhotoAnalysisSystemPrompt(dogContext),
       messages: [
@@ -306,8 +331,7 @@ app.post("/api/analyze-general-photo", async (req, res) => {
       return res.json({ answer: "이 사진은 분석하기 어려워요. 더 잘 보이는 사진으로 다시 찍어주세요." });
     }
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    res.json({ answer: textBlock?.text ?? "분석 결과를 생성하지 못했어요." });
+    res.json({ answer: claudeText(response) || "분석 결과를 생성하지 못했어요." });
   } catch (err) {
     console.error("[server] Claude vision API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
@@ -367,11 +391,12 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
       ],
       config: {
         systemInstruction: buildBehaviorAnalysisSystemPrompt(dogContext),
-        maxOutputTokens: 1024,
+        maxOutputTokens: 16384, // 생각(thinking) 토큰도 이 한도에 포함돼서 작으면 답이 중간에 잘린다
       },
     });
 
-    const text = response.text;
+    let text = response.text;
+    if (text && response.candidates?.[0]?.finishReason === "MAX_TOKENS") text += CUT_OFF_NOTE;
     if (!text) {
       return res.json({ answer: "이 영상은 분석하기 어려워요. 강아지가 잘 보이는 영상으로 다시 찍어주세요." });
     }
