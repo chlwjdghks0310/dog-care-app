@@ -335,8 +335,35 @@ async function createWithContinuation(params, messages) {
   return response;
 }
 
+// 채팅으로 앱에 기록하기 — AI가 아래 도구를 부르면 서버는 저장하지 않고(기록은 폰에 있음) 그대로 앱에 돌려주고,
+// 앱이 확인 후 저장한다. 정보가 모자라면 도구를 부르지 말고 되묻게 한다.
+const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
+function appTools(categories) {
+  const category = Array.isArray(categories) && categories.length
+    ? { type: "string", enum: categories.map(String).slice(0, 40), description: "가장 알맞은 가계부 카테고리" }
+    : { type: "string", description: "가계부 카테고리 이름" };
+  const tool = (name, description, properties, required) => ({
+    name,
+    description,
+    input_schema: { type: "object", properties, required, additionalProperties: false },
+  });
+  return [
+    tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category }, ["title", "amount", "date", "category"]),
+    tool("set_allowance", "그 달 강아지 용돈(쓸 예산)을 정한다.", { month: { type: "string", description: "YYYY-MM" }, amount: { type: "integer" } }, ["month", "amount"]),
+    tool("add_calendar_event", "일정표에 그 날짜의 일정/메모를 추가한다. 시간이 있으면 제목에 포함.", { date: DATE, title: { type: "string" } }, ["date", "title"]),
+    tool("add_weight_record", "체중 관리에 체중 기록을 추가한다.", { weight_kg: { type: "number" }, date: DATE, time: { type: "string", description: "HH:MM, 모르면 생략" } }, ["weight_kg", "date"]),
+    tool("set_checklist_done", "오늘 체크리스트 항목을 완료(또는 취소) 표시한다. 앱 기록의 오늘 할 일 제목 중 하나여야 한다.", { title: { type: "string", description: "오늘 할 일 제목 그대로" }, done: { type: "boolean" } }, ["title", "done"]),
+    tool("add_alarm", "매일 울리는 알람을 추가한다.", { title: { type: "string" }, time: { type: "string", description: "HH:MM (24시간)" } }, ["title", "time"]),
+  ];
+}
+const APP_TOOL_RULES = `[앱에 기록하기]
+보호자가 "기록해줘/적어줘/추가해줘/넣어줘"처럼 앱에 남겨 달라고 하거나, "오늘 사료 3만원 샀어", "내일 3시 미용 예약", "몸무게 3.4kg 됐어", "산책 다녀왔어"처럼 기록할 일을 분명히 말하면 알맞은 도구로 기록한다.
+- 필요한 정보(금액, 날짜, 무엇을, 체중 숫자, 알람 시각 등)가 빠졌거나 애매하면 도구를 부르지 말고, 무엇을 더 알려 주면 되는지 짧고 구체적으로 되묻는다(예: "얼마 썼는지 알려 주면 바로 적어 둘게!").
+- 그냥 질문하거나 이야기만 하는 경우엔 기록하지 않는다. 같은 내용을 두 번 기록하지 않는다.
+- 기록했으면 무엇을 어디에 적었는지(날짜·금액·카테고리 등) 한두 줄로 확인해 준다.`;
+
 app.post("/api/ask", async (req, res) => {
-  const { dogContext, question, history, mode } = req.body || {};
+  const { dogContext, question, history, mode, categories } = req.body || {};
   const chatMode = getChatMode(mode);
   if (!question || typeof question !== "string") {
     return res.status(400).json({ error: "question is required" });
@@ -355,10 +382,22 @@ app.post("/api/ask", async (req, res) => {
       ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: chatMode.effort },
-      system: buildChatSystemPrompt(dogContext, mode),
-      ...(chatMode.webSearch && { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] }),
+      system: `${buildChatSystemPrompt(dogContext, mode)}\n\n${APP_TOOL_RULES}`,
+      tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] : []), ...appTools(categories)],
     };
-    const response = await createWithContinuation(params, messages);
+    let convo = messages;
+    let response = await createWithContinuation(params, convo);
+    const actions = [];
+    for (let i = 0; i < 3 && response.stop_reason === "tool_use"; i++) {
+      const uses = response.content.filter((b) => b.type === "tool_use");
+      actions.push(...uses.map((u) => ({ type: u.name, ...u.input })));
+      convo = [
+        ...convo,
+        { role: "assistant", content: response.content },
+        { role: "user", content: uses.map((u) => ({ type: "tool_result", tool_use_id: u.id, content: "앱에 기록을 전달했어요." })) },
+      ];
+      response = await createWithContinuation(params, convo);
+    }
 
     if (response.stop_reason === "refusal") {
       return res.json({
@@ -366,7 +405,7 @@ app.post("/api/ask", async (req, res) => {
       });
     }
 
-    res.json({ answer: claudeText(response) || "답변을 생성하지 못했어요." });
+    res.json({ answer: claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요."), actions });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });

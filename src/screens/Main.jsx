@@ -6,6 +6,7 @@ import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
 import { getChatMemory, rememberChat } from "../services/chatMemory";
+import { applyAppActions } from "../services/appActions";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
@@ -135,10 +136,12 @@ export default function Main({ dog, resetSignal }) {
     setAvatarState("thinking");
 
     const session = chatSessionRef.current;
-    const { answer, source } = await askAI(dog, question, history, chatMode);
+    const { answer, source, actions } = await askAI(dog, question, history, chatMode);
+    // AI가 "기록해 줘"를 알아들었으면 앱(가계부·일정표·체중·체크리스트·알람)에 실제로 저장
+    const records = actions?.length ? applyAppActions(dog, actions) : null;
     if (source !== "mock") rememberChat(dog.id, question, answer);
     if (session !== chatSessionRef.current) return; // 그사이 메인 화면으로 돌아감
-    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode }]);
+    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode, records }]);
     setPending(false);
     setPendingKind(null);
     speak(answer.length);
@@ -295,6 +298,15 @@ export default function Main({ dog, resetSignal }) {
                 {detail && (
                   <div style={{ fontSize: 14, color: "var(--text-soft)", lineHeight: 1.5, whiteSpace: "pre-line" }}>{renderEmphasized(detail)}</div>
                 )}
+                {m.records?.done.length > 0 && (
+                  <div style={{ marginTop: 10, padding: "8px 10px", borderRadius: 10, background: "var(--accent-soft)", fontSize: 13, lineHeight: 1.6 }}>
+                    <strong>📝 앱에 기록했어요</strong>
+                    {m.records.done.map((r) => (
+                      <div key={r}>{r}</div>
+                    ))}
+                  </div>
+                )}
+                {m.records?.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>기록하지 못한 내용이 있어요. 조금 더 자세히 말해 주세요.</div>}
                 {m.mock && <div className="faint" style={{ marginTop: 6 }}>(AI 서버 연결 안 됨)</div>}
               </div>
             );

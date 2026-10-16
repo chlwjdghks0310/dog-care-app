@@ -1,5 +1,6 @@
 import { getWeightRecords } from "./weightLog";
 import { buildAppSnapshot } from "./appSnapshot";
+import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 
@@ -43,11 +44,11 @@ export async function askAI(dog, question, history, mode) {
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dogContext: toDogContext(dog), question, history, mode }),
+      body: JSON.stringify({ dogContext: toDogContext(dog), question, history, mode, categories: getCategories().map((c) => c.name) }),
     });
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    return { answer: data.answer, source: "ai" };
+    return { answer: data.answer, source: "ai", actions: Array.isArray(data.actions) ? data.actions : [] };
   } catch {
     return { answer: answerQuestion(dog, question), source: "mock" };
   }
