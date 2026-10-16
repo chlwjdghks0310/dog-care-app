@@ -147,7 +147,7 @@ export default function Budget({ dog }) {
             aria-label={`${monthDate.getMonth() + 1}월 ${dog.name} 용돈`}
             style={{ width: inputWidth(allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")), maxWidth: "100%", minWidth: 0, border: "none", background: "none", padding: 0, fontSize: 20, fontWeight: 700, color: "var(--text)" }}
           />
-          {(allowanceText ?? allowance) ? <strong style={{ fontSize: 20 }}>원</strong> : <span aria-hidden="true">✏️</span>}
+          {(allowanceText ?? allowance) ? <strong style={{ fontSize: 20 }}>원</strong> : null}
           </div>
         </label>
       </div>
