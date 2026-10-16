@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
 import { getTodayChecklist } from "./services/careEngine";
 import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, registerServiceWorker, syncPushAlarms } from "./services/notifications";
@@ -7,7 +7,7 @@ import { getCustomSchedules } from "./services/customSchedules";
 import { getSoakGuidance } from "./data/feedingGuide";
 import { calculateAge } from "./utils/age";
 import { todayKey } from "./utils/date";
-import BottomNav from "./components/BottomNav";
+import BottomNav, { TABS } from "./components/BottomNav";
 import Onboarding from "./screens/Onboarding";
 import DogRegister from "./screens/DogRegister";
 import Home from "./screens/Home";
@@ -47,6 +47,27 @@ export default function App() {
       setMainResetSignal((s) => s + 1);
     }
     setTab(key);
+  }
+
+  // 옆으로 스와이프하면 하단 탭 순서대로 이전/다음 탭으로 넘어간다(하단 탭 화면에서만 — 세부 화면은 제외).
+  // 입력칸이나 가로로 스크롤되는 영역에서 시작한 스와이프는 무시한다.
+  const swipeRef = useRef(null);
+  function handleTouchStart(e) {
+    const t = e.touches[0];
+    const blocked = e.target.closest?.("input, textarea, select, [data-no-swipe]") || hasHorizontalScroll(e.target);
+    swipeRef.current = blocked || e.touches.length > 1 ? null : { x: t.clientX, y: t.clientY, at: Date.now() };
+  }
+  function handleTouchEnd(e) {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    const index = TABS.findIndex((t) => t.key === tab);
+    if (!start || index < 0) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - start.at > 700) return;
+    const next = TABS[index + (dx < 0 ? 1 : -1)];
+    if (next) setTab(next.key);
   }
 
   // 화면에 보여줄 강아지를 바꿀 때마다(전환·추가·수정) 항상 이 함수로 통일한다 —
@@ -144,7 +165,7 @@ export default function App() {
 
   if (route === "onboarding") {
     return (
-      <div className="app-shell">
+      <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <Onboarding onStart={() => setRoute("register")} />
       </div>
     );
@@ -237,4 +258,11 @@ export default function App() {
       )}
     </div>
   );
+}
+
+function hasHorizontalScroll(el) {
+  for (let node = el; node && node !== document.body; node = node.parentElement) {
+    if (node.scrollWidth > node.clientWidth + 1 && /(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+  }
+  return false;
 }
