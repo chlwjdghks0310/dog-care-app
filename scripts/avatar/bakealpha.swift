@@ -13,7 +13,6 @@ let a = CommandLine.arguments
 let src = AVURLAsset(url: URL(fileURLWithPath: a[1])); let base = a[2]; let S = Int(a[3])!
 let lo = 140.0, step = 10, floorStep = 16
 let floorFrom = Double(ProcessInfo.processInfo.environment["FLOOR_FROM"] ?? "") ?? 0.78 // 바닥(그림자) 시작 높이 비율 — 캐릭터가 엎드려 그림자가 높으면 낮춘다
-let ENCLOSED_MIN = Int(ProcessInfo.processInfo.environment["ENCLOSED_MIN"] ?? "") ?? 0
 let wm = (x: 0.8, y: 0.93, w: 0.2, h: 0.08)
 let SOFT_BAND = 40 // 캐릭터에서 이 거리(px)보다 먼 배경은 완전 투명
 let PLATE_TOL = Double(ProcessInfo.processInfo.environment["PLATE_TOL"] ?? "") ?? 6.0, PLATE_TOL_FLOOR = max(12.0, PLATE_TOL) // 흰 털 없는 견종은 크게(14) — 밝은 배경 틈도 배경으로
@@ -77,14 +76,6 @@ func backgroundMask(_ f: Frame, plateRef: (plate: [Double], cnt: [Double])? = ni
   for x in 0..<w { seed(x); seed((h - 1) * w + x) }; for y in 0..<h { seed(y * w); seed(y * w + w - 1) }
   while let p = stack.popLast() { let x = p % w
     for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && !bg[q] && isBg(q) && close(p, q) { bg[q] = true; stack.append(q) } }
-  // 몸과 꼬리 사이처럼 테두리와 이어지지 않고 갇힌 배경(ENCLOSED_MIN px 이상 덩어리)도 배경으로. 흰 털 많은 견종은 끈다(0).
-  if plateRef != nil && ENCLOSED_MIN > 0 {
-    var seen = bg
-    for s0 in 0..<n where !seen[s0] && isBg(s0) { var comp = [s0]; seen[s0] = true; stack.append(s0)
-      while let p = stack.popLast() { let x = p % w
-        for q in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where q >= 0 && q < n && !seen[q] && isBg(q) && close(p, q) { seen[q] = true; comp.append(q); stack.append(q) } }
-      if comp.count >= ENCLOSED_MIN { for p in comp { bg[p] = true } } }
-  }
   // 캐릭터(가장 큰 덩어리)의 2%보다 작은 조각은 배경으로
   var label = [Int](repeating: 0, count: n); var sizes = [0]
   for s0 in 0..<n where !bg[s0] && label[s0] == 0 { let id = sizes.count; var size = 0; label[s0] = id; stack.append(s0)
