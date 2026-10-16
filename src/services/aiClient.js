@@ -1,8 +1,18 @@
 import { getWeightRecords } from "./weightLog";
+import { buildAppSnapshot } from "./appSnapshot";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 
 export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
+
+// 요약을 만들다 오류가 나도 채팅은 되게
+function safeSnapshot(dog) {
+  try {
+    return buildAppSnapshot(dog);
+  } catch {
+    return "";
+  }
+}
 
 function toDogContext(dog) {
   const age = calculateAge(dog.birthDate);
@@ -22,6 +32,7 @@ function toDogContext(dog) {
     weightHistory: getWeightRecords(dog.id)
       .slice(-6)
       .map((r) => `${r.measuredAt.slice(0, 10)} ${r.weightKg}kg`),
+    appData: safeSnapshot(dog),
   };
 }
 

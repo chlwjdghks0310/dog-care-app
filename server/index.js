@@ -68,7 +68,7 @@ const SAFETY_RULES = `당신은 반려견 보호자를 돕는 전문 케어 어�
 - 한국어로 답합니다.`;
 
 function buildSystemPrompt(dogContext) {
-  const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory } = dogContext || {};
+  const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory, appData } = dogContext || {};
   const genderLabel = gender === "male" ? "수컷" : gender === "female" ? "암컷" : gender;
   const appearance = getBreedAppearance(breed);
   const lines = [
@@ -89,6 +89,13 @@ function buildSystemPrompt(dogContext) {
     Array.isArray(weightHistory) && weightHistory.length > 1 ? `최근 체중 기록(오래된→최근): ${weightHistory.join(", ")}` : null,
     appearance.brachycephalic ? "참고: 단두종(코가 짧은 견종)으로 호흡기 이슈에 취약할 수 있음" : null,
     appearance.sizeCategory === "large" ? "참고: 대형견으로 관절(고관절/팔꿈치) 이슈에 취약할 수 있음" : null,
+    typeof appData === "string" && appData.trim()
+      ? [
+          "",
+          "보호자가 이 앱(멍케어)에 기록한 내용 — 체크리스트·일정표·가계부·알람·체중 관리. 보호자가 일정·지출·할 일·체중 등을 물으면 이 기록을 근거로 정확한 날짜·금액·항목을 들어 답한다(계산이 필요하면 직접 계산). 여기에 없는 내용은 기록이 없다고 말하고 지어내지 않는다. 건강 답변에도 관련 기록(최근 체중 변화, 밀린 할 일 등)이 있으면 자연스럽게 반영한다:",
+          appData.slice(0, 8000),
+        ].join("\n")
+      : null,
   ].filter(Boolean);
   return lines.join("\n");
 }
