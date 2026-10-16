@@ -110,6 +110,7 @@ export default function Budget({ dog }) {
     if (!name || !emoji) return;
     setCategories(addCategory(name, emoji));
     setNewCatName("");
+    setShowCategoryManager(false);
   }
 
   function handleDeleteCategory(cat) {
@@ -209,94 +210,97 @@ export default function Budget({ dog }) {
         )}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-          <div className="h2" style={{ margin: 0 }}>
-            {filterCategoryId
-              ? `${categoryById(filterCategoryId).emoji} 이번 달 ${categoryById(filterCategoryId).name}`
-              : `${formatKoreanDate(selectedDateKey)} 지출`}
+      {/* 카테고리 관리를 열면 지출 칸 자리에 대신 보여 준다 */}
+      {!showCategoryManager && (
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+            <div className="h2" style={{ margin: 0 }}>
+              {filterCategoryId
+                ? `${categoryById(filterCategoryId).emoji} 이번 달 ${categoryById(filterCategoryId).name}`
+                : `${formatKoreanDate(selectedDateKey)} 지출`}
+            </div>
+            {filterCategoryId ? (
+              <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setFilterCategoryId(null)}>
+                날짜별 보기
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="chip"
+                aria-expanded={showCategoryManager}
+                onClick={() => setShowCategoryManager(true)}
+                style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}
+              >
+                ⚙️ 카테고리 관리
+              </button>
+            )}
           </div>
-          {filterCategoryId ? (
-            <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setFilterCategoryId(null)}>
-              날짜별 보기
-            </button>
+
+          {listed.length === 0 ? (
+            <p className="subtle" style={{ marginBottom: 10 }}>기록이 없어요.</p>
           ) : (
-            <button
-              type="button"
-              className="chip"
-              aria-expanded={showCategoryManager}
-              onClick={() => setShowCategoryManager((v) => !v)}
-              style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}
-            >
-              ⚙️ 카테고리 관리
-            </button>
+            <div style={{ marginBottom: 10 }}>
+              {listed.map((e) => {
+                const cat = categoryById(e.categoryId);
+                return (
+                  <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+                      <div className="faint">{cat.name}{filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}</div>
+                    </div>
+                    <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{won(e.amount)}</span>
+                    <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setExpenses(deleteExpense(dog.id, e.id))}>
+                      삭제
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!filterCategoryId && (
+            <form onSubmit={handleAdd}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                {categories.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="chip"
+                    onClick={() => setCategoryId(c.id)}
+                    style={{ border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
+                  >
+                    {c.emoji} {c.name}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="무엇에 썼나요? (예: 예방접종)" style={{ ...inputStyle, flex: 2 }} />
+                <input
+                  value={amountText}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    setAmountText(digits ? Number(digits).toLocaleString("ko-KR") : "");
+                  }}
+                  inputMode="numeric"
+                  placeholder="금액(원)"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+              </div>
+              <button type="submit" className="btn-primary" style={{ marginTop: 8 }}>
+                {formatKoreanDate(selectedDateKey)}에 기록하기
+              </button>
+            </form>
           )}
         </div>
-
-        {listed.length === 0 ? (
-          <p className="subtle" style={{ marginBottom: 10 }}>기록이 없어요.</p>
-        ) : (
-          <div style={{ marginBottom: 10 }}>
-            {listed.map((e) => {
-              const cat = categoryById(e.categoryId);
-              return (
-                <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                  <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
-                    <div className="faint">{cat.name}{filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}</div>
-                  </div>
-                  <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{won(e.amount)}</span>
-                  <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setExpenses(deleteExpense(dog.id, e.id))}>
-                    삭제
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {!filterCategoryId && (
-          <form onSubmit={handleAdd}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className="chip"
-                  onClick={() => setCategoryId(c.id)}
-                  style={{ border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
-                >
-                  {c.emoji} {c.name}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="무엇에 썼나요? (예: 예방접종)" style={{ ...inputStyle, flex: 2 }} />
-              <input
-                value={amountText}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
-                  setAmountText(digits ? Number(digits).toLocaleString("ko-KR") : "");
-                }}
-                inputMode="numeric"
-                placeholder="금액(원)"
-                style={{ ...inputStyle, flex: 1 }}
-              />
-            </div>
-            <button type="submit" className="btn-primary" style={{ marginTop: 8 }}>
-              {formatKoreanDate(selectedDateKey)}에 기록하기
-            </button>
-          </form>
-        )}
-      </div>
+      )}
 
       {showCategoryManager && (
         <div className="card" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
             <div className="h2" style={{ margin: 0 }}>카테고리 관리</div>
             <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setShowCategoryManager(false)}>
-              닫기
+              취소
             </button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
