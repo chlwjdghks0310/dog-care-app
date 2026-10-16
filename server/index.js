@@ -68,20 +68,25 @@ const SAFETY_RULES = `당신은 반려견 보호자를 돕는 전문 케어 어�
 - 한국어로 답합니다.`;
 
 function buildSystemPrompt(dogContext) {
-  const { name, breed, gender, weight, ageLabel, allergies, notes } = dogContext || {};
+  const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory } = dogContext || {};
   const genderLabel = gender === "male" ? "수컷" : gender === "female" ? "암컷" : gender;
   const appearance = getBreedAppearance(breed);
   const lines = [
     SAFETY_RULES,
     "",
-    "현재 상담 중인 강아지 정보:",
+    "현재 상담 중인 강아지 정보(보호자가 앱 프로필에 적은 내용 — 답할 때 항상 이 정보에 맞춰 판단하고, 관련 있으면 자연스럽게 언급한다. 예: 알레르기 있는 재료는 권하지 않기, 체중 변화가 있으면 짚어 주기):",
     `이름: ${name || "알 수 없음"}`,
     `견종: ${breed || "알 수 없음"}`,
     `나이: ${ageLabel || "알 수 없음"}`,
     genderLabel ? `성별: ${genderLabel}` : null,
     weight ? `체중: ${weight}kg` : null,
+    birthDate ? `생년월일: ${birthDate}` : null,
+    neutered === true ? "중성화: 완료" : neutered === false ? "중성화: 안 함" : null,
+    food ? `먹는 사료: ${food}` : null,
+    adoptionDate ? `입양일: ${adoptionDate}` : null,
     allergies ? `알레르기: ${allergies}` : null,
     notes ? `특이사항: ${notes}` : null,
+    Array.isArray(weightHistory) && weightHistory.length > 1 ? `최근 체중 기록(오래된→최근): ${weightHistory.join(", ")}` : null,
     appearance.brachycephalic ? "참고: 단두종(코가 짧은 견종)으로 호흡기 이슈에 취약할 수 있음" : null,
     appearance.sizeCategory === "large" ? "참고: 대형견으로 관절(고관절/팔꿈치) 이슈에 취약할 수 있음" : null,
   ].filter(Boolean);

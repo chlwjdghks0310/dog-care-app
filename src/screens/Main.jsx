@@ -5,6 +5,7 @@ import { getTodayChecklist } from "../services/careEngine";
 import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
+import { getChatMemory, rememberChat } from "../services/chatMemory";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
@@ -33,24 +34,6 @@ const CHAT_MODE_INTROS = {
   retriever:
     "안녕! 난 수다쟁이 리트리버야 🦮\n**네 이야기를 들어 주고 같이 노는 걸** 제일 좋아해!\n심심할 때, 오늘 있었던 일을 말하고 싶을 때 언제든 말 걸어 줘. 꼬리 흔들면서 기다릴게!",
 };
-// 저장할 땐 사진 미리보기 주소(앱을 끄면 사라짐)는 빼고, 너무 길어지지 않게 최근 300개만 남긴다.
-const CHAT_KEY = "dogcare-chat-v1";
-function loadChat(dogId) {
-  try {
-    return JSON.parse(localStorage.getItem(CHAT_KEY) || "{}")[dogId] || [];
-  } catch {
-    return [];
-  }
-}
-function saveChat(dogId, messages) {
-  try {
-    const all = JSON.parse(localStorage.getItem(CHAT_KEY) || "{}");
-    all[dogId] = messages.slice(-300).map(({ mediaUrl, ...m }) => m); // eslint-disable-line no-unused-vars
-    localStorage.setItem(CHAT_KEY, JSON.stringify(all));
-  } catch {
-    // 저장 공간이 꽉 차는 등 저장에 실패해도 지금 대화는 그대로 쓸 수 있다
-  }
-}
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
 
 const IDLE_HEIGHT = 340;
@@ -64,7 +47,7 @@ const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
 export default function Main({ dog, resetSignal }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
-  const [messages, setMessages] = useState(() => loadChat(dog.id));
+  const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
   const [input, setInput] = useState("");
@@ -112,32 +95,16 @@ export default function Main({ dog, resetSignal }) {
     [dog.name, age.ageInWeeks, checklist, dateKey]
   );
 
-  // 대화는 강아지별로 기기에 저장해서 앱을 껐다 켜도 이어진다. 강아지를 바꾸면 그 강아지의 대화를 불러온다.
-  const chatDogRef = useRef(dog.id);
-  useEffect(() => {
-    if (chatDogRef.current === dog.id) return;
-    chatDogRef.current = dog.id;
-    setMessages(loadChat(dog.id));
-  }, [dog.id]);
-  useEffect(() => {
-    if (chatDogRef.current === dog.id) saveChat(dog.id, messages);
-  }, [dog.id, messages]);
-
-  // 카톡처럼 날짜가 바뀌는 곳에 흐린 가로줄 + 날짜
-  function dateDivider(i) {
-    const at = messages[i].at;
-    if (!at) return null;
-    const prev = messages.slice(0, i).reverse().find((m) => m.at)?.at;
-    if (prev && new Date(prev).toDateString() === new Date(at).toDateString()) return null;
-    return (
-      <div key={`d${i}`} className="chat-date" role="separator">
-        {new Date(at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" })}
-      </div>
-    );
-  }
-
-  // 메인 화면으로 돌아가도 대화는 그대로 둔다(카톡처럼 계속 이어짐)
+  // 메인 화면으로 돌아가면 대화를 비우고 처음부터. 진행 중이던 답변은 도착해도 버린다(chatSessionRef).
+  const chatSessionRef = useRef(0);
   function goHome() {
+    chatSessionRef.current += 1;
+    abortRef.current?.abort();
+    messagesRef.current.forEach((m) => m.mediaUrl && URL.revokeObjectURL(m.mediaUrl));
+    setMessages([]);
+    setPending(false);
+    setPendingKind(null);
+    setAvatarState("idle");
     setMode("idle");
   }
 
@@ -146,7 +113,7 @@ export default function Main({ dog, resetSignal }) {
   useEffect(() => {
     const list = chatListRef.current;
     list?.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
-  }, [messages, pending, mode]); // 채팅 화면을 다시 열 때도 최신 대화가 보이게
+  }, [messages, pending, mode]);
 
   function speak(answerLength) {
     setAvatarState("talking");
@@ -158,17 +125,20 @@ export default function Main({ dog, resetSignal }) {
   async function send(text) {
     const question = text.trim();
     if (!question || pending) return;
-    // 스타일 바꿀 때의 인사말은 빼고, 오래된 대화까지 다 보내면 느려지므로 최근 20개만 AI에 보낸다
-    const history = messages.filter((m) => !m.intro).slice(-20).map(({ role, text }) => ({ role, text }));
+    // 화면의 대화는 메인으로 가면 지워지지만, AI는 강아지별로 저장해 둔 최근 대화를 계속 기억한다
+    const history = getChatMemory(dog.id);
     setMode("chat");
-    setMessages((m) => [...m, { role: "user", text: question, at: Date.now() }]);
+    setMessages((m) => [...m, { role: "user", text: question }]);
     setInput("");
     setPending(true);
     setPendingKind("text");
     setAvatarState("thinking");
 
+    const session = chatSessionRef.current;
     const { answer, source } = await askAI(dog, question, history, chatMode);
-    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode, at: Date.now() }]);
+    if (source !== "mock") rememberChat(dog.id, question, answer);
+    if (session !== chatSessionRef.current) return; // 그사이 메인 화면으로 돌아감
+    setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode }]);
     setPending(false);
     setPendingKind(null);
     speak(answer.length);
@@ -184,7 +154,7 @@ export default function Main({ dog, resetSignal }) {
     setMode("chat");
     setMessages((m) => [
       ...m,
-      { role: "user", text: isVideo ? "🎥 영상을 보냈어요" : "📷 사진을 보냈어요", mediaUrl, mediaType: isVideo ? "video" : "image", at: Date.now() },
+      { role: "user", text: isVideo ? "🎥 영상을 보냈어요" : "📷 사진을 보냈어요", mediaUrl, mediaType: isVideo ? "video" : "image" },
     ]);
     setPending(true);
     setPendingKind("media");
@@ -193,17 +163,21 @@ export default function Main({ dog, resetSignal }) {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    const session = chatSessionRef.current;
     try {
       const answer = isVideo
         ? await analyzeBehavior(dog, file, controller.signal, chatMode)
         : await analyzeGeneralPhoto(dog, file, controller.signal, chatMode);
-      setMessages((m) => [...m, { role: "ai", text: answer, mediaUrl, mediaType: isVideo ? "video" : "image", chatMode, at: Date.now() }]);
+      rememberChat(dog.id, isVideo ? "(영상을 보내서 분석을 부탁함)" : "(사진을 보내서 분석을 부탁함)", answer);
+      if (session !== chatSessionRef.current) return;
+      setMessages((m) => [...m, { role: "ai", text: answer, mediaUrl, mediaType: isVideo ? "video" : "image", chatMode }]);
       speak(answer.length);
     } catch (err) {
       // 서버까지는 연결됐는데 분석 자체가 실패한 경우(Gemini 과부하/쿼터 초과 등)엔
       // 서버가 알려준 구체적인 이유(err.message)를 그대로 보여준다 — 원인을 뭉뚱그려
       // "서버 연결 실패"로만 보여주면 실제로는 연결이 멀쩡한데도 헷갈리게 된다.
       // fetch 자체가 실패한 경우(TypeError)만 진짜 "서버에 연결 못 했어"로 보여준다.
+      if (session !== chatSessionRef.current) return;
       let text;
       if (err.name === "AbortError") {
         text = "분석을 취소했어!";
@@ -212,12 +186,14 @@ export default function Main({ dog, resetSignal }) {
       } else {
         text = `분석을 못 했어!\n\n${err.message}`;
       }
-      setMessages((m) => [...m, { role: "ai", text, mock: true, at: Date.now() }]);
+      setMessages((m) => [...m, { role: "ai", text, mock: true }]);
       setAvatarState("idle");
     } finally {
-      abortRef.current = null;
-      setPending(false);
-      setPendingKind(null);
+      if (session === chatSessionRef.current) {
+        abortRef.current = null;
+        setPending(false);
+        setPendingKind(null);
+      }
     }
   }
 
@@ -267,7 +243,7 @@ export default function Main({ dog, resetSignal }) {
 
       {isChat && (
         <div ref={chatListRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", paddingBottom: 12 }}>
-          {messages.flatMap((m, i) => [dateDivider(i), (() => {
+          {messages.map((m, i) => {
             if (m.role === "user") {
               return (
                 <div
@@ -322,7 +298,7 @@ export default function Main({ dog, resetSignal }) {
                 {m.mock && <div className="faint" style={{ marginTop: 6 }}>(AI 서버 연결 안 됨)</div>}
               </div>
             );
-          })()])}
+          })}
           {pending && (
             <div className="faint" style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 10 }}>
               {findChatMode(chatMode).pending}
@@ -343,12 +319,6 @@ export default function Main({ dog, resetSignal }) {
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      {!isChat && messages.length > 0 && (
-        <button type="button" className="chip" onClick={() => setMode("chat")} style={{ alignSelf: "center", fontSize: 13, padding: "5px 12px", marginTop: 8 }}>
-          💬 이전 대화 보기
-        </button>
-      )}
-
       <div role="radiogroup" aria-label="채팅 스타일" style={{ display: "flex", gap: 6, marginTop: 12 }}>
         {CHAT_MODES.map((cm) => {
           const selected = chatMode === cm.key;
@@ -364,7 +334,7 @@ export default function Main({ dog, resetSignal }) {
                 setChatMode(cm.key);
                 saveChatMode(cm.key);
                 // 인사말은 채팅 중일 때만 — 메인 화면에서는 스타일만 바뀐다
-                if (isChat) setMessages((m) => [...m, { role: "ai", text: CHAT_MODE_INTROS[cm.key], chatMode: cm.key, intro: true, at: Date.now() }]);
+                if (isChat) setMessages((m) => [...m, { role: "ai", text: CHAT_MODE_INTROS[cm.key], chatMode: cm.key, intro: true }]);
               }}
               style={{
                 flex: 1,

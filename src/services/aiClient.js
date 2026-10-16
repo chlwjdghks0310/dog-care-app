@@ -1,3 +1,4 @@
+import { getWeightRecords } from "./weightLog";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 
@@ -13,6 +14,14 @@ function toDogContext(dog) {
     allergies: dog.allergies,
     notes: dog.notes,
     ageLabel: formatAge(age),
+    // 프로필에 적은 내용 전부 + 최근 체중 변화 — AI가 이걸 보고 우리 강아지에 맞춰 답한다
+    birthDate: dog.birthDate,
+    neutered: dog.neutered,
+    food: dog.food,
+    adoptionDate: dog.adoptionDate,
+    weightHistory: getWeightRecords(dog.id)
+      .slice(-6)
+      .map((r) => `${r.measuredAt.slice(0, 10)} ${r.weightKg}kg`),
   };
 }
 

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
-import { formatKoreanDate } from "../utils/date";
+import { formatKoreanDate, toDateKey } from "../utils/date";
+import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
 import { THEMES, getTheme, setTheme } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
@@ -28,6 +29,12 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onUpdateDog, o
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
 
+  // 체중 관리의 가장 최근 기록이 프로필 체중과 다르면 프로필을 그 값으로 맞춘다
+  useEffect(() => {
+    const latest = getLatestWeightRecord(dog.id);
+    if (latest && latest.weightKg !== dog.weight) onUpdateDog?.(saveDog({ ...dog, weight: latest.weightKg }));
+  }, [dog, onUpdateDog]);
+
   function startEdit() {
     setEditForm({ name: dog.name, weight: dog.weight ?? "", food: dog.food || "", neutered: dog.neutered });
     setEditing(true);
@@ -36,10 +43,18 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onUpdateDog, o
   function handleSaveEdit() {
     const name = editForm.name.trim();
     if (!name) return;
+    let weight = editForm.weight ? Number(editForm.weight) : null;
+    // 체중을 바꾸면 체중 관리에도 오늘 날짜·지금 시각으로 기록을 추가한다.
+    // 프로필 체중은 항상 체중 관리의 가장 최근 기록과 같게 맞춘다.
+    if (weight && weight !== dog.weight) {
+      const now = new Date();
+      addWeightRecord(dog.id, { weightKg: weight, measuredAt: `${toDateKey(now)}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`, note: "프로필에서 변경" });
+      weight = getLatestWeightRecord(dog.id)?.weightKg ?? weight;
+    }
     const updated = saveDog({
       ...dog,
       name,
-      weight: editForm.weight ? Number(editForm.weight) : null,
+      weight,
       food: editForm.food.trim(),
       neutered: editForm.neutered,
     });
