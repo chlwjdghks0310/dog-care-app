@@ -53,3 +53,18 @@ export function deleteExpense(dogId, id) {
   writeJSON(EXPENSES_KEY, all);
   return all[dogId];
 }
+
+// 강아지 용돈(그 달에 쓸 예산). 구조: { [dogId]: { "YYYY-MM": amount } }
+const ALLOWANCE_KEY = "dogcare-allowance-v1";
+
+export function getAllowance(dogId, month) {
+  return readJSON(ALLOWANCE_KEY, {})[dogId]?.[month] ?? null;
+}
+
+export function setAllowance(dogId, month, amount) {
+  const all = readJSON(ALLOWANCE_KEY, {});
+  all[dogId] = { ...(all[dogId] || {}) };
+  if (amount) all[dogId][month] = amount;
+  else delete all[dogId][month];
+  writeJSON(ALLOWANCE_KEY, all);
+}

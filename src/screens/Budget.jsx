@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MonthGrid from "../components/MonthGrid";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import {
@@ -8,12 +8,26 @@ import {
   getExpenses,
   addExpense,
   deleteExpense,
+  getAllowance,
+  setAllowance,
   UNKNOWN_CATEGORY,
 } from "../services/expenses";
 
 const EMOJI_CHOICES = ["🏥", "💊", "💉", "🧸", "🎾", "🧴", "🛁", "✂️", "🦴", "🍖", "🍚", "🥫", "🦮", "🎀", "👕", "🏠", "🚗", "🏨", "🎓", "📸", "🛡️", "🎂", "🧻", "💰"];
 
 const inputStyle = { height: 40, border: "1px solid var(--border)", borderRadius: 10, padding: "0 12px", fontSize: 16, minWidth: 0 };
+
+// 카테고리 색 — 카테고리 목록 순서대로 정해져서 달이 바뀌어도 같은 색
+const CATEGORY_COLORS = ["#e8774a", "#4a90e2", "#5cb85c", "#f0b429", "#9b6dd6", "#e05a8a", "#2bb5a5", "#8d6e63", "#7f8c8d", "#c0392b"];
+
+// 받침 있는 이름은 "초롱이의", 없는 이름은 "보리의"
+const withI = (name) => {
+  const code = name.charCodeAt(name.length - 1) - 0xac00;
+  return code >= 0 && code < 11172 && code % 28 !== 0 ? `${name}이` : name;
+};
+
+// 금액 입력칸을 숫자 길이만큼만(뒤의 "원"이 숫자에 붙도록). 비어 있으면 안내 문구 크기.
+const inputWidth = (text) => (text ? `${text.replace(/,/g, "").length * 0.6 + (text.match(/,/g) || []).length * 0.3 + 0.15}em` : "5em");
 
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 // 달력 칸에 들어갈 짧은 금액: 12,000 → 1.2만
@@ -35,8 +49,26 @@ export default function Budget({ dog }) {
   const [newCatEmoji, setNewCatEmoji] = useState("🎾");
 
   const categoryById = (id) => categories.find((c) => c.id === id) || UNKNOWN_CATEGORY;
+  const colorOf = (id) => {
+    const i = categories.findIndex((c) => c.id === id);
+    return i < 0 ? "#b0a89f" : CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+  };
 
   const monthPrefix = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+  const [allowance, setAllowanceState] = useState(() => getAllowance(dog.id, monthPrefix));
+  const [allowanceText, setAllowanceText] = useState(null); // 입력 중일 때만 문자열
+  useEffect(() => {
+    setAllowanceState(getAllowance(dog.id, monthPrefix));
+    setAllowanceText(null);
+  }, [dog.id, monthPrefix]);
+
+  function saveAllowance() {
+    if (allowanceText === null) return;
+    const amount = Number(allowanceText.replace(/\D/g, "")) || null;
+    setAllowance(dog.id, monthPrefix, amount);
+    setAllowanceState(amount);
+    setAllowanceText(null);
+  }
   const monthExpenses = useMemo(() => expenses.filter((e) => e.date.startsWith(monthPrefix)), [expenses, monthPrefix]);
   const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -91,11 +123,40 @@ export default function Budget({ dog }) {
 
   return (
     <div className="screen">
-      <div className="h1" style={{ marginBottom: 4 }}>가계부</div>
-      <p className="subtle" style={{ marginBottom: 14 }}>
-        {monthDate.getMonth() + 1}월에 {dog.name}에게 쓴 돈{" "}
-        <strong style={{ fontSize: 22, color: "var(--accent-strong)" }}>{won(monthTotal)}</strong>
-      </p>
+      <div className="h1" style={{ marginBottom: 10 }}>가계부</div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+        <div className="card" style={{ flex: 1, minWidth: 0, padding: "12px 14px" }}>
+          <div className="faint">{monthDate.getMonth() + 1}월 지출</div>
+          <strong style={{ fontSize: 20, color: "var(--accent-strong)" }}>{won(monthTotal)}</strong>
+        </div>
+        <label className="card" style={{ flex: 1, minWidth: 0, padding: "12px 14px", cursor: "text" }}>
+          <div className="faint">{withI(dog.name)}의 용돈</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+          <input
+            value={allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")}
+            onFocus={() => setAllowanceText(allowance ? allowance.toLocaleString("ko-KR") : "")}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "");
+              setAllowanceText(digits ? Number(digits).toLocaleString("ko-KR") : "");
+            }}
+            onBlur={saveAllowance}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            inputMode="numeric"
+            placeholder="금액 넣기"
+            aria-label={`${monthDate.getMonth() + 1}월 ${dog.name} 용돈`}
+            style={{ width: inputWidth(allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")), maxWidth: "100%", minWidth: 0, border: "none", background: "none", padding: 0, fontSize: 20, fontWeight: 700, color: "var(--text)" }}
+          />
+          {(allowanceText ?? allowance) ? <strong style={{ fontSize: 20 }}>원</strong> : <span aria-hidden="true">✏️</span>}
+          </div>
+        </label>
+      </div>
+      {allowance ? (
+        <p style={{ margin: "0 0 14px", textAlign: "right", fontWeight: 700, color: allowance - monthTotal >= 0 ? "#2f7fd8" : "#d9443b" }}>
+          {allowance - monthTotal >= 0 ? `+${won(allowance - monthTotal)} 남았어요` : `${won(monthTotal - allowance)} 넘게 썼어요`}
+        </p>
+      ) : (
+        <p className="faint" style={{ margin: "0 0 14px", textAlign: "right" }}>용돈을 넣으면 남은 돈을 알려 드려요</p>
+      )}
 
       <div className="card" style={{ marginBottom: 14 }}>
         <MonthGrid
@@ -118,31 +179,33 @@ export default function Budget({ dog }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2" style={{ marginBottom: 10 }}>카테고리별 지출</div>
+        <div className="h2" style={{ marginBottom: 10 }}>지출 분석</div>
         {byCategory.length === 0 ? (
           <p className="subtle" style={{ margin: 0 }}>이번 달 기록이 아직 없어요.</p>
         ) : (
-          byCategory.map(({ id, total }) => {
-            const cat = categoryById(id);
-            const pct = Math.round((total / monthTotal) * 100);
-            const active = filterCategoryId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setFilterCategoryId(active ? null : id)}
-                style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "6px 0" }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 4, fontWeight: active ? 700 : 400 }}>
-                  <span>{cat.emoji} {cat.name}</span>
-                  <span>{won(total)} <span className="faint">({pct}%)</span></span>
-                </div>
-                <div style={{ height: 8, borderRadius: 4, background: "var(--accent-soft)" }}>
-                  <div style={{ width: `${pct}%`, height: "100%", borderRadius: 4, background: "var(--accent)" }} />
-                </div>
-              </button>
-            );
-          })
+          <>
+            <div style={{ display: "flex", height: 22, borderRadius: 11, overflow: "hidden", gap: 2, marginBottom: 12 }} role="img" aria-label="카테고리별 지출 비율">
+              {byCategory.map(({ id, total }) => (
+                <div key={id} style={{ flex: total, minWidth: 4, background: colorOf(id) }} />
+              ))}
+            </div>
+            {byCategory.map(({ id, total }) => {
+              const cat = categoryById(id);
+              const active = filterCategoryId === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setFilterCategoryId(active ? null : id)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "none", border: "none", padding: "7px 0", fontSize: 14, fontWeight: active ? 700 : 400 }}
+                >
+                  <span style={{ width: 12, height: 12, borderRadius: 4, background: colorOf(id), flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{cat.emoji} {cat.name}</span>
+                  <span>{won(total)} <span className="faint">({Math.round((total / monthTotal) * 100)}%)</span></span>
+                </button>
+              );
+            })}
+          </>
         )}
       </div>
 
