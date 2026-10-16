@@ -13,8 +13,9 @@ import VideoToolbox
 let a = CommandLine.arguments
 let src = AVURLAsset(url: URL(fileURLWithPath: a[1])); let base = a[2]; let S = Int(a[3])!
 let env = ProcessInfo.processInfo.environment
-let EDGE = Int(env["EDGE"] ?? "") ?? 10       // 단단한 털에서 이 거리(px)보다 먼 반투명은 그림자로 보고 지움
-let SOLID = 0.95, CLEAR = 0.06                // 이보다 크면 완전 불투명 / 작으면 완전 투명
+let EDGE = Int(env["EDGE"] ?? "") ?? 6        // 단단한 털에서 이 거리(px)보다 먼 반투명은 그림자로 보고 지움
+let SOLID = Double(env["SOLID"] ?? "") ?? 0.8, CLEAR = Double(env["CLEAR"] ?? "") ?? 0.25 // 이보다 크면 완전 불투명 / 작으면 완전 투명 — 사이는 늘려서 씀(가장자리를 얇고 또렷하게)
+let RIM = Int(env["RIM"] ?? "") ?? 6
 let wm = (x: 0.715, y: 0.945)                 // Kling 워터마크 자리(우측 하단) — 무조건 투명
 
 struct Frame { let w: Int; let h: Int; var rgb: [UInt8] }
@@ -59,7 +60,7 @@ func key(_ f: Frame) -> (alpha: [Double], rgb: [UInt8]) {
   var al = [Double](repeating: 0, count: n)
   for p in 0..<n { let b = min(bands - 1, (p / w) * bands / h)
     let v = 1 - max(0, e(p)) / bandE[b]
-    al[p] = v >= SOLID ? 1 : (v <= CLEAR ? 0 : v) }
+    al[p] = min(1, max(0, (v - CLEAR) / (SOLID - CLEAR))) }
   // 그림자 제거: 불투명 털에서 EDGE px 안쪽의 반투명만 남긴다
   var dist = [Int](repeating: Int.max, count: n); var q: [Int] = []
   for p in 0..<n where al[p] >= 1 { dist[p] = 0; q.append(p) }
@@ -68,11 +69,33 @@ func key(_ f: Frame) -> (alpha: [Double], rgb: [UInt8]) {
     for r in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where r >= 0 && r < n && dist[r] == Int.max { dist[r] = dist[p] + 1; q.append(r) } }
   for p in 0..<n where dist[p] > EDGE { al[p] = 0 }
   for y in Int(Double(h) * wm.y)..<h { for x in Int(Double(w) * wm.x)..<w { al[y * w + x] = 0 } }
+  var near = [Int](repeating: -1, count: n); var q2: [Int] = []
+  for p in 0..<n where al[p] >= 1 { near[p] = p; q2.append(p) }
+  var h2 = 0
+  while h2 < q2.count { let p = q2[h2]; h2 += 1; let x = p % w
+    for r in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where r >= 0 && r < n && near[r] < 0 && al[r] > 0 { near[r] = near[p]; q2.append(r) } }
+  // 가장자리 띠(투명에서 RIM px 안쪽)는 Kling이 털 끝에 초록을 섞어 올리브색이 돼 있다
+  var rim = [Int](repeating: Int.max, count: n); var q3: [Int] = []
+  for p in 0..<n where al[p] < 1 { rim[p] = 0; q3.append(p) }
+  var h3 = 0
+  while h3 < q3.count { let p = q3[h3]; h3 += 1; if rim[p] >= RIM { continue }; let x = p % w
+    for r in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where r >= 0 && r < n && rim[r] == Int.max { rim[r] = rim[p] + 1; q3.append(r) } }
+  var inner = [Int](repeating: -1, count: n); var q4: [Int] = []  // 가장자리 띠 밖(안쪽)에서 가장 가까운 털 픽셀
+  for p in 0..<n where rim[p] > RIM { inner[p] = p; q4.append(p) }
+  var h4 = 0
+  while h4 < q4.count { let p = q4[h4]; h4 += 1; let x = p % w
+    for r in [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w] where r >= 0 && r < n && inner[r] < 0 && al[r] > 0 { inner[r] = inner[p]; q4.append(r) } }
   // 색 복원 + 초록 번짐 제거
   var out = f.rgb
   for p in 0..<n where al[p] > 0 { let B = bandC[min(bands - 1, (p / w) * bands / h)], A = al[p]
     var c = (0..<3).map { Double(f.rgb[p * 3 + $0]) }
-    if A < 1 { c = (0..<3).map { (c[$0] - (1 - A) * B[$0]) / A } }
+    // 많이 투명한 픽셀은 배경을 빼는 계산이 불안정해(초록·회색 얼룩) 가장 가까운 불투명 털 색을 쓴다
+    if A < 1 { c = A >= 0.6 || near[p] < 0 ? (0..<3).map { (c[$0] - (1 - A) * B[$0]) / A } : (0..<3).map { Double(f.rgb[near[p] * 3 + $0]) } }
+    if rim[p] <= RIM, inner[p] >= 0 {  // 가장자리 띠: 안쪽 털의 색조 + 이 픽셀의 밝기(초록이 섞인 색 대신 진짜 털 색)
+      let ic = (0..<3).map { Double(f.rgb[inner[p] * 3 + $0]) }
+      let lum = { (v: [Double]) in 0.3 * v[0] + 0.59 * min(v[1], max(v[0], v[2])) + 0.11 * v[2] }
+      let k = min(1.15, max(0.85, lum(c) / max(1, lum(ic)))) // 초록이 섞여 어두워진 테두리가 회색 선처럼 보이지 않게 밝기 차이는 조금만
+      c = ic.map { $0 * k } }
     c[1] = min(c[1], max(c[0], c[2]))
     for i in 0..<3 { out[p * 3 + i] = UInt8(max(0, min(255, c[i].rounded()))) } }
   return (al, out)
