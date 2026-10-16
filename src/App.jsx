@@ -1,4 +1,5 @@
 import { Fragment, Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
 import { getTodayChecklist } from "./services/careEngine";
 import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, registerServiceWorker, syncPushAlarms } from "./services/notifications";
@@ -149,7 +150,15 @@ export default function App() {
     const dogs = getDogs();
     if (dogs.length < 2) return;
     const idx = dogs.findIndex((d) => d.id === dog.id);
-    setActiveDog(dogs[(idx + 1) % dogs.length]);
+    const next = dogs[(idx + 1) % dogs.length];
+    // 인스타그램 계정 전환처럼 지금 화면은 왼쪽으로 밀려나고 다음 강아지 화면이 오른쪽에서 들어온다.
+    // View Transitions(iOS 18+ 사파리)로 이전·다음 화면을 함께 움직이고, 없으면 새 화면만 오른쪽에서 밀어 넣는다.
+    if (document.startViewTransition) {
+      document.startViewTransition(() => flushSync(() => setActiveDog(next)));
+    } else {
+      setActiveDog(next);
+      pagerRef.current?.animate([{ transform: "translateX(100%)" }, { transform: "translateX(0)" }], { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+    }
   }
 
   function handleBottomNavLongPress(key) {

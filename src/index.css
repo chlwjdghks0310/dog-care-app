@@ -581,3 +581,14 @@ button {
   border-left: 1px solid var(--border);
   box-shadow: -10px 0 18px rgba(0, 0, 0, 0.12);
 }
+
+/* 강아지 전환(프로필 탭 두 번 누르기): 지금 화면은 왼쪽으로, 다음 강아지 화면은 오른쪽에서 — 하단 탭은 그대로 */
+.pager { view-transition-name: dog-pages; }
+::view-transition-old(dog-pages) { animation: 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both dog-slide-out; }
+::view-transition-new(dog-pages) { animation: 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both dog-slide-in; }
+@keyframes dog-slide-out { to { transform: translateX(calc(-100% - 10px)); } }
+@keyframes dog-slide-in { from { transform: translateX(calc(100% + 10px)); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(dog-pages),
+  ::view-transition-new(dog-pages) { animation: none; }
+}
