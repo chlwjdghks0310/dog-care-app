@@ -14,7 +14,7 @@ const VIDEO_SRC = {
 // 파일이 없으면(재생 오류) 기본 영상(public/avatar/*.mp4)으로 대신 보여준다.
 function breedSrc(breed, state, ext = "mp4") {
   const file = state === "thinking" ? "thinking" : "idle";
-  return breed ? `/avatar/${breed}/${file}.${ext}` : null;
+  return KEY_BY_BREED[breed] ? `/avatar/${breed}/${file}.${ext}` : null; // 설정이 없는 견종은 기본 영상
 }
 
 // 사파리/iOS(모든 iOS 브라우저는 WebKit)는 투명 배경 HEVC(.mov)를 그대로 투명하게 재생한다 → 색으로 배경을
@@ -45,7 +45,7 @@ const KEY_BY_BREED = {
   bordercollie: { green: true, alphaMov: true },
   // 포메라니안도 같은 방식 — 밝기로 지우면 눈 흰자·코 하이라이트까지 투명해져서 캐릭터 바깥 배경만 지운 영상을 쓴다.
   // (bakealpha: PLATE_TOL=14 HOLE_FILL=0, thinking은 FLOOR_FROM=0.68)
-  pomeranian: { green: true, alphaMov: true },
+  // pomeranian: { green: true, alphaMov: true }, // 지금은 꺼둠(예전 밝기 키잉으로 비교 중) — 다시 쓰려면 주석만 풀면 됨
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
