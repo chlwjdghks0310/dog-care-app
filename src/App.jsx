@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Fragment, Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
 import { getTodayChecklist } from "./services/careEngine";
 import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, registerServiceWorker, syncPushAlarms } from "./services/notifications";
@@ -27,6 +27,20 @@ import Budget from "./screens/Budget";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import { applyTheme, getTheme } from "./services/themeSettings";
 
+const PARENT_TAB = {
+  week: "home",
+  weight: "home",
+  feeding: "home",
+  alarms: "home",
+  info: "home",
+  health: "home",
+  "health-stool": "home",
+  "health-behavior": "home",
+  "add-dog": "profile",
+  contact: "profile",
+  help: "profile",
+};
+
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
 
@@ -49,25 +63,45 @@ export default function App() {
     setTab(key);
   }
 
-  // 옆으로 스와이프하면 하단 탭 순서대로 이전/다음 탭으로 넘어간다(하단 탭 화면에서만 — 세부 화면은 제외).
-  // 입력칸이나 가로로 스크롤되는 영역에서 시작한 스와이프는 무시한다.
-  const swipeRef = useRef(null);
-  function handleTouchStart(e) {
-    const t = e.touches[0];
-    const blocked = e.target.closest?.("input, textarea, select, [data-no-swipe]") || hasHorizontalScroll(e.target);
-    swipeRef.current = blocked || e.touches.length > 1 ? null : { x: t.clientX, y: t.clientY, at: Date.now() };
+  // 하단 탭(TABS) 안에서 들어가는 세부 화면들 — 같은 페이지 칸에 그려지고, 하단 탭 표시도 부모를 따른다.
+  const pageKey = PARENT_TAB[tab] || tab;
+  const pageIndex = TABS.findIndex((t) => t.key === pageKey);
+  const pagerRef = useRef(null);
+  const touchingRef = useRef(false);
+  const settleTimerRef = useRef(null);
+  const [pageVersion, setPageVersion] = useState(0);
+
+  useEffect(() => setPageVersion((v) => v + 1), [pageKey]);
+
+  // 탭을 눌러 바꾸면 그 페이지로 바로 이동(손가락으로 끄는 중엔 건드리지 않음)
+  useLayoutEffect(() => {
+    const el = pagerRef.current;
+    const page = el?.children[pageIndex];
+    if (!page || touchingRef.current) return;
+    if (Math.abs(el.scrollLeft - page.offsetLeft) > 2) el.scrollTo({ left: page.offsetLeft });
+  }, [pageIndex]);
+
+  // 스와이프가 멈추면(스냅 완료) 보이는 페이지를 현재 탭으로
+  function settlePage() {
+    clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => {
+      const el = pagerRef.current;
+      if (!el || touchingRef.current || el.children.length < 2) return;
+      const step = el.children[1].offsetLeft - el.children[0].offsetLeft;
+      const key = TABS[Math.max(0, Math.min(TABS.length - 1, Math.round(el.scrollLeft / step)))].key;
+      setTab((cur) => ((PARENT_TAB[cur] || cur) === key ? cur : key));
+    }, 120);
   }
-  function handleTouchEnd(e) {
-    const start = swipeRef.current;
-    swipeRef.current = null;
-    const index = TABS.findIndex((t) => t.key === tab);
-    if (!start || index < 0) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - start.at > 700) return;
-    const next = TABS[index + (dx < 0 ? 1 : -1)];
-    if (next) setTab(next.key);
+  // 하단 탭 표시는 끄는 도중에도 화면 절반을 넘는 순간 바로 바뀌게
+  const [visibleIndex, setVisibleIndex] = useState(0);
+  function handlePagerScroll() {
+    const el = pagerRef.current;
+    if (el && el.children.length > 1) setVisibleIndex(Math.round(el.scrollLeft / (el.children[1].offsetLeft - el.children[0].offsetLeft)));
+    settlePage();
+  }
+  function handlePagerTouchEnd() {
+    touchingRef.current = false;
+    settlePage();
   }
 
   // 화면에 보여줄 강아지를 바꿀 때마다(전환·추가·수정) 항상 이 함수로 통일한다 —
@@ -184,59 +218,77 @@ export default function App() {
     );
   }
 
+  const homeScreens = {
+    home: () => (
+      <Home
+        dog={dog}
+        onOpenWeek={() => setTab("week")}
+        onOpenHealth={() => setTab("health")}
+        onOpenFeeding={() => setTab("feeding")}
+        onOpenAlarms={() => setTab("alarms")}
+        onOpenInfo={() => setTab("info")}
+        onOpenWeight={() => setTab("weight")}
+        onOpenMain={() => handleTabChange("main")}
+      />
+    ),
+    week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />,
+    weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("home")} />,
+    feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
+    alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
+    info: () => <Info dog={dog} onBack={() => setTab("home")} />,
+    health: () => (
+      <HealthHub
+        dog={dog}
+        onBack={() => setTab("home")}
+        onOpenStool={() => setTab("health-stool")}
+        onOpenBehavior={() => setTab("health-behavior")}
+      />
+    ),
+    "health-stool": () => <HealthCheck dog={dog} onBack={() => setTab("health")} />,
+    "health-behavior": () => <BehaviorCheck dog={dog} onBack={() => setTab("health")} />,
+  };
+  const profileScreens = {
+    profile: () => (
+      <Profile
+        dog={dog}
+        onOpenContact={() => setTab("contact")}
+        onOpenHelp={() => setTab("help")}
+        onUpdateDog={setActiveDog}
+        onDeleteCurrent={handleDeleteCurrentDog}
+        onDeleteAll={handleDeleteAllDogs}
+        onAddDog={() => setTab("add-dog")}
+      />
+    ),
+    "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
+    contact: () => <Contact onBack={() => setTab("profile")} />,
+    help: () => <Help onBack={() => setTab("profile")} />,
+  };
+  const pages = {
+    // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
+    main: (
+      <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
+        <Main dog={dog} resetSignal={mainResetSignal} />
+      </Suspense>
+    ),
+    home: <Fragment key={pageVersion}>{(homeScreens[tab] || homeScreens.home)()}</Fragment>,
+    calendar: <Calendar key={pageVersion} dog={dog} />,
+    budget: <Budget key={`${dog.id}-${pageVersion}`} dog={dog} />,
+    profile: <Fragment key={pageVersion}>{(profileScreens[tab] || profileScreens.profile)()}</Fragment>,
+  };
+
   return (
-    <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {/* 다른 탭으로 옮겨도 채팅 상태가 유지되도록 언마운트하지 않고 숨김 처리만 한다. */}
-      <div style={{ display: tab === "main" ? "flex" : "none", flexDirection: "column", flex: 1, minHeight: 0 }}>
-        <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-          <Main dog={dog} resetSignal={mainResetSignal} />
-        </Suspense>
+    <div className="app-shell">
+      {/* 인스타그램처럼 옆으로 밀면 옆 탭이 같이 끌려 나온다(브라우저 기본 가로 스크롤 + 스냅이라 손가락 속도·관성이 폰 그대로).
+          화면 사이 틈(gap)으로 두 화면이 구분된다. */}
+      <div ref={pagerRef} className="pager" onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
+        {TABS.map((t) => (
+          <div key={t.key} className="pager-page" aria-hidden={t.key !== pageKey}>
+            {pages[t.key]}
+          </div>
+        ))}
       </div>
-      {tab === "home" && (
-        <Home
-          dog={dog}
-          onOpenWeek={() => setTab("week")}
-          onOpenHealth={() => setTab("health")}
-          onOpenFeeding={() => setTab("feeding")}
-          onOpenAlarms={() => setTab("alarms")}
-          onOpenInfo={() => setTab("info")}
-          onOpenWeight={() => setTab("weight")}
-          onOpenMain={() => handleTabChange("main")}
-        />
-      )}
-      {tab === "week" && <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />}
-      {tab === "weight" && <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("home")} />}
-      {tab === "calendar" && <Calendar dog={dog} />}
-      {tab === "budget" && <Budget key={dog.id} dog={dog} />}
-      {tab === "feeding" && <FeedingPlan dog={dog} onBack={() => setTab("home")} />}
-      {tab === "alarms" && <AlarmSettings dog={dog} onBack={() => setTab("home")} />}
-      {tab === "info" && <Info dog={dog} onBack={() => setTab("home")} />}
-      {tab === "health" && (
-        <HealthHub
-          dog={dog}
-          onBack={() => setTab("home")}
-          onOpenStool={() => setTab("health-stool")}
-          onOpenBehavior={() => setTab("health-behavior")}
-        />
-      )}
-      {tab === "health-stool" && <HealthCheck dog={dog} onBack={() => setTab("health")} />}
-      {tab === "health-behavior" && <BehaviorCheck dog={dog} onBack={() => setTab("health")} />}
-      {tab === "profile" && (
-        <Profile
-          dog={dog}
-          onOpenContact={() => setTab("contact")}
-          onOpenHelp={() => setTab("help")}
-          onUpdateDog={setActiveDog}
-          onDeleteCurrent={handleDeleteCurrentDog}
-          onDeleteAll={handleDeleteAllDogs}
-          onAddDog={() => setTab("add-dog")}
-        />
-      )}
-      {tab === "add-dog" && <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />}
-      {tab === "contact" && <Contact onBack={() => setTab("profile")} />}
-      {tab === "help" && <Help onBack={() => setTab("profile")} />}
       <BottomNav
-        active={tab}
+        active={TABS[visibleIndex]?.key || pageKey}
         onChange={handleTabChange}
         onItemLongPress={handleBottomNavLongPress}
         onItemDoubleTap={handleBottomNavDoubleTap}
@@ -260,9 +312,3 @@ export default function App() {
   );
 }
 
-function hasHorizontalScroll(el) {
-  for (let node = el; node && node !== document.body; node = node.parentElement) {
-    if (node.scrollWidth > node.clientWidth + 1 && /(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
-  }
-  return false;
-}

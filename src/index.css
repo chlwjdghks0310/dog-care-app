@@ -248,6 +248,7 @@ button {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
+  height: 100dvh; /* 페이지마다 따로 세로 스크롤 — 화면 전체는 고정 */
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
@@ -525,4 +526,34 @@ button {
   display: none !important;
   -webkit-appearance: none;
   opacity: 0;
+}
+
+/* 탭 페이지들을 가로로 나란히 두고 옆으로 밀어 넘긴다(인스타그램식). gap이 두 화면 사이의 틈. */
+.pager {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  background: var(--border);
+}
+.pager::-webkit-scrollbar { display: none; }
+.pager-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-align: start;
+  scroll-snap-stop: always; /* 세게 밀어도 한 장씩만 */
+  background-color: var(--bg);
+  background-image: var(--bg-pattern);
+  background-size: var(--bg-pattern-size);
+  background-repeat: repeat;
 }
