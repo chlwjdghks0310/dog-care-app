@@ -301,8 +301,8 @@ export default function Main({ dog, resetSignal }) {
                 if (cm.key === chatMode) return;
                 setChatMode(cm.key);
                 saveChatMode(cm.key);
-                setMode("chat");
-                setMessages((m) => [...m, { role: "ai", text: CHAT_MODE_INTROS[cm.key], chatMode: cm.key, intro: true }]);
+                // 인사말은 채팅 중일 때만 — 메인 화면에서는 스타일만 바뀐다
+                if (isChat) setMessages((m) => [...m, { role: "ai", text: CHAT_MODE_INTROS[cm.key], chatMode: cm.key, intro: true }]);
               }}
               style={{
                 flex: 1,
