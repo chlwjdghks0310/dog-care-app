@@ -25,6 +25,7 @@ export default function Budget({ dog }) {
   const [expenses, setExpenses] = useState(() => getExpenses(dog.id));
   const [categories, setCategories] = useState(getCategories);
   const [filterCategoryId, setFilterCategoryId] = useState(null);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
 
   const [title, setTitle] = useState("");
   const [amountText, setAmountText] = useState("");
@@ -152,9 +153,19 @@ export default function Budget({ dog }) {
               ? `${categoryById(filterCategoryId).emoji} 이번 달 ${categoryById(filterCategoryId).name}`
               : `${formatKoreanDate(selectedDateKey)} 지출`}
           </div>
-          {filterCategoryId && (
+          {filterCategoryId ? (
             <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setFilterCategoryId(null)}>
               날짜별 보기
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="chip"
+              aria-expanded={showCategoryManager}
+              onClick={() => setShowCategoryManager((v) => !v)}
+              style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}
+            >
+              ⚙️ 카테고리 관리
             </button>
           )}
         </div>
@@ -217,58 +228,65 @@ export default function Budget({ dog }) {
         )}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2" style={{ marginBottom: 10 }}>카테고리 관리</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-          {categories.map((c) => (
-            <span key={c.id} className="chip" style={{ fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
-              {c.emoji} {c.name}
-              <button
-                type="button"
-                aria-label={`${c.name} 카테고리 삭제`}
-                onClick={() => handleDeleteCategory(c)}
-                style={{ background: "none", border: "none", padding: "0 4px", color: "inherit" }}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-
-        <form onSubmit={handleAddCategory}>
-          <div className="faint" style={{ marginBottom: 6 }}>이모티콘 고르기 (키보드 이모티콘도 직접 넣을 수 있어요)</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>
-            {EMOJI_CHOICES.map((em) => (
-              <button
-                key={em}
-                type="button"
-                onClick={() => setNewCatEmoji(em)}
-                style={{
-                  fontSize: 20,
-                  padding: "4px 0",
-                  borderRadius: 8,
-                  background: newCatEmoji === em ? "var(--accent-soft)" : "none",
-                  border: newCatEmoji === em ? "2px solid var(--accent)" : "2px solid transparent",
-                }}
-              >
-                {em}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              value={newCatEmoji}
-              onChange={(e) => setNewCatEmoji(e.target.value)}
-              aria-label="카테고리 이모티콘"
-              style={{ ...inputStyle, width: 56, textAlign: "center", fontSize: 20, padding: 0 }}
-            />
-            <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="새 카테고리 이름 (예: 미용)" style={{ ...inputStyle, flex: 1 }} />
-            <button type="submit" className="btn-primary" style={{ width: "auto", padding: "0 16px" }}>
-              추가
+      {showCategoryManager && (
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+            <div className="h2" style={{ margin: 0 }}>카테고리 관리</div>
+            <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setShowCategoryManager(false)}>
+              닫기
             </button>
           </div>
-        </form>
-      </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            {categories.map((c) => (
+              <span key={c.id} className="chip" style={{ fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
+                {c.emoji} {c.name}
+                <button
+                  type="button"
+                  aria-label={`${c.name} 카테고리 삭제`}
+                  onClick={() => handleDeleteCategory(c)}
+                  style={{ background: "none", border: "none", padding: "0 4px", color: "inherit" }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+
+          <form onSubmit={handleAddCategory}>
+            <div className="faint" style={{ marginBottom: 6 }}>이모티콘 고르기 (키보드 이모티콘도 직접 넣을 수 있어요)</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>
+              {EMOJI_CHOICES.map((em) => (
+                <button
+                  key={em}
+                  type="button"
+                  onClick={() => setNewCatEmoji(em)}
+                  style={{
+                    fontSize: 20,
+                    padding: "4px 0",
+                    borderRadius: 8,
+                    background: newCatEmoji === em ? "var(--accent-soft)" : "none",
+                    border: newCatEmoji === em ? "2px solid var(--accent)" : "2px solid transparent",
+                  }}
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={newCatEmoji}
+                onChange={(e) => setNewCatEmoji(e.target.value)}
+                aria-label="카테고리 이모티콘"
+                style={{ ...inputStyle, width: 56, textAlign: "center", fontSize: 20, padding: 0 }}
+              />
+              <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="새 카테고리 이름 (예: 미용)" style={{ ...inputStyle, flex: 1 }} />
+              <button type="submit" className="btn-primary" style={{ width: "auto", padding: "0 16px" }}>
+                추가
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

@@ -57,7 +57,7 @@ Task {
     let r = CMTimeRange(start: CMTime(seconds: cutIn[i], preferredTimescale: 600), end: CMTime(seconds: cutOut[i], preferredTimescale: 600))
     try track.insertTimeRange(r, of: tracks[i], at: cursor); cursor = cursor + r.duration }
   try? FileManager.default.removeItem(at: out)
-  let ex = AVAssetExportSession(asset: comp, presetName: AVAssetExportPresetMediumQuality)!
+  let ex = AVAssetExportSession(asset: comp, presetName: ProcessInfo.processInfo.environment["FULL_RES"] == "1" ? AVAssetExportPresetHighestQuality : AVAssetExportPresetMediumQuality)! // FULL_RES=1: 원본 해상도(다시 생성용 원본)
   ex.outputURL = out; ex.outputFileType = .mp4; ex.shouldOptimizeForNetworkUse = true
   await ex.export()
   print(ex.status == .completed ? "ok \(String(format: "%.2f", CMTimeGetSeconds(cursor)))s" : "fail \(String(describing: ex.error))")

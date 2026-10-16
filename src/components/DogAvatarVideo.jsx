@@ -38,15 +38,16 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 // min: 이보다 어두우면 무조건 캐릭터 / full: 이보다 밝으면 완전히 투명 / 채도가 SATURATION_MAX보다 높으면 캐릭터.
 // 견종 영상마다 배경 회색의 밝기가 달라 따로 맞춘다(실측: 기본 배경 밝기 217~225, 리트리버 201~216).
 const KEY_DEFAULT = { min: 150, full: 210 };
+// green+alphaMov: 미리 투명 처리한 영상 — 사파리는 .mov(투명 배경) 직접 재생, 그 외는 .mp4(초록 배경)를 캔버스에서 키잉.
+// 가만히 있는 영상(idle)은 세 견종 모두 Kling으로 배경만 초록으로 바꾼 뒤 scripts/avatar/greenkey.swift로 처리했다.
+// 고민 영상(thinking)은 아직 회색 배경 원본: 포메·리트리버는 밝기 키잉, 보더콜리는 흰 털 때문에 bakealpha.swift로 처리.
+const PRE_KEYED = { green: true, alphaMov: true };
 const KEY_BY_BREED = {
-  retriever: { min: 160, full: 188 },
-  // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 scripts/avatar/bakealpha.swift로 미리 투명 처리한 영상을 쓴다:
-  // 사파리는 .mov(투명 배경) 직접 재생, 그 외는 .mp4(초록 배경)를 캔버스에서 키잉. 워터마크도 이미 지워짐.
-  bordercollie: { green: true, alphaMov: true },
-  // 포메라니안도 같은 방식 — 밝기로 지우면 눈 흰자·코 하이라이트까지 투명해져서 캐릭터 바깥 배경만 지운 영상을 쓴다.
-  // (bakealpha: PLATE_TOL=14 HOLE_FILL=0, thinking은 FLOOR_FROM=0.68)
-  // pomeranian: { green: true, alphaMov: true }, // 지금은 꺼둠(예전 밝기 키잉으로 비교 중) — 다시 쓰려면 주석만 풀면 됨
+  pomeranian: { idle: PRE_KEYED, thinking: KEY_DEFAULT },
+  retriever: { idle: PRE_KEYED, thinking: { min: 160, full: 188 } },
+  bordercollie: { idle: PRE_KEYED, thinking: PRE_KEYED },
 };
+const keyFor = (breed, state) => KEY_BY_BREED[breed]?.[state === "thinking" ? "thinking" : "idle"];
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
 // 배경을 미리 초록과 섞어 둔 영상(scripts/avatar/bakegreen.swift로 처리)용. 영상 픽셀 = a·캐릭터 + (1-a)·초록 이므로
@@ -100,7 +101,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const frameIdRef = useRef(null);
   const [missing, setMissing] = useState({});
   const [readySrc, setReadySrc] = useState(null); // 첫 프레임을 그린 영상 — 그 전(강아지 바꾸는 사이)엔 로딩 표시
-  const direct = PLAYS_ALPHA_VIDEO && Boolean(KEY_BY_BREED[breed]?.alphaMov); // 투명 .mov를 그대로 보여줌
+  const direct = PLAYS_ALPHA_VIDEO && Boolean(keyFor(breed, state)?.alphaMov); // 투명 .mov를 그대로 보여줌
   const preferred = breedSrc(breed, state, direct ? "mov" : "mp4");
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
@@ -129,7 +130,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
         video.removeEventListener("loadeddata", onReady);
       };
     }
-    const keySettings = (src === preferred && KEY_BY_BREED[breed]) || KEY_DEFAULT;
+    const keySettings = (src === preferred && keyFor(breed, state)) || KEY_DEFAULT;
     let shown = false;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     canvas.width = PROCESS_SIZE;
@@ -216,7 +217,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       clearInterval(watchdog);
       video.removeEventListener("error", onVideoError);
     };
-  }, [src, preferred, breed, direct]);
+  }, [src, preferred, breed, state, direct]);
 
   const showVideo = direct && src === preferred;
   return (
