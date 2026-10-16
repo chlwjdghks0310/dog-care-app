@@ -557,3 +557,27 @@ button {
   background-size: var(--bg-pattern-size);
   background-repeat: repeat;
 }
+
+/* 세부 화면: 옆 탭으로 넘어가지 않고(오른쪽 스와이프는 뒤로가기), 화면 두 장을 겹쳐 둔다 */
+.pager.locked { overflow-x: hidden; }
+.pager-page.has-stack { position: relative; overflow: hidden; }
+.swipe-back { position: absolute; inset: 0; overflow: hidden; }
+.swipe-back-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  background-color: var(--bg);
+  background-image: var(--bg-pattern);
+  background-size: var(--bg-pattern-size);
+  background-repeat: repeat;
+}
+.swipe-back-under { pointer-events: none; transform: translateX(-30%); opacity: 0.6; }
+.swipe-back-top {
+  touch-action: pan-y;
+  /* 밀려나는 화면 왼쪽 가장자리 — 두 화면이 다른 화면인 게 보이게 */
+  border-left: 1px solid var(--border);
+  box-shadow: -10px 0 18px rgba(0, 0, 0, 0.12);
+}

@@ -25,6 +25,7 @@ import Help from "./screens/Help";
 import WeightTracker from "./screens/WeightTracker";
 import Budget from "./screens/Budget";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
+import SwipeBack from "./components/SwipeBack";
 import { applyTheme, getTheme } from "./services/themeSettings";
 
 const PARENT_TAB = {
@@ -40,6 +41,8 @@ const PARENT_TAB = {
   contact: "profile",
   help: "profile",
 };
+// 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
+const BACK_OF = { ...PARENT_TAB, "health-stool": "health", "health-behavior": "health" };
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
@@ -263,6 +266,16 @@ export default function App() {
     contact: () => <Contact onBack={() => setTab("profile")} />,
     help: () => <Help onBack={() => setTab("profile")} />,
   };
+  // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
+  function renderStack(screens, root) {
+    if (!screens[tab] || tab === root) return screens[root]();
+    return (
+      <SwipeBack key={tab} onBack={() => setTab(BACK_OF[tab])} renderUnderlay={screens[BACK_OF[tab]]}>
+        {screens[tab]()}
+      </SwipeBack>
+    );
+  }
+  const inSubScreen = Boolean(PARENT_TAB[tab]);
   const pages = {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
     main: (
@@ -270,19 +283,19 @@ export default function App() {
         <Main dog={dog} resetSignal={mainResetSignal} />
       </Suspense>
     ),
-    home: <Fragment key={pageVersion}>{(homeScreens[tab] || homeScreens.home)()}</Fragment>,
+    home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,
     calendar: <Calendar key={pageVersion} dog={dog} />,
     budget: <Budget key={`${dog.id}-${pageVersion}`} dog={dog} />,
-    profile: <Fragment key={pageVersion}>{(profileScreens[tab] || profileScreens.profile)()}</Fragment>,
+    profile: <Fragment key={pageVersion}>{renderStack(profileScreens, "profile")}</Fragment>,
   };
 
   return (
     <div className="app-shell">
       {/* 인스타그램처럼 옆으로 밀면 옆 탭이 같이 끌려 나온다(브라우저 기본 가로 스크롤 + 스냅이라 손가락 속도·관성이 폰 그대로).
           화면 사이 틈(gap)으로 두 화면이 구분된다. */}
-      <div ref={pagerRef} className="pager" onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
+      <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
         {TABS.map((t) => (
-          <div key={t.key} className="pager-page" aria-hidden={t.key !== pageKey}>
+          <div key={t.key} className={`pager-page${inSubScreen && t.key === pageKey ? " has-stack" : ""}`} aria-hidden={t.key !== pageKey}>
             {pages[t.key]}
           </div>
         ))}
