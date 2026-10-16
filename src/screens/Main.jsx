@@ -23,6 +23,16 @@ const loadChatMode = () => {
 const saveChatMode = (key) => {
   try { sessionStorage.setItem(CHAT_MODE_KEY, key); } catch { /* 저장 못 해도 동작엔 문제 없음 */ }
 };
+// 대화 스타일을 바꾸면 그 강아지가 먼저 인사하며 자기 특징을 알려 준다(고정 문구 — AI에 보내지 않음).
+// 첫 줄은 크게, 나머지는 작게 보인다.
+const CHAT_MODE_INTROS = {
+  pomeranian:
+    "안녕! 난 포메라니안이야 🐶\n궁금한 건 **핵심만 빠르고 짧게** 알려 줄게!\n바쁠 때나 간단히 확인하고 싶을 때 나를 불러 줘. 더 자세히 알고 싶으면 보더콜리한테 물어봐도 좋아!",
+  bordercollie:
+    "안녕! 난 꼼꼼 박사 보더콜리야 🐕\n여러 자료를 **직접 찾아보고 자세하게** 설명해 줄게!\n확인하는 방법, 생각할 수 있는 원인, 집에서 해 볼 것, 병원에 가야 하는 기준까지 차근차근 알려 줘. 대신 자료를 찾느라 **조금 오래 걸릴 수 있어.**",
+  retriever:
+    "안녕! 난 수다쟁이 리트리버야 🦮\n**네 이야기를 들어 주고 같이 노는 걸** 제일 좋아해!\n심심할 때, 오늘 있었던 일을 말하고 싶을 때 언제든 말 걸어 줘. 꼬리 흔들면서 기다릴게!",
+};
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
 
 const IDLE_HEIGHT = 340;
@@ -93,7 +103,7 @@ export default function Main({ dog, resetSignal }) {
   async function send(text) {
     const question = text.trim();
     if (!question || pending) return;
-    const history = messages;
+    const history = messages.filter((m) => !m.intro); // 스타일 바꿀 때의 인사말은 AI에 안 보낸다
     setMode("chat");
     setMessages((m) => [...m, { role: "user", text: question }]);
     setInput("");
@@ -288,8 +298,11 @@ export default function Main({ dog, resetSignal }) {
               aria-checked={selected}
               disabled={pending}
               onClick={() => {
+                if (cm.key === chatMode) return;
                 setChatMode(cm.key);
                 saveChatMode(cm.key);
+                setMode("chat");
+                setMessages((m) => [...m, { role: "ai", text: CHAT_MODE_INTROS[cm.key], chatMode: cm.key, intro: true }]);
               }}
               style={{
                 flex: 1,
