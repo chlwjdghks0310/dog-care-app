@@ -5,18 +5,24 @@ import { getTodayChecklist } from "../services/careEngine";
 import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
-import { readJSON, writeJSON } from "../services/storage";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 
 const CHAT_MODES = [
-  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
   { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
+  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
   { key: "retriever", icon: "🦮", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
 ];
+// 앱을 새로 켜면 항상 포메라니안(첫 번째)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
+const loadChatMode = () => {
+  try { return sessionStorage.getItem(CHAT_MODE_KEY); } catch { return null; }
+};
+const saveChatMode = (key) => {
+  try { sessionStorage.setItem(CHAT_MODE_KEY, key); } catch { /* 저장 못 해도 동작엔 문제 없음 */ }
+};
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
 
 const IDLE_HEIGHT = 340;
@@ -32,7 +38,7 @@ export default function Main({ dog, resetSignal }) {
   const [checklist, setChecklist] = useState([]);
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
-  const [chatMode, setChatMode] = useState(() => findChatMode(readJSON(CHAT_MODE_KEY, null)).key);
+  const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
@@ -283,7 +289,7 @@ export default function Main({ dog, resetSignal }) {
               disabled={pending}
               onClick={() => {
                 setChatMode(cm.key);
-                writeJSON(CHAT_MODE_KEY, cm.key);
+                saveChatMode(cm.key);
               }}
               style={{
                 flex: 1,
