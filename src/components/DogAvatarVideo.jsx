@@ -105,6 +105,29 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const preferred = breedSrc(breed, state, direct ? "mov" : "mp4");
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
+  // 앱을 나갔다 오면 iOS가 영상을 멈춰 두고, 화면에 보이는 <video>엔 재생(▶) 버튼을 띄운다(기기·저전력 모드에 따라 다름).
+  // 돌아오는 순간(화면 다시 보임·페이지 복원·포커스) 바로 다시 재생하고, 저전력 모드처럼 자동재생 자체가
+  // 막힌 경우엔 화면 어디든 처음 터치할 때 재생한다. ▶ 버튼 자체는 index.css에서 숨긴다.
+  useEffect(() => {
+    const resume = () => {
+      const video = videoRef.current;
+      if (video && video.paused && document.visibilityState !== "hidden") video.play().catch(() => {});
+    };
+    const onVisible = () => document.visibilityState === "visible" && resume();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", resume);
+    window.addEventListener("focus", resume);
+    document.addEventListener("touchstart", resume, { passive: true });
+    document.addEventListener("click", resume);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", resume);
+      window.removeEventListener("focus", resume);
+      document.removeEventListener("touchstart", resume);
+      document.removeEventListener("click", resume);
+    };
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -234,6 +257,8 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
         loop
         autoPlay
         playsInline
+        disablePictureInPicture
+        className="avatar-video"
         style={showVideo ? { height: "100%", width: "auto", maxWidth: "100%" } : { display: "none" }}
       />
       <canvas ref={canvasRef} style={showVideo ? { display: "none" } : { height: "100%", width: "auto", maxWidth: "100%" }} />

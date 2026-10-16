@@ -516,3 +516,13 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .avatar-loading { animation: none; }
 }
+
+/* iOS가 멈춘 영상 위에 띄우는 재생(▶) 버튼 숨김 — 캐릭터 영상은 컨트롤 없이 항상 저절로 재생된다 */
+.avatar-video::-webkit-media-controls,
+.avatar-video::-webkit-media-controls-start-playback-button,
+.avatar-video::-webkit-media-controls-panel,
+.avatar-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  opacity: 0;
+}
