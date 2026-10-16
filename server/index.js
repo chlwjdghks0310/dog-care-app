@@ -27,7 +27,7 @@ if (!process.env.GEMINI_API_KEY) {
 // 웹 푸시(VAPID) — 1단계: 구독을 메모리에만 들고 있다가 "테스트 알림 보내기"로 실제로
 // 뜨는지부터 확인한다. 서버 재시작하면 날아가고, 여러 서버 인스턴스 간에도 공유되지 않는다 —
 // 진짜 일정 기반 알림을 붙이려면 이건 DB로 바꿔야 한다(지금은 동작 검증 단계).
-// endpoint → { subscription, alarms: [{ time: "HH:MM", title, body }], timeZone, sentDate, sent: Set }
+// endpoint → { subscription, alarms: [{ time: "HH:MM", title, body, skipDate? }], timeZone, sentDate, sent: Set }
 const pushDevices = new Map();
 const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
 if (vapidConfigured) {
@@ -599,6 +599,7 @@ function checkPushAlarms() {
       device.sent = new Set();
     }
     for (const alarm of device.alarms) {
+      if (alarm.skipDate === now.date) continue; // 오늘 이미 끝낸 체크리스트 항목
       const key = `${alarm.time}|${alarm.title}|${alarm.body}`;
       if (alarm.time === now.time && !device.sent.has(key)) {
         device.sent.add(key);

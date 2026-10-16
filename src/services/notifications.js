@@ -2,7 +2,7 @@
 // 웹 푸시(VAPID) 구독/테스트 함수도 들어있다. 1단계: 실제 기기에서 뜨는지부터 확인하는
 // 용도라, 서버는 구독을 메모리에만 들고 있고 "지금 당장 테스트 알림 보내기"만 지원한다.
 // 일정 시간에 맞춰 서버가 알아서 쏴주는 건 2단계(서버 스케줄러 + DB)에서 붙인다.
-import { minutesBefore, nowLabel as getNowLabel } from "../utils/date";
+import { minutesBefore, nowLabel as getNowLabel, todayKey } from "../utils/date";
 import { playAlarmSound } from "./alarmSounds";
 import { API_BASE } from "./aiClient";
 import { getDogs } from "./dogRepository";
@@ -145,7 +145,9 @@ export function buildPushAlarms() {
   const alarms = [];
   for (const dog of getDogs()) {
     for (const item of getTodayChecklist(dog)) {
-      for (const time of item.suggestedTimes || []) alarms.push({ time, ...checklistMessage(dog, item) });
+      // 오늘 이미 체크한 일은 오늘만 건너뛴다(서버는 매일 같은 알람을 보내므로 내일은 다시 울려야 함)
+      const skipDate = item.completed ? todayKey() : undefined;
+      for (const time of item.suggestedTimes || []) alarms.push({ time, ...checklistMessage(dog, item), skipDate });
     }
     const soakNeeded = getSoakGuidance(calculateAge(dog.birthDate).ageInWeeks).needed === true;
     for (const time of getFeedingSettings(dog.id).times) alarms.push({ time: minutesBefore(time, 30), ...soakMessage(dog, soakNeeded) });

@@ -30,5 +30,7 @@ export function toggleScheduleItem(dogId, dateKey, itemId) {
   const next = items.map((it) => (it.id === itemId ? { ...it, completed: !it.completed } : it));
   all[dogId][dateKey] = next;
   saveAll(all);
+  // 체크하면 푸시 알람 목록을 바로 다시 보낸다(체크한 일은 오늘 알림이 안 오게). 순환 import를 피해 동적으로.
+  import("./notifications").then((m) => m.syncPushAlarms()).catch(() => {});
   return next;
 }
