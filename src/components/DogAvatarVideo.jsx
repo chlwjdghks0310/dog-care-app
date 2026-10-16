@@ -43,6 +43,9 @@ const KEY_BY_BREED = {
   // 보더콜리는 흰 털이 배경 회색과 거의 같은 색이라 scripts/avatar/bakealpha.swift로 미리 투명 처리한 영상을 쓴다:
   // 사파리는 .mov(투명 배경) 직접 재생, 그 외는 .mp4(초록 배경)를 캔버스에서 키잉. 워터마크도 이미 지워짐.
   bordercollie: { green: true, alphaMov: true },
+  // 포메라니안도 같은 방식 — 밝기로 지우면 눈 흰자·코 하이라이트까지 투명해져서 캐릭터 바깥 배경만 지운 영상을 쓴다.
+  // (bakealpha: PLATE_TOL=14 HOLE_FILL=0, thinking은 FLOOR_FROM=0.68)
+  pomeranian: { green: true, alphaMov: true },
 };
 const SATURATION_MAX = 0.15; // 리트리버의 가장 옅은 크림색 털도 채도 0.2 이상이라 안전
 
