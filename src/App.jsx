@@ -165,7 +165,7 @@ export default function App() {
 
   if (route === "onboarding") {
     return (
-      <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="app-shell">
         <Onboarding onStart={() => setRoute("register")} />
       </div>
     );
@@ -185,7 +185,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* 다른 탭으로 옮겨도 채팅 상태가 유지되도록 언마운트하지 않고 숨김 처리만 한다. */}
       <div style={{ display: tab === "main" ? "flex" : "none", flexDirection: "column", flex: 1, minHeight: 0 }}>
         <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
