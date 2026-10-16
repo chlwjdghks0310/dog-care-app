@@ -73,7 +73,8 @@ export default function Main({ dog, resetSignal }) {
 
   // 메인 탭을 이미 보고 있는 상태에서 메인을 다시 누르면 채팅 중이어도 메인 화면으로 돌아간다.
   useEffect(() => {
-    if (resetSignal) setMode("idle");
+    if (resetSignal) goHome();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
   const messagesRef = useRef(messages);
@@ -93,6 +94,26 @@ export default function Main({ dog, resetSignal }) {
     [dog.name, age.ageInWeeks, checklist, dateKey]
   );
 
+  // 메인 화면으로 돌아가면 대화를 비우고 처음부터. 진행 중이던 답변은 도착해도 버린다(chatSessionRef).
+  const chatSessionRef = useRef(0);
+  function goHome() {
+    chatSessionRef.current += 1;
+    abortRef.current?.abort();
+    messagesRef.current.forEach((m) => m.mediaUrl && URL.revokeObjectURL(m.mediaUrl));
+    setMessages([]);
+    setPending(false);
+    setPendingKind(null);
+    setAvatarState("idle");
+    setMode("idle");
+  }
+
+  // 새 메시지나 "생각 중"이 생기면 채팅 목록을 맨 아래로 내려 준다
+  const chatListRef = useRef(null);
+  useEffect(() => {
+    const list = chatListRef.current;
+    list?.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+  }, [messages, pending]);
+
   function speak(answerLength) {
     setAvatarState("talking");
     const talkDuration = Math.min(4000, Math.max(1200, answerLength * 45));
@@ -111,7 +132,9 @@ export default function Main({ dog, resetSignal }) {
     setPendingKind("text");
     setAvatarState("thinking");
 
+    const session = chatSessionRef.current;
     const { answer, source } = await askAI(dog, question, history, chatMode);
+    if (session !== chatSessionRef.current) return; // 그사이 메인 화면으로 돌아감
     setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode }]);
     setPending(false);
     setPendingKind(null);
@@ -137,10 +160,12 @@ export default function Main({ dog, resetSignal }) {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    const session = chatSessionRef.current;
     try {
       const answer = isVideo
         ? await analyzeBehavior(dog, file, controller.signal, chatMode)
         : await analyzeGeneralPhoto(dog, file, controller.signal, chatMode);
+      if (session !== chatSessionRef.current) return;
       setMessages((m) => [...m, { role: "ai", text: answer, mediaUrl, mediaType: isVideo ? "video" : "image", chatMode }]);
       speak(answer.length);
     } catch (err) {
@@ -148,6 +173,7 @@ export default function Main({ dog, resetSignal }) {
       // 서버가 알려준 구체적인 이유(err.message)를 그대로 보여준다 — 원인을 뭉뚱그려
       // "서버 연결 실패"로만 보여주면 실제로는 연결이 멀쩡한데도 헷갈리게 된다.
       // fetch 자체가 실패한 경우(TypeError)만 진짜 "서버에 연결 못 했어"로 보여준다.
+      if (session !== chatSessionRef.current) return;
       let text;
       if (err.name === "AbortError") {
         text = "분석을 취소했어!";
@@ -159,9 +185,11 @@ export default function Main({ dog, resetSignal }) {
       setMessages((m) => [...m, { role: "ai", text, mock: true }]);
       setAvatarState("idle");
     } finally {
-      abortRef.current = null;
-      setPending(false);
-      setPendingKind(null);
+      if (session === chatSessionRef.current) {
+        abortRef.current = null;
+        setPending(false);
+        setPendingKind(null);
+      }
     }
   }
 
@@ -186,7 +214,7 @@ export default function Main({ dog, resetSignal }) {
       )}
 
       <div
-        onClick={() => isChat && setMode("idle")}
+        onClick={() => isChat && goHome()}
         style={{
           position: isChat ? "absolute" : "relative",
           top: isChat ? CORNER_TOP : undefined,
@@ -210,7 +238,7 @@ export default function Main({ dog, resetSignal }) {
       {isChat && avatarState === "thinking" && <ThinkingBubble top={CORNER_TOP} />}
 
       {isChat && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", paddingBottom: 12 }}>
+        <div ref={chatListRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", paddingBottom: 12 }}>
           {messages.map((m, i) => {
             if (m.role === "user") {
               return (
