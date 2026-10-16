@@ -592,3 +592,20 @@ button {
   ::view-transition-old(dog-pages),
   ::view-transition-new(dog-pages) { animation: none; }
 }
+
+/* 채팅 날짜 구분선(카톡처럼) */
+.chat-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.chat-date::before,
+.chat-date::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
