@@ -114,9 +114,9 @@ Task {
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: w, kCVPixelBufferHeightKey as String: h])
     wr.add(input); wr.startWriting(); wr.startSession(atSourceTime: .zero); return (wr, ad) }
   let (wA, aA) = try writer(URL(fileURLWithPath: base + ".mov"), .mov, [AVVideoCodecKey: AVVideoCodecType.hevcWithAlpha, AVVideoWidthKey: w, AVVideoHeightKey: h,
-    AVVideoCompressionPropertiesKey: [AVVideoQualityKey: 0.7, kVTCompressionPropertyKey_TargetQualityForAlpha as String: 0.9]])
+    AVVideoCompressionPropertiesKey: [AVVideoQualityKey: 0.85, kVTCompressionPropertyKey_TargetQualityForAlpha as String: 0.9]])
   let (wG, aG) = try writer(URL(fileURLWithPath: base + ".mp4"), .mp4, [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: w, AVVideoHeightKey: h,
-    AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 1_400_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel]])
+    AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 4_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel]])
   for i in 0..<keyed.count {
     let (alpha, rgb) = keyed[i]
     for (ad, green) in [(aA, false), (aG, true)] {

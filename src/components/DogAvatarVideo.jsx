@@ -39,7 +39,7 @@ const WATERMARK_RECT = { x: 0.8, y: 0.93, w: 0.2, h: 0.08 };
 // 견종 영상마다 배경 회색의 밝기가 달라 따로 맞춘다(실측: 기본 배경 밝기 217~225, 리트리버 201~216).
 const KEY_DEFAULT = { min: 150, full: 210 };
 // green+alphaMov: 미리 투명 처리한 영상 — 사파리는 .mov(투명 배경) 직접 재생, 그 외는 .mp4(초록 배경)를 캔버스에서 키잉.
-// 가만히 있는 영상(idle)은 세 견종 모두 Kling으로 배경만 초록으로 바꾼 뒤 scripts/avatar/greenkey.swift로 처리했다.
+// 가만히 있는 영상(idle)은 세 견종 모두 Kling으로 배경만 초록으로 바꾼 뒤 scripts/avatar/greenkey.swift로 처리했다(960px, RIM=12 EDGE=12).
 // 고민 영상(thinking)은 아직 회색 배경 원본: 포메·리트리버는 밝기 키잉, 보더콜리는 흰 털 때문에 bakealpha.swift로 처리.
 const PRE_KEYED = { green: true, alphaMov: true };
 const KEY_BY_BREED = {
