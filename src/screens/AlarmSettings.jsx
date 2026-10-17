@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { todayKey } from "../utils/date";
 import {
   getCustomSchedules,
   addCustomSchedule,
@@ -21,6 +22,8 @@ export default function AlarmSettings({ dog, onBack }) {
   const [schedules, setSchedules] = useState(() => getCustomSchedules(dog.id));
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("09:00");
+  const [repeat, setRepeat] = useState("daily"); // daily | once
+  const [date, setDate] = useState(todayKey);
   const [sound, setSound] = useState(ALARM_SOUND_LIST[0].id);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [pushStatus, setPushStatus] = useState("");
@@ -34,7 +37,7 @@ export default function AlarmSettings({ dog, onBack }) {
     e.preventDefault();
     if (!title.trim()) return;
     resumeAudioContext();
-    addCustomSchedule(dog.id, { title: title.trim(), time, sound });
+    addCustomSchedule(dog.id, { title: title.trim(), time, sound, date: repeat === "once" ? date : undefined });
     setTitle("");
     refresh();
   }
@@ -132,6 +135,30 @@ export default function AlarmSettings({ dog, onBack }) {
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </div>
           <div className="field">
+            <label>반복</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[["daily", "매일"], ["once", "하루만"]].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className="chip"
+                  style={{
+                    flex: 1,
+                    border: "1px solid var(--border)",
+                    background: repeat === key ? "var(--accent-soft)" : "transparent",
+                    color: repeat === key ? "var(--accent-strong)" : "var(--text-soft)",
+                  }}
+                  onClick={() => setRepeat(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {repeat === "once" && (
+              <input type="date" value={date} min={todayKey()} onChange={(e) => setDate(e.target.value)} style={{ marginTop: 8 }} />
+            )}
+          </div>
+          <div className="field">
             <label>알람 소리</label>
             {SOUND_GROUPS.map((group) => (
               <div key={group} style={{ marginBottom: 8 }}>
@@ -184,7 +211,10 @@ export default function AlarmSettings({ dog, onBack }) {
             >
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{alarm.time} · {alarm.title}</div>
-                <div className="faint">{ALARM_SOUND_LIST.find((s) => s.id === alarm.sound)?.label}</div>
+                <div className="faint">
+                  {alarm.date ? `${alarm.date.slice(5).replace("-", "/")} 하루만${alarm.date < todayKey() ? " (지남)" : ""}` : "매일"} ·{" "}
+                  {ALARM_SOUND_LIST.find((s) => s.id === alarm.sound)?.label}
+                </div>
               </div>
               <input type="checkbox" checked={alarm.enabled} onChange={() => toggleEnabled(alarm)} style={{ width: 20, height: 20 }} />
               <button className="btn-ghost" style={{ padding: "6px 10px" }} onClick={() => handleDelete(alarm.id)}>

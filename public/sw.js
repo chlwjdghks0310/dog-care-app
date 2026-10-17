@@ -10,7 +10,7 @@ self.addEventListener("push", (event) => {
   } catch {
     // JSON이 아니면 기본 문구를 그대로 쓴다.
   }
-  event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: "/favicon.svg" }));
+  event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: "/favicon.svg", vibrate: [400, 150, 400, 150, 400] }));
 });
 
 // 알림을 탭하면 이미 열려 있는 탭이 있으면 그걸 포커스하고, 없으면 새로 연다.

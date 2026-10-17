@@ -354,7 +354,12 @@ function appTools(categories) {
     tool("add_calendar_event", "일정표에 그 날짜의 일정/메모를 추가한다. 시간이 있으면 제목에 포함.", { date: DATE, title: { type: "string" } }, ["date", "title"]),
     tool("add_weight_record", "체중 관리에 체중 기록을 추가한다.", { weight_kg: { type: "number" }, date: DATE, time: { type: "string", description: "HH:MM, 모르면 생략" } }, ["weight_kg", "date"]),
     tool("set_checklist_done", "오늘 체크리스트 항목을 완료(또는 취소) 표시한다. 앱 기록의 오늘 할 일 제목 중 하나여야 한다.", { title: { type: "string", description: "오늘 할 일 제목 그대로" }, done: { type: "boolean" } }, ["title", "done"]),
-    tool("add_alarm", "매일 울리는 알람을 추가한다.", { title: { type: "string" }, time: { type: "string", description: "HH:MM (24시간)" } }, ["title", "time"]),
+    tool(
+      "add_alarm",
+      "알람을 추가한다. 보호자가 '내일만', '10월 20일에', '오늘 한 번만'처럼 특정 날을 말하면 date를 넣어 그날 하루만 울리게 하고, '매일'이거나 날짜 말이 없으면 date 없이 매일 울린다.",
+      { title: { type: "string" }, time: { type: "string", description: "HH:MM (24시간)" }, date: { ...DATE, description: `하루만 울릴 날(매일이면 넣지 않음). ${DATE.description}` } },
+      ["title", "time"]
+    ),
     tool(
       "update_record",
       "이미 있는 기록 1건을 고친다(보호자가 앱에서 [고치기] 버튼을 눌러야 반영됨). id는 앱 기록의 [id:...] 값 그대로. 바꿀 항목만 넣는다.",
@@ -680,6 +685,7 @@ function checkPushAlarms() {
     }
     for (const alarm of device.alarms) {
       if (alarm.skipDate === now.date) continue; // 오늘 이미 끝낸 체크리스트 항목
+      if (alarm.onlyDate && alarm.onlyDate !== now.date) continue; // 하루만 울리는 알람
       const key = `${alarm.time}|${alarm.title}|${alarm.body}`;
       if (alarm.time === now.time && !device.sent.has(key)) {
         device.sent.add(key);

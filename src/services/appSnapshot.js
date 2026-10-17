@@ -54,7 +54,7 @@ export function buildAppSnapshot(dog) {
 
   // 알람·사료
   const alarms = getCustomSchedules(dog.id);
-  if (alarms.length) lines.push("", `[알람] ${alarms.map((a) => `${a.time} ${a.title}${a.enabled ? "" : "(꺼짐)"} [id:${a.id}]`).join(", ")}`);
+  if (alarms.length) lines.push("", `[알람] ${alarms.map((a) => `${a.date ? `${a.date} 하루만 ` : "매일 "}${a.time} ${a.title}${a.enabled ? "" : "(꺼짐)"} [id:${a.id}]`).join(", ")}`);
   const feeding = getFeedingSettings(dog.id);
   if (feeding.times?.length || feeding.kcalPer100g) {
     lines.push(`[사료 계산기] 급여 시각 ${feeding.times?.join(", ") || "없음"}${feeding.kcalPer100g ? `, 사료 열량 ${feeding.kcalPer100g}kcal/100g` : ""}`);

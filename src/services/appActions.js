@@ -54,10 +54,10 @@ function run(dog, a) {
       return `✅ 체크리스트: ${item.title} ${a.done ? "완료" : "완료 취소"}`;
     }
     case "add_alarm": {
-      if (!text(a.title) || !isTime(a.time)) return null;
-      addCustomSchedule(dog.id, { title: text(a.title), time: a.time, sound: ALARM_SOUND_LIST[0].id });
+      if (!text(a.title) || !isTime(a.time) || (a.date && !isDate(a.date))) return null;
+      addCustomSchedule(dog.id, { title: text(a.title), time: a.time, sound: ALARM_SOUND_LIST[0].id, date: a.date });
       syncPushAlarms();
-      return `⏰ 알람: 매일 ${a.time} ${text(a.title)}`;
+      return `⏰ 알람: ${a.date ? `${a.date} 하루만` : "매일"} ${a.time} ${text(a.title)}`;
     }
     default:
       return null;

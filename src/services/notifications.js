@@ -50,12 +50,15 @@ function markNotified(dateKey, itemId, time) {
   localStorage.setItem(`${NOTIFIED_KEY_PREFIX}${dateKey}`, JSON.stringify(set));
 }
 
+// 안드로이드는 진동 패턴을 따른다. 아이폰은 웹에서 진동을 직접 못 켜고, 아이폰 설정(소리 및 햅틱)대로 울린다.
+export const VIBRATE = [400, 150, 400, 150, 400];
+
 async function fireNotification(title, body) {
   const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
   if (registration) {
-    registration.showNotification(title, { body, icon: "/favicon.svg" });
+    registration.showNotification(title, { body, icon: "/favicon.svg", vibrate: VIBRATE });
   } else {
     new Notification(title, { body });
   }
@@ -96,11 +99,12 @@ export function checkCustomAlarms(schedules, dateKey) {
   const notified = readNotifiedSet(dateKey);
 
   for (const alarm of schedules || []) {
-    if (!alarm.enabled) continue;
+    if (!alarm.enabled || (alarm.date && alarm.date !== dateKey)) continue;
     const id = `alarm-${alarm.id}`;
     if (alarm.time === nowLabel && !notified.includes(`${id}-${alarm.time}`)) {
       markNotified(dateKey, id, alarm.time);
       playAlarmSound(alarm.sound);
+      navigator.vibrate?.(VIBRATE);
       if (getPermission() === "granted") {
         const { title, body } = customAlarmMessage(alarm);
         fireNotification(title, body);
@@ -152,7 +156,8 @@ export function buildPushAlarms() {
     const soakNeeded = getSoakGuidance(calculateAge(dog.birthDate).ageInWeeks).needed === true;
     for (const time of getFeedingSettings(dog.id).times) alarms.push({ time: minutesBefore(time, 30), ...soakMessage(dog, soakNeeded) });
     for (const alarm of getCustomSchedules(dog.id)) {
-      if (alarm.enabled) alarms.push({ time: alarm.time, ...customAlarmMessage(alarm) });
+      // 하루만 울리는 알람은 그날만(onlyDate) — 지난 날짜 알람은 보내지 않는다
+      if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ time: alarm.time, ...customAlarmMessage(alarm), onlyDate: alarm.date });
     }
   }
   return alarms;
