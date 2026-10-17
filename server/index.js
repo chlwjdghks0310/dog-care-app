@@ -357,7 +357,7 @@ function appTools(categories) {
     tool("add_alarm", "매일 울리는 알람을 추가한다.", { title: { type: "string" }, time: { type: "string", description: "HH:MM (24시간)" } }, ["title", "time"]),
     tool(
       "update_record",
-      "이미 있는 기록 1건을 고친다(보호자가 앱에서 확인 버튼을 눌러야 반영됨). id는 앱 기록의 [id:...] 값 그대로. 바꿀 항목만 넣는다.",
+      "이미 있는 기록 1건을 고친다(보호자가 앱에서 [고치기] 버튼을 눌러야 반영됨). id는 앱 기록의 [id:...] 값 그대로. 바꿀 항목만 넣는다.",
       {
         kind: KIND,
         id: { type: "string" },
@@ -373,7 +373,7 @@ function appTools(categories) {
     ),
     tool(
       "delete_record",
-      "이미 있는 기록 1건을 지운다(보호자가 앱에서 확인 버튼을 눌러야 지워짐). id는 앱 기록의 [id:...] 값 그대로.",
+      "이미 있는 기록 1건을 지운다(보호자가 앱에서 [지우기] 버튼을 눌러야 지워짐). id는 앱 기록의 [id:...] 값 그대로.",
       { kind: KIND, id: { type: "string" }, summary: { type: "string", description: "지울 기록 한 줄. 예: '10/16 로얄캐닌 사료 32,000원(사료)'" } },
       ["kind", "id", "summary"]
     ),
@@ -386,7 +386,7 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 기록했으면 무엇을 어디에 적었는지(날짜·금액·카테고리 등) 한두 줄로 확인해 준다.
 - "지워줘/삭제해줘/취소해줘" → delete_record, "고쳐줘/바꿔줘/~가 아니라 ~였어" → update_record. 앱 기록에서 [id:...]로 해당 기록을 찾는다.
   해당하는 기록이 여러 개라 어느 건지 애매하거나 못 찾으면 도구를 부르지 말고 후보(날짜·제목·금액)를 짧게 보여 주며 어느 건지 되묻는다.
-  고치기·지우기는 바로 반영되지 않고 앱에 [확인] 버튼이 뜬다 — "아래 버튼을 눌러 주면 고칠게/지울게"처럼 안내하고, 이미 지웠다/고쳤다고 말하지 않는다.`;
+  고치기·지우기는 바로 반영되지 않고 답변 아래에 [고치기]/[지우기] 버튼과 [취소] 버튼이 뜬다 — "아래 [지우기] 버튼을 눌러 주면 지울게"처럼 그 버튼 이름으로 안내하고, 이미 지웠다/고쳤다고 말하지 않는다.`;
 
 app.post("/api/ask", async (req, res) => {
   const { dogContext, question, history, mode, categories } = req.body || {};
