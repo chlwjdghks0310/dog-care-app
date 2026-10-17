@@ -5,7 +5,7 @@ import { getTodayChecklist } from "../services/careEngine";
 import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
-import { getChatMemory, rememberChat } from "../services/chatMemory";
+import { getChatMemory, rememberChat, noteChatResult } from "../services/chatMemory";
 import { applyAppActions, applyConfirmedAction } from "../services/appActions";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
@@ -121,6 +121,8 @@ export default function Main({ dog, resetSignal }) {
     const action = messages[msgIndex]?.records?.confirm?.[j];
     if (!action || action.status) return;
     const status = ok ? applyConfirmedAction(dog, action) || "이미 없거나 고칠 수 없는 기록이에요." : "취소했어요.";
+    const verb = action.type === "delete_record" ? "지우기" : "고치기";
+    noteChatResult(dog.id, ok ? `보호자가 [${verb}]를 눌렀음 → ${status} (${action.summary})` : `보호자가 ${verb}를 취소함 — 다시 제안하지 말 것 (${action.summary})`);
     setMessages((list) =>
       list.map((m, i) =>
         i === msgIndex ? { ...m, records: { ...m.records, confirm: m.records.confirm.map((c, k) => (k === j ? { ...c, status } : c)) } } : m
@@ -151,7 +153,15 @@ export default function Main({ dog, resetSignal }) {
     const { answer, source, actions } = await askAI(dog, question, history, chatMode);
     // AI가 "기록해 줘"를 알아들었으면 앱(가계부·일정표·체중·체크리스트·알람)에 실제로 저장
     const records = actions?.length ? applyAppActions(dog, actions) : null;
-    if (source !== "mock") rememberChat(dog.id, question, answer);
+    if (source !== "mock") {
+      rememberChat(dog.id, question, answer);
+      const notes = [
+        ...(records?.done || []).map((r) => `기록 완료: ${r}`),
+        ...(records?.confirm || []).map((c) => `${c.type === "delete_record" ? "지우기" : "고치기"} 버튼 띄움(보호자 확인 기다림): ${c.summary}`),
+        ...(records?.failed ? ["일부 기록 실패(형식이 맞지 않음)"] : []),
+      ];
+      if (notes.length) noteChatResult(dog.id, notes.join(" / "));
+    }
     if (session !== chatSessionRef.current) return; // 그사이 메인 화면으로 돌아감
     setMessages((m) => [...m, { role: "ai", text: answer, mock: source === "mock", chatMode, records }]);
     setPending(false);

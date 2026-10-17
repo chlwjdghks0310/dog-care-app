@@ -15,3 +15,14 @@ export function rememberChat(dogId, question, answer) {
   all[dogId] = [...(all[dogId] || []), { role: "user", text: question }, { role: "ai", text: answer }].slice(-MAX);
   writeJSON(KEY, all);
 }
+
+// 앱에서 실제로 처리된 결과(기록함·고침·지움·취소)를 AI가 기억하는 마지막 답변에 덧붙인다.
+// AI는 자기 말만 기억하면 "아직 안 했다"고 착각하거나 취소한 고치기를 또 제안한다 → 실제 결과를 함께 기억시킨다.
+export function noteChatResult(dogId, note) {
+  const all = readJSON(KEY, {});
+  const list = all[dogId] || [];
+  const last = list.findLastIndex((m) => m.role === "ai");
+  if (last < 0) return;
+  list[last] = { ...list[last], text: `${list[last].text}\n[앱 처리 결과] ${note}` };
+  writeJSON(KEY, all);
+}
