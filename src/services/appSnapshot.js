@@ -8,7 +8,7 @@ import { getWeightRecords } from "./weightLog";
 import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY } from "./expenses";
 import { toDateKey, todayKey } from "../utils/date";
 
-// AI 채팅에 함께 보내는 "앱 기록 요약" — 체크리스트·일정표·가계부·알람·체중 등 사용자가 앱에 적은 내용을
+// AI 채팅에 함께 보내는 "앱 기록 요약" — [id:...]는 AI가 고치기·지우기할 기록을 가리킬 때 쓴다. — 체크리스트·일정표·가계부·알람·체중 등 사용자가 앱에 적은 내용을
 // 짧은 글로 정리해서, "이번 달 얼마 썼어?", "다음 일정 뭐야?" 같은 질문에 AI가 실제 기록으로 답하게 한다.
 // ponytail: 매번 전체를 요약해서 보냄(기간을 잘라 길이를 제한) — 기록이 아주 많아지면 질문에 맞는 부분만 골라 보내기.
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
@@ -49,12 +49,12 @@ export function buildAppSnapshot(dog) {
     .sort(([a], [b]) => a.localeCompare(b));
   if (events.length) {
     lines.push("", "[일정표 - 보호자가 적은 일정 (지난 30일~앞으로 60일)]");
-    for (const [date, list] of events) lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${list.map((e) => e.title).join(", ")}`);
+    for (const [date, list] of events) lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${list.map((e) => `${e.title} [id:${e.id}]`).join(", ")}`);
   }
 
   // 알람·사료
   const alarms = getCustomSchedules(dog.id);
-  if (alarms.length) lines.push("", `[알람] ${alarms.map((a) => `${a.time} ${a.title}${a.enabled ? "" : "(꺼짐)"}`).join(", ")}`);
+  if (alarms.length) lines.push("", `[알람] ${alarms.map((a) => `${a.time} ${a.title}${a.enabled ? "" : "(꺼짐)"} [id:${a.id}]`).join(", ")}`);
   const feeding = getFeedingSettings(dog.id);
   if (feeding.times?.length || feeding.kcalPer100g) {
     lines.push(`[사료 계산기] 급여 시각 ${feeding.times?.join(", ") || "없음"}${feeding.kcalPer100g ? `, 사료 열량 ${feeding.kcalPer100g}kcal/100g` : ""}`);
@@ -62,7 +62,7 @@ export function buildAppSnapshot(dog) {
 
   // 체중 기록(최근 10개)
   const weights = getWeightRecords(dog.id).slice(-10);
-  if (weights.length) lines.push("", `[체중 관리] ${weights.map((r) => `${r.measuredAt.slice(0, 10)} ${r.weightKg}kg`).join(", ")}`);
+  if (weights.length) lines.push("", `[체중 관리] ${weights.map((r) => `${r.measuredAt.slice(0, 16).replace("T", " ")} ${r.weightKg}kg [id:${r.id}]`).join(", ")}`);
 
   // 가계부 — 이번 달·지난달 합계, 이번 달 카테고리별, 최근 기록
   const categories = getCategories();
@@ -83,8 +83,8 @@ export function buildAppSnapshot(dog) {
     for (const e of inMonth(thisMonth)) byCat[catName(e.categoryId)] = (byCat[catName(e.categoryId)] || 0) + e.amount;
     const catLine = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${won(v)}`).join(", ");
     if (catLine) lines.push(`이번 달 카테고리별: ${catLine}`);
-    const latest = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15);
-    if (latest.length) lines.push(`최근 지출: ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)})`).join("; ")}`);
+    const latest = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+    if (latest.length) lines.push(`최근 지출(최대 30건): ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)}) [id:${e.id}]`).join("; ")}`);
   }
 
   return lines.join("\n");

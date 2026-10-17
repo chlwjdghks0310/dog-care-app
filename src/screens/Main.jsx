@@ -6,7 +6,7 @@ import { getDogGreeting } from "../data/ageFlavorText";
 import { askAI, analyzeGeneralPhoto, analyzeBehavior } from "../services/aiClient";
 import { splitHeadline } from "../utils/text";
 import { getChatMemory, rememberChat } from "../services/chatMemory";
-import { applyAppActions } from "../services/appActions";
+import { applyAppActions, applyConfirmedAction } from "../services/appActions";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
@@ -115,6 +115,18 @@ export default function Main({ dog, resetSignal }) {
     const list = chatListRef.current;
     list?.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages, pending, mode]);
+
+  // 채팅의 고치기·지우기 확인 버튼 — 누른 결과를 그 자리에 남긴다
+  function resolveConfirm(msgIndex, j, ok) {
+    const action = messages[msgIndex]?.records?.confirm?.[j];
+    if (!action || action.status) return;
+    const status = ok ? applyConfirmedAction(dog, action) || "이미 없거나 고칠 수 없는 기록이에요." : "취소했어요.";
+    setMessages((list) =>
+      list.map((m, i) =>
+        i === msgIndex ? { ...m, records: { ...m.records, confirm: m.records.confirm.map((c, k) => (k === j ? { ...c, status } : c)) } } : m
+      )
+    );
+  }
 
   function speak(answerLength) {
     setAvatarState("talking");
@@ -306,6 +318,26 @@ export default function Main({ dog, resetSignal }) {
                     ))}
                   </div>
                 )}
+                {m.records?.confirm?.map((c, j) => (
+                  <div key={j} style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 13, lineHeight: 1.5 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                      {c.type === "delete_record" ? "🗑️ 이 기록을 지울까요?" : "✏️ 이렇게 고칠까요?"}
+                    </div>
+                    <div style={{ marginBottom: 8 }}>{c.summary}</div>
+                    {c.status ? (
+                      <div className="faint">{c.status}</div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button type="button" className="btn-primary" style={{ flex: 1, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, true)}>
+                          {c.type === "delete_record" ? "지우기" : "고치기"}
+                        </button>
+                        <button type="button" className="btn-ghost" style={{ flex: 1, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, false)}>
+                          취소
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
                 {m.records?.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>기록하지 못한 내용이 있어요. 조금 더 자세히 말해 주세요.</div>}
                 {m.mock && <div className="faint" style={{ marginTop: 6 }}>(AI 서버 연결 안 됨)</div>}
               </div>

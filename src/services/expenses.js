@@ -68,3 +68,10 @@ export function setAllowance(dogId, month, amount) {
   else delete all[dogId][month];
   writeJSON(ALLOWANCE_KEY, all);
 }
+
+export function updateExpense(dogId, id, patch) {
+  const all = readJSON(EXPENSES_KEY, {});
+  all[dogId] = (all[dogId] || []).map((e) => (e.id === id ? { ...e, ...patch } : e));
+  writeJSON(EXPENSES_KEY, all);
+  return all[dogId];
+}

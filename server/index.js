@@ -337,6 +337,7 @@ async function createWithContinuation(params, messages) {
 
 // 채팅으로 앱에 기록하기 — AI가 아래 도구를 부르면 서버는 저장하지 않고(기록은 폰에 있음) 그대로 앱에 돌려주고,
 // 앱이 확인 후 저장한다. 정보가 모자라면 도구를 부르지 말고 되묻게 한다.
+const KIND = { type: "string", enum: ["expense", "calendar_event", "weight", "alarm"], description: "expense=가계부 지출, calendar_event=일정표 일정, weight=체중 기록, alarm=알람" };
 const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
 function appTools(categories) {
   const category = Array.isArray(categories) && categories.length
@@ -354,13 +355,38 @@ function appTools(categories) {
     tool("add_weight_record", "체중 관리에 체중 기록을 추가한다.", { weight_kg: { type: "number" }, date: DATE, time: { type: "string", description: "HH:MM, 모르면 생략" } }, ["weight_kg", "date"]),
     tool("set_checklist_done", "오늘 체크리스트 항목을 완료(또는 취소) 표시한다. 앱 기록의 오늘 할 일 제목 중 하나여야 한다.", { title: { type: "string", description: "오늘 할 일 제목 그대로" }, done: { type: "boolean" } }, ["title", "done"]),
     tool("add_alarm", "매일 울리는 알람을 추가한다.", { title: { type: "string" }, time: { type: "string", description: "HH:MM (24시간)" } }, ["title", "time"]),
+    tool(
+      "update_record",
+      "이미 있는 기록 1건을 고친다(보호자가 앱에서 확인 버튼을 눌러야 반영됨). id는 앱 기록의 [id:...] 값 그대로. 바꿀 항목만 넣는다.",
+      {
+        kind: KIND,
+        id: { type: "string" },
+        summary: { type: "string", description: "보호자에게 보여 줄 변경 내용 한 줄. 예: '10/16 로얄캐닌 사료 32,000원 → 35,000원'" },
+        title: { type: "string" },
+        amount: { type: "integer" },
+        date: DATE,
+        category,
+        weight_kg: { type: "number" },
+        time: { type: "string", description: "HH:MM" },
+      },
+      ["kind", "id", "summary"]
+    ),
+    tool(
+      "delete_record",
+      "이미 있는 기록 1건을 지운다(보호자가 앱에서 확인 버튼을 눌러야 지워짐). id는 앱 기록의 [id:...] 값 그대로.",
+      { kind: KIND, id: { type: "string" }, summary: { type: "string", description: "지울 기록 한 줄. 예: '10/16 로얄캐닌 사료 32,000원(사료)'" } },
+      ["kind", "id", "summary"]
+    ),
   ];
 }
 const APP_TOOL_RULES = `[앱에 기록하기]
 보호자가 "기록해줘/적어줘/추가해줘/넣어줘"처럼 앱에 남겨 달라고 하거나, "오늘 사료 3만원 샀어", "내일 3시 미용 예약", "몸무게 3.4kg 됐어", "산책 다녀왔어"처럼 기록할 일을 분명히 말하면 알맞은 도구로 기록한다.
 - 필요한 정보(금액, 날짜, 무엇을, 체중 숫자, 알람 시각 등)가 빠졌거나 애매하면 도구를 부르지 말고, 무엇을 더 알려 주면 되는지 짧고 구체적으로 되묻는다(예: "얼마 썼는지 알려 주면 바로 적어 둘게!").
 - 그냥 질문하거나 이야기만 하는 경우엔 기록하지 않는다. 같은 내용을 두 번 기록하지 않는다.
-- 기록했으면 무엇을 어디에 적었는지(날짜·금액·카테고리 등) 한두 줄로 확인해 준다.`;
+- 기록했으면 무엇을 어디에 적었는지(날짜·금액·카테고리 등) 한두 줄로 확인해 준다.
+- "지워줘/삭제해줘/취소해줘" → delete_record, "고쳐줘/바꿔줘/~가 아니라 ~였어" → update_record. 앱 기록에서 [id:...]로 해당 기록을 찾는다.
+  해당하는 기록이 여러 개라 어느 건지 애매하거나 못 찾으면 도구를 부르지 말고 후보(날짜·제목·금액)를 짧게 보여 주며 어느 건지 되묻는다.
+  고치기·지우기는 바로 반영되지 않고 앱에 [확인] 버튼이 뜬다 — "아래 버튼을 눌러 주면 고칠게/지울게"처럼 안내하고, 이미 지웠다/고쳤다고 말하지 않는다.`;
 
 app.post("/api/ask", async (req, res) => {
   const { dogContext, question, history, mode, categories } = req.body || {};
