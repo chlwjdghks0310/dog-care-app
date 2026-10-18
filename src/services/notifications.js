@@ -58,7 +58,7 @@ async function fireNotification(title, body) {
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
   if (registration) {
-    registration.showNotification(title, { body, icon: "/favicon.svg", vibrate: VIBRATE });
+    registration.showNotification(title, { body, icon: "/icon-192.png", vibrate: VIBRATE });
   } else {
     new Notification(title, { body });
   }
