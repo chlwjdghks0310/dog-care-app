@@ -65,8 +65,11 @@ export function buildAppSnapshot(dog) {
       const stock = getStockInfo(dog.id, m);
       lines.push(`- ${m.name} 1회 ${m.dose}, ${m.days?.length ? `요일 ${m.days.map((d) => "일월화수목금토"[d]).join("")}` : "매일"} ${m.times.join(", ")}, ${m.startDate}~${m.endDate || "계속"}${m.purpose ? `, 메모: ${m.purpose}` : ""}${stock ? `, 남은 수량 ${stock.remaining}개` : ""}`);
     }
-    const doses = getDosesForDate(dog.id, today);
-    if (doses.length) lines.push(`오늘 복용: ${doses.map((d) => `${d.time} ${d.med.name} ${STATUS[d.status]}${d.status === "done" ? `(${d.record.doneAt.slice(11, 16)})` : ""}`).join(", ")}`);
+    // 어제·오늘 복용 건 — [복용:...]은 AI가 "먹였어" 기록할 때 가리키는 값
+    for (const [label, date] of [["어제", daysFrom(-1)], ["오늘", today]]) {
+      const doses = getDosesForDate(dog.id, date);
+      if (doses.length) lines.push(`${label}(${date}) 복용: ${doses.map((d) => `${d.time} ${d.med.name} ${d.med.dose} ${STATUS[d.status]}${d.status === "done" ? `(${d.record.doneAt.slice(11, 16)}에 먹임)` : ""} [복용:${d.key}]`).join(", ")}`);
+    }
   }
   const feeding = getFeedingSettings(dog.id);
   if (feeding.times?.length || feeding.kcalPer100g) {

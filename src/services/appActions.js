@@ -7,7 +7,8 @@ import { getTodayChecklist } from "./careEngine";
 import { addCustomSchedule, deleteCustomSchedule, getCustomSchedules, updateCustomSchedule } from "./customSchedules";
 import { ALARM_SOUND_LIST } from "./alarmSounds";
 import { syncPushAlarms } from "./notifications";
-import { todayKey } from "../utils/date";
+import { todayKey, nowLabel } from "../utils/date";
+import { getDosesForDate, markDoseDone, markDoseSkipped, undoDose, editDoneTime } from "./medications";
 
 // 채팅 AI가 "기록해 달라"는 요청을 받아 보낸 동작(actions)을 실제로 앱에 저장한다.
 // AI가 보낸 값은 그대로 믿지 않고 형식을 확인한 뒤 저장하고, 결과를 한 줄씩 돌려준다(채팅에 표시).
@@ -58,6 +59,29 @@ function run(dog, a) {
       addCustomSchedule(dog.id, { title: text(a.title), time: a.time, sound: ALARM_SOUND_LIST[0].id, date: a.date });
       syncPushAlarms();
       return `⏰ 알람: ${a.date ? `${a.date} 하루만` : "매일"} ${a.time} ${text(a.title)}`;
+    }
+    case "mark_med_dose": {
+      // 기록할 수 있는 건 앱에 있는 복용 건뿐 — AI가 보낸 값은 [복용:...] 목록에서 다시 찾는다
+      const date = String(a.dose || "").split("|")[1];
+      const dose = isDate(date) && getDosesForDate(dog.id, date).find((d) => d.key === a.dose);
+      if (!dose || date > todayKey()) return null;
+      const label = `${date === todayKey() ? "오늘" : date} ${dose.time} ${dose.med.name} ${dose.med.dose}`;
+      if (a.status === "undo") return undoDose(dog.id, dose) ? `💊 약 기록 취소: ${label}` : null;
+      if (a.status === "skipped") {
+        markDoseSkipped(dog.id, dose);
+        syncPushAlarms();
+        return `💊 약: ${label} 건너뜀`;
+      }
+      if (a.status !== "done") return null;
+      const time = isTime(a.time) ? a.time : nowLabel();
+      if (date === todayKey() && time > nowLabel()) return null; // 아직 오지 않은 시각에 먹였다고 기록하지 않는다
+      if (dose.record?.status === "done") {
+        if (isTime(a.time)) editDoneTime(dog.id, dose, a.time); // 시각을 말했을 때만 고친다
+        return `💊 약: ${label} — 이미 먹인 걸로 기록돼 있어요(먹인 시각 ${isTime(a.time) ? a.time : dose.record.doneAt.slice(11, 16)})`;
+      }
+      markDoseDone(dog.id, dose, `${date}T${time}:00`);
+      syncPushAlarms();
+      return `💊 약: ${label} 먹임 (${time})`;
     }
     default:
       return null;

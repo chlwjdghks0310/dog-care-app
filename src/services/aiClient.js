@@ -4,7 +4,8 @@ import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
+// env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
+export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
 
 // 요약을 만들다 오류가 나도 채팅은 되게
 function safeSnapshot(dog) {

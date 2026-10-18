@@ -80,4 +80,21 @@ M.deleteMedSeries(D, med.seriesId);
 assert.equal(M.getMeds(D).filter((m) => m.seriesId === med.seriesId).length, 0);
 assert.equal(M.getDosesForDate(D, day(-1)).length, 0);
 
+// 채팅 "8시에 약 먹였어" → mark_med_dose
+globalThis.window = globalThis;
+const { applyAppActions } = await import("../src/services/appActions.js");
+const dog = { id: "dog-c", name: "콩이" };
+M.addMed(dog.id, { name: "관절약", dose: "1알", times: ["00:00"], startDate: day(-1) });
+const yKey = M.getDosesForDate(dog.id, day(-1))[0].key;
+let r = applyAppActions(dog, [{ type: "mark_med_dose", dose: yKey, status: "done", time: "08:10" }]);
+assert.equal(r.done.length, 1, r.done.join());
+assert.equal(M.getDosesForDate(dog.id, day(-1))[0].record.doneAt, `${day(-1)}T08:10:00`);
+r = applyAppActions(dog, [{ type: "mark_med_dose", dose: yKey, status: "done" }]); // 다시 말해도 중복 없음, 시각 그대로
+assert.match(r.done[0], /이미 먹인/);
+assert.equal(M.getDosesForDate(dog.id, day(-1))[0].record.doneAt, `${day(-1)}T08:10:00`);
+r = applyAppActions(dog, [{ type: "mark_med_dose", dose: "없는|2020-01-01|08:00", status: "done" }, { type: "mark_med_dose", dose: `${yKey.split("|")[0]}|${today}|23:59`, status: "done", time: "23:59" }]);
+assert.equal(r.failed, 2, "없는 복용 건·아직 안 온 시각은 기록 안 함");
+r = applyAppActions(dog, [{ type: "mark_med_dose", dose: yKey, status: "undo" }]);
+assert.equal(M.getDosesForDate(dog.id, day(-1))[0].status, "check");
+
 console.log("약 관리 확인 통과");
