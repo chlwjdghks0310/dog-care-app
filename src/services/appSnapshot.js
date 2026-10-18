@@ -3,6 +3,7 @@ import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "./careEng
 import { getScheduleForDate } from "./scheduleRepository";
 import { getEventsByDog } from "./calendarEvents";
 import { getCustomSchedules } from "./customSchedules";
+import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getFeedingSettings } from "./feedingSettings";
 import { getWeightRecords } from "./weightLog";
 import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY } from "./expenses";
@@ -55,6 +56,18 @@ export function buildAppSnapshot(dog) {
   // 알람·사료
   const alarms = getCustomSchedules(dog.id);
   if (alarms.length) lines.push("", `[알람] ${alarms.map((a) => `${a.date ? `${a.date} 하루만 ` : "매일 "}${a.time} ${a.title}${a.enabled ? "" : "(꺼짐)"} [id:${a.id}]`).join(", ")}`);
+  // 약 — AI는 읽기만 한다(용량·횟수 변경이나 복용 기록은 보호자가 약 관리 화면에서)
+  const meds = getMeds(dog.id).filter((m) => !isEnded(m, today));
+  if (meds.length) {
+    const STATUS = { planned: "예정", done: "먹임", skipped: "건너뜀", check: "기록 없음(확인 필요)" };
+    lines.push("", "[약 관리 - 처방대로 보호자가 적은 것]");
+    for (const m of meds) {
+      const stock = getStockInfo(dog.id, m);
+      lines.push(`- ${m.name} 1회 ${m.dose}, ${m.days?.length ? `요일 ${m.days.map((d) => "일월화수목금토"[d]).join("")}` : "매일"} ${m.times.join(", ")}, ${m.startDate}~${m.endDate || "계속"}${m.purpose ? `, 메모: ${m.purpose}` : ""}${stock ? `, 남은 수량 ${stock.remaining}개` : ""}`);
+    }
+    const doses = getDosesForDate(dog.id, today);
+    if (doses.length) lines.push(`오늘 복용: ${doses.map((d) => `${d.time} ${d.med.name} ${STATUS[d.status]}${d.status === "done" ? `(${d.record.doneAt.slice(11, 16)})` : ""}`).join(", ")}`);
+  }
   const feeding = getFeedingSettings(dog.id);
   if (feeding.times?.length || feeding.kcalPer100g) {
     lines.push(`[사료 계산기] 급여 시각 ${feeding.times?.join(", ") || "없음"}${feeding.kcalPer100g ? `, 사료 열량 ${feeding.kcalPer100g}kcal/100g` : ""}`);

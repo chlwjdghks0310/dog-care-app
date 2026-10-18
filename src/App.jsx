@@ -2,7 +2,7 @@ import { Fragment, Suspense, lazy, useEffect, useLayoutEffect, useRef, useState 
 import { flushSync } from "react-dom";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
 import { getTodayChecklist } from "./services/careEngine";
-import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, registerServiceWorker, syncPushAlarms } from "./services/notifications";
+import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, checkMedAlarms, registerServiceWorker, syncPushAlarms } from "./services/notifications";
 import { getFeedingSettings } from "./services/feedingSettings";
 import { getCustomSchedules } from "./services/customSchedules";
 import { getSoakGuidance } from "./data/feedingGuide";
@@ -25,6 +25,7 @@ import Contact from "./screens/Contact";
 import Help from "./screens/Help";
 import WeightTracker from "./screens/WeightTracker";
 import Budget from "./screens/Budget";
+import Medications from "./screens/Medications";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
 import { applyTheme, getTheme } from "./services/themeSettings";
@@ -32,6 +33,7 @@ import { applyTheme, getTheme } from "./services/themeSettings";
 const PARENT_TAB = {
   week: "home",
   weight: "home",
+  meds: "home",
   feeding: "home",
   alarms: "home",
   info: "home",
@@ -58,6 +60,7 @@ export default function App() {
   const [tab, setTab] = useState("main");
   const [mainResetSignal, setMainResetSignal] = useState(0);
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
+  const [medFocus, setMedFocus] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
   // 메인 탭이 이미 열려 있는 상태에서 메인을 또 누르면(채팅 중이어도) 메인 화면으로 리셋한다.
   function handleTabChange(key) {
@@ -169,14 +172,30 @@ export default function App() {
     if (key === "profile") handleToggleNextDog();
   }
 
+  // 복용 알림 주소(/?dog=..&dose=..)로 열리면 그 강아지의 약 관리 화면, 해당 복용 건으로
+  function openFromUrl(url) {
+    const params = new URL(url, location.origin).searchParams;
+    const target = getDogs().find((d) => d.id === params.get("dog"));
+    if (!target || !params.get("dose")) return false;
+    setActiveDog(target);
+    setMedFocus(params.get("dose"));
+    setTab("meds");
+    return true;
+  }
+
   useEffect(() => {
     const dogs = getDogs();
     if (dogs.length > 0) {
       const activeId = getActiveDogId();
       setActiveDog(dogs.find((d) => d.id === activeId) || dogs[0]);
       setRoute("app");
+      if (openFromUrl(location.href)) history.replaceState(null, "", "/");
     }
     setLoading(false);
+    // 앱이 이미 켜져 있을 때 알림을 누르면 서비스워커가 주소를 보내 준다
+    const onMessage = (e) => e.data?.type === "open-url" && openFromUrl(e.data.url);
+    navigator.serviceWorker?.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMessage);
   }, []);
 
   // 앱이 켜져 있는 동안, 등록된 모든 강아지의 오늘 일정 권장 시간대가 되면 알림을 띄운다
@@ -195,6 +214,7 @@ export default function App() {
           checkFeedingSoakReminders(d, feedingSettings.times, soak.needed === true, dateKey);
         }
         checkCustomAlarms(getCustomSchedules(d.id), dateKey);
+        checkMedAlarms(d, dateKey);
       }
     }, 30 * 1000);
     // 앱을 열 때와 백그라운드로 보낼 때마다 최신 알람 목록을 서버에 보내, 앱이 꺼져 있어도 서버가 푸시를 쏘게 한다.
@@ -246,11 +266,13 @@ export default function App() {
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
         onOpenWeight={() => setTab("weight")}
+        onOpenMeds={() => setTab("meds")}
         onOpenMain={() => handleTabChange("main")}
       />
     ),
     week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />,
     weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("home")} />,
+    meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("home"))} />,
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,

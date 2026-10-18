@@ -647,3 +647,27 @@ button {
 .onb-answer input:not([type="checkbox"]) { font-size: 17px; }
 .onb-answer .chip { justify-content: center; text-align: center; font-size: 15px; }
 .onb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; max-height: 260px; overflow-y: auto; }
+
+/* 홈: 체중 체크 · 약 관리 작은 상자 */
+.mini-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.mini-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); color: var(--text); min-width: 0; }
+.mini-card:active { background: var(--accent-soft); }
+.mini-card-title { font-size: 15px; font-weight: 700; }
+.mini-card-text { font-size: 12.5px; color: var(--text-soft); line-height: 1.35; }
+
+/* 약 관리 */
+.link-btn { background: none; border: none; color: var(--accent-strong); font-size: 13.5px; font-weight: 600; padding: 6px 2px; cursor: pointer; }
+.seg { flex: 1; min-width: 0; padding: 9px 0; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-soft); font-size: 14px; font-weight: 600; }
+.seg.on { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+.btn-primary.small, .btn-ghost.small { width: auto; padding: 9px 14px; font-size: 14px; }
+.med-date { border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; font-size: 14px; color: var(--text); background: var(--surface); }
+.med-alert { padding: 12px 14px; background: var(--warning-bg); border-color: var(--warning); font-size: 14px; line-height: 1.5; }
+.med-dose { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.med-dose:last-child { border-bottom: none; }
+.med-dose.focused { background: var(--accent-soft); border-radius: 12px; padding: 12px 8px; }
+.med-dose-time { font-size: 17px; font-weight: 800; color: var(--accent-strong); min-width: 48px; padding-top: 1px; font-variant-numeric: tabular-nums; }
+.med-dose-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.med-status { display: inline-block; margin-top: 4px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.med-time-input { border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; font-size: 13px; color: var(--text); background: var(--surface); }
+.med-summary { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; background: none; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 15px; }
+.med-photo { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); font-size: 22px; }

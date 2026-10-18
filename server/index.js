@@ -394,7 +394,10 @@ const APP_TOOL_RULES = `[앱에 기록하기]
   고치기·지우기는 바로 반영되지 않고 답변 아래에 [고치기]/[지우기] 버튼과 [취소] 버튼이 뜬다 — "아래 [지우기] 버튼을 눌러 주면 지울게"처럼 그 버튼 이름으로 안내하고, 이미 지웠다/고쳤다고 말하지 않는다.
 - 지난 답변 끝의 [앱 처리 결과]는 앱에서 실제로 일어난 일이다(기록 완료, 버튼을 눌러 고침·지움, 취소함). 이것과 지금 앱 기록을 기준으로 판단한다:
   이미 기록·처리된 일을 "안 했다"고 말하거나 다시 기록하지 않고, 보호자가 취소한 고치기·지우기를 다시 제안하지 않는다.
-  도구는 이번 메시지에서 보호자가 새로 시킨 일에만 쓴다. 지난 대화의 요청을 다시 처리하지 않는다.`;
+  도구는 이번 메시지에서 보호자가 새로 시킨 일에만 쓴다. 지난 대화의 요청을 다시 처리하지 않는다.
+- [약 관리]는 보호자가 처방대로 적은 내용이다. 약의 용량·횟수·복용 간격을 정하거나 바꾸자고 하지 않는다(바꿀 일은 수의사와 상의).
+  약을 기록하는 도구는 없다 — "약 먹였어"라고 하면 기록했다고 말하지 말고, 홈의 [약 관리]나 오늘 할 일에서 체크해 달라고 안내한다.
+  놓친 약을 더 먹이거나 두 배로 먹이라고 하지 않는다. 구토·설사·처짐·발진·호흡 이상 등 이상 반응이 의심되면 약을 임의로 더 주거나 끊지 말고 바로 수의사에게 문의하라고 한다.`;
 
 app.post("/api/ask", async (req, res) => {
   const { dogContext, question, history, mode, categories } = req.body || {};
@@ -637,9 +640,9 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), (req, res) => {
   res.json({ ok: true, alarms: pushDevices.get(subscription.endpoint).alarms.length });
 });
 
-async function sendPush(device, title, body) {
+async function sendPush(device, title, body, url) {
   try {
-    await webpush.sendNotification(device.subscription, JSON.stringify({ title, body }));
+    await webpush.sendNotification(device.subscription, JSON.stringify({ title, body, url }));
     return true;
   } catch (err) {
     // 만료되었거나 더 이상 유효하지 않은 구독(410/404)은 목록에서 정리한다.
@@ -686,10 +689,12 @@ function checkPushAlarms() {
     for (const alarm of device.alarms) {
       if (alarm.skipDate === now.date) continue; // 오늘 이미 끝낸 체크리스트 항목
       if (alarm.onlyDate && alarm.onlyDate !== now.date) continue; // 하루만 울리는 알람
+      if ((alarm.from && now.date < alarm.from) || (alarm.until && now.date > alarm.until)) continue; // 약 복용 기간
+      if (Array.isArray(alarm.days) && !alarm.days.includes(new Date(`${now.date}T00:00:00Z`).getUTCDay())) continue; // 약 먹는 요일
       const key = `${alarm.time}|${alarm.title}|${alarm.body}`;
       if (alarm.time === now.time && !device.sent.has(key)) {
         device.sent.add(key);
-        sendPush(device, alarm.title, alarm.body);
+        sendPush(device, alarm.title, alarm.body, alarm.url?.replace("%7Bdate%7D", now.date));
       }
     }
   }

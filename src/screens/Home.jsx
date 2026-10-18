@@ -6,8 +6,23 @@ import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIcon } from "../data/categoryIcons";
 import { getWeightAssessment, getWeightStatusShortText } from "../data/weightGuide";
 import { getLatestWeightRecord } from "../services/weightLog";
+import { getDosesForDate, markDoseDone, undoDose } from "../services/medications";
+import { syncPushAlarms } from "../services/notifications";
 
-export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenWeight, onOpenMain }) {
+// 오늘 먹을 약을 "오늘 해야 할 일"에 함께 보여 준다 — 저장하지 않고 약 기록에서 매번 계산해서 같은 복용 건이 두 번 생기지 않는다.
+const MED_STATUS_TEXT = { planned: "복용 예정", done: "먹였어요", skipped: "건너뜀", check: "기록 확인 필요" };
+const medItems = (dog, dateKey) =>
+  getDosesForDate(dog.id, dateKey).map((d) => ({
+    id: `med-${d.key}`,
+    ruleId: "med",
+    dose: d,
+    title: `${d.time} ${d.med.name} ${d.med.dose}`,
+    description: d.status === "done" ? `${d.record.doneAt.slice(11, 16)}에 먹였어요` : MED_STATUS_TEXT[d.status],
+    category: "약",
+    completed: d.status === "done",
+  }));
+
+export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenWeight, onOpenMeds, onOpenMain }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -20,11 +35,12 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
+  function loadChecklist() {
     const items = getTodayChecklist(dog, dateKey);
     const weightItem = getWeightCheckItem(dog, dateKey);
-    setChecklist(weightItem ? [...items, weightItem] : items);
-  }, [dog, dateKey]);
+    setChecklist([...items, ...(weightItem ? [weightItem] : []), ...medItems(dog, dateKey)]);
+  }
+  useEffect(loadChecklist, [dog, dateKey]);
 
   const weightText = useMemo(() => {
     const age = calculateAge(dog.birthDate, new Date(dateKey));
@@ -45,9 +61,19 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   }, [checklist]);
 
   function handleToggle(itemId) {
-    const next = toggleScheduleItem(dog.id, dateKey, itemId);
-    if (next) setChecklist(next);
+    toggleScheduleItem(dog.id, dateKey, itemId);
+    loadChecklist();
   }
+
+  function handleMedToggle(item) {
+    if (item.completed) undoDose(dog.id, item.dose);
+    else markDoseDone(dog.id, item.dose);
+    syncPushAlarms();
+    loadChecklist();
+  }
+
+  const medsToday = checklist.filter((i) => i.ruleId === "med");
+  const medsToCheck = medsToday.filter((i) => i.dose.status === "check").length;
 
   const doneCount = checklist.filter((i) => i.completed).length;
 
@@ -68,21 +94,20 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={onOpenWeight}
-        className="card"
-        style={{ marginBottom: 14, width: "100%", textAlign: "left", display: "block" }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div className="h2">⚖️ 체중 체크</div>
-          <span className="subtle">›</span>
-        </div>
-        <p className="subtle" style={{ margin: "2px 0 0" }}>
-          {weightText || "아직 체중 기록이 없어요. 눌러서 체중 관리를 시작해보세요."}
-        </p>
-        <p className="faint" style={{ margin: "4px 0 0" }}>체중은 건강 변화를 가장 쉽게 알아챌 수 있는 신호예요.</p>
-      </button>
+      <div className="mini-cards">
+        <button type="button" className="mini-card" onClick={onOpenWeight}>
+          <span className="mini-card-title">⚖️ 체중 체크</span>
+          <span className="mini-card-text">{weightText || "아직 기록이 없어요"}</span>
+        </button>
+        <button type="button" className="mini-card" onClick={onOpenMeds}>
+          <span className="mini-card-title">💊 약 관리</span>
+          <span className="mini-card-text">
+            {medsToday.length === 0
+              ? "오늘 먹을 약이 없어요"
+              : `오늘 ${medsToday.filter((i) => i.completed).length}/${medsToday.length} 먹였어요${medsToCheck ? ` · 확인 필요 ${medsToCheck}` : ""}`}
+          </span>
+        </button>
+      </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -101,7 +126,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                   <span>{category}</span>
                 </div>
                 {items.map((item) =>
-                  item.ruleId === "weight-check" ? (
+                  item.ruleId === "med" ? (
+                    <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
+                      <input type="checkbox" checked={item.completed} disabled={item.dose.status === "skipped"} onChange={() => handleMedToggle(item)} />
+                      <div>
+                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
+                        <div className="subtle" style={item.dose.status === "check" ? { color: "var(--warning)" } : undefined}>{item.description}</div>
+                      </div>
+                    </label>
+                  ) : item.ruleId === "weight-check" ? (
                     // 체중 측정은 체크박스로 직접 완료 처리하지 않는다 — 완료 표시는 실제로
                     // 체중을 기록해야만 바뀌고, 여기서는 그 화면으로 이동만 시킨다.
                     <button

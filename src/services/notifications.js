@@ -9,6 +9,7 @@ import { getDogs } from "./dogRepository";
 import { getTodayChecklist } from "./careEngine";
 import { getFeedingSettings } from "./feedingSettings";
 import { getCustomSchedules } from "./customSchedules";
+import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 
@@ -53,12 +54,12 @@ function markNotified(dateKey, itemId, time) {
 // 안드로이드는 진동 패턴을 따른다. 아이폰은 웹에서 진동을 직접 못 켜고, 아이폰 설정(소리 및 햅틱)대로 울린다.
 export const VIBRATE = [400, 150, 400, 150, 400];
 
-async function fireNotification(title, body) {
+async function fireNotification(title, body, url) {
   const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
   if (registration) {
-    registration.showNotification(title, { body, icon: "/icon-192.png", vibrate: VIBRATE });
+    registration.showNotification(title, { body, icon: "/icon-192.png", vibrate: VIBRATE, data: { url } });
   } else {
     new Notification(title, { body });
   }
@@ -113,6 +114,20 @@ export function checkCustomAlarms(schedules, dateKey) {
   }
 }
 
+// 약 먹일 시각이 되면 알림(앱이 켜져 있을 때). 이미 기록(먹임·건너뜀)한 복용 건은 알리지 않는다.
+export function checkMedAlarms(dog, dateKey) {
+  if (getPermission() !== "granted") return;
+  const nowLabel = getNowLabel();
+  const notified = readNotifiedSet(dateKey);
+  for (const dose of getDosesForDate(dog.id, dateKey)) {
+    if (!dose.med.remind || dose.time !== nowLabel || dose.record?.status === "done" || dose.record?.status === "skipped") continue;
+    if (notified.includes(`med-${dose.key}-${dose.time}`)) continue;
+    markNotified(dateKey, `med-${dose.key}`, dose.time);
+    const { title, body } = medMessage(dog, dose.med);
+    fireNotification(title, body, medUrl(dog.id, dose.key));
+  }
+}
+
 function urlBase64ToUint8Array(base64) {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const base64Safe = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -159,6 +174,23 @@ export function buildPushAlarms() {
     for (const alarm of getCustomSchedules(dog.id)) {
       // 하루만 울리는 알람은 그날만(onlyDate) — 지난 날짜 알람은 보내지 않는다
       if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ time: alarm.time, ...customAlarmMessage(alarm), onlyDate: alarm.date });
+    }
+    // 약: 서버가 기간(from~until)·요일(days)을 보고 울린다. 오늘 이미 기록한 복용 건은 오늘만 건너뛴다.
+    const today = todayKey();
+    const recordedToday = new Set(getDosesForDate(dog.id, today).filter((d) => d.record && d.record.status !== "none").map((d) => `${d.med.id}|${d.time}`));
+    for (const med of getMeds(dog.id)) {
+      if (!med.remind || (med.endDate && med.endDate < today)) continue;
+      for (const time of med.times) {
+        alarms.push({
+          time,
+          ...medMessage(dog, med),
+          url: medUrl(dog.id, `${med.seriesId}|{date}|${time}`), // {date}는 서버가 울리는 날짜로 바꾼다
+          from: med.startDate,
+          until: med.endDate || undefined,
+          days: med.days?.length ? med.days : undefined,
+          skipDate: recordedToday.has(`${med.id}|${time}`) ? today : undefined,
+        });
+      }
     }
   }
   return alarms;
