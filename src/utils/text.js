@@ -2,10 +2,14 @@
 // (한글 완성형 글자는 코드값이 0xAC00~0xD7A3이고, 그 안에서 (code - 0xAC00) % 28 이
 // 0이면 받침 없는 글자다. 한글이 아닌 이름은 받침이 없다고 보고 "야"를 붙인다.)
 export function nameCall(name) {
-  const last = name.trim().slice(-1);
-  const code = last.charCodeAt(0);
+  return josa(name, "이야", "야");
+}
+
+// 받침 있으면 withBatchim, 없으면 without을 붙인다. 예: josa("콩이", "은", "는") → "콩이는"
+export function josa(name, withBatchim, without) {
+  const code = name.trim().slice(-1).charCodeAt(0);
   const hasBatchim = code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
-  return hasBatchim ? `${name}이야` : `${name}야`;
+  return `${name}${hasBatchim ? withBatchim : without}`;
 }
 
 // AI 응답을 "핵심 한 줄(헤드라인) + 부가 설명"으로 나눈다.

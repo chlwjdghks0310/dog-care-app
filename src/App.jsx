@@ -212,7 +212,12 @@ export default function App() {
   if (route === "onboarding") {
     return (
       <div className="app-shell">
-        <Onboarding onStart={() => setRoute("register")} />
+        <Onboarding
+          onRegistered={(newDog) => {
+            setActiveDog(newDog);
+            setRoute("app");
+          }}
+        />
       </div>
     );
   }
@@ -220,7 +225,8 @@ export default function App() {
   if (route === "register") {
     return (
       <div className="app-shell">
-        <DogRegister
+        <Onboarding
+          skipIntro
           onRegistered={(newDog) => {
             setActiveDog(newDog);
             setRoute("app");
