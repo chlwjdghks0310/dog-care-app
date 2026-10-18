@@ -1,13 +1,13 @@
 :root {
-  --bg: #fff8f1;
+  --bg: #eef6ef;
   --surface: #ffffff;
-  --border: #f0e4d8;
+  --border: #d6e7da;
   --text: #2b2320;
   --text-soft: #7a6f63;
   --text-faint: #a89c8d;
-  --accent: #e07a3f;
-  --accent-soft: #fbead9;
-  --accent-strong: #c15f28;
+  --accent: #4a7c59;
+  --accent-soft: #dcebdf;
+  --accent-strong: #36603f;
   --success: #4c8c5b;
   --success-bg: #e7f3ea;
   --danger: #c15b4a;
@@ -28,6 +28,15 @@
   color-scheme: light;
 }
 
+:root[data-theme="forest-paw"] {
+  --bg-pattern: var(--paw-bg-pattern);
+  --bg-pattern-size: var(--paw-pattern-size);
+  --surface-pattern: var(--paw-surface-pattern);
+  --surface-pattern-size: var(--paw-pattern-size);
+}
+
+/* 기본 테마는 아이콘 녹색(forest, :root). 예전 기본이던 오렌지는 선택 테마로 남긴다. */
+:root[data-theme="warm"],
 :root[data-theme="warm-paw"] {
   --bg: #fff8f1;
   --border: #f0e4d8;

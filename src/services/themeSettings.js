@@ -1,7 +1,9 @@
 const KEY = "dogcare-theme-v1";
+const DEFAULT = "forest"; // 아이콘 녹색 — 예전 기본(오렌지, "warm")을 고른 적 없는 사람은 모두 이 색
 
 // 색깔 테마들. 각각 "~-paw" id로 같은 색의 발자국 패턴 버전이 자동으로 생성된다(아래 THEMES 참고).
 const COLOR_THEMES = [
+  { id: "forest", label: "포레스트", swatch: "#4a7c59" },
   { id: "warm", label: "오렌지", swatch: "#e07a3f" },
   { id: "mint", label: "민트", swatch: "#2bd1b8" },
   { id: "green", label: "초록", swatch: "#3fa578" },
@@ -29,9 +31,14 @@ export const THEMES = [
 
 export function getTheme() {
   try {
-    return localStorage.getItem(KEY) || "warm";
+    // 기본이 오렌지였던 때 저장된 "warm"은 한 번만 새 기본(녹색)으로 옮긴다 — 그 뒤에 다시 오렌지를 고르면 그대로 둔다
+    if (!localStorage.getItem(`${KEY}-forest`)) {
+      localStorage.setItem(`${KEY}-forest`, "1");
+      if (localStorage.getItem(KEY) === "warm") localStorage.removeItem(KEY);
+    }
+    return localStorage.getItem(KEY) || DEFAULT;
   } catch {
-    return "warm";
+    return DEFAULT;
   }
 }
 
@@ -45,7 +52,7 @@ export function setTheme(themeId) {
 }
 
 export function applyTheme(themeId) {
-  if (themeId === "warm") {
+  if (themeId === DEFAULT) {
     document.documentElement.removeAttribute("data-theme");
   } else {
     document.documentElement.setAttribute("data-theme", themeId);
