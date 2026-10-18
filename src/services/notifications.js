@@ -126,8 +126,9 @@ export function isPushSupported() {
 
 export async function getPushSubscription() {
   if (!isPushSupported()) return null;
-  const registration = await navigator.serviceWorker.ready;
-  return registration.pushManager.getSubscription();
+  // 서비스워커가 아직 등록 안 됐으면 ready는 영원히 기다리므로, 있는 등록만 확인한다
+  const registration = await navigator.serviceWorker.getRegistration();
+  return registration ? registration.pushManager.getSubscription() : null;
 }
 
 // 브라우저가 꺼져 있어도 울리는 알림을 받으려면: 알림 권한 허용 + 이 구독 과정을 거쳐야 한다.
@@ -169,10 +170,10 @@ export async function syncPushAlarms({ beacon = false } = {}) {
   if (subscription) await postSubscription(subscription, buildPushAlarms(), { beacon }).catch(() => {});
 }
 
-// 어느 단계에서 실패했는지 오류 문구에 붙인다.
-async function step(label, fn) {
+// 어느 단계에서 실패했는지 오류 문구에 붙인다. 정해진 시간이 넘으면 멈춘 걸로 보고 실패 처리(버튼이 "켜는 중"에 갇히지 않게).
+async function step(label, fn, ms = 15000) {
   try {
-    return await fn();
+    return await Promise.race([fn(), new Promise((_, reject) => setTimeout(() => reject(new Error("응답이 없어요")), ms))]);
   } catch (err) {
     throw new Error(`${label} 실패: ${err.message}`);
   }
@@ -185,10 +186,12 @@ export async function subscribeToPush() {
   if (permission !== "granted") throw new Error("알림 권한을 허용해야 켤 수 있어요.");
 
   // 공개키는 서버에서 받아온다 — 프론트 빌드 환경변수에 따로 넣으면 서버 키와 어긋나기 쉽다.
-  const { publicKey } = await step("공개키 받기", () => fetch(`${API_BASE}/api/push/public-key`).then((r) => r.json()));
+  const { publicKey } = await step("공개키 받기", () => fetch(`${API_BASE}/api/push/public-key`).then((r) => r.json()), 60000); // 무료 서버가 잠들어 있으면 깨는 데 최대 1분
   if (!publicKey) throw new Error("서버에 VAPID 공개키가 설정되지 않았어요.");
 
-  const registration = await navigator.serviceWorker.ready;
+  // 온보딩처럼 서비스워커를 아직 등록하기 전에도 켤 수 있게 여기서 등록부터 한다(안 하면 ready가 끝나지 않음)
+  await registerServiceWorker();
+  const registration = await step("서비스워커 준비", () => navigator.serviceWorker.ready);
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
     subscription = await step("기기 등록", () =>
