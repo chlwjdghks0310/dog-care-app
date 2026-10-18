@@ -10,8 +10,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#e07a3f" />
     <title>멍케어</title>
+    <style>
+      /* 스플래시: React가 뜨기 전, HTML이 오자마자 바로 보이도록 여기(인라인)에 둔다 */
+      #splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 24px; background: #eaf4ec; text-align: center; transition: opacity 0.4s ease;
+        font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif; }
+      #splash.hide { opacity: 0; pointer-events: none; }
+      #splash img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 6px 18px rgba(74, 124, 89, 0.22); margin-bottom: 30px; }
+      #splash h1 { margin: 0 0 14px; font-size: 26px; font-weight: 800; color: #2f5a3c; letter-spacing: -0.02em; }
+      #splash p { margin: 0 0 22px; font-size: 16px; color: #557460; }
+      #splash small { font-size: 12px; letter-spacing: 0.14em; color: #6f8c77; }
+    </style>
   </head>
   <body>
+    <div id="splash" aria-hidden="true">
+      <img src="/icon-512.png" alt="" />
+      <h1>우리 강아지를 위한 맞춤 AI</h1>
+      <p>우리 아이에게 꼭 필요한 케어를 한눈에.</p>
+      <small>YOUR DOG, YOUR CARE</small>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
