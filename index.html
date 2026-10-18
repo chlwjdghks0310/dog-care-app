@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png?v=2" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
-    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png?v=3" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
+    <link rel="apple-touch-icon" href="/icon-180.png?v=3" />
     <meta name="apple-mobile-web-app-title" content="멍케어" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!-- 아이폰 홈 화면 앱을 켤 때 흰 화면 대신 보이는 시작 이미지(스플래시와 같은 그림, 기종별 크기) -->
@@ -23,25 +23,25 @@
     <link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/splash-420x912@3.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#eaf4ec" />
+    <meta name="theme-color" content="#eef5ff" />
     <title>멍케어</title>
     <style>
-      /* 앱을 켜는 순간(CSS·스크립트가 오기 전)부터 바탕을 연한 녹색으로 — 흰 화면이 번쩍이지 않게 */
-      html { background: #eaf4ec; }
+      /* 앱을 켜는 순간(CSS·스크립트가 오기 전)부터 바탕을 연한 파랑으로 — 흰 화면이 번쩍이지 않게 */
+      html { background: #eef5ff; }
       /* 스플래시: React가 뜨기 전, HTML이 오자마자 바로 보이도록 여기(인라인)에 둔다 */
       #splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 24px; background: #eaf4ec; text-align: center; transition: opacity 0.4s ease;
+        padding: 24px; background: #eef5ff; text-align: center; transition: opacity 0.4s ease;
         font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif; }
       #splash.hide { opacity: 0; pointer-events: none; }
-      #splash img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 6px 18px rgba(74, 124, 89, 0.22); margin-bottom: 30px; }
-      #splash h1 { margin: 0 0 14px; font-size: 26px; font-weight: 800; color: #2f5a3c; letter-spacing: -0.02em; }
-      #splash p { margin: 0 0 22px; font-size: 16px; color: #557460; }
-      #splash small { font-size: 12px; letter-spacing: 0.14em; color: #6f8c77; }
+      #splash img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 6px 18px rgba(75, 144, 226, 0.25); margin-bottom: 30px; }
+      #splash h1 { margin: 0 0 14px; font-size: 26px; font-weight: 800; color: #24456b; letter-spacing: -0.02em; }
+      #splash p { margin: 0 0 22px; font-size: 16px; color: #607d9b; }
+      #splash small { font-size: 12px; letter-spacing: 0.14em; color: #7d93ad; }
     </style>
   </head>
   <body>
     <div id="splash" aria-hidden="true">
-      <img src="/icon-512.png" alt="" />
+      <img src="/icon-512.png?v=3" alt="" />
       <h1>우리 강아지를 위한 맞춤 AI</h1>
       <p>우리 아이에게 꼭 필요한 케어를 한눈에.</p>
       <small>YOUR DOG, YOUR CARE</small>

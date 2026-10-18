@@ -1,8 +1,9 @@
 const KEY = "dogcare-theme-v1";
-const DEFAULT = "forest"; // 아이콘 녹색 — 예전 기본(오렌지, "warm")을 고른 적 없는 사람은 모두 이 색
+const DEFAULT = "softblue"; // 아이콘 소프트블루 — 다른 테마를 직접 고른 적 없는 사람은 모두 이 색
 
 // 색깔 테마들. 각각 "~-paw" id로 같은 색의 발자국 패턴 버전이 자동으로 생성된다(아래 THEMES 참고).
 const COLOR_THEMES = [
+  { id: "softblue", label: "소프트블루", swatch: "#4b90e2" },
   { id: "forest", label: "포레스트", swatch: "#4a7c59" },
   { id: "warm", label: "오렌지", swatch: "#e07a3f" },
   { id: "mint", label: "민트", swatch: "#2bd1b8" },

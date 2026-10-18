@@ -1,13 +1,13 @@
 :root {
-  --bg: #eef6ef;
+  --bg: #f0f6ff;
   --surface: #ffffff;
-  --border: #d6e7da;
+  --border: #d6e4f5;
   --text: #2b2320;
   --text-soft: #7a6f63;
   --text-faint: #a89c8d;
-  --accent: #4a7c59;
-  --accent-soft: #dcebdf;
-  --accent-strong: #36603f;
+  --accent: #4b90e2;
+  --accent-soft: #dde9fa;
+  --accent-strong: #2f6fbd;
   --success: #4c8c5b;
   --success-bg: #e7f3ea;
   --danger: #c15b4a;
@@ -28,6 +28,7 @@
   color-scheme: light;
 }
 
+:root[data-theme="softblue-paw"],
 :root[data-theme="forest-paw"] {
   --bg-pattern: var(--paw-bg-pattern);
   --bg-pattern-size: var(--paw-pattern-size);
@@ -35,7 +36,16 @@
   --surface-pattern-size: var(--paw-pattern-size);
 }
 
-/* 기본 테마는 아이콘 녹색(forest, :root). 예전 기본이던 오렌지는 선택 테마로 남긴다. */
+/* 기본 테마는 아이콘 소프트블루(softblue, :root). 녹색(forest)·오렌지(warm)는 선택 테마로 남긴다. */
+:root[data-theme="forest"],
+:root[data-theme="forest-paw"] {
+  --bg: #eef6ef;
+  --border: #d6e7da;
+  --accent: #4a7c59;
+  --accent-soft: #dcebdf;
+  --accent-strong: #36603f;
+}
+
 :root[data-theme="warm"],
 :root[data-theme="warm-paw"] {
   --bg: #fff8f1;
