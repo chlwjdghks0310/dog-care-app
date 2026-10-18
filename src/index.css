@@ -671,3 +671,24 @@ button {
 .med-time-input { border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; font-size: 13px; color: var(--text); background: var(--surface); }
 .med-summary { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; background: none; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 15px; }
 .med-photo { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); font-size: 22px; }
+
+/* 병원용 기록 */
+.vet-entry { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; margin-bottom: 14px; color: var(--text); }
+.vet-entry-icon { font-size: 28px; width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-wrap .seg { flex: 0 0 auto; padding: 8px 12px; }
+.vet-doc { background: #fff; background-image: none; color: #1f2a37; }
+.vet-doc-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 800; padding-bottom: 10px; border-bottom: 2px solid var(--accent); margin-bottom: 4px; }
+.vet-sec { padding: 12px 0; border-bottom: 1px solid #e4ebf3; }
+.vet-sec:last-child { border-bottom: none; padding-bottom: 0; }
+.vet-sec.note { background: #f3f8ff; border-radius: 12px; padding: 12px; margin: 8px 0 4px; border-bottom: none; }
+.vet-sec-title { font-size: 13px; font-weight: 800; color: var(--accent-strong); letter-spacing: 0.02em; margin-bottom: 6px; }
+.vet-line { font-size: 15px; line-height: 1.55; }
+.vet-line.sub { font-size: 14px; color: #4a5a6b; padding-left: 12px; }
+.vet-doc.large .vet-doc-head { font-size: 24px; }
+.vet-doc.large .vet-sec-title { font-size: 16px; }
+.vet-doc.large .vet-line { font-size: 20px; line-height: 1.5; }
+.vet-doc.large .vet-line.sub { font-size: 18px; }
+.vet-show { position: fixed; inset: 0; z-index: 100; background: #fff; overflow-y: auto; padding: calc(env(safe-area-inset-top) + 56px) 14px calc(env(safe-area-inset-bottom) + 24px); }
+.vet-show .vet-doc { border: none; box-shadow: none; padding: 4px; }
+.vet-show-close { position: fixed; top: calc(env(safe-area-inset-top) + 10px); right: 14px; background: #fff; z-index: 1; }

@@ -26,6 +26,7 @@ import Help from "./screens/Help";
 import WeightTracker from "./screens/WeightTracker";
 import Budget from "./screens/Budget";
 import Medications from "./screens/Medications";
+import VetSummary from "./screens/VetSummary";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
 import { applyTheme, getTheme } from "./services/themeSettings";
@@ -42,6 +43,7 @@ const PARENT_TAB = {
   "health-behavior": "home",
   "add-dog": "profile",
   contact: "profile",
+  vet: "profile",
   help: "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
@@ -293,6 +295,7 @@ export default function App() {
         dog={dog}
         onOpenContact={() => setTab("contact")}
         onOpenHelp={() => setTab("help")}
+        onOpenVet={() => setTab("vet")}
         onUpdateDog={setActiveDog}
         onDeleteCurrent={handleDeleteCurrentDog}
         onDeleteAll={handleDeleteAllDogs}
@@ -300,6 +303,7 @@ export default function App() {
       />
     ),
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
+    vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     contact: () => <Contact onBack={() => setTab("profile")} />,
     help: () => <Help onBack={() => setTab("profile")} />,
   };

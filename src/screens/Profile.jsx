@@ -19,7 +19,7 @@ function Row({ label, value }) {
   );
 }
 
-export default function Profile({ dog, onOpenContact, onOpenHelp, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
+export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
   const age = calculateAge(dog.birthDate);
   const [theme, setThemeState] = useState(getTheme());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -251,6 +251,15 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onUpdateDog, o
         <Row label="알레르기" value={dog.allergies} />
         <Row label="특이사항" value={dog.notes} />
       </div>
+
+      <button type="button" className="card vet-entry" onClick={onOpenVet}>
+        <span className="vet-entry-icon" aria-hidden="true">🏥</span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="h2" style={{ display: "block", margin: 0 }}>병원용 기록</span>
+          <span className="subtle">증상·먹는 약·체중을 수의사가 바로 읽게 정리해요</span>
+        </span>
+        <span className="subtle">›</span>
+      </button>
 
       <div className="card">
         <div className="h2">배경 테마</div>
