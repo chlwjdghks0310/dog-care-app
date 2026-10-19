@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
 export const TABS = [
-  { key: "main", label: "메인", icon: "🐶" },
+  { key: "main", label: "비서", icon: "🐶" },
   { key: "home", label: "체크리스트", icon: "✅" },
   { key: "calendar", label: "일정표", icon: "🗓️" },
   { key: "budget", label: "가계부", icon: "💰" },

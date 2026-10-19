@@ -49,7 +49,7 @@ export default function ThisWeek({ dog, onBack, onOpenMain }) {
         style={{ textAlign: "center", marginTop: 14, marginBottom: 0, cursor: "pointer" }}
         onClick={onOpenMain}
       >
-        궁금한 점은 메인에 있는 강아지한테 물어보세요!
+        궁금한 점은 비서 탭의 강아지한테 물어보세요!
       </p>
     </div>
   );
