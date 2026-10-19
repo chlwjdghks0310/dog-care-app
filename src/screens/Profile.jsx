@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
@@ -27,6 +28,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onU
   const [category, setCategory] = useState(currentTheme.category);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
 
   // 체중 관리의 가장 최근 기록이 프로필 체중과 다르면 프로필을 그 값으로 맞춘다
@@ -96,6 +98,11 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onU
 
   return (
     <div className="screen">
+      <div className="settings-bar">
+        <button type="button" className="btn-ghost settings-btn" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
+          ☰
+        </button>
+      </div>
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
           <label style={{ position: "relative", cursor: "pointer", flexShrink: 0 }}>
@@ -262,181 +269,192 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onU
         <span className="subtle">›</span>
       </button>
 
-      <div className="card">
-        <div className="h2">배경 테마</div>
-        <button
-          onClick={() => setPickerOpen((v) => !v)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            background: "none",
-            border: "none",
-            padding: 0,
-          }}
-        >
-          <span
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              background: currentTheme.swatch,
-              border: "2px solid var(--border)",
-              boxShadow: "var(--shadow)",
-              display: "inline-block",
-              flexShrink: 0,
-            }}
-            aria-hidden="true"
-          />
-          <span className="subtle">{currentTheme.label} · 탭해서 바꾸기</span>
-        </button>
-
-        {pickerOpen && (
-          <div style={{ display: "flex", gap: 14, marginTop: 16 }}>
-            <button
-              onClick={() => setCategory("plain")}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 6,
-                background: "none",
-                border: "none",
-                padding: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "var(--accent)",
-                  border: category === "plain" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
-                  boxShadow: "var(--shadow)",
-                  display: "inline-block",
-                }}
-                aria-hidden="true"
-              />
-              <span style={{ fontSize: 12, fontWeight: category === "plain" ? 700 : 400, color: category === "plain" ? "var(--accent-strong)" : "var(--text-soft)" }}>
-                색깔
-              </span>
-            </button>
-            <button
-              onClick={() => setCategory("paw")}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 6,
-                background: "none",
-                border: "none",
-                padding: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "var(--surface)",
-                  border: category === "paw" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
-                  boxShadow: "var(--shadow)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 20,
-                }}
-              >
-                🐾
-              </span>
-              <span style={{ fontSize: 12, fontWeight: category === "paw" ? 700 : 400, color: category === "paw" ? "var(--accent-strong)" : "var(--text-soft)" }}>
-                발자국
-              </span>
-            </button>
-          </div>
-        )}
-
-        {pickerOpen && (
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-            {THEMES.filter((t) => t.category === category).map((t) => (
+      {/* 설정(☰): 배경 테마·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
+      {settingsOpen &&
+        createPortal(
+          <div className="settings-sheet" role="dialog" aria-label="설정">
+            <div className="settings-head">
+              <div className="h1" style={{ margin: 0 }}>설정</div>
+              <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
+            </div>
+            <div className="card">
+              <div className="h2">배경 테마</div>
               <button
-                key={t.id}
-                onClick={() => handleSelectTheme(t.id)}
+                onClick={() => setPickerOpen((v) => !v)}
                 style={{
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  gap: 6,
-                  padding: "8px 4px",
-                  border: theme === t.id ? "2px solid var(--accent)" : "2px solid transparent",
-                  borderRadius: 12,
+                  gap: 10,
                   background: "none",
-                  width: 64,
+                  border: "none",
+                  padding: 0,
                 }}
               >
                 <span
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 44,
+                    height: 44,
                     borderRadius: "50%",
-                    background: t.swatch,
-                    display: "inline-block",
-                    border: "1px solid var(--border)",
+                    background: currentTheme.swatch,
+                    border: "2px solid var(--border)",
                     boxShadow: "var(--shadow)",
+                    display: "inline-block",
+                    flexShrink: 0,
                   }}
                   aria-hidden="true"
                 />
-                <span style={{ fontSize: 11.5, color: theme === t.id ? "var(--accent-strong)" : "var(--text-soft)", fontWeight: theme === t.id ? 700 : 400 }}>
-                  {t.label}
-                </span>
+                <span className="subtle">{currentTheme.label} · 탭해서 바꾸기</span>
               </button>
-            ))}
-          </div>
+
+              {pickerOpen && (
+                <div style={{ display: "flex", gap: 14, marginTop: 16 }}>
+                  <button
+                    onClick={() => setCategory("plain")}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        border: category === "plain" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
+                        boxShadow: "var(--shadow)",
+                        display: "inline-block",
+                      }}
+                      aria-hidden="true"
+                    />
+                    <span style={{ fontSize: 12, fontWeight: category === "plain" ? 700 : 400, color: category === "plain" ? "var(--accent-strong)" : "var(--text-soft)" }}>
+                      색깔
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setCategory("paw")}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        background: "var(--surface)",
+                        border: category === "paw" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
+                        boxShadow: "var(--shadow)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 20,
+                      }}
+                    >
+                      🐾
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: category === "paw" ? 700 : 400, color: category === "paw" ? "var(--accent-strong)" : "var(--text-soft)" }}>
+                      발자국
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {pickerOpen && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+                  {THEMES.filter((t) => t.category === category).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleSelectTheme(t.id)}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 4px",
+                        border: theme === t.id ? "2px solid var(--accent)" : "2px solid transparent",
+                        borderRadius: 12,
+                        background: "none",
+                        width: 64,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          background: t.swatch,
+                          display: "inline-block",
+                          border: "1px solid var(--border)",
+                          boxShadow: "var(--shadow)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span style={{ fontSize: 11.5, color: theme === t.id ? "var(--accent-strong)" : "var(--text-soft)", fontWeight: theme === t.id ? 700 : 400 }}>
+                        {t.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card" style={{ marginTop: 14 }}>
+              <button
+                onClick={() => { setSettingsOpen(false); onOpenHelp(); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                }}
+              >
+                <span className="h2" style={{ margin: 0 }}>도움말</span>
+                <span className="subtle">›</span>
+              </button>
+              <button
+                onClick={() => { setSettingsOpen(false); onOpenContact(); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  borderTop: "1px solid var(--border)",
+                  padding: 0,
+                  marginTop: 14,
+                  paddingTop: 14,
+                }}
+              >
+                <span className="h2" style={{ margin: 0 }}>문의하기</span>
+                <span className="subtle">›</span>
+              </button>
+            </div>
+
+            <button className="btn-ghost" style={{ width: "100%", marginTop: 14, color: "var(--danger)" }} onClick={handleDeleteCurrent}>
+              이 강아지 삭제
+            </button>
+            <button className="btn-ghost" style={{ width: "100%", marginTop: 8, color: "var(--danger)" }} onClick={handleDeleteAll}>
+              전체 삭제 (모든 강아지, 다시 등록하기)
+            </button>
+          </div>,
+          document.body
         )}
-      </div>
-
-      <div className="card" style={{ marginTop: 14 }}>
-        <button
-          onClick={onOpenHelp}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            background: "none",
-            border: "none",
-            padding: 0,
-          }}
-        >
-          <span className="h2" style={{ margin: 0 }}>도움말</span>
-          <span className="subtle">›</span>
-        </button>
-        <button
-          onClick={onOpenContact}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            background: "none",
-            border: "none",
-            borderTop: "1px solid var(--border)",
-            padding: 0,
-            marginTop: 14,
-            paddingTop: 14,
-          }}
-        >
-          <span className="h2" style={{ margin: 0 }}>문의하기</span>
-          <span className="subtle">›</span>
-        </button>
-      </div>
-
-      <button className="btn-ghost" style={{ width: "100%", marginTop: 14, color: "var(--danger)" }} onClick={handleDeleteCurrent}>
-        이 강아지 삭제
-      </button>
-      <button className="btn-ghost" style={{ width: "100%", marginTop: 8, color: "var(--danger)" }} onClick={handleDeleteAll}>
-        전체 삭제 (모든 강아지, 다시 등록하기)
-      </button>
     </div>
   );
 }
