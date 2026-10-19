@@ -5,7 +5,6 @@ import { saveDog } from "./dogRepository";
 import { getScheduleForDate, toggleScheduleItem } from "./scheduleRepository";
 import { getTodayChecklist } from "./careEngine";
 import { addCustomSchedule, deleteCustomSchedule, getCustomSchedules, updateCustomSchedule } from "./customSchedules";
-import { ALARM_SOUND_LIST } from "./alarmSounds";
 import { syncPushAlarms } from "./notifications";
 import { todayKey, nowLabel } from "../utils/date";
 import { getDosesForDate, markDoseDone, markDoseSkipped, undoDose, editDoneTime } from "./medications";
@@ -56,7 +55,7 @@ function run(dog, a) {
     }
     case "add_alarm": {
       if (!text(a.title) || !isTime(a.time) || (a.date && !isDate(a.date))) return null;
-      addCustomSchedule(dog.id, { title: text(a.title), time: a.time, sound: ALARM_SOUND_LIST[0].id, date: a.date });
+      addCustomSchedule(dog.id, { title: text(a.title), time: a.time, date: a.date });
       syncPushAlarms();
       return `⏰ 알람: ${a.date ? `${a.date} 하루만` : "매일"} ${a.time} ${text(a.title)}`;
     }

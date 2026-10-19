@@ -6,7 +6,6 @@ import {
   updateCustomSchedule,
   deleteCustomSchedule,
 } from "../services/customSchedules";
-import { ALARM_SOUND_LIST, playAlarmSound, resumeAudioContext } from "../services/alarmSounds";
 import {
   isNotificationSupported,
   getPermission,
@@ -16,15 +15,12 @@ import {
   sendTestPush,
 } from "../services/notifications";
 
-const SOUND_GROUPS = [...new Set(ALARM_SOUND_LIST.map((s) => s.group))];
-
 export default function AlarmSettings({ dog, onBack }) {
   const [schedules, setSchedules] = useState(() => getCustomSchedules(dog.id));
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("09:00");
   const [repeat, setRepeat] = useState("daily"); // daily | once
   const [date, setDate] = useState(todayKey);
-  const [sound, setSound] = useState(ALARM_SOUND_LIST[0].id);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [pushStatus, setPushStatus] = useState("");
   const [pushBusy, setPushBusy] = useState(false);
@@ -36,8 +32,7 @@ export default function AlarmSettings({ dog, onBack }) {
   function handleAdd(e) {
     e.preventDefault();
     if (!title.trim()) return;
-    resumeAudioContext();
-    addCustomSchedule(dog.id, { title: title.trim(), time, sound, date: repeat === "once" ? date : undefined });
+    addCustomSchedule(dog.id, { title: title.trim(), time, date: repeat === "once" ? date : undefined });
     setTitle("");
     refresh();
   }
@@ -53,7 +48,6 @@ export default function AlarmSettings({ dog, onBack }) {
   }
 
   async function handleEnableNotifications() {
-    resumeAudioContext();
     const result = await requestPermission();
     setNotifPermission(result);
   }
@@ -91,7 +85,7 @@ export default function AlarmSettings({ dog, onBack }) {
       </button>
       <div className="h1">알림 / 알람</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
-        원하는 시각에 소리와 함께 알려드려요. 앱(브라우저 탭)이 켜져 있는 동안만 동작해요.
+        원하는 시각에 알림으로 알려드려요. 알림 소리는 휴대폰 알림음 설정을 따라요.
       </p>
 
       {isNotificationSupported() && notifPermission !== "granted" && (
@@ -158,37 +152,6 @@ export default function AlarmSettings({ dog, onBack }) {
               <input type="date" value={date} min={todayKey()} onChange={(e) => setDate(e.target.value)} style={{ marginTop: 8 }} />
             )}
           </div>
-          <div className="field">
-            <label>알람 소리</label>
-            {SOUND_GROUPS.map((group) => (
-              <div key={group} style={{ marginBottom: 8 }}>
-                <div className="faint" style={{ marginBottom: 4 }}>{group}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {ALARM_SOUND_LIST.filter((s) => s.group === group).map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className="chip"
-                      style={{
-                        border: "1px solid var(--border)",
-                        background: sound === s.id ? "var(--accent-soft)" : "transparent",
-                        color: sound === s.id ? "var(--accent-strong)" : "var(--text-soft)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                      onClick={() => {
-                        setSound(s.id);
-                        playAlarmSound(s.id);
-                      }}
-                    >
-                      {s.label} <span aria-hidden="true">▶</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
           <button type="submit" className="btn-primary">알람 추가</button>
         </form>
       </div>
@@ -212,8 +175,7 @@ export default function AlarmSettings({ dog, onBack }) {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{alarm.time} · {alarm.title}</div>
                 <div className="faint">
-                  {alarm.date ? `${alarm.date.slice(5).replace("-", "/")} 하루만${alarm.date < todayKey() ? " (지남)" : ""}` : "매일"} ·{" "}
-                  {ALARM_SOUND_LIST.find((s) => s.id === alarm.sound)?.label}
+                  {alarm.date ? `${alarm.date.slice(5).replace("-", "/")} 하루만${alarm.date < todayKey() ? " (지남)" : ""}` : "매일"}
                 </div>
               </div>
               <input type="checkbox" checked={alarm.enabled} onChange={() => toggleEnabled(alarm)} style={{ width: 20, height: 20 }} />

@@ -3,7 +3,6 @@
 // 용도라, 서버는 구독을 메모리에만 들고 있고 "지금 당장 테스트 알림 보내기"만 지원한다.
 // 일정 시간에 맞춰 서버가 알아서 쏴주는 건 2단계(서버 스케줄러 + DB)에서 붙인다.
 import { minutesBefore, nowLabel as getNowLabel, todayKey } from "../utils/date";
-import { playAlarmSound } from "./alarmSounds";
 import { API_BASE } from "./aiClient";
 import { getDogs } from "./dogRepository";
 import { getTodayChecklist } from "./careEngine";
@@ -93,8 +92,7 @@ export function checkAndNotify(dog, checklist, dateKey) {
   }
 }
 
-// 사용자가 등록한 커스텀 일정(알람)의 시각이 되면 알림 + 소리를 함께 울린다.
-// 알림 권한이 없어도(브라우저 알림을 안 켠 경우) 소리는 낼 수 있으므로 소리는 항상 재생한다.
+// 사용자가 등록한 커스텀 일정(알람)의 시각이 되면 알림을 띄운다. 소리는 기기 알림음 설정을 따른다.
 export function checkCustomAlarms(schedules, dateKey) {
   const nowLabel = getNowLabel();
   const notified = readNotifiedSet(dateKey);
@@ -104,7 +102,6 @@ export function checkCustomAlarms(schedules, dateKey) {
     const id = `alarm-${alarm.id}`;
     if (alarm.time === nowLabel && !notified.includes(`${id}-${alarm.time}`)) {
       markNotified(dateKey, id, alarm.time);
-      playAlarmSound(alarm.sound);
       navigator.vibrate?.(VIBRATE);
       if (getPermission() === "granted") {
         const { title, body } = customAlarmMessage(alarm);
