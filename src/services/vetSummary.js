@@ -6,6 +6,7 @@ import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getExpenses } from "./expenses";
 import { getEventsByDog } from "./calendarEvents";
 import { getChatMemory } from "./chatMemory";
+import { getRecords, filterTimeline, LEVELS, md as mdKey } from "./records";
 
 // 병원용 기록 — 앱에 쌓인 기록 + 보호자가 이번 진료를 위해 적은 메모를 수의사가 한눈에 읽게 정리한다.
 // 기록에 있는 사실만 옮기고, 추정·진단 문구는 넣지 않는다(빈 곳은 "기록 없음").
@@ -15,14 +16,17 @@ export const SYMPTOMS = ["식욕 줄었음", "물 많이 마심", "구토", "설
 export const SECTIONS = [
   { key: "note", label: "보호자 메모" },
   { key: "basic", label: "기본 정보" },
+  { key: "symptoms", label: "증상 기록" },
+  { key: "observe", label: "식사·배변·컨디션" },
   { key: "meds", label: "먹는 약" },
   { key: "weight", label: "체중" },
   { key: "visits", label: "최근 병원 기록" },
+  { key: "memos", label: "보호자 기록 메모" },
   { key: "chat", label: "최근 상담 질문" },
 ];
 export const PERIODS = [7, 30, 90];
 
-const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, basic: true, meds: true, weight: true, visits: true, chat: false } };
+const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, visits: true, memos: true, chat: false } };
 
 export function getVetNote(dogId) {
   const saved = readJSON(KEY, {})[dogId] || {};
@@ -57,8 +61,30 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     `${dog.name} · ${dog.breed} · ${GENDER[dog.gender] || "성별 미입력"}${dog.neutered ? "(중성화)" : ""} · ${age}${dog.birthDate ? ` (${dog.birthDate} 생)` : ""}`,
     ...(dog.food ? [`사료: ${dog.food}`] : []),
     `알레르기: ${dog.allergies || "기록 없음"}`,
+    ...(dog.illnesses ? [`과거 질환·수술: ${dog.illnesses}`] : []),
+    ...(dog.vaccines ? [`예방접종·건강 정보: ${dog.vaccines}`] : []),
+    ...(dog.hospital ? [`다니는 병원: ${dog.hospital}`] : []),
     ...(dog.notes ? [`특이사항: ${dog.notes}`] : []),
   ]);
+
+  // 보호자가 남긴 기록(통합 기록) — 기간 안 것만, 적힌 그대로
+  const recs = filterTimeline(getRecords(dog.id), { days: note.period, order: "old" }, today);
+  add(
+    "symptoms",
+    `증상 기록 (최근 ${note.period}일)`,
+    recs.filter((r) => r.type === "symptom").map((r) => `${mdKey(r.at.slice(0, 10))} ${r.at.slice(11, 16)} ${r.data.kinds.join(", ")}${r.data.repeat ? ` (${r.data.repeat})` : ""}${r.data.since ? ` · ${mdKey(r.data.since)}부터` : ""}${r.data.observed ? ` — ${r.data.observed}` : ""}${r.memo ? ` · 메모: ${r.memo}` : ""}`)
+  );
+  const observeLines = [];
+  for (const [type, field, label, options] of [["meal", "appetite", "식욕", LEVELS], ["meal", "water", "물", LEVELS], ["potty", "stool", "대변"], ["potty", "urine", "소변"], ["condition", "activity", "활동량", LEVELS], ["condition", "sleep", "수면", LEVELS]]) {
+    const vals = recs.filter((r) => r.type === type && r.data[field]);
+    if (!vals.length) continue;
+    const counts = {};
+    for (const r of vals) (counts[r.data[field]] ||= []).push(mdKey(r.at.slice(0, 10)));
+    const keys = options ? options.filter((o) => counts[o]) : Object.keys(counts);
+    observeLines.push(`${label}: ${keys.map((k) => `${k} ${counts[k].length}번${k !== "평소" && k !== "정상" ? `(${counts[k].slice(-4).join(", ")})` : ""}`).join(", ")}`);
+  }
+  for (const r of recs.filter((r) => r.type === "condition" && (r.data.body || r.data.oral))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} ${[r.data.body, r.data.oral].filter(Boolean).join(" / ")}`);
+  add("observe", `식사·배변·컨디션 (보호자 관찰, 최근 ${note.period}일)`, observeLines);
 
   // 약: 지금 먹는 약 + 기간 안에 끝난 약, 기간 동안 기록한 대로의 복용 현황
   const medLines = [];
@@ -116,8 +142,24 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   const visits = [
     ...getExpenses(dog.id).filter((e) => e.categoryId === "medical" && e.date >= visitFrom && e.date <= today).map((e) => ({ date: e.date, text: e.title })),
     ...Object.entries(getEventsByDog(dog.id)).flatMap(([date, list]) => (date >= visitFrom ? list.filter((e) => VISIT_WORDS.test(e.title)).map((e) => ({ date, text: `${e.title}${date > today ? " (예정)" : ""}` })) : [])),
+    // 통합 기록의 병원 진료·접종·질환 기록 — 이건 진료 내용까지 옮긴다
+    ...getRecords(dog.id)
+      .filter((r) => r.at.slice(0, 10) >= visitFrom && (r.type === "vet" || (r.type === "life" && ["예방접종", "질환·수술"].includes(r.data.kind))))
+      .map((r) => {
+        const d = r.data;
+        const text = r.type === "vet" ? [d.hospital, d.reason].filter(Boolean).join(" ") : `${d.kind}${d.title ? ` ${d.title}` : ""}`;
+        const sub = r.type === "vet" ? [d.explanation && `설명: ${d.explanation}`, d.tests && `검사: ${d.tests}`, d.prescription && `처방: ${d.prescription}`, d.nextDate && `다음 진료: ${mdKey(d.nextDate)}`].filter(Boolean) : [];
+        return { date: r.at.slice(0, 10), text, sub };
+      }),
   ].sort((a, b) => b.date.localeCompare(a.date));
-  add("visits", "최근 병원 기록 (90일)", visits.slice(0, 8).map((v) => `${md(v.date)} ${v.text}`));
+  add("visits", "최근 병원 기록 (90일)", visits.slice(0, 8).flatMap((v) => [`${md(v.date)} ${v.text}`, ...(v.sub || []).map((x) => `  ${x}`)]));
+
+  // 그 밖의 기록에 남긴 메모(최근 6개)
+  add(
+    "memos",
+    `보호자 기록 메모 (최근 ${note.period}일)`,
+    recs.filter((r) => r.memo && r.type !== "vet" && r.type !== "symptom").slice(-6).map((r) => `${mdKey(r.at.slice(0, 10))} ${r.memo}`)
+  );
 
   // 최근 AI 상담에서 보호자가 직접 한 말(원문 그대로, 최근 5개)
   const asked = getChatMemory(dog.id).filter((m) => m.role === "user").slice(-5).map((m) => `"${m.text.slice(0, 80)}${m.text.length > 80 ? "…" : ""}"`);

@@ -36,6 +36,11 @@ function getLog(dogId) {
   return readAll(LOG_KEY)[dogId] || {};
 }
 
+// 보호자가 실제로 먹임/건너뜀을 누른 복용 기록(통합 기록 타임라인용) — "기록 없음"으로 되돌린 건 빼고
+export function getDoseRecords(dogId) {
+  return Object.values(getLog(dogId)).filter((r) => r.status === "done" || r.status === "skipped");
+}
+
 function saveLog(dogId, log) {
   const all = readAll(LOG_KEY);
   all[dogId] = log;

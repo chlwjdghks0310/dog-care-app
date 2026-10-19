@@ -37,6 +37,18 @@ export default function VetSummary({ dog, onBack }) {
     setSpeaking(true);
   }
 
+  // 크게 보기 화면을 띄운 뒤 그 화면만 인쇄(인쇄 창에서 PDF로 저장 가능) — 따로 PDF 라이브러리를 넣지 않는다
+  function printDoc() {
+    setShowing(true);
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch {
+        setShareMsg("이 기기에서는 인쇄를 열 수 없어요. [공유]를 써 주세요.");
+      }
+    }, 300);
+  }
+
   async function share() {
     setShareMsg("");
     try {
@@ -114,6 +126,7 @@ export default function VetSummary({ dog, onBack }) {
         <button className="btn-ghost" style={{ flex: 1 }} onClick={speak}>{speaking ? "⏹ 멈춤" : "🔊 읽어 주기"}</button>
         <button className="btn-ghost" style={{ flex: 1 }} onClick={share}>공유</button>
       </div>
+      <button className="btn-ghost" style={{ width: "100%", marginBottom: 8 }} onClick={printDoc}>🖨️ 인쇄 · PDF로 저장</button>
       {shareMsg && <p className="faint" style={{ margin: "0 0 8px" }}>{shareMsg}</p>}
 
       <SummaryDoc dog={dog} sections={sections} />

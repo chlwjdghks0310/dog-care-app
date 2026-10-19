@@ -8,6 +8,7 @@ import { getFeedingSettings } from "./feedingSettings";
 import { getWeightRecords } from "./weightLog";
 import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY } from "./expenses";
 import { toDateKey, todayKey } from "../utils/date";
+import { getRecords, filterTimeline, summarize, TYPES } from "./records";
 
 // AI 채팅에 함께 보내는 "앱 기록 요약" — [id:...]는 AI가 고치기·지우기할 기록을 가리킬 때 쓴다. — 체크리스트·일정표·가계부·알람·체중 등 사용자가 앱에 적은 내용을
 // 짧은 글로 정리해서, "이번 달 얼마 썼어?", "다음 일정 뭐야?" 같은 질문에 AI가 실제 기록으로 답하게 한다.
@@ -79,6 +80,15 @@ export function buildAppSnapshot(dog) {
   // 체중 기록(최근 10개)
   const weights = getWeightRecords(dog.id).slice(-10);
   if (weights.length) lines.push("", `[체중 관리] ${weights.map((r) => `${r.measuredAt.slice(0, 16).replace("T", " ")} ${r.weightKg}kg [id:${r.id}]`).join(", ")}`);
+
+  // 통합 기록(보호자가 적은 증상·식사·배변·병원 등) — 최근 30일, 최대 25개. 적힌 사실이고 진단이 아니다.
+  const recs = filterTimeline(getRecords(dog.id), { days: 30 }).slice(0, 25);
+  if (recs.length) {
+    lines.push("", "[보호자 기록 - 최근 30일, 보호자가 관찰해 적은 것]");
+    for (const r of recs) lines.push(`- ${r.at.replace("T", " ")} ${TYPES[r.type].label}: ${summarize(r)}`);
+  }
+  const profileInfo = [["과거 질환·수술", dog.illnesses], ["예방접종·건강", dog.vaccines], ["다니는 병원", dog.hospital]].filter(([, v]) => v);
+  if (profileInfo.length) lines.push(`[프로필 건강 정보] ${profileInfo.map(([k, v]) => `${k}: ${v}`).join(" / ")}`);
 
   // 가계부 — 이번 달·지난달 합계, 이번 달 카테고리별, 최근 기록
   const categories = getCategories();

@@ -698,3 +698,40 @@ button {
 .settings-btn { font-size: 20px; line-height: 1; padding: 8px 12px; }
 .settings-sheet { position: fixed; inset: 0; z-index: 100; background-color: var(--bg); overflow-y: auto; padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 24px); }
 .settings-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+
+/* 통합 기록 */
+.rec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.rec-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.rec-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px; font-size: 14px; color: var(--text); margin-bottom: 14px; }
+.rec-check input { width: 20px; height: 20px; flex-shrink: 0; }
+.rec-photos { display: flex; flex-wrap: wrap; gap: 8px; }
+.rec-photo { position: relative; width: 72px; height: 72px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+.rec-photo img { width: 100%; height: 100%; object-fit: cover; }
+.rec-photo button { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 15px; line-height: 1; }
+.rec-photo.add { display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--accent-strong); background: var(--accent-soft); cursor: pointer; }
+.rec-search { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--surface); color: var(--text); }
+.rec-list { display: flex; flex-direction: column; gap: 8px; }
+.rec-date { font-size: 13px; font-weight: 700; color: var(--text-soft); margin: 8px 2px 0; }
+.rec-item { padding: 0; }
+.rec-item-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 12px 14px; background: none; border: none; text-align: left; color: var(--text); }
+.rec-icon { font-size: 22px; flex-shrink: 0; }
+.rec-item-title { display: block; font-size: 14.5px; font-weight: 700; }
+.rec-item-text { display: block; font-size: 13px; color: var(--text-soft); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-item-row[aria-expanded="true"] .rec-item-text { white-space: normal; }
+.rec-detail { padding: 0 14px 14px; border-top: 1px solid var(--border); padding-top: 10px; }
+.rec-detail-photo { display: block; width: 100%; border-radius: var(--radius-md); margin-top: 8px; }
+.rec-level { font-size: 12.5px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); }
+.rec-level.lv0 { background: var(--warning-bg); color: var(--warning); border-color: transparent; }
+.rec-level.lv1 { background: var(--accent-soft); color: var(--accent-strong); border-color: transparent; }
+.rec-level.lv2 { background: var(--success-bg); color: var(--success); border-color: transparent; }
+.rec-mini { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 0; background: none; border: none; border-bottom: 1px solid var(--border); text-align: left; color: var(--text); font-size: 14px; }
+.rec-mini-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.info-toggle { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 8px; min-height: 36px; background: none; border: none; padding: 0; color: var(--text); }
+
+/* 병원용 기록 인쇄: 크게 보기 화면만 종이에 */
+@media print {
+  body > *:not(.vet-show) { display: none !important; }
+  .vet-show { position: static; overflow: visible; padding: 0; }
+  .vet-show-close { display: none; }
+  .vet-doc { box-shadow: none; border: none; }
+}

@@ -48,12 +48,14 @@ export default function WeightChart({ records }) {
 
   // 적정 구간 띠 — 기록마다 월령이 달라 구간도 다를 수 있어서, 위쪽 경계선과 아래쪽 경계선을
   // 각각 이어 만든 폭이 유연하게 변하는 띠로 그린다(기록이 1개면 사각형 하나).
+  // 적정 구간 값이 없는 기록이 섞이면(통합 기록의 단순 그래프) 띠를 그리지 않는다
+  const hasBand = records.every((r) => r.bandMin != null && r.bandMax != null);
   const upper = points.map((p) => ({ x: p.x, y: yFor(p.r.bandMax) }));
   const lower = points.map((p) => ({ x: p.x, y: yFor(p.r.bandMin) }));
   const upperPath = upper.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const lowerPath = lower.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const bandPath =
-    upper.length > 0
+    hasBand && upper.length > 0
       ? `${upperPath} ${[...lower]
           .reverse()
           .map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`)
@@ -92,9 +94,9 @@ export default function WeightChart({ records }) {
       <p className="subtle" style={{ textAlign: "center", marginTop: 6, marginBottom: 0 }}>
         {formatKoreanDate(toDateKey(new Date(active.r.measuredAt)))} · {active.r.weightKg}kg
       </p>
-      <p className="faint" style={{ textAlign: "center", marginTop: 2, marginBottom: 0 }}>
+      {hasBand && <p className="faint" style={{ textAlign: "center", marginTop: 2, marginBottom: 0 }}>
         연두색 띠 = 그 시점 월령 기준 적정 체중 구간 ({active.r.bandMin}~{active.r.bandMax}kg)
-      </p>
+      </p>}
       {active.r.statusText && active.r.status !== "ideal" && (
         <p className="subtle" style={{ marginTop: 8, marginBottom: 0 }}>
           {active.r.statusText}
