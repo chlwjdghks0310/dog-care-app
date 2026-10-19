@@ -58,7 +58,7 @@ async function fireNotification(title, body, url) {
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
   if (registration) {
-    registration.showNotification(title, { body, icon: "/icon-192.png", vibrate: VIBRATE, data: { url } });
+    registration.showNotification(title, { body, icon: "/icon-192.png", vibrate: VIBRATE, silent: false, data: { url } });
   } else {
     new Notification(title, { body });
   }
@@ -194,9 +194,15 @@ export function buildPushAlarms() {
 }
 
 // 푸시가 켜진 기기라면 최신 알람 목록을 서버에 다시 보낸다(앱 열 때/닫을 때 호출).
+// 알림 권한은 한 번 허용하면 유지되는데, 기기 구독은 만료되거나(아이폰이 정리) 권한만 켜고 구독은 안 한 경우가 있다.
+// 그때는 묻지 않고 다시 구독해서, 사용자가 다시 켜지 않아도 알람이 계속 오게 한다.
+let resubscribing = null;
 export async function syncPushAlarms({ beacon = false } = {}) {
   const subscription = await getPushSubscription().catch(() => null);
-  if (subscription) await postSubscription(subscription, buildPushAlarms(), { beacon }).catch(() => {});
+  if (subscription) return postSubscription(subscription, buildPushAlarms(), { beacon }).catch(() => {});
+  if (beacon || getPermission() !== "granted" || !isPushSupported()) return;
+  resubscribing ||= subscribeToPush().catch(() => {}).finally(() => (resubscribing = null));
+  return resubscribing;
 }
 
 // 어느 단계에서 실패했는지 오류 문구에 붙인다. 정해진 시간이 넘으면 멈춘 걸로 보고 실패 처리(버튼이 "켜는 중"에 갇히지 않게).

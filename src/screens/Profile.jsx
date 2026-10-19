@@ -3,7 +3,7 @@ import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
 import { THEMES, getTheme, setTheme } from "../services/themeSettings";
-import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
+import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { saveDog } from "../services/dogRepository";
 
@@ -71,6 +71,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onU
   async function handleEnableNotifications() {
     const result = await requestPermission();
     setNotifPermission(result);
+    if (result === "granted") syncPushAlarms(); // 권한을 켜면 앱이 꺼져 있어도 오는 푸시까지 바로 연결
   }
 
   function handleDeleteCurrent() {

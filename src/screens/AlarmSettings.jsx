@@ -10,6 +10,7 @@ import {
   isNotificationSupported,
   getPermission,
   requestPermission,
+  syncPushAlarms,
   isPushSupported,
   subscribeToPush,
   sendTestPush,
@@ -50,6 +51,7 @@ export default function AlarmSettings({ dog, onBack }) {
   async function handleEnableNotifications() {
     const result = await requestPermission();
     setNotifPermission(result);
+    if (result === "granted") syncPushAlarms(); // 권한을 켜면 앱이 꺼져 있어도 오는 푸시까지 바로 연결
   }
 
   async function handleEnablePush() {
