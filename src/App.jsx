@@ -59,7 +59,7 @@ export default function App() {
   const [dog, setDog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [route, setRoute] = useState("onboarding");
-  const [tab, setTab] = useState("main");
+  const [tab, setTab] = useState("profile"); // 앱을 열면 프로필부터
   const [mainResetSignal, setMainResetSignal] = useState(0);
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
@@ -88,7 +88,7 @@ export default function App() {
     const page = el?.children[pageIndex];
     if (!page || touchingRef.current) return;
     if (Math.abs(el.scrollLeft - page.offsetLeft) > 2) el.scrollTo({ left: page.offsetLeft });
-  }, [pageIndex]);
+  }, [pageIndex, loading, route]); // 로딩/등록이 끝나 페이저가 처음 그려질 때도 첫 탭(프로필) 위치로
 
   // 스와이프가 멈추면(스냅 완료) 보이는 페이지를 현재 탭으로
   function settlePage() {
@@ -102,7 +102,7 @@ export default function App() {
     }, 120);
   }
   // 하단 탭 표시는 끄는 도중에도 화면 절반을 넘는 순간 바로 바뀌게
-  const [visibleIndex, setVisibleIndex] = useState(0);
+  const [visibleIndex, setVisibleIndex] = useState(pageIndex);
   function handlePagerScroll() {
     const el = pagerRef.current;
     if (el && el.children.length > 1) setVisibleIndex(Math.round(el.scrollLeft / (el.children[1].offsetLeft - el.children[0].offsetLeft)));
