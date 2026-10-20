@@ -542,7 +542,7 @@ app.post("/api/quick-stool", async (req, res) => {
       ...CLAUDE_MODEL,
       max_tokens: 1500,
       system: [
-        "보호자가 기록용으로 강아지 변 사진을 올렸습니다. 사진에 보이는 것만 stool_observation 도구로 기록하세요.",
+        "보호자가 기록용으로 강아지 변 사진을 올렸습니다. 반드시 stool_observation 도구를 한 번 호출해서 사진에 보이는 것만 기록하세요. 도구 밖에 다른 글은 쓰지 않습니다.",
         "진단·병명·약 이름은 쓰지 않습니다. 확실하지 않으면 '판단 어려움'으로 둡니다. 레드플래그는 실제로 보일 때만 flags에 넣습니다.",
         "",
         FECAL_CHART,
@@ -553,8 +553,9 @@ app.post("/api/quick-stool", async (req, res) => {
         "",
         `강아지 정보: ${JSON.stringify(dogContext || {}).slice(0, 800)}`,
       ].join("\n"),
+      output_config: { effort: "low" },
       tools: [STOOL_TOOL],
-      tool_choice: { type: "tool", name: "stool_observation" },
+      // 강제 도구 호출(tool_choice: tool)은 생각 기능과 같이 못 써서 auto + 지시로 부르게 한다. 안 부르면 아래에서 다시 찍기 안내.
       messages: [
         {
           role: "user",
@@ -570,7 +571,7 @@ app.post("/api/quick-stool", async (req, res) => {
     res.json({ result: out });
   } catch (err) {
     console.error("[server] quick-stool error:", err.message);
-    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요.", detail: String(err.message).slice(0, 300) }); // TEMP 원인 확인용
   }
 });
 
