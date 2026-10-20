@@ -33,6 +33,7 @@ import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
 import { applyTheme, getTheme } from "./services/themeSettings";
+import { startSync } from "./services/sync";
 
 const PARENT_TAB = {
   week: "home",
@@ -202,10 +203,23 @@ export default function App() {
       if (openFromUrl(location.href)) history.replaceState(null, "", "/");
     }
     setLoading(false);
+    // 로그인했으면 서버와 기록 맞추기 시작. 다른 폰(가족·새 폰)에서 받은 게 있으면 화면을 새로 그린다
+    startSync();
+    const onSynced = () => {
+      const list = getDogs();
+      if (!list.length) return;
+      setDog((cur) => list.find((d) => d.id === cur?.id) || list.find((d) => d.id === getActiveDogId()) || list[0]);
+      setRoute("app");
+      setPageVersion((v) => v + 1);
+    };
+    window.addEventListener("dogcare-synced", onSynced);
     // 앱이 이미 켜져 있을 때 알림을 누르면 서비스워커가 주소를 보내 준다
     const onMessage = (e) => e.data?.type === "open-url" && openFromUrl(e.data.url);
     navigator.serviceWorker?.addEventListener("message", onMessage);
-    return () => navigator.serviceWorker?.removeEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("dogcare-synced", onSynced);
+      navigator.serviceWorker?.removeEventListener("message", onMessage);
+    };
   }, []);
 
   // 앱이 켜져 있는 동안, 등록된 모든 강아지의 오늘 일정 권장 시간대가 되면 알림을 띄운다

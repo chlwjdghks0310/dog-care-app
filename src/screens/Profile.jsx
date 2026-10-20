@@ -12,6 +12,8 @@ import { getOccurrences } from "../services/calendarEvents";
 import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summarize, md } from "../services/records";
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
+import AccountCard from "../components/AccountCard";
+import { getSyncStatus } from "../services/sync";
 
 const GENDER_LABEL = { female: "암컷", male: "수컷" };
 
@@ -24,6 +26,9 @@ function Row({ label, value }) {
     </div>
   );
 }
+
+// 로그인 중이면 삭제가 서버 백업(과 다른 폰)에도 반영된다는 걸 미리 알린다
+const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업된 기록과 같은 계정의 다른 폰에서도 사라져요." : "");
 
 export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
   const age = calculateAge(dog.birthDate);
@@ -105,13 +110,13 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
   }
 
   function handleDeleteCurrent() {
-    if (window.confirm(`${dog.name}의 정보를 삭제할까요? 체중 기록·일정 등 이 강아지 데이터가 모두 사라져요.`)) {
+    if (window.confirm(`${dog.name}의 정보를 삭제할까요? 체중 기록·일정 등 이 강아지 데이터가 모두 사라져요.${backupNote()}`)) {
       onDeleteCurrent?.();
     }
   }
 
   function handleDeleteAll() {
-    if (window.confirm("등록된 강아지를 전부 삭제할까요? 모든 강아지의 데이터가 사라지고 등록 화면으로 돌아가요.")) {
+    if (window.confirm(`등록된 강아지를 전부 삭제할까요? 모든 강아지의 데이터가 사라지고 등록 화면으로 돌아가요.${backupNote()}`)) {
       onDeleteAll?.();
     }
   }
@@ -326,6 +331,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
               <div className="h1" style={{ margin: 0 }}>설정</div>
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
             </div>
+            <AccountCard />
             <div className="card">
               <div className="h2">배경 테마</div>
               <button

@@ -7,6 +7,8 @@ import { isPushSupported, subscribeToPush } from "../services/notifications";
 import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import DogAvatarVideo from "../components/DogAvatarVideo";
+import { LoginSheet } from "../components/AccountCard";
+import { supabase } from "../services/supabase";
 
 // 첫 실행 온보딩: ① 앱 소개 4장(옆으로 넘김) → ② 강아지 정보를 한 화면에 하나씩 → ③ 알림 켜기 → ④ 인사.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
@@ -174,6 +176,7 @@ function Setup({ onRegistered }) {
   const [dog, setDog] = useState(null);
   const [notifyStatus, setNotifyStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const key = STEPS[step];
   const name = form.name.trim();
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -262,6 +265,13 @@ function Setup({ onRegistered }) {
               maxLength={20}
             />
           )}
+          {/* 새 폰: 로그인하면 서버의 기록을 받아 오고, 받은 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced) */}
+          {key === "name" && supabase && (
+            <button type="button" className="onb-skip" style={{ display: "block", margin: "14px auto 0", textDecoration: "underline" }} onClick={() => setLoginOpen(true)}>
+              예전에 쓰던 기록이 있나요? 로그인해서 불러오기
+            </button>
+          )}
+          {loginOpen && <LoginSheet onClose={() => setLoginOpen(false)} />}
 
           {key === "breed" && (
             <>
