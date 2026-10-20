@@ -571,7 +571,7 @@ app.post("/api/quick-stool", async (req, res) => {
     res.json({ result: out });
   } catch (err) {
     console.error("[server] quick-stool error:", err.message);
-    res.status(502).json({ error: "AI 서버 호출에 실패했어요.", detail: String(err.message).slice(0, 300) }); // TEMP 원인 확인용
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
   }
 });
 

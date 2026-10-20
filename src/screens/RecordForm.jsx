@@ -299,7 +299,7 @@ function PhotoCheck({ dog, onFilled }) {
       )}
       {step === "busy" && (
         <>
-          <p className="subtle" style={{ margin: "10px 0" }}>사진을 살펴보는 중… 보통 10~20초 걸려요.</p>
+          <p className="subtle" style={{ margin: "10px 0" }}>사진을 살펴보는 중… 보통 5~10초 걸려요.</p>
           <button type="button" className="btn-ghost small" onClick={() => abortRef.current?.abort()}>취소</button>
         </>
       )}
