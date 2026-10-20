@@ -257,11 +257,13 @@ export default function Main({ dog, resetSignal }) {
           boxShadow: isChat ? "var(--shadow)" : "none",
           cursor: isChat ? "pointer" : "default",
           transition: "all 0.35s ease",
-          flexShrink: 0,
+          // 메인 화면에서는 폰 화면이 작으면 강아지가 줄어들어 페이지가 넘치지 않게(최소 140px)
+          flexShrink: isChat ? 0 : 1,
+          minHeight: isChat ? undefined : 140,
           zIndex: 5,
         }}
       >
-        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : IDLE_HEIGHT} breed={chatMode} />
+        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : "100%"} breed={chatMode} />
       </div>
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={CORNER_TOP} />}
