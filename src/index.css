@@ -839,3 +839,37 @@ button {
 .es-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px); border-top: 1px solid var(--border); background: var(--surface); }
 .es-save { width: auto; padding: 12px 28px; }
 @media (prefers-reduced-motion: reduce) { .es-sheet { animation: none; } }
+
+/* 가계부 (토스 '내 소비' 방식 참고: 큰 숫자 + 한 줄 인사이트 + 둥근 아이콘 목록) */
+.bud-sum { padding: 18px; }
+.bud-total { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin: 2px 0 6px; color: var(--text); }
+.bud-insight { margin: 0; font-size: 14.5px; color: var(--text); }
+.bud-insight .up { color: var(--danger); }
+.bud-insight .down { color: var(--accent-strong); }
+.bud-allow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); cursor: text; }
+.bud-bar { height: 8px; border-radius: 4px; background: var(--accent-soft); overflow: hidden; margin-top: 10px; }
+.bud-bar span { display: block; height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.bud-donut-wrap { position: relative; width: 168px; height: 168px; margin: 0 auto 12px; }
+.bud-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; }
+.bud-cat, .bud-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 0; background: none; border: none; text-align: left; color: var(--text); }
+.bud-row { border-bottom: 1px solid var(--border); }
+.bud-row:last-child { border-bottom: none; }
+.bud-cat.on { background: var(--accent-soft); border-radius: var(--radius-md); padding-left: 8px; padding-right: 8px; }
+.bud-cat-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; background: var(--accent-soft); }
+.bud-cat-name, .bud-row-title { display: block; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bud-row .faint { display: block; }
+.bud-cat-diff { display: block; font-size: 12.5px; }
+.bud-cat-diff.up { color: var(--danger); }
+.bud-cat-diff.down { color: var(--accent-strong); }
+.bud-amt { font-weight: 800; white-space: nowrap; font-size: 15px; }
+.bud-top { font-size: 13px; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); }
+.bud-weeks { display: flex; flex-direction: column; gap: 10px; }
+.bud-week { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.bud-week-label { width: 82px; flex-shrink: 0; font-weight: 700; }
+.bud-week-bar { flex: 1; height: 10px; border-radius: 5px; background: var(--accent-soft); overflow: hidden; }
+.bud-week-bar span { display: block; height: 100%; border-radius: 5px; background: var(--accent); opacity: 0.55; }
+.bud-week.now .bud-week-bar span { opacity: 1; }
+.bud-week-amt { width: 86px; text-align: right; font-weight: 700; flex-shrink: 0; }
+.bud-badge { font-size: 12.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); flex-shrink: 0; }
+.bud-badge.done { background: var(--success-bg); color: var(--success); }
+.bud-edit { padding: 12px; margin: 6px 0; border-radius: var(--radius-md); background: var(--accent-soft); }
