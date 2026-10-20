@@ -1,24 +1,23 @@
-/* 기본 테마: 크림 & 코랄(2026-10 리디자인, 20·30대 여성 타겟 + 누구나 읽기 쉽게).
-   글자색은 모두 흰/크림 바탕에서 WCAG 4.5:1 이상(--accent 위 흰 글자 4.6, 바탕 위 --accent-strong 5.8). */
+/* 기본 테마: 아이콘 소프트블루. 흐린 글자(--text-faint)는 흰 바탕 대비 4.5:1 이상으로 맞춘 값. */
 :root {
-  --bg: #fff8f0;
+  --bg: #f0f6ff;
   --surface: #ffffff;
-  --border: #f3e3d6;
-  --text: #3a2e2a;
-  --text-soft: #7a6b63;
+  --border: #d6e4f5;
+  --text: #2b2320;
+  --text-soft: #7a6f63;
   --text-faint: #80726a;
-  --accent: #c94a45;
-  --accent-soft: #ffe6da;
-  --accent-strong: #a63a37;
-  --success: #2b7353;
+  --accent: #4b90e2;
+  --accent-soft: #dde9fa;
+  --accent-strong: #2f6fbd;
+  --success: #4c8c5b;
   --success-bg: #e7f3ea;
-  --danger: #c23a3a;
-  --danger-bg: #fce9e6;
-  --warning: #985e0e;
-  --warning-bg: #fbf0dd;
+  --danger: #c15b4a;
+  --danger-bg: #fbeae6;
+  --warning: #c98a2e;
+  --warning-bg: #faf0dd;
   --radius-lg: 22px;
   --radius-md: 14px;
-  --shadow: 0 4px 14px rgba(120, 72, 50, 0.07);
+  --shadow: 0 4px 14px rgba(43, 35, 32, 0.07);
   --bg-pattern: none;
   --bg-pattern-size: auto;
   --surface-pattern: none;
@@ -39,14 +38,14 @@
   --surface-pattern-size: var(--paw-pattern-size);
 }
 
-/* 기본 테마는 크림 코랄(cream, :root). 예전 기본 소프트블루·녹색(forest)·오렌지(warm)는 선택 테마로 남긴다. */
-:root[data-theme="softblue"],
-:root[data-theme="softblue-paw"] {
-  --bg: #f0f6ff;
-  --border: #d6e4f5;
-  --accent: #4b90e2;
-  --accent-soft: #dde9fa;
-  --accent-strong: #2f6fbd;
+/* 기본 테마는 아이콘 소프트블루(softblue, :root). 크림 코랄·녹색(forest)·오렌지(warm)는 선택 테마로 남긴다. */
+:root[data-theme="cream"],
+:root[data-theme="cream-paw"] {
+  --bg: #fff8f0;
+  --border: #f3e3d6;
+  --accent: #c94a45;
+  --accent-soft: #ffe6da;
+  --accent-strong: #a63a37;
 }
 
 :root[data-theme="forest"],
@@ -420,7 +419,7 @@ button {
   background-repeat: repeat;
   border-top: 1px solid var(--border);
   border-radius: 22px 22px 0 0;
-  box-shadow: 0 -4px 16px rgba(120, 72, 50, 0.06);
+  box-shadow: 0 -4px 16px rgba(43, 35, 32, 0.06);
   padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
