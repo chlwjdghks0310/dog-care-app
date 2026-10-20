@@ -3,6 +3,7 @@ import { buildAppSnapshot } from "./appSnapshot";
 import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
+import { sanitizeStructured, structureAnswer } from "../utils/aiAnswer";
 
 // env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
 export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
@@ -38,20 +39,42 @@ function toDogContext(dog) {
   };
 }
 
+// 서버가 준 블록 구조를 검사하고, 없거나 망가졌으면 글에서 다시 만든다(화면이 깨지지 않게).
+function withStructure(data) {
+  const answer = typeof data?.answer === "string" && data.answer.trim() ? data.answer : "답변을 생성하지 못했어요.";
+  return { answer, structured: sanitizeStructured(data?.structured) || structureAnswer(answer) };
+}
+
 // 실제 Claude API 프록시(server/)에 먼저 물어보고, 서버가 꺼져있거나 오류가 나면
 // 규칙 기반 mock 응답으로 조용히 대체한다 (UI가 끊기지 않도록).
-export async function askAI(dog, question, history, mode) {
+// 사진을 붙였으면(images: [{ data, mediaType }]) 대체 답이 있을 수 없으니 실패를 그대로 던진다.
+// imagesAreContext: 앞서 보낸 사진을 후속 질문에 다시 붙인 것 — 서버가 새로 분석하지 않고 참고만 한다.
+export async function askAI(dog, question, history, mode, { images, imagesAreContext, signal } = {}) {
+  const hasImages = Array.isArray(images) && images.length > 0;
   try {
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dogContext: toDogContext(dog), question, history, mode, categories: getCategories().map((c) => c.name) }),
+      body: JSON.stringify({
+        dogContext: toDogContext(dog),
+        question,
+        history,
+        mode,
+        categories: getCategories().map((c) => c.name),
+        ...(hasImages && { images, imagesAreContext: Boolean(imagesAreContext) }),
+      }),
+      signal,
     });
-    if (!res.ok) throw new Error(`status ${res.status}`);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "AI 서버 호출에 실패했어요.");
+    }
     const data = await res.json();
-    return { answer: data.answer, source: "ai", actions: Array.isArray(data.actions) ? data.actions : [] };
-  } catch {
-    return { answer: answerQuestion(dog, question), source: "mock" };
+    return { ...withStructure(data), source: "ai", actions: Array.isArray(data.actions) ? data.actions : [] };
+  } catch (err) {
+    if (hasImages || err.name === "AbortError") throw err;
+    const answer = answerQuestion(dog, question);
+    return { answer, structured: structureAnswer(answer), source: "mock" };
   }
 }
 
@@ -85,44 +108,37 @@ export async function quickStoolCheck(dog, imageBase64, signal) {
   return data.result;
 }
 
-// 메인 채팅(아바타)에서 보내는 사진용 — 변 사진으로 단정하지 않고 사진에 보이는 대로 분석한다.
-// (HealthCheck 화면의 "변 상태 확인"은 여전히 위 analyzePhoto를 그대로 쓴다.)
-export async function analyzeGeneralPhoto(dog, file, signal, mode) {
-  const imageBase64 = await fileToBase64(file);
-  const res = await fetch(`${API_BASE}/api/analyze-general-photo`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type, mode }),
-    signal,
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `status ${res.status}`);
-  }
-  const data = await res.json();
-  return data.answer;
-}
-
-// 영상 분석은 Gemini(구글)로 처리한다 — 영상을 통째로 이해할 수 있어 프레임 추출이 필요 없다.
+// 영상 분석은 Gemini(구글)로 처리한다 — 영상을 그대로 넘기면 Gemini가 1초에 약 1장씩 장면을 나눠 보고 소리도 듣는다.
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.
-export async function analyzeBehavior(dog, file, signal, mode) {
+// onProgress(0~1): 올리는 진행률(fetch는 업로드 진행률을 못 줘서 XHR을 쓴다). 다 올라가면 1 → 그 뒤는 분석 대기.
+export function analyzeBehavior(dog, file, signal, mode, { question, onProgress } = {}) {
   const formData = new FormData();
   if (mode) formData.append("mode", mode);
+  if (question) formData.append("question", question);
   formData.append("video", file);
   formData.append("dogContext", JSON.stringify(toDogContext(dog)));
 
-  const res = await fetch(`${API_BASE}/api/analyze-behavior`, {
-    method: "POST",
-    body: formData,
-    signal,
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/api/analyze-behavior`);
+    xhr.responseType = "json";
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(e.loaded / e.total);
+    xhr.upload.onload = () => onProgress?.(1);
+    xhr.onload = () => {
+      const data = xhr.response || {};
+      if (xhr.status >= 200 && xhr.status < 300) resolve(withStructure(data));
+      else reject(new Error(data.error || (xhr.status === 413 ? "영상이 너무 커요." : `status ${xhr.status}`)));
+    };
+    // fetch처럼 연결 실패는 TypeError, 취소는 AbortError로 맞춰 화면이 같은 문구를 쓰게 한다
+    xhr.onerror = () => reject(new TypeError("network"));
+    xhr.onabort = () => reject(new DOMException("aborted", "AbortError"));
+    if (signal) {
+      if (signal.aborted) return reject(new DOMException("aborted", "AbortError"));
+      signal.addEventListener("abort", () => xhr.abort(), { once: true });
+    }
+    xhr.send(formData);
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `status ${res.status}`);
-  }
-  const data = await res.json();
-  return data.answer;
 }
 
 function fileToBase64(file) {

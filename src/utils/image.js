@@ -16,3 +16,9 @@ export function resizeImageFile(file, maxSize = 480, quality = 0.82) {
     img.src = URL.createObjectURL(file);
   });
 }
+
+// AI에 보낼 사진: 긴 변 1280px JPEG로 줄여 { data(base64), mediaType }로. 아이폰 HEIC도 브라우저가 읽을 수 있으면 JPEG가 된다.
+export async function imageForAI(file) {
+  const dataUrl = await resizeImageFile(file, 1280, 0.82);
+  return { data: dataUrl.split(",")[1], mediaType: "image/jpeg" };
+}

@@ -33,7 +33,7 @@ export default function BehaviorCheck({ dog, onBack }) {
     setResult(null);
     timer.start();
     try {
-      const answer = await analyzeBehavior(dog, file, undefined, "vet");
+      const { answer } = await analyzeBehavior(dog, file, undefined, "vet");
       setResult(answer);
       timer.stop(true);
     } catch (err) {

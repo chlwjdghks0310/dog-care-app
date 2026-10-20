@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
 import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
+import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
 
@@ -319,6 +320,29 @@ function buildBehaviorAnalysisSystemPrompt(dogContext, mode) {
   ].join("\n");
 }
 
+// 답변 아래 "이어서 물어보기" 버튼 — 맨 끝 한 줄로 받아 src/utils/aiAnswer.js가 떼어 낸다.
+const FOLLOWUP_RULE = `[이어서 물어볼 질문]
+답변 맨 마지막 줄에 "${FOLLOWUP_MARK} 질문1 | 질문2 | 질문3" 형식으로, 보호자가 이 답변을 읽고 다음에 궁금해할 질문을 3~5개 쓴다(이 줄은 화면에서 버튼으로 바뀐다).
+- 이번 답변 내용과 직접 이어지는 실질적인 질문만. 서로 겹치지 않게, 매번 같은 일반 질문을 반복하지 않는다.
+- 보호자가 직접 묻는 말투로 25자 이내(예: "집에서 먼저 확인할 것은?", "병원에 가야 하는 증상은?").
+- 약을 먹이거나 바르는 등 집에서 하는 위험한 자가 치료를 부추기는 질문은 쓰지 않는다. 응급이 의심되면 병원 관련 질문을 맨 앞에 둔다.
+- 수다(잡담)면 강아지와 이어서 놀거나 얘기할 말 2~3개(예: "터그 놀이 하자!").
+- 기록을 마친 답변처럼 더 물어볼 게 없으면 이 줄을 생략해도 된다.`;
+
+// 웹 검색 도구가 실제로 가져와 답에 인용한 자료만 출처로 쓴다(AI가 이름만 적은 출처는 쓰지 않음).
+function citationRefs(response) {
+  return response.content
+    .filter((b) => b.type === "text")
+    .flatMap((b) => b.citations || [])
+    .filter((c) => c.type === "web_search_result_location")
+    .map((c) => ({ title: c.title, url: c.url }));
+}
+
+function structuredReply(text, references) {
+  const structured = structureAnswer(text, references);
+  return { answer: structured?.text || text, structured };
+}
+
 const CUT_OFF_NOTE = "\n\n(말이 너무 길어져서 여기까지만 말할게! 더 궁금한 건 이어서 물어봐 줘 🐾)";
 
 // 텍스트 블록이 여러 개로 나뉘어 올 수 있어 전부 이어 붙이고, 길이 한도에 걸려 잘렸으면 안내를 덧붙인다.
@@ -429,27 +453,52 @@ const APP_TOOL_RULES = `[앱에 기록하기]
   같은 약이 여러 번이라 어느 건지 애매하거나 [약 관리]에 없는 약이면 기록하지 말고 되묻는다. 먹이지 않은 약을 먹였다고 기록하지 않는다.
   놓친 약을 더 먹이거나 두 배로 먹이라고 하지 않는다. 구토·설사·처짐·발진·호흡 이상 등 이상 반응이 의심되면 약을 임의로 더 주거나 끊지 말고 바로 수의사에게 문의하라고 한다.`;
 
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_CHAT_IMAGES = 4;
+
 app.post("/api/ask", async (req, res) => {
-  const { dogContext, question, history, mode, categories } = req.body || {};
+  const { dogContext, question, history, mode, categories, images, imagesAreContext } = req.body || {};
   const chatMode = getChatMode(mode);
-  if (!question || typeof question !== "string") {
+  // 사진: 최대 4장, 앱에서 줄여 보낸 base64. imagesAreContext=true면 앞서 보낸 사진을 후속 질문에 다시 붙인 것(새로 분석하라는 뜻 아님)
+  const photos = (Array.isArray(images) ? images : [])
+    .filter((im) => typeof im?.data === "string" && im.data.length > 0 && im.data.length < 6_000_000)
+    .slice(0, MAX_CHAT_IMAGES);
+  if (Array.isArray(images) && images.length && !photos.length) {
+    return res.status(400).json({ error: "사진을 읽지 못했어요. 다른 사진으로 다시 시도해 주세요." });
+  }
+  const text = typeof question === "string" ? question.trim() : "";
+  if (!text && !photos.length) {
     return res.status(400).json({ error: "question is required" });
   }
+  const analyzing = photos.length > 0 && !imagesAreContext;
 
   try {
+    const userText = analyzing
+      ? `${photos.length > 1 ? `사진 ${photos.length}장을` : "이 사진을"} 보고 위 기준에 따라 참고 소견을 알려주세요.${text ? `\n보호자 질문: ${text}` : ""}`
+      : photos.length
+        ? `(앞서 보낸 사진을 다시 붙였어요 — 질문에 필요할 때만 참고해 주세요)\n${text}`
+        : text;
     const messages = [
       ...(Array.isArray(history) ? history : []).map((m) => ({
         role: m.role === "ai" ? "assistant" : "user",
         content: m.text,
       })),
-      { role: "user", content: question },
+      {
+        role: "user",
+        content: photos.length
+          ? [
+              ...photos.map((im) => ({ type: "image", source: { type: "base64", media_type: IMAGE_TYPES.includes(im.mediaType) ? im.mediaType : "image/jpeg", data: im.data } })),
+              { type: "text", text: userText },
+            ]
+          : userText,
+      },
     ];
 
     const params = {
       ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: chatMode.effort },
-      system: `${buildChatSystemPrompt(dogContext, mode)}\n\n${APP_TOOL_RULES}`,
+      system: `${analyzing ? buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode) : buildChatSystemPrompt(dogContext, mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`,
       tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] : []), ...appTools(categories)],
     };
     let convo = messages;
@@ -472,7 +521,8 @@ app.post("/api/ask", async (req, res) => {
       });
     }
 
-    res.json({ answer: claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요."), actions });
+    const reply = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
+    res.json({ ...structuredReply(reply, citationRefs(response)), actions });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
@@ -666,6 +716,7 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
   const type = ALLOWED_VIDEO_TYPES.includes(req.file.mimetype) ? req.file.mimetype : "video/mp4";
   // 체크리스트 "활동 상태 확인" 화면은 mode=vet — 수의사 소견서 형식 + 구글 검색으로 자료 확인
   const isVet = req.body.mode === "vet";
+  const question = typeof req.body.question === "string" ? req.body.question.trim().slice(0, 1000) : "";
 
   try {
     let uploaded = await gemini.files.upload({ file: req.file.path, config: { mimeType: type } });
@@ -681,10 +732,14 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
       model: "gemini-3.8-flash",
       contents: [
         { fileData: { fileUri: uploaded.uri, mimeType: uploaded.mimeType } },
-        { text: isVet ? "이 영상을 수의사로서 분석해 주세요." : "이 영상을 보고 위 기준에 따라 참고 소견을 알려주세요." },
+        {
+          text: isVet
+            ? "이 영상을 수의사로서 분석해 주세요."
+            : `이 영상을 보고 위 기준에 따라 참고 소견을 알려주세요.${question ? `\n보호자 질문: ${question}` : ""}`,
+        },
       ],
       config: {
-        systemInstruction: isVet ? buildVetVideoSystemPrompt(dogContext) : buildBehaviorAnalysisSystemPrompt(dogContext, req.body.mode),
+        systemInstruction: isVet ? buildVetVideoSystemPrompt(dogContext) : `${buildBehaviorAnalysisSystemPrompt(dogContext, req.body.mode)}\n\n${FOLLOWUP_RULE}`,
         ...(isVet && { tools: [{ googleSearch: {} }] }),
         maxOutputTokens: 16384, // 생각(thinking) 토큰도 이 한도에 포함돼서 작으면 답이 중간에 잘린다
       },
@@ -695,7 +750,9 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
     if (!text) {
       return res.json({ answer: "이 영상은 분석하기 어려워요. 강아지가 잘 보이는 영상으로 다시 찍어주세요." });
     }
-    res.json({ answer: text });
+    // 구글 검색(vet 모드)으로 실제로 찾아본 자료만 출처로
+    const refs = (response.candidates?.[0]?.groundingMetadata?.groundingChunks || []).map((c) => ({ title: c.web?.title, url: c.web?.uri }));
+    res.json(isVet ? { answer: text } : structuredReply(text, refs)); // 활동 상태 확인 화면(vet)은 소견서 글 그대로
   } catch (err) {
     console.error("[server] Gemini video API error:", err.message);
     const isUnavailable = err.status === 503 || /UNAVAILABLE|overloaded|high demand/i.test(err.message || "");
