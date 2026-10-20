@@ -3,6 +3,8 @@ import { todayKey } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { addWeightRecord, updateWeightRecord } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
+import { quickStoolCheck } from "../services/aiClient";
+import { normalizeStoolResult } from "../services/photoCheck";
 import {
   TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule,
@@ -151,6 +153,13 @@ function Form({ dog, type, initial, onSaved, onBack }) {
 
       {type === "potty" && (
         <>
+          <PhotoCheck
+            dog={dog}
+            onFilled={(fill, photo) => {
+              setData((d) => ({ ...d, ...fill }));
+              setPhotos((p) => [photo, ...p.filter((x) => x !== photo)].slice(0, MAX_PHOTOS));
+            }}
+          />
           <Field label="대변"><Pick options={STOOL} value={data.stool} onChange={set("stool")} /></Field>
           <Field label="소변"><Pick options={URINE} value={data.urine} onChange={set("urine")} /></Field>
         </>
@@ -223,6 +232,106 @@ function Form({ dog, type, initial, onSaved, onBack }) {
       <button type="button" className="btn-primary" onClick={save} disabled={saving}>
         {saving ? "저장 중…" : "저장"}
       </button>
+    </div>
+  );
+}
+
+// 사진으로 채우기: 동그라미 안에 사진, 둘레에 보이는 것. 결과는 아래 칸에 채우고 보호자가 확인 후 저장한다.
+function PhotoCheck({ dog, onFilled }) {
+  const [state, setState] = useState({ step: "idle" });
+  const abortRef = useRef(null);
+
+  async function run(photo) {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setState({ step: "busy", photo });
+    try {
+      const raw = await quickStoolCheck(dog, photo.split(",")[1], ctrl.signal);
+      const r = normalizeStoolResult(raw);
+      if (!r.ok) return setState({ step: "retake", photo, msg: r.retake });
+      onFilled({ ...r.fill, photoSummary: r.obs.summary }, photo);
+      setState({ step: "done", photo, obs: r.obs });
+    } catch (err) {
+      if (err.name === "AbortError") return setState({ step: "idle" });
+      setState({ step: "error", photo, msg: err instanceof TypeError ? "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요." : err.message });
+    }
+  }
+
+  async function pick(e) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    try {
+      run(await resizeImageFile(f, 720, 0.8));
+    } catch {
+      setState({ step: "error", msg: "사진을 불러오지 못했어요. 다른 사진으로 해 주세요." });
+    }
+  }
+
+  const picker = (label) => (
+    <label className="btn-ghost small pc-pick">
+      {label}
+      <input type="file" accept="image/*" capture="environment" onChange={pick} hidden />
+    </label>
+  );
+  const { step, photo, obs, msg } = state;
+
+  if (step === "idle")
+    return (
+      <label className="pc-start">
+        <span className="pc-start-icon" aria-hidden="true">📷</span>
+        <span>
+          <b>사진으로 채우기</b>
+          <span className="faint" style={{ display: "block" }}>변 사진을 찍으면 보이는 모양·색을 정리해서 아래 칸을 채워 줘요. 진단은 아니에요.</span>
+        </span>
+        <input type="file" accept="image/*" capture="environment" onChange={pick} hidden />
+      </label>
+    );
+
+  const flagged = obs?.flags.length > 0;
+  return (
+    <div className="pc" aria-live="polite">
+      {photo && (
+        <div className={`pc-circle${step === "busy" ? " busy" : ""}${flagged ? " flagged" : ""}`}>
+          <img src={photo} alt="분석한 변 사진" />
+        </div>
+      )}
+      {step === "busy" && (
+        <>
+          <p className="subtle" style={{ margin: "10px 0" }}>사진을 살펴보는 중… 보통 10~20초 걸려요.</p>
+          <button type="button" className="btn-ghost small" onClick={() => abortRef.current?.abort()}>취소</button>
+        </>
+      )}
+      {step === "done" && (
+        <>
+          <div className="pc-chips">
+            {[["모양", obs.shape], ["색", obs.color], ["피", obs.blood], ["점액", obs.mucus], ["이물질", obs.foreign]].map(([k, v]) => (
+              <span key={k} className={`pc-chip${(k === "피" || k === "점액" || k === "이물질") && v === "보임" ? " warn" : ""}`}>
+                <span className="faint">{k}</span> {v}
+              </span>
+            ))}
+          </div>
+          {flagged && (
+            <div className="pc-flags" role="alert">
+              <b>병원에 연락해 보면 좋은 신호</b>
+              {obs.flags.map((f, i) => <div key={i}>• {f}</div>)}
+            </div>
+          )}
+          {obs.summary && <p className="subtle" style={{ margin: "8px 0 0" }}>{obs.summary}</p>}
+          <p className="faint" style={{ margin: "8px 0" }}>아래 칸에 채워 뒀어요. 실제와 다르면 고친 뒤 저장해 주세요. 사진만으로는 정확하지 않을 수 있어요.</p>
+          {picker("다른 사진으로")}
+        </>
+      )}
+      {(step === "retake" || step === "error") && (
+        <>
+          <p className={step === "error" ? "error-text" : "subtle"} style={{ margin: "10px 0" }}>{msg}</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+            {step === "error" && photo && <button type="button" className="btn-ghost small" onClick={() => run(photo)}>다시 시도</button>}
+            {picker("다시 찍기")}
+          </div>
+        </>
+      )}
     </div>
   );
 }

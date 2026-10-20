@@ -137,7 +137,7 @@ export function summarize(rec) {
       parts.push(d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount);
       break;
     case "potty":
-      parts.push(d.stool && `대변 ${d.stool}`, d.urine && `소변 ${d.urine}`);
+      parts.push(d.stool && `대변 ${d.stool}`, d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
       break;
     case "vet":
       parts.push(d.hospital, d.reason, d.nextDate && `다음 진료 ${md(d.nextDate)}`);

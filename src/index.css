@@ -764,3 +764,20 @@ button {
   .confetti { display: none; }
   .dog-react-face, .ring-bar { animation: none; transition: none; }
 }
+
+/* 사진으로 채우기 (변 사진) */
+.pc-start { display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1.5px dashed var(--accent); border-radius: var(--radius-lg); background: var(--accent-soft); cursor: pointer; color: var(--text); }
+.pc-start-icon { font-size: 30px; }
+.pc { text-align: center; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.pc-circle { position: relative; width: 168px; height: 168px; margin: 0 auto; border-radius: 50%; padding: 6px; background: var(--accent); }
+.pc-circle img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 4px solid var(--surface); }
+.pc-circle.flagged { background: var(--danger); }
+.pc-circle.busy { background: conic-gradient(var(--accent) 0 25%, var(--accent-soft) 25% 100%); animation: pc-spin 1s linear infinite; }
+.pc-circle.busy img { animation: pc-spin 1s linear infinite reverse; }
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+.pc-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.pc-chip { font-size: 13px; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--text); }
+.pc-chip.warn { background: var(--danger-bg); color: var(--danger); font-weight: 700; }
+.pc-flags { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger); text-align: left; font-size: 14px; line-height: 1.5; }
+.pc-pick { display: inline-block; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .pc-circle.busy, .pc-circle.busy img { animation: none; } }

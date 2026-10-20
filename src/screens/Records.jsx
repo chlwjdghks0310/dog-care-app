@@ -13,6 +13,7 @@ const FIELD_LABEL = {
   appetite: "식욕", water: "물", food: "사료", amount: "급여량", treats: "간식", stool: "대변", urine: "소변",
   hospital: "병원", reason: "진료 사유", explanation: "수의사 설명", tests: "검사 결과", prescription: "처방", nextDate: "다음 날짜",
   nextAlarm: "알림", activity: "활동량", sleep: "수면", body: "피부·귀·눈", oral: "구강", kind: "종류", minutes: "시간(분)", title: "제목",
+  photoNote: "사진 분석(참고)", photoSummary: "사진에 보인 것", photoFlags: "병원에 연락해 보면 좋은 신호",
   name: "약", dose: "용량", status: "상태", time: "예정 시각", doneAt: "먹인 시각",
 };
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];

@@ -112,4 +112,22 @@ const { reactionFor } = await import("../src/data/recordReactions.js");
   for (const t of Object.keys(R.TYPES)) assert.ok(reactionFor({ type: t, data: {} }).line, t);
 }
 
+// 변 사진 결과 → 배변 기록 칸: 모르는 값은 버리고, 피가 보이면 "피 섞임", 변이 아니면 채우지 않음
+const { normalizeStoolResult } = await import("../src/services/photoCheck.js");
+assert.equal(normalizeStoolResult({ is_stool: false, retake: "가까이 찍어 주세요" }).ok, false);
+assert.equal(normalizeStoolResult(null).ok, false);
+const ok = normalizeStoolResult({ is_stool: true, shape: "무름", fecal_score: 5, color: "갈색", blood: "안 보임", mucus: "판단 어려움", foreign: "안 보임", foreign_note: "", flags: [], summary: "부드럽게 쌓인 갈색 변" });
+assert.equal(ok.fill.stool, "무름");
+assert.match(ok.fill.photoNote, /대변 점수 5\/7 · 색 갈색 · 피 안 보임 · 점액 판단 어려움/);
+const bloody = normalizeStoolResult({ is_stool: true, shape: "설사", fecal_score: 6, color: "붉은 갈색", blood: "보임", mucus: "보임", foreign: "안 보임", flags: ["붉은 피가 섞여 보여요"], summary: "" });
+assert.equal(bloody.fill.stool, "피 섞임");
+assert.deepEqual(bloody.fill.photoFlags, ["붉은 피가 섞여 보여요"]);
+const weird = normalizeStoolResult({ is_stool: true, shape: "아주 나쁨", fecal_score: 99, color: 5, blood: "많이", flags: "x" });
+assert.equal(weird.fill.stool, undefined, "모르는 모양은 칸에 넣지 않음");
+assert.equal(weird.obs.score, null);
+assert.equal(weird.obs.blood, "판단 어려움");
+assert.deepEqual(weird.obs.flags, []);
+assert.equal(reactionFor({ type: "potty", data: { stool: "정상", photoFlags: ["피"] } }).concern, true);
+assert.match(R.summarize({ type: "potty", data: { stool: "피 섞임", photoFlags: ["붉은 피"] }, memo: "" }), /⚠ 붉은 피/);
+
 console.log("통합 기록 확인 통과");

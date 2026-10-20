@@ -72,6 +72,19 @@ export async function analyzePhoto(dog, file) {
   return data.answer;
 }
 
+// 통합 기록 "사진으로 채우기" — 보이는 것만 정해진 칸으로 받는다. 실패하면 그대로 오류(대체 결과 없음).
+export async function quickStoolCheck(dog, imageBase64, signal) {
+  const res = await fetch(`${API_BASE}/api/quick-stool`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: "image/jpeg" }),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "사진을 분석하지 못했어요. 다시 시도해 주세요.");
+  return data.result;
+}
+
 // 메인 채팅(아바타)에서 보내는 사진용 — 변 사진으로 단정하지 않고 사진에 보이는 대로 분석한다.
 // (HealthCheck 화면의 "변 상태 확인"은 여전히 위 analyzePhoto를 그대로 쓴다.)
 export async function analyzeGeneralPhoto(dog, file, signal, mode) {

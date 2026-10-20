@@ -45,6 +45,7 @@ const client = new Anthropic();
 const CLAUDE_MODEL = { model: "claude-opus-5-5", betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
 const gemini = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const app = express();
+app.set("trust proxy", 1); // Render 프록시 뒤 — 속도 제한이 실제 접속 IP 기준이 되게
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
 
@@ -496,6 +497,79 @@ app.post("/api/analyze-photo", async (req, res) => {
     res.json({ answer: claudeText(response) || "분석 결과를 생성하지 못했어요." });
   } catch (err) {
     console.error("[server] Claude vision API error:", err.message);
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+  }
+});
+
+// 통합 기록의 "사진으로 채우기" — 변 사진에서 눈에 보이는 것만 정해진 칸으로 돌려준다(빠르게, 검색 없이).
+// 점수·진단을 매기지 않고, 레드플래그는 실제로 보일 때만. 결과는 보호자가 확인하고 고친 뒤 저장한다.
+const LOOK = { type: "string", enum: ["안 보임", "보임", "판단 어려움"] };
+const STOOL_TOOL = {
+  name: "stool_observation",
+  description: "변 사진에서 눈에 보이는 것을 기록한다. 안 보이는 것은 지어내지 말고 '판단 어려움'.",
+  input_schema: {
+    type: "object",
+    properties: {
+      is_stool: { type: "boolean", description: "강아지 변이 사진에서 판별 가능하게 보이면 true" },
+      retake: { type: "string", description: "변이 아니거나 잘 안 보일 때 다시 찍는 방법 한 문장. 아니면 빈 문자열" },
+      shape: { type: "string", enum: ["정상", "무름", "설사", "딱딱함", "판단 어려움"], description: "퓨리나 2~3점=정상, 4~5점=무름, 6~7점=설사, 1점=딱딱함" },
+      fecal_score: { type: "integer", description: "퓨리나 대변 점수 1~7, 판단 어려우면 0" },
+      color: { type: "string", description: "보이는 색 한두 단어(예: 갈색, 노란빛 갈색, 검은 타르색)" },
+      blood: LOOK,
+      mucus: LOOK,
+      foreign: LOOK,
+      foreign_note: { type: "string", description: "이물질·기생충처럼 보이는 것이 있으면 무엇인지 짧게, 없으면 빈 문자열" },
+      flags: { type: "array", items: { type: "string" }, description: "레드플래그 중 사진에 실제로 보이는 것만, 보호자용 짧은 문장(예: 붉은 피가 섞여 보여요). 없으면 빈 배열" },
+      summary: { type: "string", description: "보이는 것만 1~2문장, 진단·병명·약 이름 금지" },
+    },
+    required: ["is_stool", "retake", "shape", "fecal_score", "color", "blood", "mucus", "foreign", "foreign_note", "flags", "summary"],
+    additionalProperties: false,
+  },
+};
+const quickStoolHits = new Map(); // ip → [시각] — ponytail: 서버 메모리 속도 제한(재시작하면 초기화), 사용자가 늘면 계정 기준으로
+
+app.post("/api/quick-stool", async (req, res) => {
+  const { dogContext, imageBase64, mediaType } = req.body || {};
+  if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "사진이 필요해요." });
+  const now = Date.now();
+  const hits = (quickStoolHits.get(req.ip) || []).filter((t) => now - t < 60 * 60 * 1000);
+  if (hits.length >= 30) return res.status(429).json({ error: "사진 분석을 너무 많이 했어요. 잠시 뒤에 다시 해 주세요." });
+  quickStoolHits.set(req.ip, [...hits, now]);
+  const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
+
+  try {
+    const response = await client.beta.messages.create({
+      ...CLAUDE_MODEL,
+      max_tokens: 1500,
+      system: [
+        "보호자가 기록용으로 강아지 변 사진을 올렸습니다. 사진에 보이는 것만 stool_observation 도구로 기록하세요.",
+        "진단·병명·약 이름은 쓰지 않습니다. 확실하지 않으면 '판단 어려움'으로 둡니다. 레드플래그는 실제로 보일 때만 flags에 넣습니다.",
+        "",
+        FECAL_CHART,
+        "",
+        FECAL_COLOR_GUIDE,
+        "",
+        RED_FLAGS,
+        "",
+        `강아지 정보: ${JSON.stringify(dogContext || {}).slice(0, 800)}`,
+      ].join("\n"),
+      tools: [STOOL_TOOL],
+      tool_choice: { type: "tool", name: "stool_observation" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: type, data: imageBase64 } },
+            { type: "text", text: "이 사진에서 보이는 변 상태를 기록해 주세요." },
+          ],
+        },
+      ],
+    });
+    const out = response.content.find((b) => b.type === "tool_use")?.input;
+    if (!out || response.stop_reason === "refusal") return res.json({ result: { is_stool: false, retake: "이 사진은 분석하기 어려워요. 변이 잘 보이게 밝은 곳에서 다시 찍어 주세요." } });
+    res.json({ result: out });
+  } catch (err) {
+    console.error("[server] quick-stool error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
   }
 });

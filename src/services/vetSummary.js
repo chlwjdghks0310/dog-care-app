@@ -83,6 +83,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     const keys = options ? options.filter((o) => counts[o]) : Object.keys(counts);
     observeLines.push(`${label}: ${keys.map((k) => `${k} ${counts[k].length}번${k !== "평소" && k !== "정상" ? `(${counts[k].slice(-4).join(", ")})` : ""}`).join(", ")}`);
   }
+  for (const r of recs.filter((r) => r.type === "potty" && r.data.photoNote)) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 변 사진(참고): ${r.data.photoNote}${r.data.photoFlags?.length ? ` / ⚠ ${r.data.photoFlags.join(", ")}` : ""}`);
   for (const r of recs.filter((r) => r.type === "condition" && (r.data.body || r.data.oral))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} ${[r.data.body, r.data.oral].filter(Boolean).join(" / ")}`);
   add("observe", `식사·배변·컨디션 (보호자 관찰, 최근 ${note.period}일)`, observeLines);
 
