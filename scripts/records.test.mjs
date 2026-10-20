@@ -131,3 +131,63 @@ assert.equal(reactionFor({ type: "potty", data: { stool: "정상", photoFlags: [
 assert.match(R.summarize({ type: "potty", data: { stool: "피 섞임", photoFlags: ["붉은 피"] }, memo: "" }), /⚠ 붉은 피/);
 
 console.log("통합 기록 확인 통과");
+
+// ── 건강 수치 ──
+{
+  const { VITAL, outOfRange } = await import("../src/data/vitals.js");
+  const at2 = (n, t) => `${day(n)}T${t}`;
+  assert.match(R.validateRecord({ type: "vital", at: at2(0, "00:00"), data: { metric: "temp", value: 52 } }), /30~45℃/);
+  assert.match(R.validateRecord({ type: "vital", at: at2(0, "00:00"), data: { metric: "weight", value: 3 } }), /어떤 수치/);
+  assert.equal(R.validateRecord({ type: "vital", at: at2(0, "00:00"), data: { metric: "water", value: 200 } }), null);
+  for (const [t, v] of [["08:00", 150], ["13:00", 100]]) R.saveRecord("v", { id: R.newRecordId(), type: "vital", at: at2(-1, t), data: { metric: "water", value: v }, memo: "", photos: [] });
+  R.saveRecord("v", { id: R.newRecordId(), type: "vital", at: at2(-3, "09:00"), data: { metric: "water", value: 300 }, memo: "", photos: [] });
+  const water = R.vitalDaily(R.getVitalEntries("v", "water"), "sum");
+  assert.deepEqual(water.map((d) => [d.date, d.value]), [[day(-3), 300], [day(-1), 250]], "하루 합계, 기록 없는 날은 만들지 않음");
+  for (const [n, v] of [[-2, 24], [-1, 42], [-1, 28]]) R.saveRecord("v", { id: R.newRecordId(), type: "vital", at: at2(n, n === -1 && v === 28 ? "23:00" : "22:00"), data: { metric: "resp", value: v }, memo: "", photos: [] });
+  assert.deepEqual(R.vitalDaily(R.getVitalEntries("v", "resp"), "point").map((d) => d.value), [24, 28], "잴 때마다 보는 건 그날 마지막 값");
+  assert.equal(outOfRange("resp", 42), "above");
+  assert.equal(outOfRange("temp", 38.5), null);
+  // 산책: 일상 기록의 산책 시간도 합침
+  R.saveRecord("v", { id: "rec-walk-daily", type: "daily", at: at2(-1, "18:00"), data: { kind: "산책", minutes: "30" }, memo: "", photos: [] });
+  R.saveRecord("v", { id: R.newRecordId(), type: "vital", at: at2(-1, "07:00"), data: { metric: "walk", value: 20 }, memo: "", photos: [] });
+  assert.equal(R.vitalDaily(R.getVitalEntries("v", "walk"), "sum").at(-1).value, 50);
+  assert.match(R.summarize({ type: "vital", data: { metric: "temp", value: 38.55 }, memo: "" }), /체온 38\.6℃/);
+  assert.equal(VITAL.fluid.unit, "ml");
+  // 다른 강아지에 안 섞임
+  assert.equal(R.getVitalEntries("a", "water").length, 0);
+  // 병원용 기록에 건강 수치 요약
+  const vs = V.buildVetSummary({ id: "v", name: "콩", breed: "말티즈", gender: "male", birthDate: "2020-01-01" }, V.getVetNote("v"), today);
+  const vl = vs.find((x) => x.key === "vitals").lines.join("\n");
+  assert.match(vl, /음수량: 기록한 2일 하루 평균 275ml/);
+  assert.match(vl, /호흡수: 최근 28회\/분.*3번 잼 24~42, 참고 범위\(15~30\) 밖 1번/);
+  assert.doesNotMatch(vl, /체온|심박수/, "기록 없는 수치는 안 나옴");
+  console.log("건강 수치 확인 통과");
+}
+
+// ── AI 채팅으로 건강 수치 넣기·고치기·지우기 ──
+{
+  const A = await import("../src/services/appActions.js");
+  const dogA = { id: "ai", name: "보리", breed: "푸들", birthDate: "2020-01-01", gender: "female" };
+  const r1 = A.applyAppActions(dogA, [{ type: "add_health_value", metric: "water", value: 200, date: day(0), time: "00:00" }]);
+  assert.equal(r1.done.length, 1, JSON.stringify(r1));
+  assert.match(r1.done[0], /음수량 200ml/);
+  const bad = A.applyAppActions(dogA, [
+    { type: "add_health_value", metric: "temp", value: 99, date: day(0) },
+    { type: "add_health_value", metric: "weight", value: 3, date: day(0) },
+    { type: "add_health_value", metric: "nope", value: 3, date: day(0) },
+  ]);
+  assert.equal(bad.done.length, 0);
+  assert.equal(bad.failed, 3, "범위 밖·몸무게·모르는 수치는 저장 안 함");
+  const id = R.getRecords("ai")[0].id;
+  // 고치기·지우기는 버튼 확인 후 — 먼저 confirm 목록으로
+  const c = A.applyAppActions(dogA, [{ type: "update_record", kind: "health_record", id, value: 250, summary: "물 200→250" }]);
+  assert.equal(c.confirm.length, 1);
+  assert.match(A.applyConfirmedAction(dogA, c.confirm[0]), /음수량 250ml/);
+  assert.equal(R.getRecords("ai")[0].data.value, 250);
+  assert.equal(A.applyConfirmedAction(dogA, { type: "update_record", kind: "health_record", id, value: 99999, summary: "x" }), null, "범위 밖으로는 못 고침");
+  // 다른 강아지 id로는 못 지움
+  assert.equal(A.applyAppActions({ ...dogA, id: "other" }, [{ type: "delete_record", kind: "health_record", id, summary: "x" }]).confirm.length, 0);
+  assert.match(A.applyConfirmedAction(dogA, { type: "delete_record", kind: "health_record", id, summary: "물 250ml" }), /지웠어요/);
+  assert.equal(R.getRecords("ai").length, 0);
+  console.log("AI 건강 수치 확인 통과");
+}

@@ -8,6 +8,8 @@ import { addCustomSchedule, deleteCustomSchedule, getCustomSchedules, updateCust
 import { syncPushAlarms } from "./notifications";
 import { todayKey, nowLabel } from "../utils/date";
 import { getDosesForDate, markDoseDone, markDoseSkipped, undoDose, editDoneTime } from "./medications";
+import { getRecords, saveRecord, deleteRecord, newRecordId, validateRecord, summarize } from "./records";
+import { VITAL, fmtValue } from "../data/vitals";
 
 // 채팅 AI가 "기록해 달라"는 요청을 받아 보낸 동작(actions)을 실제로 앱에 저장한다.
 // AI가 보낸 값은 그대로 믿지 않고 형식을 확인한 뒤 저장하고, 결과를 한 줄씩 돌려준다(채팅에 표시).
@@ -59,6 +61,16 @@ function run(dog, a) {
       syncPushAlarms();
       return `⏰ 알람: ${a.date ? `${a.date} 하루만` : "매일"} ${a.time} ${text(a.title)}`;
     }
+    case "add_health_value": {
+      const def = VITAL[a.metric];
+      if (!def || def.external || !isDate(a.date)) return null;
+      const now = new Date().toTimeString().slice(0, 5);
+      const time = isTime(a.time) ? a.time : a.date === todayKey() ? now : "12:00";
+      const rec = { id: newRecordId(), type: "vital", at: `${a.date}T${time}`, data: { metric: a.metric, value: Number(a.value) }, memo: text(a.memo), photos: [] };
+      if (validateRecord(rec)) return null; // 범위 밖·미래 시각 등은 저장하지 않음
+      saveRecord(dog.id, rec);
+      return `${def.icon} 건강 수치: ${a.date} ${time} ${def.label} ${fmtValue(a.metric, rec.data.value)}${def.unit}`;
+    }
     case "mark_med_dose": {
       // 기록할 수 있는 건 앱에 있는 복용 건뿐 — AI가 보낸 값은 [복용:...] 목록에서 다시 찾는다
       const date = String(a.dose || "").split("|")[1];
@@ -99,6 +111,7 @@ function findRecord(dog, kind, id) {
   if (kind === "expense") return getExpenses(dog.id).find((e) => e.id === id);
   if (kind === "weight") return getWeightRecords(dog.id).find((r) => r.id === id);
   if (kind === "alarm") return getCustomSchedules(dog.id).find((a) => a.id === id);
+  if (kind === "health_record") return getRecords(dog.id).find((r) => r.id === id);
   if (kind === "calendar_event") {
     for (const [date, list] of Object.entries(getEventsByDog(dog.id))) {
       const e = list.find((x) => x.id === id);
@@ -121,6 +134,10 @@ export function applyConfirmedAction(dog, a) {
     }
     if (a.kind === "alarm") {
       deleteCustomSchedule(dog.id, a.id);
+      syncPushAlarms();
+    }
+    if (a.kind === "health_record") {
+      deleteRecord(dog.id, a.id); // 이 기록으로 만든 일정·알림도 같이 지워짐
       syncPushAlarms();
     }
     return `🗑️ 지웠어요: ${text(a.summary)}`;
@@ -151,6 +168,13 @@ export function applyConfirmedAction(dog, a) {
       if (!Object.keys(patch).length) return null;
       updateWeightRecord(dog.id, a.id, patch);
       syncDogWeight(dog);
+    } else if (a.kind === "health_record") {
+      const next = { ...rec, data: { ...rec.data } };
+      if (rec.type === "vital" && a.value != null && Number.isFinite(Number(a.value))) next.data.value = Number(a.value);
+      if (isDate(a.date) || isTime(a.time)) next.at = `${isDate(a.date) ? a.date : rec.at.slice(0, 10)}T${isTime(a.time) ? a.time : rec.at.slice(11, 16)}`;
+      if (JSON.stringify(next) === JSON.stringify(rec) || validateRecord(next)) return null;
+      saveRecord(dog.id, next);
+      return `✏️ 고쳤어요: ${summarize(next)}`;
     } else if (a.kind === "alarm") {
       const patch = {};
       if (text(a.title)) patch.title = text(a.title);

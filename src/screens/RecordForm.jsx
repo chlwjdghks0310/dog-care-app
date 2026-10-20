@@ -5,6 +5,7 @@ import { addWeightRecord, updateWeightRecord } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import { quickStoolCheck } from "../services/aiClient";
 import { normalizeStoolResult } from "../services/photoCheck";
+import { VITALS, VITAL } from "../data/vitals";
 import {
   TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule,
@@ -13,8 +14,8 @@ import {
 const MAX_PHOTOS = 4;
 
 // 새 기록 추가: 종류를 고르면 그 종류에 필요한 칸만 보여 준다. initial이 있으면 그 기록 고치기.
-export default function RecordForm({ dog, initial, onSaved, onCancel, onOpenMeds }) {
-  const [type, setType] = useState(initial?.type || null);
+export default function RecordForm({ dog, initial, startType, onSaved, onCancel, onOpenMeds }) {
+  const [type, setType] = useState(initial?.type || startType || null);
   if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : setType(t))} onCancel={onCancel} />;
   return <Form key={type} dog={dog} type={type} initial={initial} onSaved={onSaved} onBack={initial ? onCancel : () => setType(null)} />;
 }
@@ -89,7 +90,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
   function save() {
     if (saving) return;
     setError("");
-    const rec = { id, type, at, data: clean(data), memo: memo.trim(), photos };
+    const rec = { id, type, at, data: type === "vital" ? { ...clean(data), value: Number(data.value) } : clean(data), memo: memo.trim(), photos };
     const problem = validateRecord(rec);
     if (problem) return setError(problem);
     setSaving(true);
@@ -129,6 +130,18 @@ function Form({ dog, type, initial, onSaved, onBack }) {
       </Field>
 
       {type === "weight" && <Field label="체중 (kg)">{input("weightKg", { type: "number", inputMode: "decimal", step: "0.1", min: "0.1", placeholder: "예: 3.4", autoFocus: true })}</Field>}
+
+      {type === "vital" && (
+        <>
+          <Field label="어떤 수치">
+            <select value={data.metric || ""} onChange={set("metric")} disabled={Boolean(initial)}>
+              <option value="" disabled>골라 주세요</option>
+              {VITALS.filter((v) => !v.external).map((v) => <option key={v.id} value={v.id}>{v.icon} {v.label} ({v.unit})</option>)}
+            </select>
+          </Field>
+          {data.metric && <Field label={`${VITAL[data.metric].label} (${VITAL[data.metric].unit})`}>{input("value", { type: "number", inputMode: "decimal", step: VITAL[data.metric].step })}</Field>}
+        </>
+      )}
 
       {type === "symptom" && (
         <>
@@ -209,7 +222,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
         <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="선택" maxLength={500} />
       </Field>
 
-      {type !== "weight" && (
+      {type !== "weight" && type !== "vital" && (
         <Field label={`사진 (${photos.length}/${MAX_PHOTOS})`}>
           <div className="rec-photos">
             {photos.map((p, i) => (

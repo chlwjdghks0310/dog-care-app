@@ -9,7 +9,9 @@ import { resizeImageFile } from "../utils/image";
 import { saveDog } from "../services/dogRepository";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
-import { TYPES, getTimeline, filterTimeline, summarize, md } from "../services/records";
+import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summarize, md } from "../services/records";
+import { readJSON, writeJSON } from "../services/storage";
+import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
 
 const GENDER_LABEL = { female: "암컷", male: "수컷" };
 
@@ -23,7 +25,7 @@ function Row({ label, value }) {
   );
 }
 
-export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
+export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
   const age = calculateAge(dog.birthDate);
   const [theme, setThemeState] = useState(getTheme());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -219,32 +221,11 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
 
       <HealthSummary dog={dog} onEdit={startEdit} />
 
-      <div className="mini-cards">
-        <WeightCard dog={dog} onOpen={onOpenWeight} />
-        <MedCard dog={dog} onOpen={onOpenMeds} />
-      </div>
+      <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} />
+
+      <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} />
 
       <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
-
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="rec-head">
-          <div className="h2" style={{ margin: 0 }}>최근 기록</div>
-          <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenRecords}>전체 기록 보기 ›</button>
-        </div>
-        <RecentRecords dog={dog} onOpen={onOpenRecords} />
-        <button type="button" className="btn-primary" style={{ marginTop: 12 }} onClick={onNewRecord}>
-          ＋ 새 기록
-        </button>
-      </div>
-
-      <button type="button" className="card vet-entry" onClick={onOpenVet}>
-        <span className="vet-entry-icon" aria-hidden="true">🏥</span>
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <span className="h2" style={{ display: "block", margin: 0 }}>병원용 기록</span>
-          <span className="subtle">증상·먹는 약·체중을 수의사가 바로 읽게 정리해요</span>
-        </span>
-        <span className="subtle">›</span>
-      </button>
 
       <div id="dog-info" className="card" style={{ marginBottom: 14, scrollMarginTop: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -570,37 +551,7 @@ function HealthSummary({ dog, onEdit }) {
   );
 }
 
-function WeightCard({ dog, onOpen }) {
-  const list = getTimeline(dog.id).filter((r) => r.type === "weight").sort((a, b) => a.at.localeCompare(b.at));
-  const [prev, latest] = [list.at(-2), list.at(-1)];
-  const diff = latest && prev ? Math.round((latest.data.weightKg - prev.data.weightKg) * 100) / 100 : null;
-  return (
-    <button type="button" className="mini-card" onClick={onOpen}>
-      <span className="mini-card-title">⚖️ 체중</span>
-      <span className="mini-card-text">
-        {!latest ? "아직 기록이 없습니다" : `${latest.data.weightKg}kg (${md(latest.at.slice(0, 10))})${diff == null ? " · 비교할 기록 없음" : ` · 이전 대비 ${diff > 0 ? "+" : ""}${diff}kg`}`}
-      </span>
-    </button>
-  );
-}
 
-function MedCard({ dog, onOpen }) {
-  const meds = getMeds(dog.id).filter((m) => !isEnded(m));
-  const doses = getDosesForDate(dog.id, todayKey());
-  const check = doses.filter((d) => d.status === "check").length;
-  return (
-    <button type="button" className="mini-card" onClick={onOpen}>
-      <span className="mini-card-title">💊 복약</span>
-      <span className="mini-card-text">
-        {meds.length === 0
-          ? "먹는 약이 없습니다"
-          : doses.length === 0
-            ? `약 ${new Set(meds.map((m) => m.seriesId)).size}개 · 오늘은 없음`
-            : `오늘 ${doses.filter((d) => d.status === "done").length}/${doses.length} 먹였어요${check ? ` · 확인 필요 ${check}` : ""}`}
-      </span>
-    </button>
-  );
-}
 
 function UpcomingCard({ dog, onOpenCalendar }) {
   const today = todayKey();
@@ -630,14 +581,118 @@ function UpcomingCard({ dog, onOpenCalendar }) {
   );
 }
 
-function RecentRecords({ dog, onOpen }) {
-  const recent = filterTimeline(getTimeline(dog.id)).slice(0, 3);
-  if (recent.length === 0) return <p className="subtle" style={{ margin: 0 }}>아직 기록이 없습니다. 체중·증상·식사 등 첫 기록을 남겨 보세요.</p>;
-  return recent.map((r) => (
-    <button key={`${r.source}-${r.id}`} type="button" className="rec-mini" onClick={onOpen}>
-      <span aria-hidden="true">{TYPES[r.type].icon}</span>
-      <span className="faint">{md(r.at.slice(0, 10))}</span>
-      <span className="rec-mini-text">{TYPES[r.type].label} · {summarize(r)}</span>
-    </button>
-  ));
+// 건강 수치 칸(집사일기 '주요 수치' 참고) — 자주 쓰는 수치만 기본으로 보이고, 최근 30일 기록이 있거나 [편집]에서 켠 수치가 더해진다.
+const PINS_KEY = "dogcare-vital-pins-v1";
+function VitalsCard({ dog, onOpenVital, onOpenWeight }) {
+  const [editingPins, setEditingPins] = useState(false);
+  const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || DEFAULT_PINS);
+  const today = todayKey();
+  const since = toDateKey(addDays(new Date(), -29));
+  const tiles = VITALS.map((v) => {
+    const entries = getVitalEntries(dog.id, v.id);
+    const daily = vitalDaily(entries, v.kind);
+    const recent = entries.some((e) => e.at.slice(0, 10) >= since);
+    const todayRow = daily.find((d) => d.date === today);
+    const last = entries.at(-1);
+    return { v, recent, todayRow, last };
+  });
+  const shown = editingPins ? tiles : tiles.filter((t) => pins.includes(t.v.id) || t.recent);
+  function togglePin(id) {
+    const next = pins.includes(id) ? pins.filter((x) => x !== id) : [...pins, id];
+    setPins(next);
+    writeJSON(PINS_KEY, { ...readJSON(PINS_KEY, {}), [dog.id]: next });
+  }
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="rec-head">
+        <div className="h2" style={{ margin: 0 }}>건강 수치</div>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditingPins((e) => !e)}>{editingPins ? "완료" : "편집"}</button>
+      </div>
+      {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요.</p>}
+      <div className="vt-grid">
+        {shown.map(({ v, todayRow, last }) => {
+          const value = v.kind === "sum" ? todayRow?.value : last?.value;
+          const sub = v.kind === "sum" ? (todayRow ? "오늘" : last ? `마지막 ${md(last.at.slice(0, 10))}` : "기록 없음") : last ? (last.at.slice(0, 10) === today ? `오늘 ${last.at.slice(11)}` : md(last.at.slice(0, 10))) : "기록 없음";
+          const flag = v.kind === "point" && last && outOfRange(v.id, last.value);
+          const on = pins.includes(v.id);
+          return (
+            <button
+              key={v.id}
+              type="button"
+              className={`vt-tile${editingPins ? (on ? " pinned" : " unpinned") : ""}`}
+              aria-pressed={editingPins ? on : undefined}
+              aria-label={`${v.label} ${value != null ? `${fmtValue(v.id, value)}${v.unit}` : "기록 없음"}`}
+              onClick={() => (editingPins ? togglePin(v.id) : v.external ? onOpenWeight() : onOpenVital(v.id))}
+            >
+              <span className="vt-top">
+                <span aria-hidden="true">{v.icon}</span>
+                <span className="vt-label">{v.label}</span>
+                {editingPins && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
+              </span>
+              {value != null ? (
+                <span className="vt-value">
+                  {fmtValue(v.id, value)}
+                  <span className="vt-unit">{v.unit}</span>
+                </span>
+              ) : (
+                <span className="vt-empty">＋ 적기</span>
+              )}
+              {(value != null || sub !== "기록 없음") && <span className={`vt-sub${flag ? " warn" : ""}`}>{flag ? "참고 범위 밖" : sub}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// 건강 기록 목록 — 종류마다 마지막 기록 한 줄, 누르면 그 종류만 모아 보고 ＋로 바로 적기
+const SERVICES = [
+  { key: "symptom", label: "이상 증상", icon: "🤒", types: ["symptom"] },
+  { key: "meds", label: "투약 기록", icon: "💊" },
+  { key: "vet", label: "병원 진료", icon: "🏥", types: ["vet"] },
+  { key: "eat", label: "식사·배변", icon: "🍚", types: ["meal", "potty"], add: "meal" },
+  { key: "condition", label: "컨디션", icon: "🌙", types: ["condition"] },
+  { key: "daily", label: "산책·일상", icon: "🦮", types: ["daily"] },
+  { key: "memory", label: "사진·추억", icon: "📷", types: ["media", "life"], add: "media" },
+  { key: "report", label: "병원용 기록", icon: "📋" },
+];
+function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet }) {
+  const recs = getRecords(dog.id);
+  const meds = getMeds(dog.id).filter((m) => !isEnded(m));
+  const doses = getDosesForDate(dog.id, todayKey());
+  const check = doses.filter((d) => d.status === "check").length;
+  const subFor = (svc) => {
+    if (svc.key === "meds")
+      return meds.length === 0 ? "먹는 약이 없어요" : doses.length ? `오늘 ${doses.filter((d) => d.status === "done").length}/${doses.length} 먹였어요${check ? ` · 확인 필요 ${check}` : ""}` : `약 ${new Set(meds.map((m) => m.seriesId)).size}개 · 오늘은 없음`;
+    if (svc.key === "report") return "수의사에게 보여 줄 정리본";
+    const last = filterTimeline(recs.filter((r) => svc.types.includes(r.type)))[0];
+    return last ? `${md(last.at.slice(0, 10))} · ${summarize(last)}` : "아직 기록이 없어요";
+  };
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="rec-head">
+        <div className="h2" style={{ margin: 0 }}>건강 기록</div>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => onOpenRecords()}>전체 보기 ›</button>
+      </div>
+      {SERVICES.map((svc) => (
+        <div key={svc.key} className="sv-row">
+          <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>
+            <span className="sv-icon" aria-hidden="true">{svc.icon}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="sv-label">{svc.label}</span>
+              <span className={`sv-sub${svc.key === "meds" && check ? " warn" : ""}`}>{subFor(svc)}</span>
+            </span>
+            <span className="faint" aria-hidden="true">›</span>
+          </button>
+          {svc.types && (
+            <button type="button" className="sv-add" aria-label={`${svc.label} 기록 추가`} onClick={() => onNewRecord(svc.add || svc.types[0])}>＋</button>
+          )}
+        </div>
+      ))}
+      <button type="button" className="btn-primary" style={{ marginTop: 12 }} onClick={() => onNewRecord()}>
+        ＋ 새 기록
+      </button>
+    </div>
+  );
 }

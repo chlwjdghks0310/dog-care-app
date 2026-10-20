@@ -6,7 +6,8 @@ import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getExpenses } from "./expenses";
 import { getEventsByDog } from "./calendarEvents";
 import { getChatMemory } from "./chatMemory";
-import { getRecords, filterTimeline, LEVELS, md as mdKey } from "./records";
+import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily } from "./records";
+import { VITALS, fmtValue, outOfRange } from "../data/vitals";
 
 // 병원용 기록 — 앱에 쌓인 기록 + 보호자가 이번 진료를 위해 적은 메모를 수의사가 한눈에 읽게 정리한다.
 // 기록에 있는 사실만 옮기고, 추정·진단 문구는 넣지 않는다(빈 곳은 "기록 없음").
@@ -20,13 +21,14 @@ export const SECTIONS = [
   { key: "observe", label: "식사·배변·컨디션" },
   { key: "meds", label: "먹는 약" },
   { key: "weight", label: "체중" },
+  { key: "vitals", label: "건강 수치" },
   { key: "visits", label: "최근 병원 기록" },
   { key: "memos", label: "보호자 기록 메모" },
   { key: "chat", label: "최근 상담 질문" },
 ];
 export const PERIODS = [7, 30, 90];
 
-const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, visits: true, memos: true, chat: false } };
+const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, vitals: true, visits: true, memos: true, chat: false } };
 
 export function getVetNote(dogId) {
   const saved = readJSON(KEY, {})[dogId] || {};
@@ -137,6 +139,24 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     weightLines.push(`프로필 체중: ${dog.weight}kg (측정 기록 없음)`);
   }
   add("weight", "체중", weightLines);
+
+  // 건강 수치(보호자가 잰 값) — 잴 때마다 보는 건 범위·참고 범위 밖 횟수, 하루 합계로 보는 건 기록한 날 평균
+  const vitalLines = [];
+  for (const v of VITALS.filter((x) => !x.external)) {
+    const entries = getVitalEntries(dog.id, v.id).filter((e) => e.at.slice(0, 10) >= from && e.at.slice(0, 10) <= today);
+    if (!entries.length) continue;
+    const last = entries.at(-1);
+    if (v.kind === "point") {
+      const vals = entries.map((e) => e.value);
+      const out = entries.filter((e) => outOfRange(v.id, e.value)).length;
+      vitalLines.push(`${v.label}: 최근 ${fmtValue(v.id, last.value)}${v.unit}(${mdKey(last.at.slice(0, 10))})${entries.length > 1 ? `, ${entries.length}번 잼 ${fmtValue(v.id, Math.min(...vals))}~${fmtValue(v.id, Math.max(...vals))}` : ""}${out ? `, 참고 범위(${v.range.join("~")}) 밖 ${out}번` : ""}`);
+    } else {
+      const daily = vitalDaily(entries, "sum");
+      const avg = daily.reduce((t, d) => t + d.value, 0) / daily.length;
+      vitalLines.push(`${v.label}: 기록한 ${daily.length}일 하루 평균 ${fmtValue(v.id, avg)}${v.unit}, 최근 ${mdKey(daily.at(-1).date)} ${fmtValue(v.id, daily.at(-1).value)}${v.unit}`);
+    }
+  }
+  add("vitals", `건강 수치 (보호자 측정, 최근 ${note.period}일)`, vitalLines);
 
   // 최근 병원 기록: 가계부 의료 지출 + 일정표의 병원 관련 일정 (기간과 상관없이 최근 90일)
   const visitFrom = toDateKey(addDays(new Date(`${today}T00:00:00`), -90));

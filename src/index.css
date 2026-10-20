@@ -873,3 +873,52 @@ button {
 .bud-badge { font-size: 12.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); flex-shrink: 0; }
 .bud-badge.done { background: var(--success-bg); color: var(--success); }
 .bud-edit { padding: 12px; margin: 6px 0; border-radius: var(--radius-md); background: var(--accent-soft); }
+
+/* 건강 수치 칸 (집사일기 '주요 수치' 참고: 큰 숫자 + 단위 + 언제 값인지) */
+.vt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vt-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; min-height: 92px; padding: 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); text-align: left; color: var(--text); }
+.vt-tile:active { background: var(--accent-soft); }
+.vt-tile.unpinned { opacity: 0.45; }
+.vt-tile.pinned { border-color: var(--accent); background: var(--accent-soft); }
+.vt-top { display: flex; align-items: center; gap: 4px; width: 100%; font-size: 13px; }
+.vt-label { flex: 1; min-width: 0; font-weight: 600; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-check { color: var(--accent-strong); font-weight: 800; }
+.vt-value { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; margin-top: auto; line-height: 1.15; }
+.vt-unit { font-size: 12px; font-weight: 600; color: var(--text-soft); margin-left: 2px; }
+.vt-sub { font-size: 11.5px; color: var(--text-faint); }
+.vt-sub.warn { color: var(--warning); font-weight: 700; }
+
+/* 건강 기록 목록 */
+.sv-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+.sv-row:last-of-type { border-bottom: none; }
+.sv-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 58px; padding: 8px 0; background: none; border: none; text-align: left; color: var(--text); }
+.sv-icon { width: 38px; height: 38px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.sv-label { display: block; font-weight: 700; font-size: 15px; }
+.sv-sub { display: block; font-size: 12.5px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-sub.warn { color: var(--warning); }
+.sv-add { width: 40px; height: 40px; margin-left: 6px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--accent-strong); font-size: 18px; flex-shrink: 0; }
+
+/* 건강 수치 상세 */
+.vd-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.vd-icon { width: 52px; height: 52px; border-radius: 16px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.vd-now { margin-bottom: 14px; }
+.vd-big { font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; margin: 4px 0; }
+.vd-unit { font-size: 16px; font-weight: 700; color: var(--text-soft); margin-left: 4px; }
+.vd-range { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--accent-soft); font-size: 13px; line-height: 1.5; }
+.vd-range.out { background: var(--warning-bg); color: var(--text); }
+.vd-form { margin-bottom: 14px; }
+.vd-input-row { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 14px; }
+.vd-input { flex: 1; min-width: 0; font-size: 32px; font-weight: 800; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); }
+.vd-input-unit { font-size: 18px; font-weight: 700; color: var(--text-soft); }
+.vd-counter { margin-bottom: 12px; }
+.vd-tap { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 150px; height: 150px; margin: 0 auto; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; box-shadow: var(--shadow); }
+.vd-tap:active { transform: scale(0.96); }
+.vd-tap-n { font-size: 46px; font-weight: 800; line-height: 1; }
+.vd-day { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.vd-day:last-child { border-bottom: none; }
+.vd-day-head { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 4px; }
+.vd-entry { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14.5px; }
+.vd-entry-time { width: 44px; color: var(--text-soft); font-size: 13px; flex-shrink: 0; }
+.vd-flag { color: var(--warning); font-size: 12px; font-weight: 700; }
+.vt-empty { margin-top: auto; font-size: 14px; font-weight: 700; color: var(--accent); opacity: 0.8; }
+.vd-none { font-size: 17px; font-weight: 700; color: var(--text-soft); margin: 8px 0; }

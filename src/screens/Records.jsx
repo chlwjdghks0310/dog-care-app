@@ -5,7 +5,7 @@ import { syncPushAlarms } from "../services/notifications";
 import WeightChart from "../components/WeightChart";
 import RecordForm from "./RecordForm";
 import DogReaction from "../components/DogReaction";
-import { TYPES, ADD_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
+import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
 const FIELD_LABEL = {
@@ -19,11 +19,11 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, onBack, onOpenMeds }) {
+export default function Records({ dog, startNew, startType, initialTypes, onBack, onOpenMeds }) {
   const [view, setView] = useState("list");
-  const [form, setForm] = useState(startNew ? { initial: null } : null);
+  const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
-  const [types, setTypes] = useState([]);
+  const [types, setTypes] = useState(initialTypes || []);
   const [days, setDays] = useState(0);
   const [q, setQ] = useState("");
   const [order, setOrder] = useState("new");
@@ -69,7 +69,7 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
       </div>
 
       {form ? (
-        <RecordForm dog={dog} initial={form.initial} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
+        <RecordForm dog={dog} initial={form.initial} startType={form.type} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
       ) : (
         <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (setNotice(""), setReaction(null), setForm({ initial: null }))}>
           ＋ 새 기록
@@ -83,7 +83,7 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
           <div className="card" style={{ marginBottom: 14 }}>
             <input className="rec-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색 (예: 구토, 병원 이름)" aria-label="기록 검색" />
             <div className="chip-wrap" style={{ margin: "10px 0" }}>
-              {ADD_ORDER.map((t) => (
+              {FILTER_ORDER.map((t) => (
                 <button key={t} type="button" className={`seg${types.includes(t) ? " on" : ""}`} aria-pressed={types.includes(t)} onClick={() => setTypes((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t]))}>
                   {TYPES[t].icon} {TYPES[t].label}
                 </button>

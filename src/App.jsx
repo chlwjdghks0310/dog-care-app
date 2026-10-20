@@ -29,6 +29,7 @@ import Budget from "./screens/Budget";
 import Medications from "./screens/Medications";
 import VetSummary from "./screens/VetSummary";
 import Records from "./screens/Records";
+import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
 import { applyTheme, getTheme } from "./services/themeSettings";
@@ -47,6 +48,7 @@ const PARENT_TAB = {
   contact: "profile",
   vet: "profile",
   records: "profile",
+  vital: "profile",
   "records-new": "profile",
   help: "profile",
 };
@@ -66,7 +68,9 @@ export default function App() {
   const [tab, setTab] = useState("profile"); // 앱을 열면 프로필부터
   const [mainResetSignal, setMainResetSignal] = useState(0);
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
-  const [medFocus, setMedFocus] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
+  const [medFocus, setMedFocus] = useState(null);
+  const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
+  const [vitalMetric, setVitalMetric] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
   // 메인 탭이 이미 열려 있는 상태에서 메인을 또 누르면(채팅 중이어도) 메인 화면으로 리셋한다.
   function handleTabChange(key) {
@@ -301,8 +305,9 @@ export default function App() {
         onOpenContact={() => setTab("contact")}
         onOpenHelp={() => setTab("help")}
         onOpenVet={() => setTab("vet")}
-        onOpenRecords={() => setTab("records")}
-        onNewRecord={() => setTab("records-new")}
+        onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
+        onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
+        onNewRecord={(type) => (setRecordsOpts({ type }), setTab("records-new"))}
         onOpenWeight={() => setTab("weight")}
         onOpenMeds={() => setTab("meds")}
         onOpenCalendar={() => setTab("calendar")}
@@ -314,8 +319,9 @@ export default function App() {
     ),
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
-    records: () => <Records key="list" dog={dog} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
-    "records-new": () => <Records key="new" dog={dog} startNew onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
+    vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
     contact: () => <Contact onBack={() => setTab("profile")} />,
     help: () => <Help onBack={() => setTab("profile")} />,
   };

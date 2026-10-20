@@ -338,7 +338,8 @@ async function createWithContinuation(params, messages) {
 
 // 채팅으로 앱에 기록하기 — AI가 아래 도구를 부르면 서버는 저장하지 않고(기록은 폰에 있음) 그대로 앱에 돌려주고,
 // 앱이 확인 후 저장한다. 정보가 모자라면 도구를 부르지 말고 되묻게 한다.
-const KIND = { type: "string", enum: ["expense", "calendar_event", "weight", "alarm"], description: "expense=가계부 지출, calendar_event=일정표 일정, weight=체중 기록, alarm=알람" };
+const KIND = { type: "string", enum: ["expense", "calendar_event", "weight", "alarm", "health_record"], description: "expense=가계부 지출, calendar_event=일정표 일정, weight=체중 기록, alarm=알람, health_record=건강 수치·증상·식사 등 [보호자 기록]/[건강 수치]의 기록" };
+const VITAL_METRIC = { type: "string", enum: ["dry", "wet", "treat", "water", "fluid", "resp", "heart", "temp", "walk"], description: "dry=건식 사료(g), wet=습식(g), treat=간식(개), water=음수량(ml), fluid=피하수액(ml), resp=호흡수(회/분), heart=심박수(회/분), temp=체온(℃), walk=산책(분)" };
 const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
 function appTools(categories) {
   const category = Array.isArray(categories) && categories.length
@@ -362,6 +363,18 @@ function appTools(categories) {
       ["title", "time"]
     ),
     tool(
+      "add_health_value",
+      "건강 수치 1건을 기록한다(먹은 양·마신 양·피하수액·호흡수·심박수·체온·산책 시간). 몸무게는 add_weight_record를 쓴다. 숫자와 단위가 분명할 때만.",
+      {
+        metric: VITAL_METRIC,
+        value: { type: "number", description: "metric 단위로 바꾼 숫자. 예: '물 한 컵 200ml'→200, '30초에 12번 숨'→24, '1시간 산책'→60" },
+        date: DATE,
+        time: { type: "string", description: "HH:MM(24시간). 말하지 않았으면 생략" },
+        memo: { type: "string", description: "보호자가 덧붙인 말(선택)" },
+      },
+      ["metric", "value", "date"]
+    ),
+    tool(
       "mark_med_dose",
       "약 관리의 복용 건 1개를 기록한다. 보호자가 약을 먹였다/건너뛰었다/잘못 말했으니 취소해 달라고 할 때만. 앱 기록 [약 관리]의 [복용:...] 값 그대로 쓴다.",
       {
@@ -383,6 +396,7 @@ function appTools(categories) {
         date: DATE,
         category,
         weight_kg: { type: "number" },
+        value: { type: "number", description: "health_record 건강 수치의 새 숫자" },
         time: { type: "string", description: "HH:MM" },
       },
       ["kind", "id", "summary"]
@@ -406,6 +420,10 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 지난 답변 끝의 [앱 처리 결과]는 앱에서 실제로 일어난 일이다(기록 완료, 버튼을 눌러 고침·지움, 취소함). 이것과 지금 앱 기록을 기준으로 판단한다:
   이미 기록·처리된 일을 "안 했다"고 말하거나 다시 기록하지 않고, 보호자가 취소한 고치기·지우기를 다시 제안하지 않는다.
   도구는 이번 메시지에서 보호자가 새로 시킨 일에만 쓴다. 지난 대화의 요청을 다시 처리하지 않는다.
+- 건강 수치: "건식 50g 먹었어", "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
+  사료가 건식인지 습식인지(캔·파우치=습식), 단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
+  수치를 보고 진단하지 않는다. [건강 수치]에 참고 범위 밖 값이 있으면 사실만 말하고(예: "잘 때 호흡수가 42회로 적혔어"), 계속되면 동물병원에 문의하라고 한다.
+  건강 수치·증상 등 [id:...]가 붙은 기록을 지우거나 고칠 때는 kind=health_record.
 - [약 관리]는 보호자가 처방대로 적은 내용이다. 약의 용량·횟수·복용 간격을 정하거나 바꾸자고 하지 않는다(바꿀 일은 수의사와 상의).
   "8시에 심장약 먹였어"처럼 먹였다고 하면 mark_med_dose로 그 복용 건을 기록한다(먹인 시각이 있으면 time). 예정 시각이 가장 가까운 복용 건을 고르고,
   같은 약이 여러 번이라 어느 건지 애매하거나 [약 관리]에 없는 약이면 기록하지 말고 되묻는다. 먹이지 않은 약을 먹였다고 기록하지 않는다.

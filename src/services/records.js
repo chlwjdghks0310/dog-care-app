@@ -4,6 +4,7 @@ import { getWeightRecords } from "./weightLog";
 import { getDoseRecords } from "./medications";
 import { addEvent, deleteEvent, getEventsForDate } from "./calendarEvents";
 import { addCustomSchedule, deleteCustomSchedule } from "./customSchedules";
+import { VITAL, fmtValue } from "../data/vitals";
 
 // 통합 기록 — 강아지별 건강·병원·일상·성장 기록. 체중과 복약은 이미 있는 저장소(weightLog, medications)를
 // 그대로 쓰고, 타임라인에서만 합쳐 보여 준다(같은 기록을 두 군데 저장하지 않음).
@@ -23,9 +24,12 @@ export const TYPES = {
   daily: { label: "일상", icon: "🦮" },
   life: { label: "성장·추억", icon: "🎉" },
   media: { label: "사진", icon: "📷" },
+  vital: { label: "건강 수치", icon: "📈" },
 };
 // 새 기록 추가에서 고르는 순서
 export const ADD_ORDER = ["weight", "symptom", "meal", "potty", "med", "vet", "media", "daily", "condition", "life"];
+// 전체 기록 필터에 쓰는 종류(건강 수치는 프로필의 수치 칸에서 적는다)
+export const FILTER_ORDER = [...ADD_ORDER, "vital"];
 
 export const SYMPTOM_KINDS = ["구토", "설사", "기침", "식욕 없음", "기운 없음", "절뚝거림", "가려움·긁음", "눈 이상", "귀 이상", "피부 이상", "숨이 가쁨", "떨림", "물 많이 마심", "기타"];
 export const REPEAT = ["처음", "가끔", "자주", "계속"];
@@ -58,6 +62,12 @@ export function validateRecord(r, now = localNow()) {
   if (r.type === "weight") {
     const w = Number(d.weightKg);
     if (!(w > 0 && w < 120)) return "체중을 0.1~120kg 사이로 적어 주세요.";
+  }
+  if (r.type === "vital") {
+    const def = VITAL[d.metric];
+    const v = Number(d.value);
+    if (!def || def.external) return "어떤 수치인지 골라 주세요.";
+    if (!(v >= def.min && v <= def.max)) return `${def.label}은 ${def.min}~${def.max}${def.unit} 사이로 적어 주세요.`;
   }
   if (r.type === "symptom" && !d.kinds?.length) return "증상을 하나 이상 골라 주세요.";
   if (r.type === "vet" && !d.reason?.trim()) return "진료 사유를 적어 주세요.";
@@ -154,6 +164,9 @@ export function summarize(rec) {
     case "media":
       parts.push(`사진 ${rec.photos?.length || 0}장`);
       break;
+    case "vital":
+      parts.push(`${VITAL[d.metric]?.label} ${fmtValue(d.metric, d.value)}${VITAL[d.metric]?.unit}`);
+      break;
   }
   if (rec.memo) parts.push(rec.memo);
   return parts.filter(Boolean).join(" · ");
@@ -204,4 +217,27 @@ export function filterTimeline(items, { types = [], days = 0, q = "", order = "n
 export function levelSeries(dogId, field, days, today = todayKey()) {
   const type = field === "appetite" || field === "water" ? "meal" : "condition";
   return filterTimeline(getRecords(dogId).filter((r) => r.data?.[field]), { types: [type], days, order: "old" }, today).map((r) => ({ at: r.at, value: r.data[field] }));
+}
+
+// 건강 수치 기록(종류별). 산책은 일상 기록의 산책 시간도 합친다(같은 걸 두 번 적지 않게).
+// 반환: [{ id, at, value, memo, source }] 시간순
+export function getVitalEntries(dogId, metric) {
+  const recs = getRecords(dogId);
+  const out = recs.filter((r) => r.type === "vital" && r.data?.metric === metric).map((r) => ({ id: r.id, at: r.at, value: Number(r.data.value), memo: r.memo || "", source: "vital" }));
+  if (metric === "walk")
+    for (const r of recs) if (r.type === "daily" && r.data?.kind === "산책" && Number(r.data.minutes) > 0) out.push({ id: r.id, at: r.at, value: Number(r.data.minutes), memo: r.memo || "", source: "daily" });
+  if (metric === "weight")
+    for (const w of getWeightRecords(dogId)) out.push({ id: w.id, at: w.measuredAt.slice(0, 16), value: w.weightKg, memo: w.note || "", source: "weight" });
+  return out.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+// 날짜별로 묶기: sum 수치는 하루 합계, point 수치는 그날 마지막 값. 기록 없는 날은 만들지 않는다.
+export function vitalDaily(entries, kind) {
+  const map = new Map();
+  for (const e of entries) {
+    const d = e.at.slice(0, 10);
+    const cur = map.get(d);
+    map.set(d, kind === "sum" ? { date: d, value: (cur?.value || 0) + e.value, count: (cur?.count || 0) + 1 } : { date: d, value: e.value, count: (cur?.count || 0) + 1 });
+  }
+  return [...map.values()];
 }
