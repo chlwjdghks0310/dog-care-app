@@ -444,6 +444,7 @@ export default function Main({ dog, resetSignal }) {
           placeholder="나한테 물어봐!"
           style={{
             flex: 1,
+            minWidth: 0, // 입력창은 기본 최소 너비가 있어 좁은 화면(확대 모드 320px)에서 전송 버튼을 밀어냄
             height: 44,
             border: "1px solid var(--border)",
             borderRadius: 22,

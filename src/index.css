@@ -606,6 +606,7 @@ button {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden; /* 페이지 안에서 옆으로 밀려 움직이지 않게(옆 탭 넘기기는 .pager가 한다) */
   overscroll-behavior-y: contain;
   scroll-snap-align: start;
   scroll-snap-stop: always; /* 세게 밀어도 한 장씩만 */
