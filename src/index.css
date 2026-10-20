@@ -677,6 +677,14 @@ button {
 .onb-bubble.me { margin-left: auto; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
 .onb-bubble.ai { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .onb-record { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+.onb-text { white-space: pre-line; }
+.onb-example { font-size: 11px; font-weight: 700; color: var(--text-faint); text-align: right; margin: -4px 0 4px; }
+.onb-photo { width: 52px; height: 52px; flex-shrink: 0; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.onb-section { font-size: 14px; font-weight: 700; padding: 7px 10px; border-radius: 10px; background: var(--accent-soft); margin-top: 6px; }
+.onb-section.caution { background: var(--danger-bg); border-left: 3px solid var(--danger); }
+.onb-followup { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent-strong); background: var(--surface); }
+.onb-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 600; }
+.onb-notice { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; border-radius: 16px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 6px 18px rgba(43, 35, 32, 0.12); }
 .onb-setup { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 20px 0; overflow-y: auto; }
 .onb-speech { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px 20px; font-size: 19px; font-weight: 800; text-align: center; white-space: pre-line; box-shadow: var(--shadow); margin-bottom: 4px; }
 .onb-speech::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 14px; height: 14px; background: var(--surface); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); transform: translateX(-50%) rotate(45deg); }
@@ -959,3 +967,9 @@ button {
 .vd-flag { color: var(--warning); font-size: 12px; font-weight: 700; }
 .vt-empty { margin-top: auto; font-size: 14px; font-weight: 700; color: var(--accent-strong); opacity: 0.8; }
 .vd-none { font-size: 17px; font-weight: 700; color: var(--text-soft); margin: 8px 0; }
+/* 아주 작은 화면(SE 1세대·확대 모드)에선 소개 그림을 줄여 위가 잘리지 않게 */
+@media (max-height: 600px) {
+  .onb-visual { min-height: 0; margin-bottom: 16px; }
+  .onb-notice { display: none; }
+  .onb-mock { padding: 10px 14px; }
+}

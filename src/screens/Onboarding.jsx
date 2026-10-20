@@ -8,13 +8,17 @@ import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 
-// 첫 실행 온보딩: ① 앱 소개 3장(옆으로 넘김) → ② 강아지 정보를 한 화면에 하나씩 → ③ 알림 켜기 → ④ 인사.
+// 첫 실행 온보딩: ① 앱 소개 4장(옆으로 넘김) → ② 강아지 정보를 한 화면에 하나씩 → ③ 알림 켜기 → ④ 인사.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
+// 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
+// 4장, 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
 const SLIDES = [
-  { title: "우리 강아지가 직접 말해 줘요", text: "궁금한 걸 물어보면 AI 강아지가 우리 아이 정보에 맞춰 답해 줘요." },
-  { title: "오늘 챙길 일을 알려 줘요", text: "나이·견종에 맞춘 할 일과 밥·산책 시간을 알림으로 챙겨 줘요." },
-  { title: "말만 하면 기록돼요", text: "채팅으로 말하면 가계부·일정·체중에 알아서 적어 줘요." },
+  { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n말투는 세 가지 중에 골라요." },
+  { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
+  { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n가계부·일정·체중·약까지 알아서 적어요." },
+  { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에 모이고\n밥·산책·약 시간엔 알림이 와요." },
 ];
+const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock];
 
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -45,7 +49,7 @@ function Intro({ onDone }) {
       <div ref={trackRef} className="onb-track" onScroll={(e) => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
         {SLIDES.map((s, i) => (
           <div key={i} className="onb-slide">
-            <div className="onb-visual">{i === 0 ? <DogAvatarVideo state="idle" height={220} breed="pomeranian" /> : i === 1 ? <ChecklistMock /> : <ChatMock />}</div>
+            <div className="onb-visual">{(() => { const Visual = SLIDE_VISUALS[i]; return <Visual />; })()}</div>
             <div className="onb-title">{s.title}</div>
             <p className="onb-text">{s.text}</p>
           </div>
@@ -58,27 +62,50 @@ function Intro({ onDone }) {
       </div>
       <div className="onb-bottom">
         <button type="button" className="btn-primary" onClick={next}>
-          {last ? "시작하기" : "다음"}
+          {last ? "우리 아이 소개하기" : "다음"}
         </button>
       </div>
     </div>
   );
 }
 
-function ChecklistMock() {
+const Example = () => <div className="onb-example">예시 화면</div>;
+
+function ModesMock() {
   return (
-    <div className="onb-mock">
-      {[
-        ["밥 주기", "08:00", true],
-        ["산책", "18:00", false],
-        ["양치", "21:00", false],
-      ].map(([t, time, done]) => (
-        <div key={t} className="onb-mock-row">
-          <span className={`onb-check${done ? " on" : ""}`}>{done ? "✓" : ""}</span>
-          <span style={{ flex: 1, textDecoration: done ? "line-through" : "none", color: done ? "var(--text-faint)" : "var(--text)" }}>{t}</span>
-          <span className="faint">⏰ {time}</span>
-        </div>
-      ))}
+    <div style={{ width: "100%", maxWidth: 300 }}>
+      <DogAvatarVideo state="idle" height={110} breed="pomeranian" />
+      <div className="onb-mock" style={{ marginTop: 6, padding: "6px 14px" }}>
+        {[
+          ["🐶", "포메라니안", "핵심만 빠르게"],
+          ["🐕", "보더콜리", "자료 찾아 꼼꼼하게"],
+          ["🦮", "리트리버", "수다 친구처럼"],
+        ].map(([icon, name, desc]) => (
+          <div key={name} className="onb-mock-row">
+            <span style={{ fontSize: 20 }}>{icon}</span>
+            <b style={{ minWidth: 76 }}>{name}</b>
+            <span className="subtle" style={{ fontSize: 14 }}>{desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PhotoMock() {
+  return (
+    <div className="onb-mock" style={{ textAlign: "left" }}>
+      <Example />
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+        <div className="onb-photo">🐶</div>
+        <div style={{ fontWeight: 800, lineHeight: 1.4 }}>사진에서 본 걸 정리했어!</div>
+      </div>
+      <div className="onb-section">👀 사진에서 본 것</div>
+      <div className="onb-section caution">🏥 이럴 땐 병원에</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+        <span className="onb-followup">집에서 확인할 것은?</span>
+        <span className="onb-followup">병원 가야 할 때는?</span>
+      </div>
     </div>
   );
 }
@@ -86,10 +113,51 @@ function ChecklistMock() {
 function ChatMock() {
   return (
     <div className="onb-mock" style={{ background: "transparent", boxShadow: "none", border: "none" }}>
-      <div className="onb-bubble me">오늘 사료 3만원 샀어</div>
+      <Example />
+      <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
       <div className="onb-bubble ai">
-        가계부에 적어 뒀어!
-        <div className="onb-record">📝 사료 30,000원 · 오늘</div>
+        둘 다 적어 뒀어!
+        <div className="onb-record">🐾 산책 30분 · 건강 기록</div>
+        <div className="onb-record">💰 사료 30,000원 · 가계부</div>
+      </div>
+    </div>
+  );
+}
+
+function CareMock() {
+  return (
+    <div style={{ width: "100%", maxWidth: 300 }}>
+      <div className="onb-notice">
+        <span style={{ fontSize: 20 }}>🔔</span>
+        <div style={{ textAlign: "left", lineHeight: 1.4 }}>
+          <b>멍케어</b>
+          <div className="subtle" style={{ fontSize: 14 }}>산책 갈 시간이에요!</div>
+        </div>
+      </div>
+      <div className="onb-mock">
+        <Example />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
+          {[
+            ["⚖️", "몸무게"],
+            ["💧", "물"],
+            ["🦮", "산책"],
+          ].map(([icon, label]) => (
+            <div key={label} className="onb-tile">
+              <span style={{ fontSize: 18 }}>{icon}</span>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+        {[
+          ["밥 주기", "08:00", true],
+          ["산책", "18:00", false],
+        ].map(([t, time, done]) => (
+          <div key={t} className="onb-mock-row">
+            <span className={`onb-check${done ? " on" : ""}`}>{done ? "✓" : ""}</span>
+            <span style={{ flex: 1, textAlign: "left", textDecoration: done ? "line-through" : "none", color: done ? "var(--text-faint)" : "var(--text)" }}>{t}</span>
+            <span className="faint">⏰ {time}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
