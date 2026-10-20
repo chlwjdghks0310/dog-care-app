@@ -102,4 +102,14 @@ assert.doesNotMatch(get("observe"), /수면|활동량/, "기록 없는 항목은
 assert.match(get("visits"), /행복병원 구토[\s\S]*검사: 혈액검사 정상/);
 assert.match(get("memos"), /산책 후/);
 
+// 저장 후 강아지 반응 — 걱정되는 기록엔 축하하지 않는다(진단 문구 없음)
+const { reactionFor } = await import("../src/data/recordReactions.js");
+{
+  assert.equal(reactionFor({ type: "symptom", data: { kinds: ["구토"] } }).concern, true);
+  assert.equal(reactionFor({ type: "potty", data: { stool: "설사" } }).concern, true);
+  assert.equal(reactionFor({ type: "potty", data: { stool: "정상" } }).concern, undefined);
+  assert.equal(reactionFor({ type: "meal", data: { appetite: "평소보다 적음" } }).concern, true);
+  for (const t of Object.keys(R.TYPES)) assert.ok(reactionFor({ type: t, data: {} }).line, t);
+}
+
 console.log("통합 기록 확인 통과");

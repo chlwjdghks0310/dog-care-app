@@ -4,6 +4,7 @@ import { deleteWeightRecord, getWeightRecords } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import WeightChart from "../components/WeightChart";
 import RecordForm from "./RecordForm";
+import DogReaction from "../components/DogReaction";
 import { TYPES, ADD_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
@@ -27,6 +28,7 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
   const [order, setOrder] = useState("new");
   const [openId, setOpenId] = useState(null);
   const [notice, setNotice] = useState("");
+  const [reaction, setReaction] = useState(null); // 방금 저장한 기록 — 강아지 반응 카드
   const reload = () => setItems(getTimeline(dog.id));
 
   function handleSaved(rec) {
@@ -34,7 +36,8 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
     reload();
     setView("list");
     setOpenId(rec.id);
-    setNotice("저장했어요.");
+    setNotice("");
+    setReaction(rec.type ? rec : { ...rec, type: "weight", data: { weightKg: rec.weightKg } }); // 체중은 체중 기록 형태로 돌아온다
   }
 
   function handleDelete(rec) {
@@ -67,10 +70,11 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
       {form ? (
         <RecordForm dog={dog} initial={form.initial} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
       ) : (
-        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (setNotice(""), setForm({ initial: null }))}>
+        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (setNotice(""), setReaction(null), setForm({ initial: null }))}>
           ＋ 새 기록
         </button>
       )}
+      {reaction && !form && <DogReaction dog={dog} rec={reaction} onClose={() => setReaction(null)} />}
       {notice && !form && <p className="subtle" role="status" style={{ margin: "0 0 10px" }}>{notice}</p>}
 
       {!form && view === "list" && (
@@ -110,7 +114,7 @@ export default function Records({ dog, startNew, onBack, onOpenMeds }) {
                     rec={r}
                     open={openId === r.id}
                     onToggle={() => setOpenId(openId === r.id ? null : r.id)}
-                    onEdit={() => (r.source === "med" ? onOpenMeds() : (setNotice(""), setForm({ initial: r })))}
+                    onEdit={() => (r.source === "med" ? onOpenMeds() : (setNotice(""), setReaction(null), setForm({ initial: r })))}
                     onDelete={() => handleDelete(r)}
                   />
                 </div>

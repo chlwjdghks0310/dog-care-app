@@ -8,6 +8,7 @@ import { getWeightAssessment, getWeightStatusShortText } from "../data/weightGui
 import { getLatestWeightRecord } from "../services/weightLog";
 import { getDosesForDate, markDoseDone, undoDose } from "../services/medications";
 import { syncPushAlarms } from "../services/notifications";
+import ProgressRing from "../components/ProgressRing";
 
 // 오늘 먹을 약을 "오늘 해야 할 일"에 함께 보여 준다 — 저장하지 않고 약 기록에서 매번 계산해서 같은 복용 건이 두 번 생기지 않는다.
 const MED_STATUS_TEXT = { planned: "복용 예정", done: "먹였어요", skipped: "건너뜀", check: "기록 확인 필요" };
@@ -118,7 +119,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
           <p className="subtle">오늘 등록된 필수 일과가 없어요. 이번 주 핵심을 확인해보세요.</p>
         ) : (
           <>
-            <p className="faint" style={{ marginBottom: 4 }}>{doneCount}/{checklist.length} 완료</p>
+            <div className="today-head">
+              <ProgressRing done={doneCount} total={checklist.length} label="오늘 할 일" />
+              <div>
+                <div style={{ fontWeight: 700 }}>
+                  {doneCount === checklist.length ? `오늘 할 일을 다 했어요!` : `${checklist.length - doneCount}개 남았어요`}
+                </div>
+                <div className="faint">{checklist.length}개 중 {doneCount}개 완료</div>
+              </div>
+            </div>
             {groupedChecklist.map(([category, items]) => (
               <div key={category} className="category-group">
                 <div className="category-label">
