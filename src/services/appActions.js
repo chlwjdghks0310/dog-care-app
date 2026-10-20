@@ -1,5 +1,5 @@
 import { addExpense, deleteExpense, getCategories, getExpenses, setAllowance, updateExpense } from "./expenses";
-import { addEvent, deleteEvent, getEventsByDog } from "./calendarEvents";
+import { addEvent, removeEvent, saveEvent, getEventsByDog } from "./calendarEvents";
 import { addWeightRecord, deleteWeightRecord, getLatestWeightRecord, getWeightRecords, updateWeightRecord } from "./weightLog";
 import { saveDog } from "./dogRepository";
 import { getScheduleForDate, toggleScheduleItem } from "./scheduleRepository";
@@ -114,7 +114,7 @@ export function applyConfirmedAction(dog, a) {
   if (!rec) return null;
   if (a.type === "delete_record") {
     if (a.kind === "expense") deleteExpense(dog.id, a.id);
-    if (a.kind === "calendar_event") deleteEvent(dog.id, rec.date, a.id);
+    if (a.kind === "calendar_event") removeEvent(dog.id, rec.date, a.id);
     if (a.kind === "weight") {
       deleteWeightRecord(dog.id, a.id);
       syncDogWeight(dog);
@@ -138,8 +138,8 @@ export function applyConfirmedAction(dog, a) {
     } else if (a.kind === "calendar_event") {
       const title = text(a.title) || rec.title;
       const date = isDate(a.date) ? a.date : rec.date;
-      deleteEvent(dog.id, rec.date, a.id);
-      addEvent(dog.id, date, title, rec.color);
+      const { date: _old, ...event } = rec; // eslint-disable-line no-unused-vars
+      saveEvent(dog.id, date, { ...event, title }); // 시간·반복·알림은 그대로 두고 제목·날짜만
     } else if (a.kind === "weight") {
       const patch = {};
       const kg = Number(a.weight_kg);

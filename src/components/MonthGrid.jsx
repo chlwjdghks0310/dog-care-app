@@ -3,7 +3,8 @@ import { todayKey, toDateKey } from "../utils/date";
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 월 달력. renderMarker(dateKey)로 각 날짜 아래에 표시할 내용(점, 금액 등)을 그린다.
-export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, onSelect, renderMarker }) {
+// cellClass(dateKey)로 날짜 칸에 클래스를 붙일 수 있다(일정 기간 띠 등).
+export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, onSelect, renderMarker, cellClass }) {
   const today = todayKey();
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -41,6 +42,10 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
           return (
             <button
               key={key}
+              type="button"
+              className={cellClass?.(key) || undefined}
+              aria-label={`${month + 1}월 ${d}일`}
+              aria-pressed={isSelected}
               onClick={() => onSelect(key)}
               style={{
                 display: "flex",
@@ -55,7 +60,7 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
               }}
             >
               <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400 }}>{d}</span>
-              {renderMarker(key)}
+              {renderMarker?.(key)}
             </button>
           );
         })}

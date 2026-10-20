@@ -1,7 +1,7 @@
 import { getDogs } from "./dogRepository";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "./careEngine";
 import { getScheduleForDate } from "./scheduleRepository";
-import { getEventsByDog } from "./calendarEvents";
+import { getOccurrences } from "./calendarEvents";
 import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getFeedingSettings } from "./feedingSettings";
@@ -46,12 +46,14 @@ export function buildAppSnapshot(dog) {
   if (upcoming.length) lines.push(`다가오는 관리: ${upcoming.map((r) => `${r.title}(${r.startsInWeeks}주 뒤)`).join(", ")}`);
 
   // 일정표(직접 적은 일정) — 지난 30일 ~ 앞으로 60일
-  const events = Object.entries(getEventsByDog(dog.id) || {})
-    .filter(([date, list]) => date >= daysFrom(-30) && date <= daysFrom(60) && list.length)
-    .sort(([a], [b]) => a.localeCompare(b));
-  if (events.length) {
-    lines.push("", "[일정표 - 보호자가 적은 일정 (지난 30일~앞으로 60일)]");
-    for (const [date, list] of events) lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${list.map((e) => `${e.title} [id:${e.id}]`).join(", ")}`);
+  const occ = getOccurrences(dog.id, daysFrom(-30), daysFrom(60));
+  const events = {};
+  for (const o of occ) (events[o.date] ||= []).push(o);
+  const eventDates = Object.keys(events).sort();
+  if (eventDates.length) {
+    lines.push("", "[일정표 - 보호자가 적은 일정 (지난 30일~앞으로 60일, 반복·기간 일정은 날짜마다 펼침)]");
+    for (const date of eventDates)
+      lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${events[date].map(({ event: e, start }) => `${e.time ? `${e.time} ` : ""}${e.title}${e.endDate ? `(${start}~${e.endDate})` : ""}${e.repeat ? "(반복)" : ""} [id:${e.id}]`).join(", ")}`);
   }
 
   // 알람·사료

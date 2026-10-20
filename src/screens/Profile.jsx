@@ -8,7 +8,7 @@ import { getPermission, isNotificationSupported, requestPermission, syncPushAlar
 import { resizeImageFile } from "../utils/image";
 import { saveDog } from "../services/dogRepository";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
-import { getEventsByDog } from "../services/calendarEvents";
+import { getOccurrences } from "../services/calendarEvents";
 import { TYPES, getTimeline, filterTimeline, summarize, md } from "../services/records";
 
 const GENDER_LABEL = { female: "암컷", male: "수컷" };
@@ -605,10 +605,10 @@ function MedCard({ dog, onOpen }) {
 function UpcomingCard({ dog, onOpenCalendar }) {
   const today = todayKey();
   const until = toDateKey(addDays(new Date(), 60));
-  const items = Object.entries(getEventsByDog(dog.id))
-    .filter(([date]) => date >= today && date <= until)
-    .flatMap(([date, list]) => list.filter((e) => VISIT_WORDS.test(e.title)).map((e) => ({ date, title: e.title })))
-    .sort((a, b) => a.date.localeCompare(b.date))
+  const seen = new Set(); // 반복 일정은 가장 가까운 회차만
+  const items = getOccurrences(dog.id, today, until)
+    .filter((o) => o.isStart && (o.event.kind === "vet" || o.event.kind === "vaccine" || VISIT_WORDS.test(o.event.title)) && !seen.has(o.event.id) && seen.add(o.event.id))
+    .map((o) => ({ date: o.date, title: `${o.event.title}${o.event.time ? ` ${o.event.time}` : ""}` }))
     .slice(0, 3);
   const dday = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
   return (
