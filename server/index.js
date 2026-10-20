@@ -330,7 +330,7 @@ const FOLLOWUP_RULE = `[이어서 물어볼 질문]
 - 기록을 마친 답변처럼 더 물어볼 게 없으면 이 줄을 생략해도 된다.`;
 
 // 웹 검색 도구가 실제로 가져온 자료만 출처로 쓴다(AI가 이름만 적은 출처는 쓰지 않음).
-// 답에 인용(citation)된 것을 먼저, 인용 표시가 없으면 검색 도구가 실제로 연 결과 페이지를 쓴다.
+// 답에 인용(citation)된 것을 먼저, 인용 표시가 없으면(동적 필터링 검색은 인용 표시가 안 붙음) 검색 도구가 실제로 가져온 결과 페이지를 쓴다.
 function citationRefs(response) {
   const cited = response.content
     .filter((b) => b.type === "text")
@@ -529,9 +529,7 @@ app.post("/api/ask", async (req, res) => {
     }
 
     const reply = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
-    // TEMP(출처 확인용, 확인 후 삭제): 응답 블록 종류만 — 내용은 넣지 않음
-    const _debug = req.body?._debug ? response.content.map((b) => `${b.type}${b.citations ? `:c${b.citations.length}` : ""}${Array.isArray(b.content) ? `:r${b.content.length}` : ""}`) : undefined;
-    res.json({ ...structuredReply(reply, citationRefs(response)), actions, _debug });
+    res.json({ ...structuredReply(reply, citationRefs(response)), actions });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
