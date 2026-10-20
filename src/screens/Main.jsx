@@ -338,7 +338,7 @@ export default function Main({ dog, resetSignal }) {
                       <div className="faint">{c.status}</div>
                     ) : (
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button type="button" className="btn-primary" style={{ flex: 1, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, true)}>
+                        <button type="button" className="btn-primary" style={{ flex: 1, minHeight: 40, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, true)}>
                           {c.type === "delete_record" ? "지우기" : "고치기"}
                         </button>
                         <button type="button" className="btn-ghost" style={{ flex: 1, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, false)}>
@@ -454,7 +454,7 @@ export default function Main({ dog, resetSignal }) {
         <button
           type="submit"
           className="btn-primary"
-          style={{ width: 44, height: 44, padding: 0, borderRadius: "50%", fontSize: 18, flexShrink: 0 }}
+          style={{ width: 44, height: 44, minHeight: 44, padding: 0, borderRadius: "50%", fontSize: 18, flexShrink: 0 }}
           disabled={pending}
           aria-label="전송"
         >

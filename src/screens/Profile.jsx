@@ -238,7 +238,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
               <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12.5 }} onClick={() => setEditing(false)}>
                 취소
               </button>
-              <button className="btn-primary" style={{ width: "auto", padding: "4px 12px", fontSize: 12.5 }} onClick={handleSaveEdit}>
+              <button className="btn-primary" style={{ width: "auto", minHeight: 32, padding: "4px 12px", fontSize: 13 }} onClick={handleSaveEdit}>
                 저장
               </button>
             </div>
