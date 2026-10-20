@@ -272,7 +272,7 @@ function PhotoCheck({ dog, onFilled }) {
   const picker = (label) => (
     <label className="btn-ghost small pc-pick">
       {label}
-      <input type="file" accept="image/*" capture="environment" onChange={pick} hidden />
+      <input type="file" accept="image/*" onChange={pick} hidden />
     </label>
   );
   const { step, photo, obs, msg } = state;
@@ -283,9 +283,9 @@ function PhotoCheck({ dog, onFilled }) {
         <span className="pc-start-icon" aria-hidden="true">📷</span>
         <span>
           <b>사진으로 채우기</b>
-          <span className="faint" style={{ display: "block" }}>변 사진을 찍으면 보이는 모양·색을 정리해서 아래 칸을 채워 줘요. 진단은 아니에요.</span>
+          <span className="faint" style={{ display: "block" }}>변 사진을 찍거나 앨범에서 고르면 보이는 모양·색을 정리해서 아래 칸을 채워 줘요. 진단은 아니에요.</span>
         </span>
-        <input type="file" accept="image/*" capture="environment" onChange={pick} hidden />
+        <input type="file" accept="image/*" onChange={pick} hidden />
       </label>
     );
 

@@ -71,7 +71,7 @@ export default function HealthCheck({ dog, onBack }) {
 
         <label className="btn-ghost" style={{ display: "block", textAlign: "center", marginBottom: 8 }}>
           {file ? "다른 사진 선택" : "사진 촬영 / 선택"}
-          <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: "none" }} />
+          <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
         </label>
 
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>

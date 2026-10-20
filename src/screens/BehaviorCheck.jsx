@@ -77,7 +77,7 @@ export default function BehaviorCheck({ dog, onBack }) {
 
         <label className="btn-ghost" style={{ display: "block", textAlign: "center", marginBottom: 8 }}>
           {videoUrl ? "다른 영상 선택" : "영상 촬영 / 선택"}
-          <input type="file" accept="video/*" capture="environment" onChange={handleFileChange} style={{ display: "none" }} />
+          <input type="file" accept="video/*" onChange={handleFileChange} style={{ display: "none" }} />
         </label>
 
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>
