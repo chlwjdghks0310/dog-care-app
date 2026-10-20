@@ -293,7 +293,8 @@ button {
 
 .screen {
   flex: 1;
-  padding: 20px 18px 96px;
+  /* 아이폰 홈 화면 앱은 화면이 상태바(시계·배터리) 밑까지 올라가므로 그 높이만큼 내려서 시작한다 */
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 18px 96px;
   overflow-y: auto;
 }
 
