@@ -17,14 +17,15 @@ import { acceptInvite } from "../services/sync/family";
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
-// 4장, 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
+// 5장(마지막은 손동작), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
 const SLIDES = [
   { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n말투는 세 가지 중에 골라요." },
   { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
   { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n가계부·일정·체중·약까지 알아서 적어요." },
   { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에 모이고\n밥·산책·약 시간엔 알림이 와요." },
+  { title: "손끝으로 빠르게", text: "아래 프로필 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
 ];
-const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock];
+const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock, GestureMock];
 
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -201,6 +202,28 @@ function CareMock() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// 손동작 안내: 실제 하단 탭처럼 보이는 줄 + 동작 목록
+function GestureMock() {
+  return (
+    <div className="onb-mock" style={{ textAlign: "left" }}>
+      {[
+        ["👆👆", "프로필 탭 두 번 톡", "다음 강아지로 바꾸기"],
+        ["✋", "프로필 탭 꾹 누르기", "강아지 목록 열기"],
+        ["⬇️", "화면 맨 위에서 아래로 당기기", "새로고침 · 가족 기록 받기"],
+        ["➡️", "왼쪽에서 오른쪽으로 밀기", "이전 화면으로"],
+      ].map(([icon, how, what]) => (
+        <div key={how} className="onb-mock-row">
+          <span style={{ fontSize: 18, width: 40, textAlign: "center", whiteSpace: "nowrap", letterSpacing: -4 }}>{icon}</span>
+          <span style={{ flex: 1, lineHeight: 1.35 }}>
+            <b style={{ fontSize: 14 }}>{how}</b>
+            <div className="faint" style={{ fontSize: 13 }}>{what}</div>
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useSwipeClose } from "../components/SwipeBack";
 import { todayKey } from "../utils/date";
 import { getVetNote, saveVetNote, buildVetSummary, summaryToText, SYMPTOMS, SECTIONS, PERIODS } from "../services/vetSummary";
 
@@ -7,6 +8,7 @@ import { getVetNote, saveVetNote, buildVetSummary, summaryToText, SYMPTOMS, SECT
 export default function VetSummary({ dog, onBack }) {
   const [note, setNote] = useState(() => getVetNote(dog.id));
   const [showing, setShowing] = useState(false);
+  const swipeClose = useSwipeClose(() => setShowing(false));
   const [speaking, setSpeaking] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
   const sections = buildVetSummary(dog, note);
@@ -135,7 +137,7 @@ export default function VetSummary({ dog, onBack }) {
       {/* 화면 전체(하단 탭 위까지)를 덮어야 해서 body에 띄운다 */}
       {showing &&
         createPortal(
-          <div className="vet-show" role="dialog" aria-label="병원용 기록 크게 보기">
+          <div className="vet-show" role="dialog" aria-label="병원용 기록 크게 보기" {...swipeClose}>
             <button className="btn-ghost vet-show-close" onClick={() => setShowing(false)}>닫기</button>
             <SummaryDoc dog={dog} sections={sections} large />
           </div>,

@@ -32,8 +32,9 @@ import Records from "./screens/Records";
 import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
+import PullToRefresh from "./components/PullToRefresh";
 import { applyTheme, getTheme } from "./services/themeSettings";
-import { startSync } from "./services/sync";
+import { startSync, syncNow } from "./services/sync";
 
 const PARENT_TAB = {
   week: "home",
@@ -127,6 +128,14 @@ export default function App() {
   function setActiveDog(d) {
     setDog(d);
     if (d) setActiveDogId(d.id);
+  }
+
+  // 아래로 당겨 새로고침: 로그인했으면 이 폰 기록을 백업하고 가족이 적은 기록을 받아 온 뒤, 열려 있는 강아지 화면을 다시 그린다
+  async function handleRefresh() {
+    await syncNow();
+    const fresh = getDogs().find((d) => d.id === dog?.id);
+    if (fresh) setDog(fresh);
+    setPageVersion((v) => v + 1);
   }
 
   // 강아지 추가 — 기존 강아지는 그대로 두고 새 강아지를 등록한 뒤, 그 강아지로 바로 전환한다.
@@ -376,11 +385,13 @@ export default function App() {
           화면 사이 틈(gap)으로 두 화면이 구분된다. */}
       <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
         {TABS.map((t) => (
-          <div key={t.key} className={`pager-page${inSubScreen && t.key === pageKey ? " has-stack" : ""}`} aria-hidden={t.key !== pageKey}>
+          <div key={t.key} data-tab={t.key} className={`pager-page${inSubScreen && t.key === pageKey ? " has-stack" : ""}`} aria-hidden={t.key !== pageKey}>
             {pages[t.key]}
           </div>
         ))}
       </div>
+      {/* 비서(채팅) 화면은 대화 스크롤과 겹치지 않게 빼고, 나머지 화면은 맨 위에서 당기면 새로고침 */}
+      <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
       <BottomNav
         active={TABS[visibleIndex]?.key || pageKey}
         onChange={handleTabChange}

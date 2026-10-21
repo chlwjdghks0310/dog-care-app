@@ -14,6 +14,7 @@ import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
+import { useSwipeClose } from "../components/SwipeBack";
 import { getSyncStatus } from "../services/sync";
 import { leavePet, myRole } from "../services/sync/family";
 
@@ -43,6 +44,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const swipeClose = useSwipeClose(() => setSettingsOpen(false));
   const [editForm, setEditForm] = useState(null);
   const [editError, setEditError] = useState("");
   const [infoOpen, setInfoOpen] = useState(false);
@@ -340,7 +342,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
       {/* 설정(☰): 배경 테마·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
       {settingsOpen &&
         createPortal(
-          <div className="settings-sheet" role="dialog" aria-label="설정">
+          <div className="settings-sheet" role="dialog" aria-label="설정" {...swipeClose}>
             <div className="settings-head">
               <div className="h1" style={{ margin: 0 }}>설정</div>
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>

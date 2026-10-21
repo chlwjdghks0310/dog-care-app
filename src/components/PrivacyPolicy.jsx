@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { useSwipeClose } from "./SwipeBack";
 
 // 개인정보 처리방침(초안) — 개인정보보호법 제30조·시행령 제31조 항목 기준(자료용 조사: ../자료용/자료/2026-10-20-supabase-카카오로그인.md).
 // ⚠️ 법률 검토 전 초안. 아래 OPERATOR의 빈칸(운영자·연락처·시행일)은 사용자가 채워야 하고, 국외 이전 해당 여부는 법률 확인이 필요하다.
@@ -27,8 +28,9 @@ const SECTIONS = [
 ];
 
 export default function PrivacyPolicy({ onClose }) {
+  const swipeClose = useSwipeClose(onClose);
   return createPortal(
-    <div className="settings-sheet" role="dialog" aria-label="개인정보 처리방침" style={{ zIndex: 130 }}>
+    <div className="settings-sheet" role="dialog" aria-label="개인정보 처리방침" style={{ zIndex: 130 }} {...swipeClose}>
       <div className="settings-head">
         <div className="h1" style={{ margin: 0 }}>개인정보 처리방침</div>
         <button type="button" className="btn-ghost" onClick={onClose}>
