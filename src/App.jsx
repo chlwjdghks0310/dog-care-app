@@ -257,7 +257,7 @@ export default function App() {
           const soak = getSoakGuidance(age.ageInWeeks);
           checkFeedingSoakReminders(d, feedingSettings.times, soak.needed === true, dateKey);
         }
-        checkCustomAlarms(getCustomSchedules(d.id), dateKey);
+        checkCustomAlarms(d, getCustomSchedules(d.id), dateKey);
         checkMedAlarms(d, dateKey);
       }
     }, 30 * 1000);

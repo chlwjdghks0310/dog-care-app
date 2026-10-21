@@ -34,7 +34,11 @@ export async function syncNow() {
     try {
       const { changed, blocked } = await syncOnce(supabaseRemote(supabase));
       setStatus({ lastSyncedAt: new Date().toISOString(), blocked });
-      if (changed) window.dispatchEvent(new Event("dogcare-synced"));
+      if (changed) {
+        window.dispatchEvent(new Event("dogcare-synced"));
+        // 가족이 바꾼 알람·약·일정을 받았으면 이 기기의 서버 알람 목록도 바로 새로(순환 import를 피해 동적으로)
+        import("../notifications").then((m) => m.syncPushAlarms()).catch(() => {});
+      }
     } catch (err) {
       // 인터넷이 끊겨도 폰에는 저장돼 있으니 다음에 다시 시도하면 된다
       setStatus({ error: err instanceof TypeError ? "인터넷 연결이 없어 다음에 백업할게요." : err.message || "백업하지 못했어요." });

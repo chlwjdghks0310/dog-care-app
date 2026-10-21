@@ -28,8 +28,13 @@ if (!process.env.GEMINI_API_KEY) {
 // 웹 푸시(VAPID) — 1단계: 구독을 메모리에만 들고 있다가 "테스트 알림 보내기"로 실제로
 // 뜨는지부터 확인한다. 서버 재시작하면 날아가고, 여러 서버 인스턴스 간에도 공유되지 않는다 —
 // 진짜 일정 기반 알림을 붙이려면 이건 DB로 바꿔야 한다(지금은 동작 검증 단계).
-// endpoint → { subscription, alarms: [{ time: "HH:MM", title, body, skipDate? }], timeZone, sentDate, sent: Set }
+// endpoint → { subscription, alarms: [{ time: "HH:MM", title, body, petId, skipDate? }], pets: Set|null(확인된 가족 강아지), timeZone, sentDate, sent: Set }
 const pushDevices = new Map();
+// 가족 공유: 강아지 id → 그 강아지 알람 목록(가족 중 마지막으로 보낸 기기 기준). 같은 강아지의 가족 기기 모두가 이 목록으로 울린다
+const petAlarms = new Map();
+// 가족 확인용 Supabase(공개 주소·공개 키). 없으면 가족 공유 알람은 꺼지고 기기별 알람만 동작한다
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
 if (vapidConfigured) {
   webpush.setVapidDetails(
@@ -784,7 +789,29 @@ app.get("/api/push/public-key", (req, res) => {
 // 기기가 앱을 열거나 닫을 때마다 구독 정보 + 매일 울릴 알람 목록을 통째로 보내온다.
 // ponytail: 메모리에만 저장 — 서버 재시작(배포 등) 후엔 사용자가 앱을 한 번 열어야 다시 등록된다.
 // 여러 사용자/확실한 보존이 필요해지면 DB(Postgres 등)로 옮길 것.
-app.post("/api/push/subscribe", express.text({ limit: "1mb" }), (req, res) => {
+// 로그인 토큰으로 "이 사람이 가족인 강아지 id들"을 Supabase에 물어본다(RLS가 본인 강아지만 돌려준다). 확인 못 하면 null
+async function verifiedPets(accessToken) {
+  if (!accessToken || !SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/pet_members?select=pet_id`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return null;
+    return new Set((await r.json()).map((row) => row.pet_id));
+  } catch {
+    return null;
+  }
+}
+
+// 이 기기가 울려야 할 알람: 가족으로 확인된 강아지는 그 강아지의 공유 목록, 나머지(로그인 전·백업 전 강아지)는 기기가 보낸 목록
+function alarmsForDevice(device) {
+  if (!device.pets?.size) return device.alarms;
+  const own = device.alarms.filter((a) => !device.pets.has(a.petId));
+  return [...own, ...[...device.pets].flatMap((p) => petAlarms.get(p) || [])];
+}
+
+app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res) => {
   let body = req.body || {};
   if (typeof body === "string") {
     try {
@@ -793,19 +820,30 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), (req, res) => {
       return res.status(400).json({ error: "invalid JSON" });
     }
   }
-  const { subscription, alarms, timeZone } = body;
+  const { subscription, alarms, timeZone, accessToken, petIds } = body;
   if (!subscription?.endpoint) {
     return res.status(400).json({ error: "subscription is required" });
   }
   const prev = pushDevices.get(subscription.endpoint);
+  const list = Array.isArray(alarms) ? alarms : prev?.alarms || [];
+  // ponytail: 가족 확인은 기기가 알람을 보낼 때(앱 열기·닫기)만 — 내보낸 가족 기기는 그 기기가 다시 보낼 때까지 알람을 받을 수 있다. 정확히 하려면 구독을 DB로 옮겨 서버가 직접 확인
+  const pets = (await verifiedPets(accessToken)) ?? prev?.pets ?? null;
+  // 확인된 강아지의 알람만 공유 목록으로 받는다(가족 아닌 강아지 목록을 덮어쓰지 못하게)
+  // 이 기기에 있는 강아지(petIds)는 알람이 0개여도 그대로 반영해 지운 알람이 남지 않게 한다
+  if (pets && Array.isArray(alarms)) {
+    const here = new Set([...(Array.isArray(petIds) ? petIds : []), ...alarms.map((a) => a.petId)]);
+    for (const pet of pets) if (here.has(pet)) petAlarms.set(pet, alarms.filter((a) => a.petId === pet));
+  }
   pushDevices.set(subscription.endpoint, {
     subscription,
-    alarms: Array.isArray(alarms) ? alarms : prev?.alarms || [],
+    alarms: list,
+    pets,
     timeZone: timeZone || prev?.timeZone || "Asia/Seoul",
     sentDate: prev?.sentDate,
     sent: prev?.sent || new Set(),
   });
-  res.json({ ok: true, alarms: pushDevices.get(subscription.endpoint).alarms.length });
+  const device = pushDevices.get(subscription.endpoint);
+  res.json({ ok: true, alarms: alarmsForDevice(device).length, familyPets: pets?.size || 0 });
 });
 
 async function sendPush(device, title, body, url) {
@@ -854,7 +892,7 @@ function checkPushAlarms() {
       device.sentDate = now.date;
       device.sent = new Set();
     }
-    for (const alarm of device.alarms) {
+    for (const alarm of alarmsForDevice(device)) {
       if (alarm.skipDate === now.date) continue; // 오늘 이미 끝낸 체크리스트 항목
       if (alarm.onlyDate && alarm.onlyDate !== now.date) continue; // 하루만 울리는 알람
       if ((alarm.from && now.date < alarm.from) || (alarm.until && now.date > alarm.until)) continue; // 약 복용 기간

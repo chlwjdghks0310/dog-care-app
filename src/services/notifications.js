@@ -11,6 +11,7 @@ import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
+import { supabase } from "./supabase";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -65,7 +66,8 @@ async function fireNotification(title, body, url) {
 }
 
 export const checklistMessage = (dog, item) => ({ title: `🐾 ${dog.name}`, body: `나 이제 ${item.title} 시간이야! 알고 있지?` });
-export const customAlarmMessage = (alarm) => ({ title: `⏰ ${alarm.title}`, body: `나 지금 "${alarm.title}" 시간이라고 알려주는 거야, 잊지 마!` });
+// 제목에 강아지 이름을 넣는다 — 알림만 보고도 어느 강아지 알람인지 알 수 있게
+export const customAlarmMessage = (dog, alarm) => ({ title: `⏰ ${dog.name} · ${alarm.title}`, body: `나 지금 "${alarm.title}" 시간이라고 알려주는 거야, 잊지 마!` });
 export const soakMessage = (dog, soakNeeded) => ({
   title: `🐾 ${dog.name}`,
   body: soakNeeded
@@ -93,7 +95,7 @@ export function checkAndNotify(dog, checklist, dateKey) {
 }
 
 // 사용자가 등록한 커스텀 일정(알람)의 시각이 되면 알림을 띄운다. 소리는 기기 알림음 설정을 따른다.
-export function checkCustomAlarms(schedules, dateKey) {
+export function checkCustomAlarms(dog, schedules, dateKey) {
   const nowLabel = getNowLabel();
   const notified = readNotifiedSet(dateKey);
 
@@ -104,7 +106,7 @@ export function checkCustomAlarms(schedules, dateKey) {
       markNotified(dateKey, id, alarm.time);
       navigator.vibrate?.(VIBRATE);
       if (getPermission() === "granted") {
-        const { title, body } = customAlarmMessage(alarm);
+        const { title, body } = customAlarmMessage(dog, alarm);
         fireNotification(title, body);
       }
     }
@@ -147,8 +149,11 @@ export async function getPushSubscription() {
 // 구독 정보를 서버에 보내두면, 서버가 그 기기로 직접 푸시를 보낼 수 있게 된다.
 // 서버에 이 기기의 구독 + 매일 울릴 알람 목록을 보낸다. 서버가 그 시각에 푸시를 쏜다.
 // text/plain으로 보내 CORS 사전요청(preflight)을 피한다 — sendBeacon은 text/plain만 교차 출처로 보낼 수 있다.
+// 로그인했으면 토큰도 같이 보낸다 → 서버가 Supabase에서 이 사람이 어느 강아지의 가족인지 확인하고, 가족이 만든 알람도 이 기기로 보낸다
 async function postSubscription(subscription, alarms, { beacon = false } = {}) {
-  const body = JSON.stringify({ subscription, alarms, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const accessToken = supabase ? (await supabase.auth.getSession().catch(() => null))?.data?.session?.access_token : undefined;
+  // petIds: 이 기기에 있는 강아지 — 알람을 다 지운 강아지도 서버 공유 목록이 비워지도록
+  const body = JSON.stringify({ subscription, alarms, petIds: getDogs().map((d) => d.id), accessToken, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   const url = `${API_BASE}/api/push/subscribe`;
   // 앱을 닫는 순간엔 일반 fetch가 끊길 수 있어 sendBeacon을 쓴다(사파리는 fetch keepalive가 "Load failed"로 실패).
   if (beacon && navigator.sendBeacon?.(url, new Blob([body], { type: "text/plain" }))) return;
@@ -157,10 +162,12 @@ async function postSubscription(subscription, alarms, { beacon = false } = {}) {
 }
 
 // 모든 강아지의 매일 알람(케어 권장 시각 + 사료 불리기 30분 전 + 사용자 알람)을 서버용 목록으로 만든다.
+// 알람마다 petId(강아지 id)를 붙인다 — 서버가 같은 강아지의 가족 기기 모두에 보낼 수 있게.
 // ponytail: 완료 체크 여부는 무시하고 매일 보낸다 — 서버는 체크 상태를 모른다.
 export function buildPushAlarms() {
-  const alarms = [];
+  const all = [];
   for (const dog of getDogs()) {
+    const alarms = [];
     for (const item of getTodayChecklist(dog)) {
       // 오늘 이미 체크한 일은 오늘만 건너뛴다(서버는 매일 같은 알람을 보내므로 내일은 다시 울려야 함)
       const skipDate = item.completed ? todayKey() : undefined;
@@ -170,7 +177,7 @@ export function buildPushAlarms() {
     for (const time of getFeedingSettings(dog.id).times) alarms.push({ time: minutesBefore(time, 30), ...soakMessage(dog, soakNeeded) });
     for (const alarm of getCustomSchedules(dog.id)) {
       // 하루만 울리는 알람은 그날만(onlyDate) — 지난 날짜 알람은 보내지 않는다
-      if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ time: alarm.time, ...customAlarmMessage(alarm), onlyDate: alarm.date });
+      if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ time: alarm.time, ...customAlarmMessage(dog, alarm), onlyDate: alarm.date });
     }
     // 약: 서버가 기간(from~until)·요일(days)을 보고 울린다. 오늘 이미 기록한 복용 건은 오늘만 건너뛴다.
     const today = todayKey();
@@ -189,8 +196,9 @@ export function buildPushAlarms() {
         });
       }
     }
+    all.push(...alarms.map((a) => ({ ...a, petId: dog.id })));
   }
-  return alarms;
+  return all;
 }
 
 // 푸시가 켜진 기기라면 최신 알람 목록을 서버에 다시 보낸다(앱 열 때/닫을 때 호출).
