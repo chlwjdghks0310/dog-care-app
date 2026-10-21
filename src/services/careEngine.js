@@ -19,6 +19,8 @@ export function getTodayChecklist(dog, dateKey = todayKey()) {
     const rules = getDailyRules(age.ageInWeeks, dog.breed);
     items = rules.map((rule) =>
       createScheduleItem({
+        // 날짜+규칙으로 정해지는 id — 가족 폰 두 대가 같은 날 각자 목록을 만들어도 같은 항목으로 합쳐진다(중복 표시 방지)
+        id: `sch-${dateKey}-${rule.id}`,
         dogId: dog.id,
         ruleId: rule.id,
         title: rule.title,

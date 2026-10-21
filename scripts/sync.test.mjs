@@ -182,4 +182,18 @@ await syncOnce(remote).catch(() => {});
 assert.ok(get("dogcare-dogs-v1").some((d) => d.id === "dog-1"), "보호자 강아지는 폰에 남음");
 server.members.mom = saved;
 
+// 같은 날 엄마·아빠 폰이 각자 오늘의 케어 목록을 처음 만들어도 합치면 항목이 두 번씩 생기지 않음
+const { getTodayChecklist } = await import("../src/services/careEngine.js");
+const day = "2026-10-25";
+const choco = () => get("dogcare-dogs-v1").find((d) => d.id === "dog-1");
+use("mom"); who = "mom";
+const n = getTodayChecklist({ ...choco(), birthDate: "2023-05-01" }, day).length;
+use("dad"); who = "dad";
+getTodayChecklist({ ...choco(), birthDate: "2023-05-01" }, day);
+await syncOnce(remote);
+use("mom"); who = "mom";
+await syncOnce(remote);
+assert.ok(n > 0);
+assert.equal(get("dogcare-schedules-v1")["dog-1"][day].length, n, "케어 목록이 중복되지 않음");
+
 console.log("기록 서버 저장(동기화) 확인 통과");

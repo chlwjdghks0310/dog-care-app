@@ -13,7 +13,7 @@ import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summari
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
-import FamilyShare from "../components/FamilyShare";
+import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { getSyncStatus } from "../services/sync";
 import { leavePet, myRole } from "../services/sync/family";
 
@@ -221,6 +221,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
             <div className="h1" style={{ marginBottom: 4 }}>{dog.name}</div>
             <span className="chip">{formatAge(age)}</span>
             <span className="faint" style={{ marginLeft: 8 }}>{dog.breed}</span>
+            <FamilyBadge dogId={dog.id} />
           </div>
 
           {isNotificationSupported() && notifPermission !== "granted" && (

@@ -24,7 +24,7 @@ export function createDog(input) {
 
 export function createScheduleItem(input) {
   return {
-    id: nextId("sch"),
+    id: input.id || nextId("sch"),
     dogId: input.dogId,
     ruleId: input.ruleId || null,
     title: input.title,
