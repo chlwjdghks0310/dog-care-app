@@ -76,7 +76,8 @@ alter table public.pet_items enable row level security;
 alter table public.pet_invites enable row level security;
 
 drop policy if exists pets_select on public.pets;
-create policy pets_select on public.pets for select using (public.is_member(id));
+-- 만든 사람도 보이게: 등록(upsert = insert ... on conflict)할 때 새 행이 읽기 규칙도 통과해야 하는데, 보호자 등록 트리거는 그 뒤에 돈다
+create policy pets_select on public.pets for select using (created_by = auth.uid() or public.is_member(id));
 drop policy if exists pets_insert on public.pets;
 create policy pets_insert on public.pets for insert with check (created_by = auth.uid());
 drop policy if exists pets_delete on public.pets;
