@@ -1013,7 +1013,16 @@ button {
   .onb-trust-full { display: none; } /* 아주 작은 폰은 기관 약칭만 */
   .onb-slide .onb-trust-note { margin-top: 2px !important; line-height: 1.35; }
 }
-/* 비서 입력창 🎤(VoiceButton) — 사진 버튼과 같은 모양, 듣는 중엔 빨간 점멸 */
+/* 비서 입력창 🎤(VoiceButton) — 시리처럼 아래에서 듣기 화면이 올라온다. 동그라미는 목소리 크기에 따라 커진다 */
 .voice-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 18px; flex-shrink: 0; box-shadow: var(--shadow); color: var(--text); }
-.voice-btn.on { background: #e5484d; border-color: #e5484d; color: #fff; font-size: 14px; animation: voice-pulse 1.2s ease-in-out infinite; }
-@keyframes voice-pulse { 50% { box-shadow: 0 0 0 6px rgba(229, 72, 77, 0.25); } }
+.voice-sheet-back { position: fixed; inset: 0; z-index: 140; background: rgba(20, 24, 32, 0.35); display: flex; align-items: flex-end; justify-content: center; animation: voice-fade 0.2s ease; }
+.voice-sheet { position: relative; width: 100%; max-width: 480px; background: var(--surface); border-radius: 26px 26px 0 0; padding: 26px 20px calc(env(safe-area-inset-bottom) + 22px); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; animation: es-up 0.25s ease; }
+.voice-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--accent-soft); color: var(--text-soft); font-size: 15px; }
+.voice-live { min-height: 56px; max-height: 30vh; overflow-y: auto; font-size: 21px; font-weight: 700; line-height: 1.45; color: var(--text); padding: 0 24px; word-break: keep-all; }
+.voice-live.empty { color: var(--text-faint); font-weight: 600; }
+.voice-orb { position: relative; width: 92px; height: 92px; margin: 12px 0 18px; border: none; background: none; padding: 0; }
+.voice-orb-glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(94, 124, 255, 0.55), rgba(255, 92, 168, 0.35) 60%, transparent 72%); transition: transform 0.1s linear; }
+.voice-orb-core { position: absolute; inset: 18px; border-radius: 50%; background: linear-gradient(135deg, #5e7cff, #b05cff 55%, #ff5ca8); color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(94, 124, 255, 0.35); }
+.voice-orb.busy .voice-orb-core { animation: voice-spin 1.2s linear infinite; }
+@keyframes voice-spin { to { filter: hue-rotate(360deg); } }
+@keyframes voice-fade { from { opacity: 0; } }
