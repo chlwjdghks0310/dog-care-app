@@ -198,27 +198,6 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
             <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
           </label>
 
-          <button
-            type="button"
-            onClick={onAddDog}
-            aria-label="강아지 추가"
-            title="강아지 추가"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              boxShadow: "var(--shadow)",
-              fontSize: 16,
-              lineHeight: 1,
-              color: "var(--accent-strong)",
-              flexShrink: 0,
-            }}
-          >
-            +
-          </button>
-
           <div style={{ flex: 1 }}>
             <div className="h1" style={{ marginBottom: 4 }}>{dog.name}</div>
             <span className="chip">{formatAge(age)}</span>
@@ -339,7 +318,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
         )}
       </div>
 
-      {/* 설정(☰): 배경 테마·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
+      {/* 설정(☰): 가족 공유·강아지 등록·배경 테마·백업 로그인·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
       {settingsOpen &&
         createPortal(
           <div className="settings-sheet" role="dialog" aria-label="설정" {...swipeClose}>
@@ -347,9 +326,15 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
               <div className="h1" style={{ margin: 0 }}>설정</div>
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
             </div>
-            <AccountCard />
             <FamilyShare dog={dog} />
-            <div className="card">
+            <div className="card" style={{ marginBottom: 14 }}>
+              <div className="h2">강아지 등록</div>
+              <p className="subtle" style={{ margin: "0 0 12px" }}>함께 사는 강아지를 더 등록할 수 있어요. 지금 강아지 기록은 그대로예요.</p>
+              <button type="button" className="btn-ghost" onClick={() => { setSettingsOpen(false); onAddDog(); }}>
+                + 새 강아지 등록하기
+              </button>
+            </div>
+            <div className="card" style={{ marginBottom: 14 }}>
               <div className="h2">배경 테마</div>
               <button
                 onClick={() => setPickerOpen((v) => !v)}
@@ -481,6 +466,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
                 </div>
               )}
             </div>
+            <AccountCard />
 
             <div className="card" style={{ marginTop: 14 }}>
               <button

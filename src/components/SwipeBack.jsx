@@ -13,7 +13,9 @@ function useRightDrag({ onStart, onMove, onEnd }) {
   return {
     onTouchStart(e) {
       const t = e.touches[0];
-      const blocked = e.touches.length > 1 || e.target.closest?.("input, textarea, select, [data-no-swipe]") || hasHorizontalScroll(e.target);
+      // 입력칸 위에서 시작해도 밀 수 있게(등록 화면처럼 입력칸이 화면을 채운 곳) — 글자를 입력 중인 칸·슬라이더만 막는다
+      const field = e.target.closest?.("input, textarea, select");
+      const blocked = e.touches.length > 1 || (field && (field === document.activeElement || field.type === "range")) || e.target.closest?.("[data-no-swipe]") || hasHorizontalScroll(e.target);
       drag.current = blocked ? null : { x: t.clientX, y: t.clientY, at: Date.now(), dx: 0, active: false };
     },
     onTouchMove(e) {

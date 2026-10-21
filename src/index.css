@@ -984,3 +984,7 @@ button {
 .ptr.spinning .ptr-arrow { display: none; }
 @keyframes ptr-spin { to { transform: rotate(360deg); } }
 .settings-sheet, .vet-show { touch-action: pan-y; }
+/* 아이폰에서 날짜 칸·선택 칸이 다른 칸과 크기·정렬이 어긋나지 않게 */
+.field input[type="date"], .onb-answer input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; min-height: 48px; text-align: left; }
+.field input[type="date"]::-webkit-date-and-time-value, .onb-answer input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.field select { -webkit-appearance: none; appearance: none; min-height: 48px; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2380726a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
