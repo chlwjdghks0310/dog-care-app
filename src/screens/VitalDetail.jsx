@@ -212,7 +212,9 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
           {tips.more.map((t) => (
             <InfoAccordionItem key={t.q} headline={t.q} detail={t.a} />
           ))}
-          <p className="faint" style={{ marginTop: 10, marginBottom: 0 }}>일반적인 보호자 안내예요. 진단을 대신하지 않고, 아이마다 평소 값이 달라요. 걱정되면 동물병원에 물어보세요.</p>
+          <p className="faint" style={{ marginTop: 10, marginBottom: 0 }}>
+            {tips.source && <>출처: {tips.source}. </>}일반적인 보호자 안내예요. 진단이 아니고 아이마다 평소 값이 달라요. 걱정되면 담당 수의사에게 먼저 물어보세요{metric === "fluid" ? ". 수액 등 치료는 수의사 안내가 우선이에요" : ""}.
+          </p>
         </div>
       )}
     </div>

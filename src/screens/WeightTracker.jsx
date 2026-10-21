@@ -411,7 +411,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
         />
 
         <p className="faint" style={{ marginTop: 10, marginBottom: 0 }}>
-          참고: WSAVA 신체충실지수(Body Condition Score), 일반 수의 영양학 자료 기반 — 진단을
+          참고: WSAVA·코넬대 수의대 신체충실지수(Body Condition Score) 자료 기반 — 진단을
           대신하지 않아요. 체중이 급격히 변하거나 식욕 저하·구토·설사 등이 함께 보이면 수의사
           진료를 받아보세요.
         </p>
