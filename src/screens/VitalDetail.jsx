@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
+import { VITAL_TIPS } from "../data/vitalTips";
+import InfoAccordionItem from "../components/InfoAccordion";
 import { getVitalEntries, vitalDaily, saveRecord, deleteRecord, getRecords, localNow, newRecordId, validateRecord, md } from "../services/records";
 
 const PERIODS = [7, 30, 90];
 
-// 건강 수치 하나: 맨 위 오늘/최근 값 → 바로 적기(호흡·심박은 탭해서 세기) → 기간 그래프 → 날짜별 기록(고치기·지우기)
+// 건강 수치 하나: 맨 위 측정법 요약 → 오늘/최근 값 → 바로 적기(호흡·심박은 탭해서 세기) → 기간 그래프 → 날짜별 기록(고치기·지우기) → 맨 아래 자세한 팁(눌러서 펼침)
 export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
   const def = VITAL[metric];
   const [entries, setEntries] = useState(() => getVitalEntries(dog.id, metric));
@@ -27,6 +29,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
   const recent7 = daily.filter((d) => d.date >= toDateKey(addDays(new Date(), -6)));
   const avg7 = recent7.length ? recent7.reduce((s, d) => s + d.value, 0) / recent7.length : null;
   const unit = def.unit;
+  const tips = VITAL_TIPS[metric];
 
   function resetForm() {
     setValue("");
@@ -84,6 +87,17 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
           <div className="faint">{def.kind === "sum" ? "하루 동안 적은 걸 합쳐서 보여 줘요" : "잴 때마다 따로 적어요"}</div>
         </div>
       </div>
+
+      {tips && (
+        <div className="vd-how">
+          <div className="vd-how-title">📏 이렇게 재요</div>
+          <ul>
+            {tips.how.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="card vd-now">
         <div className="faint">{def.kind === "sum" ? "오늘 합계" : latest ? `최근 · ${md(latest.at.slice(0, 10))} ${latest.at.slice(11)}` : "최근"}</div>
@@ -191,6 +205,16 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
           ))
         )}
       </div>
+
+      {tips?.more && (
+        <div className="card" style={{ marginTop: 14 }}>
+          <div className="h2" style={{ marginBottom: 6 }}>{def.label}, 이렇게 재고 살펴봐요</div>
+          {tips.more.map((t) => (
+            <InfoAccordionItem key={t.q} headline={t.q} detail={t.a} />
+          ))}
+          <p className="faint" style={{ marginTop: 10, marginBottom: 0 }}>일반적인 보호자 안내예요. 진단을 대신하지 않고, 아이마다 평소 값이 달라요. 걱정되면 동물병원에 물어보세요.</p>
+        </div>
+      )}
     </div>
   );
 }

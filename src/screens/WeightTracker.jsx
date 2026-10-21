@@ -6,6 +6,8 @@ import { getEffectiveCadenceDays, getCustomCadenceDays, setCustomCadenceDays, ge
 import { saveDog } from "../services/dogRepository";
 import { getWeightAssessment, getWeightStatusText, STATUS_COLOR } from "../data/weightGuide";
 import WeightChart from "../components/WeightChart";
+import InfoAccordionItem from "../components/InfoAccordion";
+import { VITAL_TIPS } from "../data/vitalTips";
 
 const METHODS = [
   { id: "pet-scale", label: "반려동물용 저울" },
@@ -33,27 +35,6 @@ function recordDateTime(record) {
 }
 
 // 핵심 한 문장만 먼저 보여주고, 누르면 자세한 내용이 펼쳐지는 아코디언 한 칸.
-function InfoAccordionItem({ headline, detail }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ borderBottom: "1px solid var(--border)", padding: "10px 0" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "none", border: "none", padding: 0, textAlign: "left" }}
-      >
-        <span style={{ fontWeight: 700, fontSize: 14 }}>{headline}</span>
-        <span className="subtle" aria-hidden="true">{open ? "▲" : "▼"}</span>
-      </button>
-      {open && (
-        <p className="subtle" style={{ marginTop: 8, marginBottom: 0 }}>
-          {detail}
-        </p>
-      )}
-    </div>
-  );
-}
-
 export default function WeightTracker({ dog, onUpdateDog, onBack }) {
   const [records, setRecords] = useState(() => getWeightRecords(dog.id));
   const [range, setRange] = useState("4w");
@@ -222,6 +203,15 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
           <div className="h1" style={{ marginBottom: 2 }}>체중 관리</div>
           <span className="faint">{dog.name} · {formatAge(age)}</span>
         </div>
+      </div>
+
+      <div className="vd-how">
+        <div className="vd-how-title">📏 이렇게 재요</div>
+        <ul>
+          {VITAL_TIPS.weight.how.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
