@@ -594,7 +594,8 @@ function UpcomingCard({ dog, onOpenCalendar }) {
 const PINS_KEY = "dogcare-vital-pins-v1";
 function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
   const [editingPins, setEditingPins] = useState(false);
-  const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || DEFAULT_PINS);
+  // 투약 칸("meds")도 같은 목록으로 켜고 끈다. 처음엔 켜져 있다
+  const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || [...DEFAULT_PINS, "meds"]);
   const today = todayKey();
   const since = toDateKey(addDays(new Date(), -29));
   const tiles = VITALS.map((v) => {
@@ -617,7 +618,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
         <div className="h2" style={{ margin: 0 }}>건강 수치</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditingPins((e) => !e)}>{editingPins ? "완료" : "편집"}</button>
       </div>
-      {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요.</p>}
+      {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요(투약은 끄면 숨겨져요).</p>}
       <div className="vt-grid">
         {shown.map(({ v, todayRow, last }) => {
           const value = v.kind === "sum" ? todayRow?.value : last?.value;
@@ -650,23 +651,32 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
             </button>
           );
         })}
-        {!editingPins && <MedsTile dog={dog} today={today} onOpen={onOpenMeds} />}
+        {(editingPins || pins.includes("meds")) && (
+          <MedsTile dog={dog} today={today} onOpen={onOpenMeds} editing={editingPins} on={pins.includes("meds")} onToggle={() => togglePin("meds")} />
+        )}
       </div>
     </div>
   );
 }
 
-// 투약 칸: 오늘 먹일 약을 몇 번 먹였는지. 누르면 약 관리(약 등록·복용 체크·기록)로. 체크리스트 대신 여기서 관리한다
-function MedsTile({ dog, today, onOpen }) {
+// 투약 칸: 오늘 먹일 약을 몇 번 먹였는지. 누르면 약 관리(약 등록·복용 체크·기록)로. 체크리스트 대신 여기서 관리한다. [편집]에서 켜고 끌 수 있다
+function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
   const doses = getDosesForDate(dog.id, today);
   const done = doses.filter((d) => d.status === "done").length;
   const toCheck = doses.filter((d) => d.status === "check").length;
   const hasMeds = getMeds(dog.id).some((m) => !isEnded(m, today));
   return (
-    <button type="button" className="vt-tile" onClick={onOpen} aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}>
+    <button
+      type="button"
+      className={`vt-tile${editing ? (on ? " pinned" : " unpinned") : ""}`}
+      aria-pressed={editing ? on : undefined}
+      onClick={editing ? onToggle : onOpen}
+      aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}
+    >
       <span className="vt-top">
         <span aria-hidden="true">💊</span>
         <span className="vt-label">투약</span>
+        {editing && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
       </span>
       {doses.length ? (
         <span className="vt-value">
