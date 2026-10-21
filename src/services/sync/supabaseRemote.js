@@ -8,10 +8,10 @@ export function supabaseRemote(supabase) {
     return data;
   };
   return {
-    async myPetIds() {
+    async myPets() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) throw new Error("로그인이 필요해요.");
-      return check(await supabase.from("pet_members").select("pet_id").eq("user_id", auth.user.id)).map((r) => r.pet_id);
+      return check(await supabase.from("pet_members").select("pet_id,role").eq("user_id", auth.user.id)).map((r) => ({ id: r.pet_id, role: r.role }));
     },
     async createPets(ids) {
       check(await supabase.from("pets").upsert(ids.map((id) => ({ id })), { onConflict: "id", ignoreDuplicates: true }));

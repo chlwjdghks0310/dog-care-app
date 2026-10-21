@@ -2,7 +2,7 @@
 // 순서: ① 서버에서 바뀐 항목 받기(pull) → ② 이 폰에서 바뀐 항목 올리기(push).
 // 충돌: 같은 항목을 이 폰에서도 고쳤으면 이 폰 것을 남기고(다음 push로 서버도 바뀜), 아니면 서버 것을 받는다.
 // remote(서버)는 바꿔 끼울 수 있게 함수 묶음으로 받는다 — 실제는 Supabase(supabaseRemote.js), 테스트는 가짜.
-//   remote.myPetIds() → ["dog-..."]          내가 구성원인 강아지
+//   remote.myPets() → [{ id, role }]          내가 구성원인 강아지와 역할(owner/family)
 //   remote.createPets(ids)                     처음 올리는 강아지 등록(나는 보호자)
 //   remote.pull(petIds, sinceIso) → rows       { pet_id, key, item, shape, value, deleted, updated_at }
 //   remote.push(rows)                          같은 모양으로 올리기(서버가 updated_at을 찍음)
@@ -50,7 +50,9 @@ const fp = (value) => fingerprint(JSON.stringify(value));
 
 function loadState() {
   const s = readJSON(STATE_KEY, null);
-  return s && typeof s === "object" ? { cursor: s.cursor || null, base: s.base || {} } : { cursor: null, base: {} };
+  // pets: 지난번 서버에서 내가 구성원이던 강아지(새로 들어온 강아지를 알아내려고), family: 그중 가족으로 들어온 강아지(빠지면 폰 사본을 지울 대상)
+  const empty = { cursor: null, base: {}, pets: null, family: [] };
+  return s && typeof s === "object" ? { ...empty, ...s, base: s.base || {}, family: s.family || [] } : empty;
 }
 
 // ── 이 폰의 값 읽기/쓰기(키 종류별) ──
@@ -86,8 +88,9 @@ function writeLocal(petId, key, value) {
 const keysFor = () => [PROFILE, CATEGORIES, ...SYNCED_KEYS];
 const localPetIds = () => readJSON(DOGS_KEY, []).map((d) => d.id);
 
-// ① 받기: 이 폰에서 안 고친 항목만 서버 값으로 바꾼다
+// ① 받기: 이 폰에서 안 고친 항목만 서버 값으로 바꾼다. 실제로 폰 기록이 바뀐 묶음 수를 돌려준다
 function applyRows(rows, state) {
+  let changedGroups = 0;
   const groups = new Map();
   for (const r of rows) {
     const g = `${r.pet_id}\n${r.key}`;
@@ -119,10 +122,18 @@ function applyRows(rows, state) {
       if (r.shape && r.shape !== "none") shape = r.shape;
     }
     if (!changed) continue;
+    changedGroups++;
     // 항목이 하나도 안 남으면: 목록은 빈 목록, 객체는 빈 객체, 그 밖(프로필 등)은 값 자체를 지운다
     const empty = shape === "list" ? [] : shape === "object" ? {} : undefined;
     writeLocal(petId, key, Object.keys(items).length ? unflatten(shape === "none" ? "single" : shape, items, order) : empty);
   }
+  return changedGroups;
+}
+
+// 더 이상 구성원이 아닌 강아지(가족에서 내보내짐·나감): 서버에는 손대지 않고 이 폰의 사본만 지운다
+function dropLocalPet(petId, state) {
+  for (const key of [PROFILE, ...SYNCED_KEYS]) if (readLocal(petId, key) !== undefined) writeLocal(petId, key, undefined);
+  delete state.base[petId];
 }
 
 // ② 올리기: 지난번 맞춘 상태(지문)와 지금을 비교해 바뀐 항목만. 지운 항목은 deleted=true(무덤 표시)로 올린다.
@@ -152,18 +163,31 @@ function collectChanges(petIds, state) {
 // 한 번 맞추기. 실패하면 던지고(다음에 다시), 성공한 만큼만 기억한다.
 export async function syncOnce(remote) {
   const state = loadState();
-  const remoteIds = await remote.myPetIds();
+  let pets = await remote.myPets();
+  let remoteIds = pets.map((p) => p.id);
+  // 가족으로 들어왔다가 빠진 강아지만 폰에서 지운다(보호자 강아지는 서버 목록이 비어 보여도 절대 안 지움)
+  const removed = state.family.filter((id) => !remoteIds.includes(id));
+  for (const id of removed) dropLocalPet(id, state);
   const mine = localPetIds();
   const missing = mine.filter((id) => !remoteIds.includes(id));
-  if (missing.length) await remote.createPets(missing);
-  const petIds = [...new Set([...remoteIds, ...mine])];
+  if (missing.length) {
+    await remote.createPets(missing);
+    pets = await remote.myPets(); // 같은 id가 다른 계정에 이미 있으면 등록되지 않는다 → 그 강아지는 올리지 않는다
+    remoteIds = pets.map((p) => p.id);
+  }
+  const blocked = mine.filter((id) => !remoteIds.includes(id));
+  const petIds = remoteIds;
+  const family = pets.filter((p) => p.role === "family").map((p) => p.id);
 
+  // 처음 보는 강아지(가족 초대로 막 들어옴)는 커서와 상관없이 기록 전체를 받는다. 목록을 모르면(예전 버전에서 넘어옴) 한 번 전부 받는다
+  const fresh = state.pets ? petIds.filter((id) => !state.pets.includes(id)) : petIds;
+  const known = petIds.filter((id) => !fresh.includes(id));
   const since = state.cursor ? new Date(new Date(state.cursor).getTime() - OVERLAP_MS).toISOString() : null;
-  const rows = petIds.length ? await remote.pull(petIds, since) : [];
-  applyRows(rows, state);
+  const rows = [...(fresh.length ? await remote.pull(fresh, null) : []), ...(known.length ? await remote.pull(known, since) : [])];
+  const changed = applyRows(rows, state) + removed.length;
   // 커서는 서버가 찍은 시각만 쓴다(폰 시계가 틀려도 놓치지 않게)
   const cursor = rows.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), state.cursor || "") || null;
-  writeJSON(STATE_KEY, { cursor, base: state.base });
+  writeJSON(STATE_KEY, { cursor, base: state.base, pets: petIds, family });
 
   const { rows: out, commits } = collectChanges(petIds, state);
   if (out.length) {
@@ -173,12 +197,12 @@ export async function syncOnce(remote) {
       if (c.f === undefined) delete base[c.item];
       else base[c.item] = c.f;
     }
-    writeJSON(STATE_KEY, { cursor, base: state.base });
+    writeJSON(STATE_KEY, { cursor, base: state.base, pets: petIds, family });
   }
-  return { pulled: rows.length, pushed: out.length };
+  return { pulled: rows.length, changed, pushed: out.length, blocked };
 }
 
 // 로그아웃하면 서버와 맞춘 기억을 지운다(폰 기록은 그대로 남김)
 export function resetSyncState() {
-  writeJSON(STATE_KEY, { cursor: null, base: {} });
+  writeJSON(STATE_KEY, { cursor: null, base: {}, pets: null, family: [] });
 }

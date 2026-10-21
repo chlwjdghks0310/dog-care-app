@@ -6,14 +6,16 @@ import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
 import { THEMES, getTheme, setTheme } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
-import { saveDog } from "../services/dogRepository";
+import { getDogs, saveDog } from "../services/dogRepository";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
 import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summarize, md } from "../services/records";
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
+import FamilyShare from "../components/FamilyShare";
 import { getSyncStatus } from "../services/sync";
+import { leavePet, myRole } from "../services/sync/family";
 
 const GENDER_LABEL = { female: "암컷", male: "수컷" };
 
@@ -28,7 +30,9 @@ function Row({ label, value }) {
 }
 
 // 로그인 중이면 삭제가 서버 백업(과 다른 폰)에도 반영된다는 걸 미리 알린다
-const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업된 기록과 같은 계정의 다른 폰에서도 사라져요." : "");
+const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업된 기록과 다른 폰(같은 계정·가족 공유 중인 가족)에서도 사라져요." : "");
+// 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
+const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
 export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
   const age = calculateAge(dog.birthDate);
@@ -109,16 +113,25 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
     if (result === "granted") syncPushAlarms(); // 권한을 켜면 앱이 꺼져 있어도 오는 푸시까지 바로 연결
   }
 
-  function handleDeleteCurrent() {
+  async function handleDeleteCurrent() {
+    if ((await roleOf(dog.id)) === "family") {
+      if (!window.confirm(`${dog.name}은(는) 가족이 공유한 강아지예요. 이 폰에서 빼고 가족 공유에서 나갈까요? 다른 가족의 기록은 그대로 남아요.`)) return;
+      // 서버에서 먼저 빠진다 → 맞추기가 이 폰의 사본만 지우고, 화면은 dogcare-synced로 바뀐다
+      return leavePet(dog.id).catch((err) => window.alert(err.message));
+    }
     if (window.confirm(`${dog.name}의 정보를 삭제할까요? 체중 기록·일정 등 이 강아지 데이터가 모두 사라져요.${backupNote()}`)) {
       onDeleteCurrent?.();
     }
   }
 
-  function handleDeleteAll() {
-    if (window.confirm(`등록된 강아지를 전부 삭제할까요? 모든 강아지의 데이터가 사라지고 등록 화면으로 돌아가요.${backupNote()}`)) {
-      onDeleteAll?.();
+  async function handleDeleteAll() {
+    if (!window.confirm(`등록된 강아지를 전부 삭제할까요? 모든 강아지의 데이터가 사라지고 등록 화면으로 돌아가요.${backupNote()}\n가족이 공유한 강아지는 삭제하지 않고 가족 공유에서만 나가요.`)) return;
+    try {
+      for (const d of getDogs()) if ((await roleOf(d.id)) === "family") await leavePet(d.id);
+    } catch (err) {
+      return window.alert(err.message);
     }
+    onDeleteAll?.();
   }
 
   async function handlePhotoChange(e) {
@@ -332,6 +345,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
             </div>
             <AccountCard />
+            <FamilyShare dog={dog} />
             <div className="card">
               <div className="h2">배경 테마</div>
               <button

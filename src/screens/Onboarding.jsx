@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createDog } from "../models/dog";
-import { saveDog } from "../services/dogRepository";
+import { getDogs, saveDog, setActiveDogId } from "../services/dogRepository";
 import { addWeightRecord } from "../services/weightLog";
 import { BREEDS } from "../data/breeds";
 import { isPushSupported, subscribeToPush } from "../services/notifications";
@@ -9,9 +9,12 @@ import { todayKey } from "../utils/date";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import { LoginForm, LoginSheet, useSyncStatus } from "../components/AccountCard";
 import { supabase } from "../services/supabase";
+import { readJSON, writeJSON } from "../services/storage";
+import { acceptInvite } from "../services/sync/family";
 
-// 첫 실행 온보딩: ① 앱 소개 4장(옆으로 넘김) → ② 로그인 또는 게스트 → ③ 강아지 정보를 한 화면에 하나씩 → ④ 알림 켜기 → ⑤ 인사.
+// 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 4장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 알림 켜기 → ⑤ 인사.
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
+// 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
 // 4장, 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
@@ -26,20 +29,31 @@ const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock];
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
 
+const PROGRESS_KEY = "dogcare-onboarding-v1";
+const loadProgress = () => readJSON(PROGRESS_KEY, null) || {};
+const saveProgress = (patch) => writeJSON(PROGRESS_KEY, { ...loadProgress(), ...patch });
+const clearProgress = () => writeJSON(PROGRESS_KEY, null);
+
 export default function Onboarding({ onRegistered, skipIntro = false }) {
-  const [phase, setPhase] = useState(skipIntro ? "setup" : "intro");
+  const [phase, setPhase] = useState(() => (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
   const { user } = useSyncStatus();
-  // 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개·로그인은 건너뛴다
-  if (phase === "setup" || user) return <Setup onRegistered={onRegistered} />;
-  if (phase === "intro") return <Intro onDone={() => setPhase(supabase ? "login" : "setup")} />;
-  return <Login onGuest={() => setPhase("setup")} />;
+  // 로그인 화면에서 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개로
+  const current = phase === "login" && user ? "intro" : phase;
+  useEffect(() => {
+    if (!skipIntro) saveProgress({ phase: current });
+  }, [current, skipIntro]);
+  const done = (dog) => (clearProgress(), onRegistered(dog));
+  if (current === "login") return <Login onGuest={() => setPhase("intro")} />;
+  if (current === "intro") return <Intro onDone={() => setPhase("setup")} />;
+  return <Setup onRegistered={done} restore={!skipIntro} />;
 }
 
 function Login({ onGuest }) {
   return (
     <div className="onb">
       <div className="onb-setup" style={{ textAlign: "center" }}>
-        <img src="/icon-192.png?v=5" alt="" width="72" height="72" style={{ borderRadius: 18, margin: "auto auto 14px", display: "block", flexShrink: 0 }} />
+        <img src="/icon-192.png?v=5" alt="" width="72" height="72" style={{ borderRadius: 18, margin: "auto auto 8px", display: "block", flexShrink: 0 }} />
+        <div style={{ fontWeight: 800, color: "var(--accent-strong)", marginBottom: 14 }}>멍케어</div>
         <div className="onb-title">우리 아이 기록, 안전하게 보관해요</div>
         <p className="onb-text">로그인하면 폰을 바꿔도 기록을 그대로 불러오고{"\n"}가족과 함께 볼 수 있어요.</p>
         <div className="onb-login">
@@ -195,10 +209,13 @@ function CareMock() {
 const STEPS = ["name", "breed", "birthDate", "gender", "weight", "notify", "done"];
 const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
 
-function Setup({ onRegistered }) {
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ name: "", breed: "", birthDate: "", gender: "", neutered: false, weight: "" });
+function Setup({ onRegistered, restore }) {
+  const saved = restore ? loadProgress() : {};
+  const [step, setStep] = useState(saved.step || 0);
+  const [form, setForm] = useState(saved.form || { name: "", breed: "", birthDate: "", gender: "", neutered: false, weight: "" });
   const [breedQuery, setBreedQuery] = useState("");
+  const [invite, setInvite] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const [dog, setDog] = useState(null);
   const [notifyStatus, setNotifyStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -208,6 +225,34 @@ function Setup({ onRegistered }) {
   const name = form.name.trim();
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const back = () => setStep((s) => Math.max(0, s - 1));
+  const joining = key === "name" && invite.trim().length > 0;
+
+  // 강아지를 저장하기 전(이름~몸무게)까지만 이어 하기용으로 저장. 저장한 뒤엔 App이 앱 화면으로 연다
+  useEffect(() => {
+    if (restore && STEPS.indexOf(key) <= STEPS.indexOf("weight")) saveProgress({ step, form });
+  }, [restore, step, form, key]);
+
+  // 초대 코드로 가족 강아지와 연결: 서버가 코드를 확인하고 가족으로 넣으면, 그 강아지 기록 전체를 받아 와 바로 연다(새 강아지는 만들지 않음)
+  async function joinFamily() {
+    setInviteError("");
+    if (!user) {
+      setInviteError("초대 코드로 연결하려면 먼저 로그인해 주세요.");
+      setLoginOpen(true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const petId = await acceptInvite(invite);
+      setActiveDogId(petId);
+      const joined = getDogs().find((d) => d.id === petId);
+      if (joined) onRegistered(joined);
+      else setInviteError("연결됐어요! 다만 보호자 폰에서 아직 강아지 정보가 백업되지 않았어요. 보호자가 앱을 한 번 열면 자동으로 나타나요.");
+    } catch (err) {
+      setInviteError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const valid = {
     name: name.length > 0,
@@ -224,6 +269,7 @@ function Setup({ onRegistered }) {
       saveDog(created);
       if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${todayKey()}T12:00:00`, note: "처음 등록" });
       setDog(created);
+      if (restore) clearProgress();
     }
     setStep((s) => s + 1);
   }
@@ -287,10 +333,30 @@ function Setup({ onRegistered }) {
               autoFocus
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && valid && next()}
+              onKeyDown={(e) => e.key === "Enter" && valid && !joining && next()}
               placeholder="예: 콩이"
               maxLength={20}
             />
+          )}
+          {key === "name" && supabase && (
+            <div style={{ marginTop: 18, textAlign: "left" }}>
+              <label htmlFor="onb-invite" style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
+                가족 초대 코드 <span className="faint">(선택)</span>
+              </label>
+              <input
+                id="onb-invite"
+                value={invite}
+                onChange={(e) => (setInvite(e.target.value.toUpperCase()), setInviteError(""))}
+                placeholder="가족에게 받은 초대 코드를 입력해 주세요"
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={12}
+                style={{ letterSpacing: invite ? "0.15em" : undefined }}
+              />
+              <p className="faint" style={{ margin: "6px 0 0" }}>초대 코드가 있으신가요? 입력하면 가족이 관리 중인 강아지와 연결할 수 있어요.</p>
+              {inviteError && <p className="error-text" style={{ marginTop: 6 }}>{inviteError}</p>}
+            </div>
           )}
           {/* 새 폰: 로그인하면 서버의 기록을 받아 오고, 받은 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced) */}
           {key === "name" && supabase && !user && (
@@ -365,9 +431,15 @@ function Setup({ onRegistered }) {
           </button>
         ) : (
           <>
-            <button type="button" className="btn-primary" disabled={!valid} onClick={next}>
-              다음
-            </button>
+            {joining ? (
+              <button type="button" className="btn-primary" disabled={busy} onClick={joinFamily}>
+                {busy ? "확인하는 중…" : "가족 강아지와 연결하기"}
+              </button>
+            ) : (
+              <button type="button" className="btn-primary" disabled={!valid} onClick={next}>
+                다음
+              </button>
+            )}
             {key === "weight" && !form.weight && (
               <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={next}>
                 건너뛰기

@@ -207,8 +207,16 @@ export default function App() {
     startSync();
     const onSynced = () => {
       const list = getDogs();
-      if (!list.length) return;
-      setDog((cur) => list.find((d) => d.id === cur?.id) || list.find((d) => d.id === getActiveDogId()) || list[0]);
+      if (!list.length) {
+        // 가족 공유에서 나가거나 내보내져 남은 강아지가 없으면 등록 화면으로(로그인 직후 빈 계정이면 그대로 둠)
+        setDog((cur) => {
+          if (cur) setRoute("register");
+          return null;
+        });
+        return;
+      }
+      // 초대 코드로 막 연결한 강아지가 있으면 그 강아지(setActiveDogId)를 먼저 보여 준다
+      setDog((cur) => list.find((d) => d.id === getActiveDogId()) || list.find((d) => d.id === cur?.id) || list[0]);
       setRoute("app");
       setPageVersion((v) => v + 1);
     };

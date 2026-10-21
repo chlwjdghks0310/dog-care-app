@@ -975,3 +975,4 @@ button {
   .onb-notice { display: none; }
   .onb-mock { padding: 10px 14px; }
 }
+.family-code { font-size: 28px; font-weight: 800; letter-spacing: 0.18em; text-align: center; padding: 14px 8px; border-radius: 16px; background: var(--accent-soft); color: var(--accent-strong); font-variant-numeric: tabular-nums; user-select: all; }

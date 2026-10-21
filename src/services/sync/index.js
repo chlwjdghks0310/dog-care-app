@@ -7,7 +7,8 @@ import { supabaseRemote } from "./supabaseRemote";
 
 const WATCHED = new Set([...SYNCED_KEYS, "dogcare-dogs-v1", "dogcare-expense-categories-v1"]);
 const listeners = new Set();
-let status = { enabled: Boolean(supabase), user: null, syncing: false, lastSyncedAt: null, error: "" };
+// blocked: 같은 id의 강아지가 다른 계정에 백업돼 있어 이 계정으로 올리지 못한 강아지 id
+let status = { enabled: Boolean(supabase), user: null, syncing: false, lastSyncedAt: null, error: "", blocked: [] };
 let running = null;
 let again = false;
 let timer = null;
@@ -31,9 +32,9 @@ export async function syncNow() {
   setStatus({ syncing: true, error: "" });
   running = (async () => {
     try {
-      const { pulled } = await syncOnce(supabaseRemote(supabase));
-      setStatus({ lastSyncedAt: new Date().toISOString() });
-      if (pulled) window.dispatchEvent(new Event("dogcare-synced"));
+      const { changed, blocked } = await syncOnce(supabaseRemote(supabase));
+      setStatus({ lastSyncedAt: new Date().toISOString(), blocked });
+      if (changed) window.dispatchEvent(new Event("dogcare-synced"));
     } catch (err) {
       // 인터넷이 끊겨도 폰에는 저장돼 있으니 다음에 다시 시도하면 된다
       setStatus({ error: err instanceof TypeError ? "인터넷 연결이 없어 다음에 백업할게요." : err.message || "백업하지 못했어요." });
@@ -58,6 +59,7 @@ export function startSync() {
     const changed = user?.id !== status.user?.id;
     setStatus({ user });
     if (user && changed) syncNow();
+    if (changed) watchRemote(user);
   });
   onLocalChange((key) => {
     if (!status.user || !WATCHED.has(key)) return;
@@ -68,9 +70,26 @@ export function startSync() {
   document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && syncNow());
 }
 
+// 실시간: 가족이 기록을 바꾸면 Supabase가 알려 준다 → 1초 모아서 맞추기. RLS가 적용돼 내 강아지 변경만 온다.
+// 끊겨 있던 동안의 변경은 앱으로 돌아올 때(visibilitychange) 맞추기가 받아 온다.
+let channel = null;
+let liveTimer = null;
+function watchRemote(user) {
+  if (channel) supabase.removeChannel(channel);
+  channel = null;
+  if (!user) return;
+  channel = supabase
+    .channel("pet-items")
+    .on("postgres_changes", { event: "*", schema: "public", table: "pet_items" }, () => {
+      clearTimeout(liveTimer);
+      liveTimer = setTimeout(syncNow, 1000);
+    })
+    .subscribe();
+}
+
 export async function signOut() {
   if (!supabase) return;
   await supabase.auth.signOut();
   resetSyncState(); // 폰 기록은 그대로 두고, 서버와 맞춘 기억만 지운다
-  setStatus({ user: null, lastSyncedAt: null, error: "" });
+  setStatus({ user: null, lastSyncedAt: null, error: "", blocked: [] });
 }

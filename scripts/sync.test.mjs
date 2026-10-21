@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 
 // 폰마다 저장소를 따로 두고, 지금 쓰는 폰의 것으로 바꿔 끼운다
-const phones = { mom: {}, dad: {} };
+const phones = { mom: {}, dad: {}, kid: {} };
 let current = phones.mom;
 globalThis.localStorage = { getItem: (k) => current[k] ?? null, setItem: (k, v) => (current[k] = String(v)), removeItem: (k) => delete current[k] };
 const use = (name) => (current = phones[name]);
@@ -25,11 +25,12 @@ assert.deepEqual(unflatten("object", flatten({ r1: true, r2: true }).items), { r
 
 // ── 가짜 서버: 행마다 서버 시각을 찍고, 같은 (강아지, 키, 항목)은 덮어쓴다 ──
 let clock = Date.parse("2026-10-20T00:00:00Z");
-const server = { pets: new Set(), rows: new Map(), members: { mom: new Set(), dad: new Set() } };
+const server = { pets: new Set(), rows: new Map(), members: { mom: new Map(), dad: new Map(), kid: new Map() } };
 let who = "mom";
 const remote = {
-  myPetIds: async () => [...server.members[who]],
-  createPets: async (ids) => ids.forEach((id) => (server.pets.add(id), server.members[who].add(id))),
+  myPets: async () => [...server.members[who]].map(([id, role]) => ({ id, role })),
+  // 서버처럼: 이미 있는 id면 아무것도 안 함(다른 계정의 강아지를 가로채지 못함)
+  createPets: async (ids) => ids.forEach((id) => !server.pets.has(id) && (server.pets.add(id), server.members[who].set(id, "owner"))),
   pull: async (petIds, since) =>
     [...server.rows.values()].filter((r) => petIds.includes(r.pet_id) && (!since || r.updated_at > since)).map((r) => structuredClone(r)),
   push: async (rows) =>
@@ -53,7 +54,7 @@ assert.ok(r.pushed > 0);
 assert.ok(![...server.rows.values()].some((x) => x.key === "dogcare-theme-v1"), "테마는 서버에 안 올라감");
 
 // 아빠가 같은 강아지에 합류(3단계 초대를 흉내) → 받아 보면 엄마 기록이 그대로
-server.members.dad.add("dog-1");
+server.members.dad.set("dog-1", "family");
 await syncAs("dad");
 assert.equal(get("dogcare-dogs-v1")[0].name, "초코");
 assert.deepEqual(get("dogcare-expenses-v1")["dog-1"].map((e) => e.id), ["x1", "x2"]);
@@ -127,5 +128,58 @@ await syncOnce(remote);
 globalThis.localStorage.setItem = origSet;
 assert.equal(writes, 0, "같은 값은 다시 안 씀");
 assert.equal(JSON.parse(before)["dogcare-expenses-v1"], phones.mom["dogcare-expenses-v1"]);
+
+
+// ── 가족 초대 ──
+// 아이(kid)는 자기 강아지로 먼저 쓰고 있어서 커서가 앞서 있다 → 나중에 엄마 강아지에 들어와도 예전 기록까지 전부 받아야 함
+use("kid");
+who = "kid";
+set("dogcare-dogs-v1", [{ id: "dog-k", name: "보리" }]);
+await syncOnce(remote);
+clock += 60_000;
+await syncOnce(remote); // 커서가 엄마 기록들보다 뒤로 감
+server.members.kid.set("dog-1", "family"); // 초대 코드로 연결(서버 함수 accept_invite가 하는 일)
+r = await syncOnce(remote);
+assert.ok(r.changed > 0, "연결 직후 받은 게 있음(화면 새로 그림)");
+assert.deepEqual(get("dogcare-dogs-v1").map((d) => d.id).sort(), ["dog-1", "dog-k"], "엄마 강아지가 복제 없이 같은 id로 들어옴");
+assert.equal(get("dogcare-expenses-v1")["dog-1"].length, 3, "예전 기록까지 전부 받음");
+assert.equal(get("dogcare-weight-cadence-v1")["dog-1"], 30);
+assert.equal(server.pets.size, 2, "강아지가 새로 생기지 않음");
+
+// 아이가 적은 기록이 엄마에게 반영
+set("dogcare-expenses-v1", { ...get("dogcare-expenses-v1"), "dog-1": [...get("dogcare-expenses-v1")["dog-1"], { id: "x9", title: "패드", amount: 7000 }] });
+await syncOnce(remote);
+use("mom");
+who = "mom";
+await syncOnce(remote);
+assert.ok(get("dogcare-expenses-v1")["dog-1"].some((e) => e.id === "x9"), "가족이 적은 기록이 엄마 폰에도");
+
+// 엄마가 아이를 내보냄 → 아이 폰에서 엄마 강아지 사본만 사라지고, 서버 기록은 그대로(지움 표시를 올리지 않음)
+server.members.kid.delete("dog-1");
+use("kid");
+who = "kid";
+const rowsBefore = [...server.rows.values()].filter((x) => x.pet_id === "dog-1" && !x.deleted).length;
+r = await syncOnce(remote);
+assert.deepEqual(get("dogcare-dogs-v1").map((d) => d.id), ["dog-k"], "내보낸 강아지는 아이 폰에서 사라짐");
+assert.equal(get("dogcare-expenses-v1")["dog-1"], undefined);
+assert.equal([...server.rows.values()].filter((x) => x.pet_id === "dog-1" && !x.deleted).length, rowsBefore, "서버의 엄마 기록은 그대로");
+
+// 다른 계정이 같은 id의 강아지를 폰에 갖고 있어도(예: 계정을 바꿔 로그인) 엄마 강아지를 덮어쓰지 못함
+phones.other = { "dogcare-dogs-v1": JSON.stringify([{ id: "dog-1", name: "가짜" }]) };
+server.members.other = new Map();
+use("other");
+who = "other";
+r = await syncOnce(remote);
+assert.deepEqual(r.blocked, ["dog-1"], "올리지 않고 알려 줌");
+assert.equal(server.rows.get("dog-1|dog|name").value, "초코", "서버의 이름은 그대로");
+
+// 보호자 강아지는 서버 목록에서 안 보여도 폰에서 지우지 않음(서버 데이터가 비어 보이는 사고 대비)
+use("mom");
+who = "mom";
+const saved = server.members.mom;
+server.members.mom = new Map();
+await syncOnce(remote).catch(() => {});
+assert.ok(get("dogcare-dogs-v1").some((d) => d.id === "dog-1"), "보호자 강아지는 폰에 남음");
+server.members.mom = saved;
 
 console.log("기록 서버 저장(동기화) 확인 통과");
