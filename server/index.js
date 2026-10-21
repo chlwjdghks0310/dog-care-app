@@ -617,6 +617,38 @@ const STOOL_TOOL = {
 };
 const quickStoolHits = new Map(); // ip → [시각] — ponytail: 서버 메모리 속도 제한(재시작하면 초기화), 사용자가 늘면 계정 기준으로
 
+// 음성 → 글자(비서 입력창 🎤). 브라우저 음성 인식이 안 되는 기기(아이폰 홈 화면 앱 등)에서만 쓴다.
+// 받아쓰기만 시키는 가벼운 일이라 가장 싼 Flash-Lite(음성 1분 ≈ 1,500토큰). 음성은 저장하지 않는다.
+app.post("/api/transcribe", async (req, res) => {
+  if (!gemini) return res.status(503).json({ error: "음성 인식이 아직 설정되지 않았어요." });
+  const { audio, mimeType } = req.body || {};
+  // 강아지 이름·견종처럼 잘못 알아듣기 쉬운 단어를 힌트로(짧은 글자만)
+  const hints = (Array.isArray(req.body?.hints) ? req.body.hints : []).filter((h) => typeof h === "string").map((h) => h.slice(0, 20)).slice(0, 5);
+  if (typeof audio !== "string" || !audio || !/^audio\/[\w.+-]+(;.*)?$/.test(mimeType || "")) return res.status(400).json({ error: "음성 파일이 필요해요." });
+  if (audio.length > 4_000_000) return res.status(413).json({ error: "녹음이 너무 길어요. 1분 안쪽으로 말해 주세요." });
+  try {
+    const r = await gemini.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: [{ role: "user", parts: [{ inlineData: { mimeType: mimeType.split(";")[0], data: audio } }, { text: `이 녹음에 사람이 또렷하게 말한 목소리가 있는지 먼저 판단해. 있으면 들리는 그대로 한국어로 받아 적어. 무음·잡음·기계음뿐이거나 알아들을 수 없으면 speech를 false로 하고 text는 비워. 들리지 않은 말을 절대 지어내지 마.${hints.length ? ` 반려견 이름·견종 등 나올 수 있는 단어: ${hints.join(", ")}` : ""}` }] }],
+      // 무음에서도 그럴듯한 문장을 지어내는 일이 있어(테스트에서 확인) "말이 있었나"를 먼저 답하게 한다
+      config: {
+        thinkingConfig: { thinkingLevel: "minimal" },
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+        responseSchema: { type: "object", properties: { speech: { type: "boolean" }, text: { type: "string" } }, required: ["speech", "text"] },
+      },
+    });
+    let out = {};
+    try {
+      out = JSON.parse(r.text || "{}");
+    } catch {}
+    res.json({ text: out.speech ? String(out.text || "").trim() : "" });
+  } catch (err) {
+    console.error("[server] transcribe error:", err.status || "", err.message?.slice(0, 200));
+    res.status(502).json({ error: "음성을 글자로 바꾸지 못했어요. 다시 말해 주세요." });
+  }
+});
+
 app.post("/api/quick-stool", async (req, res) => {
   const { dogContext, imageBase64, mediaType } = req.body || {};
   if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "사진이 필요해요." });
@@ -755,7 +787,7 @@ app.post("/api/analyze-behavior", upload.single("video"), async (req, res) => {
         { fileData: { fileUri: uploaded.uri, mimeType: uploaded.mimeType } },
         {
           text: isVet
-            ? "이 영상을 수의사로서 분석해 주세요."
+            ? "이 영상을 위 기준에 따라 분석해 주세요."
             : `이 영상을 보고 위 기준에 따라 참고 분석을 알려주세요.${question ? `\n보호자 질문: ${question}` : ""}`,
         },
       ],

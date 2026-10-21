@@ -13,6 +13,7 @@ import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 import AiAnswer from "../components/AiAnswer";
+import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
   { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
@@ -72,6 +73,8 @@ export default function Main({ dog, resetSignal }) {
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
   const [input, setInput] = useState("");
+  const inputRef = useRef("");
+  inputRef.current = input; // 🎤가 말하기 시작할 때의 입력 내용에 이어 붙이도록
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
   const [attachments, setAttachments] = useState([]); // 보내기 전 첨부 [{ id, kind: 'image'|'video', file, url }]
@@ -603,6 +606,7 @@ export default function Main({ dog, resetSignal }) {
             background: "var(--surface)",
           }}
         />
+        <VoiceButton getText={() => inputRef.current} onText={setInput} onError={setAttachError} disabled={pending} hints={[dog.name, dog.breed].filter(Boolean)} />
         <button
           type="submit"
           className="btn-primary"

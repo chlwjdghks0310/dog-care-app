@@ -1013,3 +1013,7 @@ button {
   .onb-trust-full { display: none; } /* 아주 작은 폰은 기관 약칭만 */
   .onb-slide .onb-trust-note { margin-top: 2px !important; line-height: 1.35; }
 }
+/* 비서 입력창 🎤(VoiceButton) — 사진 버튼과 같은 모양, 듣는 중엔 빨간 점멸 */
+.voice-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 18px; flex-shrink: 0; box-shadow: var(--shadow); color: var(--text); }
+.voice-btn.on { background: #e5484d; border-color: #e5484d; color: #fff; font-size: 14px; animation: voice-pulse 1.2s ease-in-out infinite; }
+@keyframes voice-pulse { 50% { box-shadow: 0 0 0 6px rgba(229, 72, 77, 0.25); } }
