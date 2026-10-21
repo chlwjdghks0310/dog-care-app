@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { createInvite, leavePet, listMembers, removeMember, savedInvite } from "../services/sync/family";
 import { syncNow } from "../services/sync";
-import { useSyncStatus } from "./AccountCard";
+import { LoginSheet, useSyncStatus } from "./AccountCard";
 
-// 설정의 "가족 공유" 카드 — 지금 보고 있는 강아지 기준. 로그인했을 때만 보인다.
+// 설정의 "가족 공유" 카드 — 지금 보고 있는 강아지 기준. 로그인 전에는 로그인 안내를 보여 준다.
 // 보호자: 초대 코드 만들기·복사·공유·새로 만들기, 가족 내보내기 / 가족: 목록 보기, 나가기.
 export default function FamilyShare({ dog }) {
-  const { user, lastSyncedAt } = useSyncStatus();
+  const { enabled, user, lastSyncedAt } = useSyncStatus();
+  const [loginOpen, setLoginOpen] = useState(false);
   const [members, setMembers] = useState(null); // null = 불러오는 중
   const [invite, setInvite] = useState(() => savedInvite(dog.id));
   const [busy, setBusy] = useState(false);
@@ -16,7 +17,8 @@ export default function FamilyShare({ dog }) {
     try {
       setMembers(await listMembers(dog.id));
     } catch (err) {
-      setMsg(err.message);
+      // 서버에 가족 공유 기능(supabase/schema.sql)이 아직 없으면 그렇다고 알려 준다
+      setMsg(/schema cache|could not find|does not exist/i.test(err.message) ? "서버에 가족 공유 기능이 아직 설정되지 않았어요. 관리자가 supabase/schema.sql을 실행해야 해요." : err.message);
       setMembers([]);
     }
   }, [dog.id]);
@@ -24,7 +26,18 @@ export default function FamilyShare({ dog }) {
     if (user) load();
   }, [user, load, lastSyncedAt]); // 백업이 끝나면(처음 등록 포함) 다시 불러온다
 
-  if (!user) return null;
+  if (!enabled) return null;
+  if (!user)
+    return (
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div className="h2">가족 공유 · {dog.name}</div>
+        <p className="subtle" style={{ margin: "0 0 12px" }}>로그인하면 초대 코드를 만들어 가족과 {dog.name} 기록을 함께 볼 수 있어요.</p>
+        <button type="button" className="btn-ghost" onClick={() => setLoginOpen(true)}>
+          로그인하고 가족 초대하기
+        </button>
+        {loginOpen && <LoginSheet onClose={() => setLoginOpen(false)} />}
+      </div>
+    );
   const me = members?.find((m) => m.is_me);
   const isOwner = me?.role === "owner";
 
@@ -58,7 +71,7 @@ export default function FamilyShare({ dog }) {
       <div className="h2">가족 공유 · {dog.name}</div>
       {members === null ? (
         <p className="faint" style={{ margin: 0 }}>불러오는 중…</p>
-      ) : !me ? (
+      ) : !me && msg ? null : !me ? (
         <>
           <p className="subtle" style={{ margin: "0 0 10px" }}>{dog.name} 기록을 먼저 백업하면 가족을 초대할 수 있어요.</p>
           <button type="button" className="btn-ghost small" disabled={busy} onClick={() => syncNow()}>
