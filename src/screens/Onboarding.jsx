@@ -17,15 +17,16 @@ import { acceptInvite } from "../services/sync/family";
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
-// 5장(마지막은 손동작), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
+// 6장(신뢰·손동작 포함), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
 const SLIDES = [
   { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n말투는 세 가지 중에 골라요." },
   { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
   { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n가계부·일정·체중·약까지 알아서 적어요." },
   { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에 모이고\n밥·산책·약 시간엔 알림이 와요." },
+  { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n숫자마다 출처를 밝혀요." },
   { title: "손끝으로 빠르게", text: "아래 프로필 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
 ];
-const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock, GestureMock];
+const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock, TrustMock, GestureMock];
 
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -202,6 +203,38 @@ function CareMock() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// 신뢰: 실제로 참고한 자료(src/data/vitalTips.js·vitals.js·사료 계산·품종 정보에 적힌 출처)만 쓴다. 로고 대신 이름만 — 제휴·보증처럼 보이지 않게
+const TRUST_SOURCES = [["WSAVA", "세계소동물수의사회"], ["AAHA", "미국동물병원협회"], ["ACVIM", "미국수의내과학회"], ["Merck", "수의학 매뉴얼"], ["코넬대", "수의대"], ["농촌진흥청", ""]];
+function TrustMock() {
+  return (
+    <div className="onb-mock" style={{ textAlign: "left" }}>
+      <div className="onb-trust-head" style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}>📚 이런 자료를 바탕으로 해요</div>
+      <div className="onb-trust-chips">
+        {TRUST_SOURCES.map(([short, full]) => (
+          <span key={short}>
+            {short}
+            {full && <span className="onb-trust-full"> {full}</span>}
+          </span>
+        ))}
+      </div>
+      {[
+        ["🔎", "숫자마다 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
+        ["🩺", "진단하지 않아요", "참고 범위와 병원에 물어볼 때만 알려요"],
+        ["🔒", "기록은 나와 가족만", "백업은 암호화해 보내고, 초대한 가족만 볼 수 있어요"],
+      ].map(([icon, head, sub]) => (
+        <div key={head} className="onb-mock-row">
+          <span style={{ fontSize: 18, width: 28, textAlign: "center" }}>{icon}</span>
+          <span style={{ flex: 1, lineHeight: 1.35 }}>
+            <b style={{ fontSize: 14 }}>{head}</b>
+            <div className="faint onb-trust-sub" style={{ fontSize: 12.5 }}>{sub}</div>
+          </span>
+        </div>
+      ))}
+      <div className="faint onb-trust-note" style={{ fontSize: 11.5, marginTop: 6 }}>각 기관의 공개 자료를 참고했어요. 기관의 보증·제휴는 아니에요.</div>
     </div>
   );
 }

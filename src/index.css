@@ -999,3 +999,17 @@ button {
 .vd-how li { font-size: 14px; line-height: 1.55; color: var(--text); }
 /* 비서 탭 페이지는 통째로 위아래로 움직이지 않게(대화 목록만 안에서 스크롤) */
 .pager-page[data-tab="main"] { overflow-y: hidden; overscroll-behavior: none; }
+.onb-trust-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
+.onb-trust-chips > span { font-size: 12px; white-space: nowrap; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); }
+/* 키가 작은 폰: 신뢰 페이지는 설명 한 줄씩을 숨기고 칩을 촘촘하게(제목과 겹치지 않게) */
+@media (max-height: 720px) {
+  .onb-trust-sub { display: none; }
+  .onb-trust-chips > span { font-size: 11px; padding: 2px 7px; }
+  .onb-slide .onb-mock-row { padding: 6px 0; }
+}
+@media (max-height: 600px) {
+  .onb-trust-head { display: none; } /* 제목·설명이 같은 말을 하니 아주 작은 폰에선 생략 */
+  .onb-trust-chips { gap: 4px; }
+  .onb-trust-full { display: none; } /* 아주 작은 폰은 기관 약칭만 */
+  .onb-slide .onb-trust-note { margin-top: 2px !important; line-height: 1.35; }
+}
