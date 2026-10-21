@@ -88,7 +88,7 @@ export default function HealthCheck({ dog, onBack }) {
 
       {result && (
         <div className="card">
-          <div className="h2">🩺 수의사 관점 소견 (참고용)</div>
+          <div className="h2">🩺 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
         </div>
       )}
