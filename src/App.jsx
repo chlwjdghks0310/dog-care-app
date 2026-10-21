@@ -90,7 +90,10 @@ export default function App() {
   const settleTimerRef = useRef(null);
   const [pageVersion, setPageVersion] = useState(0);
 
-  useEffect(() => setPageVersion((v) => v + 1), [pageKey]);
+  useEffect(() => {
+    setPageVersion((v) => v + 1);
+    window.scrollTo(0, 0); // 혹시 문서가 밀려 있었어도(키보드 등) 다른 탭 위쪽이 잘리지 않게
+  }, [pageKey]);
 
   // 탭을 눌러 바꾸면 그 페이지로 바로 이동(손가락으로 끄는 중엔 건드리지 않음)
   useLayoutEffect(() => {

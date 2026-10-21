@@ -57,7 +57,7 @@ function videoDuration(url) {
   });
 }
 
-const IDLE_HEIGHT = 340;
+const IDLE_HEIGHT = 290;
 const CORNER_SIZE = 76;
 // 말풍선이 들어갈 공간을 위쪽에 남겨두기 위해 화면 맨 위보다 조금 내리고,
 // 노치/상태바(safe-area-inset-top)가 있는 폰에서는 그만큼 더 내린다.

@@ -15,3 +15,10 @@ setTimeout(() => {
   splash?.classList.add('hide')
   setTimeout(() => splash?.remove(), 400)
 }, 1000)
+
+// 아이폰은 입력칸에 키보드가 올라오면 문서 전체를 위로 밀었다가 내려가도 그대로 둘 때가 있다 → 키보드가 닫히면 제자리로
+document.addEventListener("focusout", () =>
+  setTimeout(() => {
+    if (!document.activeElement?.matches?.("input, textarea, select")) window.scrollTo(0, 0);
+  }, 100)
+);
