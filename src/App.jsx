@@ -38,8 +38,6 @@ import { startSync, syncNow } from "./services/sync";
 
 const PARENT_TAB = {
   week: "home",
-  weight: "home",
-  meds: "home",
   feeding: "home",
   alarms: "home",
   info: "home",
@@ -47,6 +45,8 @@ const PARENT_TAB = {
   "health-stool": "home",
   "health-behavior": "home",
   "add-dog": "profile",
+  weight: "profile",
+  meds: "profile",
   contact: "profile",
   vet: "profile",
   records: "profile",
@@ -307,14 +307,10 @@ export default function App() {
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
-        onOpenWeight={() => setTab("weight")}
-        onOpenMeds={() => setTab("meds")}
         onOpenMain={() => handleTabChange("main")}
       />
     ),
     week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />,
-    weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("home")} />,
-    meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("home"))} />,
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,
@@ -348,6 +344,8 @@ export default function App() {
         onAddDog={() => setTab("add-dog")}
       />
     ),
+    weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("profile")} />,
+    meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("profile"))} />,
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,

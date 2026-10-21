@@ -1,29 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { calculateAge } from "../utils/age";
 import { todayKey, formatKoreanDate } from "../utils/date";
-import { getTodayChecklist, getThisWeekHighlights, getUpcoming, getWeightCheckItem } from "../services/careEngine";
+import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIcon } from "../data/categoryIcons";
-import { getWeightAssessment, getWeightStatusShortText } from "../data/weightGuide";
-import { getLatestWeightRecord } from "../services/weightLog";
-import { getDosesForDate, markDoseDone, undoDose } from "../services/medications";
-import { syncPushAlarms } from "../services/notifications";
 import ProgressRing from "../components/ProgressRing";
 
-// 오늘 먹을 약을 "오늘 해야 할 일"에 함께 보여 준다 — 저장하지 않고 약 기록에서 매번 계산해서 같은 복용 건이 두 번 생기지 않는다.
-const MED_STATUS_TEXT = { planned: "복용 예정", done: "먹였어요", skipped: "건너뜀", check: "기록 확인 필요" };
-const medItems = (dog, dateKey) =>
-  getDosesForDate(dog.id, dateKey).map((d) => ({
-    id: `med-${d.key}`,
-    ruleId: "med",
-    dose: d,
-    title: `${d.time} ${d.med.name} ${d.med.dose}`,
-    description: d.status === "done" ? `${d.record.doneAt.slice(11, 16)}에 먹였어요` : MED_STATUS_TEXT[d.status],
-    category: "약",
-    completed: d.status === "done",
-  }));
-
-export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenWeight, onOpenMeds, onOpenMain }) {
+// 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
+export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -37,18 +20,10 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   }, []);
 
   function loadChecklist() {
-    const items = getTodayChecklist(dog, dateKey);
-    const weightItem = getWeightCheckItem(dog, dateKey);
-    setChecklist([...items, ...(weightItem ? [weightItem] : []), ...medItems(dog, dateKey)]);
+    setChecklist(getTodayChecklist(dog, dateKey));
   }
   useEffect(loadChecklist, [dog, dateKey]);
 
-  const weightText = useMemo(() => {
-    const age = calculateAge(dog.birthDate, new Date(dateKey));
-    const latestRecord = getLatestWeightRecord(dog.id);
-    const currentWeight = latestRecord ? latestRecord.weightKg : dog.weight;
-    return getWeightStatusShortText(getWeightAssessment({ ...dog, weight: currentWeight }, age.ageInMonths));
-  }, [dog, dateKey]);
   const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog]);
   const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog]);
 
@@ -66,16 +41,6 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
     loadChecklist();
   }
 
-  function handleMedToggle(item) {
-    if (item.completed) undoDose(dog.id, item.dose);
-    else markDoseDone(dog.id, item.dose);
-    syncPushAlarms();
-    loadChecklist();
-  }
-
-  const medsToday = checklist.filter((i) => i.ruleId === "med");
-  const medsToCheck = medsToday.filter((i) => i.dose.status === "check").length;
-
   const doneCount = checklist.filter((i) => i.completed).length;
 
   return (
@@ -92,21 +57,6 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         <button className="quick-tile" onClick={onOpenAlarms}>
           <span className="quick-tile-icon" aria-hidden="true">⏰</span>
           <span className="quick-tile-label">알림·알람</span>
-        </button>
-      </div>
-
-      <div className="mini-cards">
-        <button type="button" className="mini-card" onClick={onOpenWeight}>
-          <span className="mini-card-title">⚖️ 체중 체크</span>
-          <span className="mini-card-text">{weightText || "아직 기록이 없어요"}</span>
-        </button>
-        <button type="button" className="mini-card" onClick={onOpenMeds}>
-          <span className="mini-card-title">💊 약 관리</span>
-          <span className="mini-card-text">
-            {medsToday.length === 0
-              ? "오늘 먹을 약이 없어요"
-              : `오늘 ${medsToday.filter((i) => i.completed).length}/${medsToday.length} 먹였어요${medsToCheck ? ` · 확인 필요 ${medsToCheck}` : ""}`}
-          </span>
         </button>
       </div>
 
@@ -134,43 +84,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                   <span aria-hidden="true">{getCategoryIcon(category)}</span>
                   <span>{category}</span>
                 </div>
-                {items.map((item) =>
-                  item.ruleId === "med" ? (
-                    <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
-                      <input type="checkbox" checked={item.completed} disabled={item.dose.status === "skipped"} onChange={() => handleMedToggle(item)} />
-                      <div>
-                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
-                        <div className="subtle" style={item.dose.status === "check" ? { color: "var(--warning)" } : undefined}>{item.description}</div>
-                      </div>
-                    </label>
-                  ) : item.ruleId === "weight-check" ? (
-                    // 체중 측정은 체크박스로 직접 완료 처리하지 않는다 — 완료 표시는 실제로
-                    // 체중을 기록해야만 바뀌고, 여기서는 그 화면으로 이동만 시킨다.
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={onOpenWeight}
-                      className={`checklist-item${item.completed ? " completed" : ""}`}
-                      style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
-                    >
-                      <span aria-hidden="true" style={{ fontSize: 18, width: 20, flexShrink: 0 }}>
-                        {item.completed ? "✅" : "⚖️"}
-                      </span>
-                      <div>
-                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
-                        <div className="subtle">{item.description}</div>
-                      </div>
-                    </button>
-                  ) : (
-                    <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
-                      <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
-                      <div>
-                        <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
-                        {item.description && <div className="subtle">{item.description}</div>}
-                      </div>
-                    </label>
-                  )
-                )}
+                {items.map((item) => (
+                  <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
+                    <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
+                    <div>
+                      <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
+                      {item.description && <div className="subtle">{item.description}</div>}
+                    </div>
+                  </label>
+                ))}
               </div>
             ))}
           </>

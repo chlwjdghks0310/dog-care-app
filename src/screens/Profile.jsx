@@ -221,7 +221,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
 
       <HealthSummary dog={dog} onEdit={startEdit} />
 
-      <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} />
+      <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
       <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} />
 
@@ -592,7 +592,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
 
 // 건강 수치 칸(집사일기 '주요 수치' 참고) — 자주 쓰는 수치만 기본으로 보이고, 최근 30일 기록이 있거나 [편집]에서 켠 수치가 더해진다.
 const PINS_KEY = "dogcare-vital-pins-v1";
-function VitalsCard({ dog, onOpenVital, onOpenWeight }) {
+function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
   const [editingPins, setEditingPins] = useState(false);
   const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || DEFAULT_PINS);
   const today = todayKey();
@@ -650,8 +650,34 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight }) {
             </button>
           );
         })}
+        {!editingPins && <MedsTile dog={dog} today={today} onOpen={onOpenMeds} />}
       </div>
     </div>
+  );
+}
+
+// 투약 칸: 오늘 먹일 약을 몇 번 먹였는지. 누르면 약 관리(약 등록·복용 체크·기록)로. 체크리스트 대신 여기서 관리한다
+function MedsTile({ dog, today, onOpen }) {
+  const doses = getDosesForDate(dog.id, today);
+  const done = doses.filter((d) => d.status === "done").length;
+  const toCheck = doses.filter((d) => d.status === "check").length;
+  const hasMeds = getMeds(dog.id).some((m) => !isEnded(m, today));
+  return (
+    <button type="button" className="vt-tile" onClick={onOpen} aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}>
+      <span className="vt-top">
+        <span aria-hidden="true">💊</span>
+        <span className="vt-label">투약</span>
+      </span>
+      {doses.length ? (
+        <span className="vt-value">
+          {done}/{doses.length}
+          <span className="vt-unit">회</span>
+        </span>
+      ) : (
+        <span className="vt-empty">{hasMeds ? "오늘은 없음" : "＋ 약 등록"}</span>
+      )}
+      {doses.length > 0 && <span className={`vt-sub${toCheck ? " warn" : ""}`}>{toCheck ? `확인 필요 ${toCheck}` : "오늘"}</span>}
+    </button>
   );
 }
 
