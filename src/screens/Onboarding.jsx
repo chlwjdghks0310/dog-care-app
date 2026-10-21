@@ -7,10 +7,11 @@ import { isPushSupported, subscribeToPush } from "../services/notifications";
 import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import DogAvatarVideo from "../components/DogAvatarVideo";
-import { LoginSheet } from "../components/AccountCard";
+import { LoginForm, LoginSheet, useSyncStatus } from "../components/AccountCard";
 import { supabase } from "../services/supabase";
 
-// 첫 실행 온보딩: ① 앱 소개 4장(옆으로 넘김) → ② 강아지 정보를 한 화면에 하나씩 → ③ 알림 켜기 → ④ 인사.
+// 첫 실행 온보딩: ① 앱 소개 4장(옆으로 넘김) → ② 로그인 또는 게스트 → ③ 강아지 정보를 한 화면에 하나씩 → ④ 알림 켜기 → ⑤ 인사.
+// 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
 // 4장, 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
@@ -27,7 +28,32 @@ const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
 
 export default function Onboarding({ onRegistered, skipIntro = false }) {
   const [phase, setPhase] = useState(skipIntro ? "setup" : "intro");
-  return phase === "intro" ? <Intro onDone={() => setPhase("setup")} /> : <Setup onRegistered={onRegistered} />;
+  const { user } = useSyncStatus();
+  // 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개·로그인은 건너뛴다
+  if (phase === "setup" || user) return <Setup onRegistered={onRegistered} />;
+  if (phase === "intro") return <Intro onDone={() => setPhase(supabase ? "login" : "setup")} />;
+  return <Login onGuest={() => setPhase("setup")} />;
+}
+
+function Login({ onGuest }) {
+  return (
+    <div className="onb">
+      <div className="onb-setup" style={{ textAlign: "center" }}>
+        <img src="/icon-192.png?v=5" alt="" width="72" height="72" style={{ borderRadius: 18, margin: "auto auto 14px", display: "block", flexShrink: 0 }} />
+        <div className="onb-title">우리 아이 기록, 안전하게 보관해요</div>
+        <p className="onb-text">로그인하면 폰을 바꿔도 기록을 그대로 불러오고{"\n"}가족과 함께 볼 수 있어요.</p>
+        <div className="onb-login">
+          <LoginForm />
+        </div>
+        <button type="button" className="btn-ghost" onClick={onGuest} style={{ marginTop: 18 }}>
+          로그인 없이 시작하기
+        </button>
+        <p className="faint" style={{ margin: "8px 4px auto", paddingBottom: 12 }}>
+          게스트는 기록이 이 폰에만 저장돼요. 앱을 지우거나 폰을 바꾸면 기록이 사라지고, 가족과 공유할 수 없어요. 나중에 설정에서 언제든 로그인할 수 있어요.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function Intro({ onDone }) {
@@ -177,6 +203,7 @@ function Setup({ onRegistered }) {
   const [notifyStatus, setNotifyStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const { user } = useSyncStatus();
   const key = STEPS[step];
   const name = form.name.trim();
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -266,7 +293,7 @@ function Setup({ onRegistered }) {
             />
           )}
           {/* 새 폰: 로그인하면 서버의 기록을 받아 오고, 받은 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced) */}
-          {key === "name" && supabase && (
+          {key === "name" && supabase && !user && (
             <button type="button" className="onb-skip" style={{ display: "block", margin: "14px auto 0", textDecoration: "underline" }} onClick={() => setLoginOpen(true)}>
               예전에 쓰던 기록이 있나요? 로그인해서 불러오기
             </button>

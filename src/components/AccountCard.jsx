@@ -56,19 +56,38 @@ export function useSyncStatus() {
   return status;
 }
 
-// 로그인: 카카오(앱 밖 카카오 화면을 거쳐 돌아옴) 또는 이메일 6자리 코드(앱 안에서 끝남 — 홈 화면 앱에서도 안전)
+// 로그인 시트(설정에서 열림). 내용은 LoginForm — 온보딩 로그인 화면도 같은 걸 쓴다
 export function LoginSheet({ onClose }) {
+  const status = useSyncStatus();
+  useEffect(() => {
+    if (status.user) onClose();
+  }, [status.user, onClose]);
+  return createPortal(
+    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="es-sheet" role="dialog" aria-label="로그인">
+        <div className="es-top">
+          <span className="es-title">로그인하고 백업하기</span>
+          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        <div className="es-scroll" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}>
+          <LoginForm />
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// 로그인: 카카오(앱 밖 카카오 화면을 거쳐 돌아옴) 또는 이메일 6자리 코드(앱 안에서 끝남 — 홈 화면 앱에서도 안전)
+export function LoginForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const status = useSyncStatus();
-
-  useEffect(() => {
-    if (status.user) onClose();
-  }, [status.user, onClose]);
 
   async function run(fn) {
     setBusy(true);
@@ -91,60 +110,49 @@ export function LoginSheet({ onClose }) {
   const verify = () => run(() => supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" }));
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  return createPortal(
-    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="es-sheet" role="dialog" aria-label="로그인">
-        <div className="es-top">
-          <span className="es-title">로그인하고 백업하기</span>
-          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>
-            ✕
+  return (
+    <>
+      <button type="button" className="btn-primary" disabled={busy} onClick={kakao} style={{ background: "#FEE500", color: "#191600", boxShadow: "none" }}>
+        카카오로 계속하기
+      </button>
+      <div className="faint" style={{ textAlign: "center" }}>또는 이메일로</div>
+      {!sent ? (
+        <>
+          <input className="es-input" type="email" inputMode="email" autoComplete="email" placeholder="이메일 주소" value={email} onChange={(e) => setEmail(e.target.value)} style={{ fontSize: 16 }} />
+          <button type="button" className="btn-ghost" disabled={busy || !emailOk} onClick={sendCode}>
+            {busy ? "보내는 중…" : "인증 코드 받기"}
           </button>
-        </div>
-        <div className="es-scroll" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}>
-          <button type="button" className="btn-primary" disabled={busy} onClick={kakao} style={{ background: "#FEE500", color: "#191600", boxShadow: "none" }}>
-            카카오로 계속하기
-          </button>
-          <div className="faint" style={{ textAlign: "center" }}>또는 이메일로</div>
-          {!sent ? (
-            <>
-              <input className="es-input" type="email" inputMode="email" autoComplete="email" placeholder="이메일 주소" value={email} onChange={(e) => setEmail(e.target.value)} style={{ fontSize: 16 }} />
-              <button type="button" className="btn-ghost" disabled={busy || !emailOk} onClick={sendCode}>
-                {busy ? "보내는 중…" : "인증 코드 받기"}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="subtle" style={{ margin: 0 }}>
-                <b>{email.trim()}</b>로 보낸 6자리 코드를 적어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.
-              </p>
-              <input
-                className="es-input"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="인증 코드 6자리"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                style={{ fontSize: 20, letterSpacing: "0.3em", textAlign: "center" }}
-              />
-              <button type="button" className="btn-primary" disabled={busy || code.length !== 6} onClick={verify}>
-                {busy ? "확인하는 중…" : "로그인"}
-              </button>
-              <button type="button" className="btn-ghost small" disabled={busy} onClick={() => (setSent(false), setCode(""))}>
-                이메일 다시 적기
-              </button>
-            </>
-          )}
-          {error && <div className="error-text">{error}</div>}
-          <p className="faint" style={{ margin: 0 }}>
-            로그인하면 강아지 기록(프로필·건강 기록·일정·가계부·약)이 서버에 저장돼요. 화면 테마와 AI 대화 내용은 이 폰에만 남아요.{" "}
-            <button type="button" onClick={() => setPrivacyOpen(true)} style={{ background: "none", border: "none", padding: 0, color: "var(--accent-strong)", textDecoration: "underline", font: "inherit" }}>
-              개인정보 처리방침
-            </button>
+        </>
+      ) : (
+        <>
+          <p className="subtle" style={{ margin: 0 }}>
+            <b>{email.trim()}</b>로 보낸 6자리 코드를 적어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.
           </p>
-        </div>
-      </div>
+          <input
+            className="es-input"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="인증 코드 6자리"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            style={{ fontSize: 20, letterSpacing: "0.3em", textAlign: "center" }}
+          />
+          <button type="button" className="btn-primary" disabled={busy || code.length !== 6} onClick={verify}>
+            {busy ? "확인하는 중…" : "로그인"}
+          </button>
+          <button type="button" className="btn-ghost small" disabled={busy} onClick={() => (setSent(false), setCode(""))}>
+            이메일 다시 적기
+          </button>
+        </>
+      )}
+      {error && <div className="error-text">{error}</div>}
+      <p className="faint" style={{ margin: 0 }}>
+        로그인하면 강아지 기록(프로필·건강 기록·일정·가계부·약)이 서버에 저장돼요. 화면 테마와 AI 대화 내용은 이 폰에만 남아요.{" "}
+        <button type="button" onClick={() => setPrivacyOpen(true)} style={{ background: "none", border: "none", padding: 0, color: "var(--accent-strong)", textDecoration: "underline", font: "inherit" }}>
+          개인정보 처리방침
+        </button>
+      </p>
       {privacyOpen && <PrivacyPolicy onClose={() => setPrivacyOpen(false)} />}
-    </div>,
-    document.body
+    </>
   );
 }
