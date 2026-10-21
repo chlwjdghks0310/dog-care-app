@@ -312,6 +312,10 @@ export default function Main({ dog, resetSignal }) {
         position: "relative",
         display: "flex",
         flexDirection: "column",
+        // 비서 화면은 페이지 전체가 위아래로 움직이지 않게 고정 — 대화 목록만 안에서 스크롤
+        overflow: "hidden",
+        overscrollBehavior: "none",
+        minHeight: 0,
         padding: isChat
           ? `calc(${CORNER_TOP} + ${CORNER_SIZE + 12}px) 16px 16px`
           : "calc(56px + env(safe-area-inset-top, 0px)) 16px 20px",
@@ -338,9 +342,9 @@ export default function Main({ dog, resetSignal }) {
           boxShadow: isChat ? "var(--shadow)" : "none",
           cursor: isChat ? "pointer" : "default",
           transition: "all 0.35s ease",
-          // 메인 화면에서는 폰 화면이 작으면 강아지가 줄어들어 페이지가 넘치지 않게(최소 140px)
+          // 메인 화면에서는 폰 화면이 작으면 강아지가 줄어들어 페이지가 넘치지 않게(최소 100px)
           flexShrink: isChat ? 0 : 1,
-          minHeight: isChat ? undefined : 140,
+          minHeight: isChat ? undefined : 100,
           zIndex: 5,
         }}
       >
@@ -355,7 +359,7 @@ export default function Main({ dog, resetSignal }) {
       )}
 
       {isChat && (
-        <div ref={chatListRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", paddingBottom: 12 }}>
+        <div ref={chatListRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 12 }}>
           {messages.map((m, i) => {
             if (m.role === "user") {
               return (
