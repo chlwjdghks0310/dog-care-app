@@ -843,7 +843,7 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
     sent: prev?.sent || new Set(),
   });
   const device = pushDevices.get(subscription.endpoint);
-  res.json({ ok: true, alarms: alarmsForDevice(device).length, familyPets: pets?.size || 0 });
+  res.json({ ok: true, alarms: alarmsForDevice(device).length, familyPets: pets?.size || 0, familyCheck: Boolean(SUPABASE_URL && SUPABASE_ANON_KEY) }); // familyCheck: 서버에 가족 확인용 설정이 있는지(값은 알려 주지 않음)
 });
 
 async function sendPush(device, title, body, url) {
