@@ -11,9 +11,11 @@ export default function Contact({ onBack }) {
 
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 프로필로
-      </button>
+      {onBack && (
+        <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
+          ← 프로필로
+        </button>
+      )}
       <div className="h1">문의하기</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
         궁금한 점이나 불편한 점을 적어주시면 메일 앱으로 보낼 수 있도록 연결해드려요.

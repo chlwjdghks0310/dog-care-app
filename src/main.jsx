@@ -2,10 +2,15 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import PrivacyPolicy from './components/PrivacyPolicy.jsx'
+import Contact from './screens/Contact.jsx'
+
+const page = new URLSearchParams(location.search)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?support(문의) — 설치 안 한 사람도 브라우저로 본다 */}
+    {page.has('privacy') ? <PrivacyPolicy /> : page.has('support') ? <Contact /> : <App />}
   </StrictMode>,
 )
 

@@ -30,12 +30,14 @@ const SECTIONS = [
 export default function PrivacyPolicy({ onClose }) {
   const swipeClose = useSwipeClose(onClose);
   return createPortal(
-    <div className="settings-sheet" role="dialog" aria-label="개인정보 처리방침" style={{ zIndex: 130 }} {...swipeClose}>
+    <div className="settings-sheet" role="dialog" aria-label="개인정보 처리방침" style={{ zIndex: 130 }} {...(onClose && swipeClose)}>
       <div className="settings-head">
         <div className="h1" style={{ margin: 0 }}>개인정보 처리방침</div>
-        <button type="button" className="btn-ghost" onClick={onClose}>
-          닫기
-        </button>
+        {onClose && (
+          <button type="button" className="btn-ghost" onClick={onClose}>
+            닫기
+          </button>
+        )}
       </div>
       <div className="card">
         <p className="subtle" style={{ marginTop: 0 }}>
