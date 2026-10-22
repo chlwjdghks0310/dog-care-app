@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "server": "node server/index.js",
-    "test": "node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/weight-logic.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/medications.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/vet-summary.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/records.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/calendar.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/budget.test.mjs && node scripts/ai-answer.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/sync.test.mjs"
+    "test": "node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/weight-logic.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/medications.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/vet-summary.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/records.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/calendar.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/budget.test.mjs && node scripts/ai-answer.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/sync.test.mjs && node scripts/walk.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -18,6 +18,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "leaflet": "1.9.4",
     "multer": "^2.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

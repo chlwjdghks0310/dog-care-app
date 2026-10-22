@@ -38,6 +38,7 @@ import { startSync, syncNow } from "./services/sync";
 
 const PARENT_TAB = {
   week: "home",
+  walk: "home",
   feeding: "home",
   alarms: "home",
   info: "home",
@@ -59,6 +60,7 @@ const BACK_OF = { ...PARENT_TAB, "health-stool": "health", "health-behavior": "h
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
+const Walk = lazy(() => import("./screens/Walk")); // 지도(Leaflet)가 커서 산책 화면을 열 때만 받는다
 
 // 렌더링 전에 바로 적용해서 기본 테마가 잠깐 보였다가 바뀌는 깜빡임을 막는다.
 applyTheme(getTheme());
@@ -310,10 +312,16 @@ export default function App() {
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
+        onOpenWalk={() => setTab("walk")}
         onOpenMain={() => handleTabChange("main")}
       />
     ),
     week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />,
+    walk: () => (
+      <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
+        <Walk dog={dog} onBack={() => setTab("home")} />
+      </Suspense>
+    ),
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,

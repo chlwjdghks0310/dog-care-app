@@ -1026,3 +1026,33 @@ button {
 .voice-orb.busy .voice-orb-core { animation: voice-spin 1.2s linear infinite; }
 @keyframes voice-spin { to { filter: hue-rotate(360deg); } }
 @keyframes voice-fade { from { opacity: 0; } }
+/* 산책(Walk.jsx) — 나이키 런 클럽처럼 큰 숫자와 둥근 버튼 */
+.walk-start-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 10px 0 22px; }
+.walk-start { width: 168px; height: 168px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 34px; font-weight: 900; letter-spacing: 0.02em; box-shadow: 0 12px 30px rgba(59, 108, 246, 0.35); }
+.walk-start:active { transform: scale(0.97); }
+.walk-gps { font-size: 13px; color: var(--text-faint); padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.walk-gps.ok { color: #1a7f52; border-color: #bfe3cf; background: #ecf8f1; }
+.walk-prep { display: flex; flex-wrap: wrap; gap: 6px; }
+.walk-prep span { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.walk-week { display: flex; gap: 8px; }
+.walk-week > div, .walk-stats > div { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+.walk-week b, .walk-stats b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.walk-week span, .walk-stats span { font-size: 12px; color: var(--text-faint); }
+.walk-item { display: flex; justify-content: space-between; width: 100%; padding: 12px 0; border: none; border-top: 1px solid var(--border); background: none; color: var(--text); font-size: 14.5px; text-align: left; }
+.walk-map { width: 100%; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); z-index: 0; }
+.walk-run .walk-map { margin-bottom: 8px; }
+.walk-paused { text-align: center; font-weight: 700; color: var(--accent-strong); margin: 4px 0; }
+.walk-big { text-align: center; font-size: 76px; font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin: 4px 0 10px; }
+.walk-big span { font-size: 22px; font-weight: 700; color: var(--text-faint); margin-left: 4px; letter-spacing: 0; }
+.walk-stats { display: flex; gap: 8px; margin-bottom: 12px; }
+.walk-marks { display: flex; gap: 8px; margin-bottom: 14px; }
+.walk-marks button { flex: 1; height: 46px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); font-size: 15px; font-weight: 700; color: var(--text); }
+.walk-controls { display: flex; justify-content: center; gap: 28px; }
+.walk-circle { width: 84px; height: 84px; border-radius: 50%; border: none; font-size: 26px; font-weight: 900; color: #fff; box-shadow: var(--shadow); }
+.walk-circle.pause { background: #1d1d1f; }
+.walk-circle.go { background: var(--accent); }
+.walk-circle.stop { background: #e5484d; }
+.walk-pin { font-size: 18px; line-height: 22px; text-align: center; background: none; border: none; }
+.walk-card { display: flex; align-items: center; gap: 12px; width: 100%; border: 1px solid var(--border); text-align: left; color: var(--text); cursor: pointer; }
+.walk-card-icon { width: 46px; height: 46px; border-radius: 14px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.walk-card-go { font-weight: 800; color: var(--accent-strong); white-space: nowrap; }
