@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { calculateAge } from "../utils/age";
-import { todayKey } from "../utils/date";
-import { getTodayChecklist } from "../services/careEngine";
-import { getDogGreeting } from "../data/ageFlavorText";
+import { useEffect, useRef, useState } from "react";
 import { askAI, analyzeBehavior } from "../services/aiClient";
 import { imageForAI } from "../utils/image";
 import { splitHeadline } from "../utils/text";
@@ -16,9 +12,10 @@ import AiAnswer from "../components/AiAnswer";
 import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
-  { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
-  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "retriever", icon: "🦮", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
+  // hello: 첫 화면 말풍선의 자기소개(고른 강아지마다 다름). {name}은 보호자의 강아지 이름
+  { key: "pomeranian", icon: "🐶", name: "포메라니안", hello: "안녕! 난 포메라니안이야 🐶\n{name} 얘기라면 뭐든 물어봐!\n핵심만 콕콕 빠르게 알려 줄게!", pending: "음… 생각 중이야…" },
+  { key: "bordercollie", icon: "🐕", name: "보더콜리", hello: "반가워! 꼼꼼 박사 보더콜리야 🐕\n자료를 찾아보고 차근차근 자세히 알려 줄게.\n대신 조금 오래 걸릴 수 있어!", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "retriever", icon: "🦮", name: "리트리버", hello: "안녕안녕! 수다쟁이 리트리버야 🦮\n오늘 있었던 일, 나한테 다 얘기해 줘!\n꼬리 흔들면서 들을게 🐾", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 앱을 새로 켜면 항상 포메라니안(첫 번째)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -68,8 +65,6 @@ const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
 export default function Main({ dog, resetSignal, onReadingChange }) {
-  const [dateKey, setDateKey] = useState(todayKey());
-  const [checklist, setChecklist] = useState([]);
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
@@ -92,18 +87,6 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
   // 답변 읽기: 대화를 아래로 스크롤하면 말투 버튼·안내문·하단 탭을 내려 숨기고, 위로 스크롤하면 다시 보인다
   const [reading, setReading] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const key = todayKey();
-      setDateKey((prev) => (prev === key ? prev : key));
-    }, 60 * 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    setChecklist(getTodayChecklist(dog, dateKey));
-  }, [dog, dateKey]);
-
   useEffect(() => () => clearTimeout(talkTimerRef.current), []);
 
   // 메인 탭을 이미 보고 있는 상태에서 메인을 다시 누르면 채팅 중이어도 메인 화면으로 돌아간다.
@@ -123,11 +106,6 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
     []
   );
 
-  const age = useMemo(() => calculateAge(dog.birthDate, new Date(dateKey)), [dog.birthDate, dateKey]);
-  const greeting = useMemo(
-    () => getDogGreeting(dog.name, age.ageInWeeks, checklist, dateKey),
-    [dog.name, age.ageInWeeks, checklist, dateKey]
-  );
 
   // 메인 화면으로 돌아가면 대화를 비우고 처음부터. 진행 중이던 답변은 도착해도 버린다(chatSessionRef).
   const chatSessionRef = useRef(0);
@@ -354,7 +332,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
     >
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
-          <SpeechBubble>{greeting}</SpeechBubble>
+          <SpeechBubble>{findChatMode(chatMode).hello.replace("{name}", dog.name)}</SpeechBubble>
         </div>
       )}
 
@@ -563,7 +541,6 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
           );
         })}
       </div>
-      <p className="faint" style={{ textAlign: "center", margin: "6px 0 0" }}>{findChatMode(chatMode).desc}</p>
       </div></div>
 
       {(attachments.length > 0 || attachError) && (
