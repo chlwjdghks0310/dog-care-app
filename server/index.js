@@ -7,7 +7,8 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
+import { WebSocketServer } from "ws";
 import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
@@ -955,6 +956,69 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[server] AI proxy listening on http://localhost:${PORT}`);
+});
+
+// 실시간 받아쓰기(비서 🎤, 시리처럼 말하는 동안 단어가 바로 보이게): 앱 ↔ 이 서버 ↔ Gemini Transcribe Live.
+// 앱이 16kHz 16비트 PCM을 0.1초 조각(바이너리)으로 보내면, 중간 결과 {interim}과 확정 결과 {final}을 돌려준다. 끝낼 땐 {"end":true}.
+// 브라우저 음성 인식(아이폰 사파리는 시리와 같은 애플 엔진)이 막힌 기기에서만 쓴다. API 키는 서버에만 있다.
+// ponytail: 남용 막기는 연결당 70초·IP당 동시 2개까지만. 사용자가 많아지면 로그인 토큰 확인을 붙일 것
+const LIVE_MODEL = "gemini-3.5-transcribe-live";
+const liveByIp = new Map();
+const wss = new WebSocketServer({ server, path: "/api/voice-live", maxPayload: 256 * 1024 });
+wss.on("connection", async (client, req) => {
+  const send = (obj) => client.readyState === 1 && client.send(JSON.stringify(obj));
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
+  if (!gemini) return send({ error: "음성 인식이 아직 설정되지 않았어요." }), client.close();
+  if ((liveByIp.get(ip) || 0) >= 2) return send({ error: "잠시 후 다시 시도해 주세요." }), client.close();
+  liveByIp.set(ip, (liveByIp.get(ip) || 0) + 1);
+  const limit = setTimeout(() => client.close(), 70_000);
+  let session = null;
+  const pending = []; // Gemini 연결 전에 온 소리
+  let closed = false;
+  client.on("close", () => {
+    closed = true;
+    clearTimeout(limit);
+    liveByIp.set(ip, Math.max(0, (liveByIp.get(ip) || 1) - 1));
+    session?.close();
+  });
+  client.on("message", (data, isBinary) => {
+    if (isBinary) {
+      const chunk = { audio: { data: Buffer.from(data).toString("base64"), mimeType: "audio/pcm;rate=16000" } };
+      return session ? session.sendRealtimeInput(chunk) : pending.push(chunk);
+    }
+    try {
+      if (JSON.parse(String(data)).end) session ? session.sendRealtimeInput({ audioStreamEnd: true }) : pending.push({ audioStreamEnd: true });
+    } catch {}
+  });
+  // 강아지 이름·견종처럼 틀리기 쉬운 단어(주소 ?hints=a,b)
+  const hints = (new URL(req.url, "http://x").searchParams.get("hints") || "").split(",").map((h) => h.trim().slice(0, 20)).filter(Boolean).slice(0, 5);
+  try {
+    const s = await gemini.live.connect({
+      model: LIVE_MODEL,
+      config: { responseModalities: [Modality.TEXT], inputAudioTranscription: { languageCodes: ["ko-KR"], mode: "SMART", ...(hints.length && { customVocabulary: hints }) } },
+      callbacks: {
+        onmessage: (m) => {
+          const c = m.serverContent;
+          if (c?.interimInputTranscription?.text) send({ interim: c.interimInputTranscription.text });
+          if (c?.inputTranscription?.text) send({ final: c.inputTranscription.text });
+        },
+        onerror: (e) => {
+          console.error("[server] voice-live error:", e.message?.slice(0, 200));
+          send({ error: "실시간 받아쓰기에 문제가 생겼어요." });
+          client.close();
+        },
+        onclose: () => client.close(),
+      },
+    });
+    if (closed) return s.close();
+    session = s;
+    for (const chunk of pending.splice(0)) session.sendRealtimeInput(chunk);
+    send({ ready: true });
+  } catch (err) {
+    console.error("[server] voice-live connect error:", err.message?.slice(0, 200));
+    send({ error: "실시간 받아쓰기에 연결하지 못했어요." });
+    client.close();
+  }
 });
