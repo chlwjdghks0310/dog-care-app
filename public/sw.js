@@ -1,5 +1,21 @@
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+// 인터넷 없이 앱을 열면 보여 줄 안내 페이지 하나만 저장해 둔다(앱 파일은 저장하지 않아 업데이트는 그대로 바로 반영).
+const OFFLINE_CACHE = "mungcare-offline-v1";
+const OFFLINE_URL = "/offline.html";
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(OFFLINE_CACHE).then((c) => c.addAll([OFFLINE_URL])).then(() => self.skipWaiting()));
+});
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== OFFLINE_CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+  );
+});
+
+// 화면을 여는 요청(앱 켜기·새로고침)만: 인터넷이 안 되면 안내 페이지. 나머지 요청은 손대지 않는다.
+self.addEventListener("fetch", (event) => {
+  if (event.request.mode !== "navigate") return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+});
 
 // 서버가 보낸 웹 푸시를 받아서 실제 알림으로 띄운다 — 브라우저(탭)가 닫혀 있어도
 // 서비스워커는 OS가 대신 깨워주기 때문에 이 부분만은 동작한다.

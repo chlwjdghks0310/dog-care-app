@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f0f6ff" />
+  <title>멍케어 · 인터넷 연결 없음</title>
+  <!-- 인터넷 없이 앱을 열면 서비스워커(sw.js)가 이 페이지를 대신 보여 준다. 외부 파일 없이 혼자 열려야 해서 스타일도 여기 둔다. -->
+  <style>
+    :root { --bg: #f0f6ff; --surface: #fff; --text: #2b2320; --soft: #6b625d; --accent: #4b90e2; --accent-soft: #dde9fa; --border: #dbe6f5; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #15191f; --surface: #1f252d; --text: #f1ede9; --soft: #a59d97; --accent: #6aa6ee; --accent-soft: #233348; --border: #2c3540; } }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { word-break: keep-all; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px); }
+    main { width: 100%; max-width: 380px; text-align: center; }
+    .bubble { position: relative; display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 12px 18px; font-weight: 700; line-height: 1.5; box-shadow: 0 6px 18px rgba(43, 35, 32, 0.08); }
+    .bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 14px; height: 14px; background: var(--surface); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); transform: translateX(-50%) rotate(45deg); }
+    .dog { font-size: 84px; margin: 18px 0 6px; animation: sniff 2.4s ease-in-out infinite; display: inline-block; }
+    @keyframes sniff { 0%, 100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-10px) rotate(-6deg); } 75% { transform: translateX(10px) rotate(6deg); } }
+    @media (prefers-reduced-motion: reduce) { .dog { animation: none; } }
+    h1 { font-size: 22px; margin: 6px 0 8px; }
+    p { color: var(--soft); line-height: 1.6; margin: 0 0 6px; font-size: 15px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px 16px; margin: 18px 0; text-align: left; }
+    .card div { display: flex; gap: 10px; font-size: 14px; line-height: 1.55; padding: 4px 0; }
+    button { width: 100%; min-height: 52px; border: none; border-radius: 16px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 800; font-family: inherit; }
+    .small { color: var(--soft); font-size: 12.5px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="bubble">킁킁… 인터넷 냄새가 안 나!<br />금방 다시 찾아올게 🐾</div>
+    <div><span class="dog" aria-hidden="true">🐶</span></div>
+    <h1>인터넷이 연결되지 않았어요</h1>
+    <p>와이파이나 모바일 데이터가 켜져 있는지 확인해 주세요.</p>
+    <div class="card">
+      <div><span aria-hidden="true">🔒</span><span>기록은 이 폰에 그대로 있어요. 연결되면 바로 이어서 쓸 수 있고, 로그인했다면 백업도 자동으로 다시 해요.</span></div>
+      <div><span aria-hidden="true">🏥</span><span>강아지가 많이 아파 보이면 연결을 기다리지 말고 가까운 동물병원에 바로 전화해 주세요.</span></div>
+    </div>
+    <button type="button" onclick="location.reload()">다시 시도</button>
+    <p class="small">연결되면 자동으로 다시 열려요.</p>
+  </main>
+  <script>
+    window.addEventListener("online", () => location.reload());
+  </script>
+</body>
+</html>

@@ -222,7 +222,7 @@ export default function Help({ onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 프로필로
+        ← 설정으로
       </button>
       <div className="h1">도움말</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

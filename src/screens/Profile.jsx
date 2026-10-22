@@ -36,7 +36,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
-export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog }) {
+export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog, reopenSettings, onSettingsReopened }) {
   const age = calculateAge(dog.birthDate);
   const [theme, setThemeState] = useState(getTheme());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -44,7 +44,11 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
   const [category, setCategory] = useState(currentTheme.category);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(Boolean(reopenSettings)); // 설정에서 연 화면을 닫고 돌아오면 설정을 다시 연다
+  useEffect(() => {
+    if (reopenSettings) onSettingsReopened?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const swipeClose = useSwipeClose(() => setSettingsOpen(false));
   const [editForm, setEditForm] = useState(null);
   const [editError, setEditError] = useState("");
