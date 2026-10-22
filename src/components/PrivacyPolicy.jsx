@@ -4,9 +4,9 @@ import { useSwipeClose } from "./SwipeBack";
 // 개인정보 처리방침(초안) — 개인정보보호법 제30조·시행령 제31조 항목 기준(자료용 조사: ../자료용/자료/2026-10-20-supabase-카카오로그인.md).
 // ⚠️ 법률 검토 전 초안. 운영자·연락처·시행일은 사용자가 정한 값(2026-10-22). 국외 이전 해당 여부는 법률 확인이 필요하다.
 const OPERATOR = {
-  name: "최정환 멍케어 (주)",
+  name: "멍케어(대표 최정환)",
   contact: "bluelovei05@gmail.com",
-  effective: "2026년 9월 24일",
+  effective: "2026년 10월 22일",
 };
 
 const SECTIONS = [
