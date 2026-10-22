@@ -16,6 +16,9 @@ import AccountCard from "../components/AccountCard";
 import { AIConsentCard } from "../components/AIConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
+import Help from "./Help";
+import Contact from "./Contact";
+import DogRegister from "./DogRegister";
 import { getSyncStatus } from "../services/sync";
 import { leavePet, myRole } from "../services/sync/family";
 
@@ -36,7 +39,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
-export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onAddDog, reopenSettings, onSettingsReopened }) {
+export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [theme, setThemeState] = useState(getTheme());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -44,11 +47,10 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
   const [category, setCategory] = useState(currentTheme.category);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(Boolean(reopenSettings)); // 설정에서 연 화면을 닫고 돌아오면 설정을 다시 연다
-  useEffect(() => {
-    if (reopenSettings) onSettingsReopened?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // 설정 위에 겹쳐 여는 화면(도움말·문의하기·강아지 등록) — 닫으면 아래 설정이 그대로 보인다
+  const [settingsSub, setSettingsSub] = useState(null); // null | "help" | "contact" | "add-dog"
+  const subSwipeClose = useSwipeClose(() => setSettingsSub(null));
   const swipeClose = useSwipeClose(() => setSettingsOpen(false));
   const [editForm, setEditForm] = useState(null);
   const [editError, setEditError] = useState("");
@@ -335,7 +337,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
             <div className="card" style={{ marginBottom: 14 }}>
               <div className="h2">강아지 등록</div>
               <p className="subtle" style={{ margin: "0 0 12px" }}>함께 사는 강아지를 더 등록할 수 있어요. 지금 강아지 기록은 그대로예요.</p>
-              <button type="button" className="btn-ghost" onClick={() => { setSettingsOpen(false); onAddDog(); }}>
+              <button type="button" className="btn-ghost" onClick={() => setSettingsSub("add-dog")}>
                 + 새 강아지 등록하기
               </button>
             </div>
@@ -476,7 +478,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
 
             <div className="card" style={{ marginTop: 14 }}>
               <button
-                onClick={() => { setSettingsOpen(false); onOpenHelp(); }}
+                onClick={() => setSettingsSub("help")}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -491,7 +493,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
                 <span className="subtle">›</span>
               </button>
               <button
-                onClick={() => { setSettingsOpen(false); onOpenContact(); }}
+                onClick={() => setSettingsSub("contact")}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -516,6 +518,25 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
             <button className="btn-ghost" style={{ width: "100%", marginTop: 8, color: "var(--danger)" }} onClick={handleDeleteAll}>
               전체 삭제 (모든 강아지, 다시 등록하기)
             </button>
+          </div>,
+          document.body
+        )}
+      {settingsOpen &&
+        settingsSub &&
+        createPortal(
+          <div className="settings-sheet" role="dialog" aria-label={{ help: "도움말", contact: "문의하기", "add-dog": "강아지 등록" }[settingsSub]} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
+            {settingsSub === "help" && <Help onBack={() => setSettingsSub(null)} />}
+            {settingsSub === "contact" && <Contact onBack={() => setSettingsSub(null)} />}
+            {settingsSub === "add-dog" && (
+              <DogRegister
+                onCancel={() => setSettingsSub(null)}
+                onRegistered={(newDog) => {
+                  setSettingsSub(null);
+                  setSettingsOpen(false); // 등록을 마치면 새 강아지 프로필로
+                  onDogRegistered(newDog);
+                }}
+              />
+            )}
           </div>,
           document.body
         )}

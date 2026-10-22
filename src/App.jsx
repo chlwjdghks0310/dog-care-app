@@ -22,8 +22,6 @@ import HealthCheck from "./screens/HealthCheck";
 import BehaviorCheck from "./screens/BehaviorCheck";
 import FeedingPlan from "./screens/FeedingPlan";
 import AlarmSettings from "./screens/AlarmSettings";
-import Contact from "./screens/Contact";
-import Help from "./screens/Help";
 import WeightTracker from "./screens/WeightTracker";
 import Budget from "./screens/Budget";
 import Medications from "./screens/Medications";
@@ -47,12 +45,10 @@ const PARENT_TAB = {
   "add-dog": "profile",
   weight: "profile",
   meds: "profile",
-  contact: "profile",
   vet: "profile",
   records: "profile",
   vital: "profile",
   "records-new": "profile",
-  help: "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
 const BACK_OF = { ...PARENT_TAB, "health-stool": "health", "health-behavior": "health" };
@@ -69,8 +65,6 @@ export default function App() {
   const [route, setRoute] = useState("onboarding");
   const [tab, setTab] = useState("profile"); // 앱을 열면 프로필부터
   const [mainResetSignal, setMainResetSignal] = useState(0);
-  // 설정(☰)에서 연 화면(도움말·문의하기·강아지 등록)을 닫으면 설정으로 돌아가게 — 프로필이 다시 그려질 때 설정을 연다
-  const [settingsReturn, setSettingsReturn] = useState(false);
   const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
@@ -87,10 +81,6 @@ export default function App() {
 
   // 하단 탭(TABS) 안에서 들어가는 세부 화면들 — 같은 페이지 칸에 그려지고, 하단 탭 표시도 부모를 따른다.
   const pageKey = PARENT_TAB[tab] || tab;
-  // 설정에서 연 화면에서 뒤로가 아니라 다른 탭으로 떠나면 설정 다시 열기는 취소
-  useEffect(() => {
-    if (!["help", "contact", "add-dog", "profile"].includes(tab)) setSettingsReturn(false);
-  }, [tab]);
   const pageIndex = TABS.findIndex((t) => t.key === pageKey);
   const pagerRef = useRef(null);
   const touchingRef = useRef(false);
@@ -150,7 +140,6 @@ export default function App() {
 
   // 강아지 추가 — 기존 강아지는 그대로 두고 새 강아지를 등록한 뒤, 그 강아지로 바로 전환한다.
   function handleAddDog(newDog) {
-    setSettingsReturn(false); // 등록을 마치면 새 강아지 프로필을 보여 준다
     setActiveDog(newDog);
     setTab("profile");
   }
@@ -340,8 +329,6 @@ export default function App() {
     profile: () => (
       <Profile
         dog={dog}
-        onOpenContact={() => (setSettingsReturn(true), setTab("contact"))}
-        onOpenHelp={() => (setSettingsReturn(true), setTab("help"))}
         onOpenVet={() => setTab("vet")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
         onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
@@ -352,9 +339,7 @@ export default function App() {
         onUpdateDog={setActiveDog}
         onDeleteCurrent={handleDeleteCurrentDog}
         onDeleteAll={handleDeleteAllDogs}
-        onAddDog={() => (setSettingsReturn(true), setTab("add-dog"))}
-        reopenSettings={settingsReturn && tab === "profile"}
-        onSettingsReopened={() => setSettingsReturn(false)}
+        onDogRegistered={handleAddDog}
       />
     ),
     weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("profile")} />,
@@ -364,8 +349,6 @@ export default function App() {
     records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
     "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
-    contact: () => <Contact onBack={() => setTab("profile")} />,
-    help: () => <Help onBack={() => setTab("profile")} />,
   };
   // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
   function renderStack(screens, root) {
@@ -419,7 +402,6 @@ export default function App() {
           }}
           onAddDog={() => {
             setDogSwitcherOpen(false);
-            setSettingsReturn(false);
             setTab("add-dog");
           }}
           onClose={() => setDogSwitcherOpen(false)}
