@@ -1,7 +1,7 @@
 import { useState } from "react";
 import InfoAccordionItem from "../components/InfoAccordion";
 
-const CONTACT_EMAIL = "bluelovei05@gmail.com";
+const CONTACT_EMAIL = "meongcare.app@gmail.com";
 
 // 자주 묻는 질문 — 문의 전에 먼저 보여 준다(앱에 실제로 있는 메뉴 이름으로 안내)
 const FAQ = [

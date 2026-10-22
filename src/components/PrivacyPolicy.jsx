@@ -5,7 +5,7 @@ import { useSwipeClose } from "./SwipeBack";
 // ⚠️ 법률 검토 전 초안. 운영자·연락처·시행일은 사용자가 정한 값(2026-10-22). 국외 이전 해당 여부는 법률 확인이 필요하다.
 const OPERATOR = {
   name: "멍케어(대표 최정환)",
-  contact: "bluelovei05@gmail.com",
+  contact: "meongcare.app@gmail.com",
   effective: "2026년 10월 22일",
 };
 

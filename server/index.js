@@ -39,7 +39,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
 if (vapidConfigured) {
   webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:example@example.com",
+    process.env.VAPID_SUBJECT || "mailto:meongcare.app@gmail.com",
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );
