@@ -191,8 +191,26 @@ end $$;
 drop trigger if exists pet_members_keep_owner on public.pet_members;
 create trigger pet_members_keep_owner before delete on public.pet_members for each row execute function public.keep_owner();
 
-revoke all on function public.create_invite(text), public.accept_invite(text), public.pet_member_list(text) from public, anon;
-grant execute on function public.create_invite(text), public.accept_invite(text), public.pet_member_list(text) to authenticated;
+-- 계정 삭제(앱 설정 → 계정 삭제). 가족이 함께 쓰는 강아지는 가장 먼저 들어온 가족이 보호자가 되어 기록이 남고,
+-- 나만 쓰던 강아지는 기록까지 지운다. 마지막에 로그인 계정(auth.users)을 지우면 남은 내 행(초대 코드·시도 기록)도 같이 지워진다.
+create or replace function public.delete_my_account() returns void language plpgsql volatile security definer set search_path = public, auth as $$
+declare me uuid := auth.uid(); r record;
+begin
+  if me is null then raise exception 'login required'; end if;
+  for r in select p.id, (select m.user_id from pet_members m where m.pet_id = p.id and m.user_id <> me order by m.role desc, m.joined_at limit 1) as heir
+           from pets p where p.created_by = me loop
+    if r.heir is not null then
+      update pet_members set role = 'owner' where pet_id = r.id and user_id = r.heir;
+      update pets set created_by = r.heir where id = r.id;
+    end if;
+  end loop;
+  delete from pets where created_by = me;
+  delete from pet_members where user_id = me;
+  delete from auth.users where id = me;
+end $$;
+
+revoke all on function public.create_invite(text), public.accept_invite(text), public.pet_member_list(text), public.delete_my_account() from public, anon;
+grant execute on function public.create_invite(text), public.accept_invite(text), public.pet_member_list(text), public.delete_my_account() to authenticated;
 
 -- 실시간: 가족이 기록을 바꾸면 다른 폰이 바로 받아 가도록(RLS가 그대로 적용돼 내 강아지 변경만 온다)
 do $$ begin

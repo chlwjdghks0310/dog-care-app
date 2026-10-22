@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { API_BASE } from "../services/aiClient";
+import { ensureAIConsent } from "./AIConsent";
 import { readJSON, writeJSON } from "../services/storage";
 
 // 비서 입력창 🎤 — 시리처럼: 누르면 듣기 화면이 뜨고, 말하는 동안 단어가 바로바로 보이고, 말을 멈추면 저절로 끝난다.
@@ -170,6 +171,11 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
 
   async function start() {
     onError("");
+    try {
+      await ensureAIConsent(); // 받아쓰기는 소리를 Google로 보낼 수 있어서 처음 한 번 묻는다
+    } catch (err) {
+      return onError(err.message);
+    }
     setLive("");
     const r = (ref.current = { base: getText(), heard: false, finals: [], interim: "", pcm: [], voicedMs: 0, quietMs: 0, startedAt: Date.now() });
     setState("listening");

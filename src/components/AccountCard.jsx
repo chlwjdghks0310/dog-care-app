@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../services/supabase";
-import { getSyncStatus, onSyncStatus, signOut, syncNow } from "../services/sync";
+import { deleteAccount, getSyncStatus, onSyncStatus, signOut, syncNow } from "../services/sync";
 import PrivacyPolicy from "./PrivacyPolicy";
 
 // 설정의 "백업·로그인" 카드. Supabase가 설정돼 있을 때만 보인다(src/services/supabase.js).
@@ -40,6 +40,7 @@ export default function AccountCard() {
             </button>
           </div>
           <LoginMethods user={status.user} />
+          <DeleteAccount />
         </>
       ) : (
         <>
@@ -122,6 +123,33 @@ function LoginMethods({ user }) {
         </div>
       )}
       {msg && <p className="faint" style={{ margin: "8px 0 0" }}>{msg}</p>}
+    </div>
+  );
+}
+
+// 계정 삭제 — 앱 안에서 바로(앱스토어·구글 플레이 필수). 두 번 확인한다
+function DeleteAccount() {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  async function run() {
+    if (!window.confirm("계정을 삭제할까요?\n\n· 서버에 백업된 기록과 로그인 정보가 지워지고 되돌릴 수 없어요.\n· 가족과 함께 쓰던 강아지는 가족에게 넘어가 가족의 기록으로 남아요.\n· 이 폰에 있는 내 강아지 기록은 남아요(앱을 지우면 함께 지워져요).")) return;
+    if (!window.confirm("정말 삭제할까요? 되돌릴 수 없어요.")) return;
+    setBusy(true);
+    setMsg("");
+    try {
+      await deleteAccount();
+      window.alert("계정을 삭제했어요.");
+    } catch (err) {
+      setMsg(err.message);
+      setBusy(false);
+    }
+  }
+  return (
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+      <button type="button" className="btn-ghost small" disabled={busy} onClick={run} style={{ color: "var(--danger)" }}>
+        {busy ? "삭제하는 중…" : "계정 삭제"}
+      </button>
+      {msg && <p className="error-text" style={{ margin: "8px 0 0" }}>{msg}</p>}
     </div>
   );
 }

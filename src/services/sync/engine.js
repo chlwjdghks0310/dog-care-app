@@ -202,7 +202,12 @@ export async function syncOnce(remote) {
   return { pulled: rows.length, changed, pushed: out.length, blocked };
 }
 
-// 로그아웃하면 서버와 맞춘 기억을 지운다(폰 기록은 그대로 남김)
-export function resetSyncState() {
+// 로그아웃하면 서버와 맞춘 기억을 지운다(폰 기록은 그대로 남김).
+// dropFamily: 계정 삭제 — 가족으로 받아 온 강아지(남의 기록)는 이 폰에서도 지운다
+export function resetSyncState({ dropFamily = false } = {}) {
+  if (dropFamily) {
+    const state = loadState();
+    for (const id of state.family) dropLocalPet(id, state);
+  }
   writeJSON(STATE_KEY, { cursor: null, base: {}, pets: null, family: [] });
 }

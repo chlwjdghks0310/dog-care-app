@@ -13,6 +13,7 @@ import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summari
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
+import { AIConsentCard } from "../components/AIConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
 import { getSyncStatus } from "../services/sync";
@@ -467,6 +468,7 @@ export default function Profile({ dog, onOpenContact, onOpenHelp, onOpenVet, onO
               )}
             </div>
             <AccountCard />
+            <AIConsentCard />
 
             <div className="card" style={{ marginTop: 14 }}>
               <button

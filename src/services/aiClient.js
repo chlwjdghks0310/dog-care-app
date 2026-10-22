@@ -4,6 +4,7 @@ import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { answerQuestion } from "./mockAI";
 import { sanitizeStructured, structureAnswer } from "../utils/aiAnswer";
+import { ensureAIConsent } from "../components/AIConsent";
 
 // env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
 export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
@@ -51,6 +52,7 @@ function withStructure(data) {
 // imagesAreContext: 앞서 보낸 사진을 후속 질문에 다시 붙인 것 — 서버가 새로 분석하지 않고 참고만 한다.
 export async function askAI(dog, question, history, mode, { images, imagesAreContext, signal } = {}) {
   const hasImages = Array.isArray(images) && images.length > 0;
+  await ensureAIConsent(); // 처음 한 번: 외부 AI로 보내도 되는지 묻는다(거절하면 아무것도 안 보냄)
   try {
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
@@ -81,6 +83,7 @@ export async function askAI(dog, question, history, mode, { images, imagesAreCon
 // 사진 분석은 신뢰할 만한 mock 대체 결과가 있을 수 없으므로(건강 관련 허위 안심/허위 경고 위험),
 // 서버 연결 실패 시 mock으로 조용히 대체하지 않고 에러를 그대로 알린다.
 export async function analyzePhoto(dog, file) {
+  await ensureAIConsent();
   const imageBase64 = await fileToBase64(file);
   const res = await fetch(`${API_BASE}/api/analyze-photo`, {
     method: "POST",
@@ -97,6 +100,7 @@ export async function analyzePhoto(dog, file) {
 
 // 통합 기록 "사진으로 채우기" — 보이는 것만 정해진 칸으로 받는다. 실패하면 그대로 오류(대체 결과 없음).
 export async function quickStoolCheck(dog, imageBase64, signal) {
+  await ensureAIConsent();
   const res = await fetch(`${API_BASE}/api/quick-stool`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -112,7 +116,8 @@ export async function quickStoolCheck(dog, imageBase64, signal) {
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.
 // onProgress(0~1): 올리는 진행률(fetch는 업로드 진행률을 못 줘서 XHR을 쓴다). 다 올라가면 1 → 그 뒤는 분석 대기.
-export function analyzeBehavior(dog, file, signal, mode, { question, onProgress } = {}) {
+export async function analyzeBehavior(dog, file, signal, mode, { question, onProgress } = {}) {
+  await ensureAIConsent();
   const formData = new FormData();
   if (mode) formData.append("mode", mode);
   if (question) formData.append("question", question);

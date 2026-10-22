@@ -97,3 +97,15 @@ export async function signOut() {
   resetSyncState(); // 폰 기록은 그대로 두고, 서버와 맞춘 기억만 지운다
   setStatus({ user: null, lastSyncedAt: null, error: "", blocked: [] });
 }
+
+// 계정 삭제(설정 → 백업·로그인). 서버 기록은 supabase/schema.sql의 delete_my_account가 지운다 —
+// 가족과 함께 쓰던 강아지는 가족에게 넘어가고, 나만 쓰던 강아지 기록은 서버에서 사라진다. 이 폰의 내 강아지 기록은 남는다.
+export async function deleteAccount() {
+  const { error } = await supabase.rpc("delete_my_account");
+  if (error) throw new Error(error instanceof TypeError || /fetch|network/i.test(error.message) ? "인터넷 연결을 확인하고 다시 시도해 주세요." : "계정을 지우지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+  await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+  resetSyncState({ dropFamily: true });
+  setStatus({ user: null, lastSyncedAt: null, error: "", blocked: [] });
+  window.dispatchEvent(new Event("dogcare-synced"));
+  import("../notifications").then((m) => m.syncPushAlarms()).catch(() => {});
+}
