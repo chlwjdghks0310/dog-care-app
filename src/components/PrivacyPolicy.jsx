@@ -2,11 +2,11 @@ import { createPortal } from "react-dom";
 import { useSwipeClose } from "./SwipeBack";
 
 // 개인정보 처리방침(초안) — 개인정보보호법 제30조·시행령 제31조 항목 기준(자료용 조사: ../자료용/자료/2026-10-20-supabase-카카오로그인.md).
-// ⚠️ 법률 검토 전 초안. 아래 OPERATOR의 빈칸(운영자·연락처·시행일)은 사용자가 채워야 하고, 국외 이전 해당 여부는 법률 확인이 필요하다.
+// ⚠️ 법률 검토 전 초안. 운영자·연락처·시행일은 사용자가 정한 값(2026-10-22). 국외 이전 해당 여부는 법률 확인이 필요하다.
 const OPERATOR = {
-  name: "[운영자 이름 또는 상호]",
-  contact: "[개인정보 보호책임자 이메일]",
-  effective: "[시행일: 0000년 0월 0일]",
+  name: "최정환 멍케어 (주)",
+  contact: "bluelovei05@gmail.com",
+  effective: "2026년 9월 24일",
 };
 
 const SECTIONS = [
