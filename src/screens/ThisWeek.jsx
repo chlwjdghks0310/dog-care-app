@@ -10,7 +10,7 @@ export default function ThisWeek({ dog, onBack, onOpenMain }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 뒤로
+        ← 체크리스트로
       </button>
       <div className="h1">이번 주</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

@@ -2,7 +2,7 @@ export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) 
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 홈으로
+        ← 체크리스트로
       </button>
       <div className="h1">건강 체크</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

@@ -1,31 +1,19 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { readJSON, writeJSON } from "../services/storage";
+import { hasAIConsent, setAIConsent } from "../services/aiConsent";
 
-// AI 정보 전송 동의 — 처음 AI(질문·사진·영상·음성)를 쓸 때 한 번 묻는다(앱스토어 5.1.2: 외부 AI로 보내기 전 명시 동의).
-// 동의하면 이 기기에 기억하고, 거절하면 아무것도 보내지 않는다. 설정(백업·로그인 아래)에서 철회할 수 있다(AIConsentCard).
-const KEY = "dogcare-ai-consent-v1";
-export const hasAIConsent = () => readJSON(KEY, null)?.agreed === true;
-export const setAIConsent = (agreed) => writeJSON(KEY, agreed ? { agreed: true, at: new Date().toISOString() } : null);
-
-let pending = null;
-export function ensureAIConsent() {
-  if (typeof document === "undefined" || hasAIConsent()) return Promise.resolve();
-  pending ||= new Promise((resolve, reject) => {
+// AI 정보 전송 동의 화면(상태·저장은 services/aiConsent.js). askConsent()는 시트를 띄우고 동의 여부(true/false)를 돌려준다.
+export function askConsent() {
+  return new Promise((resolve) => {
     const el = document.body.appendChild(document.createElement("div"));
     const root = createRoot(el);
     const done = (agreed) => {
       root.unmount();
       el.remove();
-      pending = null;
-      if (agreed) {
-        setAIConsent(true);
-        resolve();
-      } else reject(Object.assign(new Error("AI 정보 전송에 동의하지 않아 보내지 않았어요."), { consent: false }));
+      resolve(agreed);
     };
     root.render(<ConsentSheet onDone={done} />);
   });
-  return pending;
 }
 
 function ConsentSheet({ onDone }) {

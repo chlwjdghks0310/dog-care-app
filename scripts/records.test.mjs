@@ -191,3 +191,45 @@ console.log("통합 기록 확인 통과");
   assert.equal(R.getRecords("ai").length, 0);
   console.log("AI 건강 수치 확인 통과");
 }
+
+// 채팅 일정: 종류·시각을 받아 저장하고, 고치기로 종류만 바꿀 수 있다
+{
+  const A = await import("../src/services/appActions.js");
+  const { getEventsForDate } = await import("../src/services/calendarEvents.js");
+  const dogC = { id: "cal", name: "콩이", breed: "말티즈", birthDate: "2022-01-01", gender: "male" };
+  const d = day(3);
+  const res = A.applyAppActions(dogC, [{ type: "add_calendar_event", date: d, title: "미용 예약", kind: "grooming", time: "14:00" }]);
+  assert.equal(res.done.length, 1);
+  assert.match(res.done[0], /14:00 미용 예약 \(✂️ 미용\)/);
+  const ev = getEventsForDate("cal", d)[0];
+  assert.equal(ev.kind, "grooming");
+  assert.equal(ev.time, "14:00");
+  A.applyAppActions(dogC, [{ type: "add_calendar_event", date: d, title: "뭔가", kind: "없는종류" }]);
+  assert.equal(getEventsForDate("cal", d)[1].kind, "etc", "모르는 종류는 기타");
+  const conf = A.applyAppActions(dogC, [{ type: "update_record", kind: "calendar_event", id: ev.id, summary: "미용 → 병원", event_kind: "vet" }]).confirm;
+  assert.equal(conf.length, 1);
+  assert.ok(A.applyConfirmedAction(dogC, conf[0]));
+  const changed = getEventsForDate("cal", d).find((e) => e.id === ev.id);
+  assert.equal(changed.kind, "vet");
+  assert.equal(changed.time, "14:00", "종류만 바꾸면 시각은 그대로");
+  console.log("채팅 일정 종류 확인 통과");
+}
+
+// 산책을 기록하면 체크리스트의 산책 할 일이 완료로 보이고, 급여 시각은 밥 주기 할 일이 된다
+{
+  const { getTodayChecklist } = await import("../src/services/careEngine.js");
+  const { saveFeedingSettings } = await import("../src/services/feedingSettings.js");
+  const dogW = { id: "walk", name: "두부", breed: "말티즈", birthDate: "2022-01-01", gender: "male" };
+  const today = day(0);
+  const walkItem = () => getTodayChecklist(dogW, today).find((i) => i.category === "산책");
+  assert.ok(walkItem() && !walkItem().completed);
+  R.saveRecord("walk", { id: "w1", type: "vital", at: `${today}T00:00`, data: { metric: "walk", value: 30 }, memo: "", photos: [] });
+  assert.equal(walkItem().completed, true);
+  saveFeedingSettings("walk", { times: ["08:00", "18:30"] });
+  const meals = getTodayChecklist(dogW, today).filter((i) => i.category === "식사");
+  assert.deepEqual(meals.map((m) => m.title), ["아침 밥 주기", "저녁 밥 주기"]);
+  assert.deepEqual(meals[1].suggestedTimes, ["18:30"]);
+  saveFeedingSettings("walk", { times: ["09:00"] });
+  assert.deepEqual(getTodayChecklist(dogW, today).filter((i) => i.category === "식사").map((m) => m.description.slice(0, 5)), ["09:00"], "시각을 바꾸면 안 끝낸 밥 항목도 바뀜");
+  console.log("체크리스트 산책·밥 확인 통과");
+}

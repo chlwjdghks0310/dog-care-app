@@ -95,8 +95,8 @@ export default function DogRegister({ onRegistered, onCancel }) {
         <div className="field">
           <label>성별 *</label>
           <select value={form.gender} onChange={(e) => update("gender", e.target.value)}>
-            <option value="female">암컷</option>
-            <option value="male">수컷</option>
+            <option value="male">남자 ♂</option>
+            <option value="female">여자 ♀</option>
           </select>
         </div>
 

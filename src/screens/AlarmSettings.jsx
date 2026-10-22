@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { todayKey } from "../utils/date";
 import {
   getCustomSchedules,
@@ -12,6 +12,7 @@ import {
   requestPermission,
   syncPushAlarms,
   isPushSupported,
+  getPushSubscription,
   subscribeToPush,
   sendTestPush,
 } from "../services/notifications";
@@ -25,6 +26,10 @@ export default function AlarmSettings({ dog, onBack }) {
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [pushStatus, setPushStatus] = useState("");
   const [pushBusy, setPushBusy] = useState(false);
+  const [pushOn, setPushOn] = useState(false);
+  useEffect(() => {
+    if (isPushSupported() && getPermission() === "granted") getPushSubscription().then((sub) => setPushOn(Boolean(sub))).catch(() => {});
+  }, []);
 
   function refresh() {
     setSchedules(getCustomSchedules(dog.id));
@@ -48,18 +53,20 @@ export default function AlarmSettings({ dog, onBack }) {
     refresh();
   }
 
-  async function handleEnableNotifications() {
-    const result = await requestPermission();
-    setNotifPermission(result);
-    if (result === "granted") syncPushAlarms(); // 권한을 켜면 앱이 꺼져 있어도 오는 푸시까지 바로 연결
-  }
-
-  async function handleEnablePush() {
+  // 알림 켜기 하나로: 푸시가 되는 기기는 앱이 꺼져도 오는 푸시까지, 아니면 앱을 켜 둔 동안 뜨는 알림만
+  async function handleEnable() {
     setPushBusy(true);
     setPushStatus("");
     try {
-      await subscribeToPush();
-      setPushStatus("ok");
+      if (isPushSupported()) {
+        await subscribeToPush();
+        setPushOn(true);
+      } else {
+        const result = await requestPermission();
+        if (result !== "granted") throw new Error("알림 권한을 허용해야 켤 수 있어요.");
+      }
+      setNotifPermission(getPermission());
+      syncPushAlarms();
     } catch (err) {
       setPushStatus(err.message);
     } finally {
@@ -83,39 +90,38 @@ export default function AlarmSettings({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 홈으로
+        ← 체크리스트로
       </button>
-      <div className="h1">알림 / 알람</div>
+      <div className="h1">알림·알람</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
         원하는 시각에 알림으로 알려드려요. 알림 소리는 휴대폰 알림음 설정을 따라요.
       </p>
 
-      {isNotificationSupported() && notifPermission !== "granted" && (
-        <button className="btn-ghost" style={{ width: "100%", marginBottom: 14 }} onClick={handleEnableNotifications}>
-          🔔 알림 권한 켜기 (팝업 알림도 함께 받기)
-        </button>
-      )}
-
-      {isPushSupported() && (
+      {isNotificationSupported() && (
         <div className="card" style={{ marginBottom: 14 }}>
-          <div className="h2">백그라운드 푸시 (실험 중)</div>
-          <p className="subtle" style={{ marginBottom: 10 }}>
-            브라우저를 완전히 꺼놔도 알림이 뜨는지 확인하는 단계예요. 아이폰이면 사파리 공유 버튼 →
-            "홈 화면에 추가"로 설치한 상태에서만 동작해요.
-          </p>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <button className="btn-ghost" style={{ flex: 1 }} onClick={handleEnablePush} disabled={pushBusy}>
-              푸시 알림 켜기
-            </button>
-            <button className="btn-ghost" style={{ flex: 1 }} onClick={handleTestPush} disabled={pushBusy}>
-              테스트 알림 보내기
-            </button>
-          </div>
-          {pushStatus && (
-            <p className={pushStatus === "ok" ? "subtle" : "error-text"} style={{ margin: 0 }}>
-              {pushStatus === "ok" ? "푸시 알림이 켜졌어요!" : pushStatus}
-            </p>
+          <div className="h2">알림 받기</div>
+          {notifPermission === "granted" && (pushOn || !isPushSupported()) ? (
+            <>
+              <p className="subtle" style={{ marginBottom: 10 }}>
+                ✅ 알림이 켜져 있어요. {pushOn ? "앱을 꺼 둬도 약·밥·알람 시간에 알려 드려요." : "앱을 열어 둔 동안 알려 드려요."}
+              </p>
+              {pushOn && (
+                <button className="btn-ghost small" onClick={handleTestPush} disabled={pushBusy}>
+                  {pushBusy ? "보내는 중…" : "알림 확인하기"}
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="subtle" style={{ marginBottom: 10 }}>
+                앱을 꺼 둬도 약·밥·알람 시간에 알림이 와요. 아이폰은 사파리 공유 버튼 → "홈 화면에 추가"로 설치한 앱에서만 켤 수 있어요.
+              </p>
+              <button className="btn-primary" onClick={handleEnable} disabled={pushBusy}>
+                {pushBusy ? "켜는 중…" : "🔔 알림 켜기"}
+              </button>
+            </>
           )}
+          {pushStatus && <p className="faint" style={{ margin: "8px 0 0" }}>{pushStatus}</p>}
         </div>
       )}
 

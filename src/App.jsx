@@ -69,6 +69,7 @@ export default function App() {
   const [route, setRoute] = useState("onboarding");
   const [tab, setTab] = useState("profile"); // 앱을 열면 프로필부터
   const [mainResetSignal, setMainResetSignal] = useState(0);
+  const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
@@ -371,7 +372,7 @@ export default function App() {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
     main: (
       <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-        <Main dog={dog} resetSignal={mainResetSignal} />
+        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} />
       </Suspense>
     ),
     home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,
@@ -381,7 +382,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${chatReading && TABS[visibleIndex]?.key === "main" ? " reading" : ""}`}>
       {/* 인스타그램처럼 옆으로 밀면 옆 탭이 같이 끌려 나온다(브라우저 기본 가로 스크롤 + 스냅이라 손가락 속도·관성이 폰 그대로).
           화면 사이 틈(gap)으로 두 화면이 구분된다. */}
       <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>

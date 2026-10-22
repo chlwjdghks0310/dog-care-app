@@ -4,6 +4,7 @@ import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../servic
 import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIcon } from "../data/categoryIcons";
 import ProgressRing from "../components/ProgressRing";
+import { getFeedingSettings } from "../services/feedingSettings";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
@@ -43,8 +44,11 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
 
   const doneCount = checklist.filter((i) => i.completed).length;
 
+  const noMealTimes = !(getFeedingSettings(dog.id).times || []).length;
+
   return (
     <div className="screen">
+      <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenHealth}>
           <span className="quick-tile-icon" aria-hidden="true">🩺</span>
@@ -96,6 +100,11 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
               </div>
             ))}
           </>
+        )}
+        {noMealTimes && (
+          <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
+            🍚 밥 시간 정하고 알림 받기
+          </button>
         )}
       </div>
 

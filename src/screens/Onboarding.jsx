@@ -6,6 +6,7 @@ import { BREEDS } from "../data/breeds";
 import { isPushSupported, subscribeToPush } from "../services/notifications";
 import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
+import { localNow } from "../services/records";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import { LoginForm, LoginSheet, useSyncStatus } from "../components/AccountCard";
 import { supabase } from "../services/supabase";
@@ -323,7 +324,7 @@ function Setup({ onRegistered, restore }) {
       // 필수 정보가 다 모였으니 여기서 저장 — 알림 켜기가 이 강아지의 알람까지 서버에 등록하도록
       const created = createDog(form);
       saveDog(created);
-      if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${todayKey()}T12:00:00`, note: "처음 등록" });
+      if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
       setDog(created);
       if (restore) clearProgress();
     }

@@ -19,7 +19,7 @@ import { useSwipeClose } from "../components/SwipeBack";
 import { getSyncStatus } from "../services/sync";
 import { leavePet, myRole } from "../services/sync/family";
 
-const GENDER_LABEL = { female: "암컷", male: "수컷" };
+const GENDER_LABEL = { male: "남자 ♂", female: "여자 ♀" }; // 등록 화면과 같은 말·순서
 
 function Row({ label, value }) {
   if (!value) return null;

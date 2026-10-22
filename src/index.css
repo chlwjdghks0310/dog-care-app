@@ -1026,3 +1026,15 @@ button {
 .voice-orb.busy .voice-orb-core { animation: voice-spin 1.2s linear infinite; }
 @keyframes voice-spin { to { filter: hue-rotate(360deg); } }
 @keyframes voice-fade { from { opacity: 0; } }
+
+/* 비서 답변 읽기: 아래로 스크롤하면 하단 탭과 입력창 위아래 부가 줄이 아래로 내려가 숨고, 위로 스크롤하면 다시 올라온다(Main.jsx) */
+.bottom-nav { transition: margin-bottom 0.28s ease; }
+.app-shell.reading { overflow: hidden; }
+.app-shell.reading .bottom-nav { position: relative; margin-bottom: calc(-1 * var(--nav-h, 80px)); }
+.collapse-y { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.28s ease, opacity 0.2s ease; }
+.collapse-y > div { overflow: hidden; min-height: 0; }
+.collapse-y.collapsed { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.chat-suggest { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 6px; }
+.chat-suggest::-webkit-scrollbar { display: none; }
+.chat-suggest button { flex-shrink: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13.5px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .bottom-nav, .collapse-y { transition: none; } }

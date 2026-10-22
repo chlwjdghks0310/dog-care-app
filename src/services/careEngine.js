@@ -6,6 +6,8 @@ import { getScheduleForDate, setScheduleForDate } from "./scheduleRepository";
 import { getHiddenRules } from "./ruleOverrides";
 import { getNextDueDateKey } from "./weightSchedule";
 import { hasWeightRecordOnDate } from "./weightLog";
+import { getRecords } from "./records";
+import { getFeedingSettings } from "./feedingSettings";
 
 // 강아지 데이터 -> 월령/주령 계산 -> 규칙 조회 -> 오늘 일정 생성 순서로 동작한다.
 // 하루가 지나면 새 dateKey로 자동 재생성되므로 어제 완료 상태는 오늘로 이어지지 않는다.
@@ -32,7 +34,30 @@ export function getTodayChecklist(dog, dateKey = todayKey()) {
     );
     setScheduleForDate(dog.id, dateKey, items);
   }
-  return items.filter((it) => !hidden[it.ruleId]);
+  items = withMealItems(dog, dateKey, items);
+  // 산책을 기록했으면(건강 수치 "산책" 또는 일상 "산책") 산책 할 일은 체크 안 해도 완료로 본다
+  const walked = getRecords(dog.id).some(
+    (r) => r.at?.startsWith(dateKey) && ((r.type === "vital" && r.data?.metric === "walk") || (r.type === "daily" && r.data?.kind === "산책"))
+  );
+  return items.filter((it) => !hidden[it.ruleId]).map((it) => (walked && it.category === "산책" && !it.completed ? { ...it, completed: true } : it));
+}
+
+// 사료 계산기에서 정한 급여 시각 → "아침 밥 주기" 같은 할 일(그 시각에 체크리스트 알림도 온다).
+// 시각을 바꾸면 안 끝낸 밥 항목은 새 시각으로 바뀌고, 이미 체크한 항목은 그날 기록으로 남긴다.
+function withMealItems(dog, dateKey, items) {
+  const times = [...(getFeedingSettings(dog.id).times || [])].sort();
+  const mealId = (t) => `sch-${dateKey}-meal-${t}`;
+  const kept = items.filter((it) => !it.ruleId?.startsWith("meal-") || it.completed || times.includes(it.ruleId.slice(5)));
+  const added = times
+    .filter((t) => !kept.some((it) => it.id === mealId(t)))
+    .map((t) => {
+      const h = Number(t.slice(0, 2));
+      return createScheduleItem({ id: mealId(t), dogId: dog.id, ruleId: `meal-${t}`, title: `${h < 11 ? "아침" : h < 16 ? "점심" : "저녁"} 밥 주기`, description: `${t} · 사료 계산기에서 정한 시각`, date: dateKey, category: "식사", suggestedTimes: [t] });
+    });
+  if (!added.length && kept.length === items.length) return items;
+  const next = [...kept, ...added];
+  setScheduleForDate(dog.id, dateKey, next);
+  return next;
 }
 
 // "체중 측정"은 다른 케어 규칙과 달리 스케줄 저장소에 캐시하지 않는다 — 완료 여부를 매번

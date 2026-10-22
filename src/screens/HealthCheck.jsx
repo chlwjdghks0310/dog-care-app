@@ -41,7 +41,7 @@ export default function HealthCheck({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 뒤로
+        ← 건강 체크로
       </button>
       <div className="h1">변 상태 확인</div>
       <p className="faint" style={{ marginBottom: 16 }}>

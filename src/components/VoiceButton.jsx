@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { API_BASE } from "../services/aiClient";
-import { ensureAIConsent } from "./AIConsent";
+import { ensureAIConsent } from "../services/aiConsent";
 import { readJSON, writeJSON } from "../services/storage";
 
 // 비서 입력창 🎤 — 시리처럼: 누르면 듣기 화면이 뜨고, 말하는 동안 단어가 바로바로 보이고, 말을 멈추면 저절로 끝난다.
@@ -17,8 +17,8 @@ const MAX_MS = 60_000;
 // 받아쓰기 AI는 무음에서도 문장을 지어낼 수 있다(일괄 받아쓰기에서 확인) → 소리 크기로 말소리를 확인한 뒤에만 보낸다
 const VOICE_RMS = 0.02; // 이보다 크면 말소리로 친다(약 -34dB)
 const MIN_VOICED_MS = 300;
-const END_SILENCE_MS = 1500; // 말한 뒤 이만큼 조용하면 끝(시리처럼)
-const NO_SPEECH_MS = 5000; // 처음부터 이만큼 아무 말이 없으면 끝
+const END_SILENCE_MS = 2500; // 말한 뒤 이만큼 조용하면 끝 — 1.5초는 말하다 잠깐 생각하는 사이에 끊겼다
+const NO_SPEECH_MS = 8000; // 처음부터 이만큼 아무 말이 없으면 끝
 const SR_GRACE_MS = 2000; // 브라우저 인식이 이 안에 글자를 못 주면 ②로
 const WORKLET = `registerProcessor("pcm-tap", class extends AudioWorkletProcessor {
   process(inputs) { const ch = inputs[0] && inputs[0][0]; if (ch) this.port.postMessage(ch.slice(0)); return true; }
@@ -196,10 +196,10 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
         const rec = new SR();
         rec.lang = "ko-KR";
         rec.interimResults = true;
-        rec.continuous = false;
+        rec.continuous = Boolean(r.ctx); // 잠깐 멈춰도 브라우저가 혼자 끝내지 않게 — 끝은 위의 소리 크기 감지(END_SILENCE_MS)가 정한다
         rec.onresult = (e) => {
           r.heard = true;
-          r.srText = [...e.results].map((x) => x[0].transcript).join("");
+          r.srText = [...e.results].map((x) => x[0].transcript).join(" ").replace(/\s+/g, " ").trim(); // 계속 듣기면 문장 조각이 여러 개
           setLive(r.srText);
         };
         rec.onend = () => {

@@ -50,7 +50,7 @@ export default function FeedingPlan({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 홈으로
+        ← 체크리스트로
       </button>
       <div className="h1">사료량·급여시간 계산기</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

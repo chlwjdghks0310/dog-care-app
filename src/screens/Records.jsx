@@ -5,6 +5,7 @@ import { syncPushAlarms } from "../services/notifications";
 import WeightChart from "../components/WeightChart";
 import RecordForm from "./RecordForm";
 import DogReaction from "../components/DogReaction";
+import { VITAL } from "../data/vitals";
 import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
@@ -27,6 +28,7 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
   const [days, setDays] = useState(0);
   const [q, setQ] = useState("");
   const [order, setOrder] = useState("new");
+  const [showFilters, setShowFilters] = useState(Boolean(initialTypes?.length)); // 종류·기간 버튼은 접어 두고 검색창만
   const [openId, setOpenId] = useState(null);
   const [notice, setNotice] = useState("");
   const [reaction, setReaction] = useState(null); // 방금 저장한 기록 — 강아지 반응 카드
@@ -81,7 +83,14 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
       {!form && view === "list" && (
         <>
           <div className="card" style={{ marginBottom: 14 }}>
-            <input className="rec-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색 (예: 구토, 병원 이름)" aria-label="기록 검색" />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input className="rec-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색 (예: 구토)" aria-label="기록 검색" style={{ flex: 1, minWidth: 0 }} />
+              <button type="button" className={`seg${showFilters || types.length || days ? " on" : ""}`} aria-expanded={showFilters} onClick={() => setShowFilters((v) => !v)} style={{ flexShrink: 0 }}>
+                필터{types.length + (days ? 1 : 0) ? ` ${types.length + (days ? 1 : 0)}` : ""} {showFilters ? "▴" : "▾"}
+              </button>
+            </div>
+            {showFilters && (
+            <>
             <div className="chip-wrap" style={{ margin: "10px 0" }}>
               {FILTER_ORDER.map((t) => (
                 <button key={t} type="button" className={`seg${types.includes(t) ? " on" : ""}`} aria-pressed={types.includes(t)} onClick={() => setTypes((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t]))}>
@@ -97,6 +106,8 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
                 {order === "new" ? "최신순" : "과거순"}
               </button>
             </div>
+            </>
+            )}
             {filtered && (
               <button type="button" className="link-btn" onClick={() => (setTypes([]), setDays(0), setQ(""))}>필터 지우기</button>
             )}
@@ -136,7 +147,7 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete }) {
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
         <span className="rec-icon" aria-hidden="true">{TYPES[rec.type].icon}</span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span className="rec-item-title">{TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
+          <span className="rec-item-title">{(rec.type === "vital" && VITAL[rec.data?.metric]?.label) || TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
           <span className="rec-item-text">{summarize(rec) || "내용 없음"}</span>
         </span>
         {rec.photos?.length > 0 && <span className="faint">📎{rec.photos.length}</span>}

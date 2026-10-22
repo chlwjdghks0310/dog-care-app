@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { josa } from "../utils/text";
+import { md } from "../services/records";
 import {
   getMeds,
   addMed,
@@ -90,7 +91,7 @@ export default function Medications({ dog, focusDose, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 홈으로
+        ← 프로필로
       </button>
       <div className="h1">약 관리</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
@@ -104,7 +105,7 @@ export default function Medications({ dog, focusDose, onBack }) {
       ))}
       {remindOff && (
         <p className="faint" style={{ margin: "0 0 10px" }}>
-          🔕 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 홈 → 알림·알람에서 켤 수 있어요.
+          🔕 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 체크리스트 → 알림·알람에서 켤 수 있어요.
         </p>
       )}
 
@@ -209,7 +210,7 @@ function MedSummary({ med, stock, ended, onClick, onDelete }) {
       <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
         <div style={{ fontWeight: 700 }}>{med.name} <span className="subtle" style={{ fontWeight: 400 }}>{med.dose}</span></div>
         <div className="faint">
-          {daysLabel(med.days)} {med.times.join(", ")} · {med.startDate.slice(5)} ~ {med.endDate ? med.endDate.slice(5) : "계속"}
+          {daysLabel(med.days)} {med.times.join(", ")} · {md(med.startDate)} ~ {med.endDate ? md(med.endDate) : "계속"}
         </div>
         {med.purpose && <div className="faint">{med.purpose}</div>}
         {stock && <div className="faint">남은 수량 {stock.remaining}개{stock.daysLeft >= 1 ? ` (약 ${stock.daysLeft}일치)` : ""}</div>}

@@ -249,14 +249,14 @@ export async function subscribeToPush() {
 // 이 기기로 서버가 바로 테스트 알림을 보낸다.
 export async function sendTestPush() {
   const subscription = await getPushSubscription();
-  if (!subscription) throw new Error("이 기기는 아직 푸시 알림이 꺼져 있어요. 먼저 '푸시 알림 켜기'를 눌러주세요.");
+  if (!subscription) throw new Error("이 기기는 아직 푸시 알림이 꺼져 있어요. 먼저 '알림 켜기'를 눌러 주세요.");
   const res = await fetch(`${API_BASE}/api/push/test`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subscription }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "테스트 알림 전송에 실패했어요.");
+  if (!res.ok) throw new Error(data.error || "알림을 보내지 못했어요.");
   return data;
 }
 

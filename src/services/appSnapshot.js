@@ -1,7 +1,7 @@
 import { getDogs } from "./dogRepository";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "./careEngine";
 import { getScheduleForDate } from "./scheduleRepository";
-import { getOccurrences } from "./calendarEvents";
+import { getOccurrences, kindOf } from "./calendarEvents";
 import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getFeedingSettings } from "./feedingSettings";
@@ -54,7 +54,7 @@ export function buildAppSnapshot(dog) {
   if (eventDates.length) {
     lines.push("", "[일정표 - 보호자가 적은 일정 (지난 30일~앞으로 60일, 반복·기간 일정은 날짜마다 펼침)]");
     for (const date of eventDates)
-      lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${events[date].map(({ event: e, start }) => `${e.time ? `${e.time} ` : ""}${e.title}${e.endDate ? `(${start}~${e.endDate})` : ""}${e.repeat ? "(반복)" : ""} [id:${e.id}]`).join(", ")}`);
+      lines.push(`- ${date}${date === today ? "(오늘)" : ""}: ${events[date].map(({ event: e, start }) => `${e.time ? `${e.time} ` : ""}${e.title}${e.endDate ? `(${start}~${e.endDate})` : ""}${e.repeat ? "(반복)" : ""} [종류:${kindOf(e)?.label || "기타"}] [id:${e.id}]`).join(", ")}`);
   }
 
   // 알람·사료

@@ -16,9 +16,9 @@ import AiAnswer from "../components/AiAnswer";
 import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
-  { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
-  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "retriever", icon: "🦮", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "pomeranian", icon: "🐶", name: "빠르게", breed: "포메라니안", desc: "포메라니안 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
+  { key: "bordercollie", icon: "🐕", name: "자세히", breed: "보더콜리", desc: "보더콜리 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "retriever", icon: "🦮", name: "수다", breed: "리트리버", desc: "리트리버 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 앱을 새로 켜면 항상 포메라니안(첫 번째)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -39,6 +39,8 @@ const CHAT_MODE_INTROS = {
     "안녕! 난 수다쟁이 리트리버야 🦮\n**네 이야기를 들어 주고 같이 노는 걸** 제일 좋아해!\n심심할 때, 오늘 있었던 일을 말하고 싶을 때 언제든 말 걸어 줘. 꼬리 흔들면서 기다릴게!",
 };
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES[0];
+// 첫 화면 추천 질문 — 눌러서 바로 물어보기(기록 근거로 답하는 것들)
+const SUGGESTIONS = ["오늘 뭐 챙겨야 해?", "이번 주 기록 정리해 줘", "밥은 얼마나 줘야 해?", "다음 일정 뭐야?"];
 
 // 첨부 제한 — 사진은 앱에서 줄여 보내고, 영상은 서버를 거쳐 Gemini로 간다(서버 한도 500MB보다 작게 잡음)
 const MAX_IMAGES = 4;
@@ -60,13 +62,12 @@ function videoDuration(url) {
 
 const IDLE_HEIGHT = 290;
 const CORNER_SIZE = 76;
-// 말풍선이 들어갈 공간을 위쪽에 남겨두기 위해 화면 맨 위보다 조금 내리고,
-// 노치/상태바(safe-area-inset-top)가 있는 폰에서는 그만큼 더 내린다.
-const CORNER_TOP = "calc(56px + env(safe-area-inset-top, 0px))";
+// 채팅 중 왼쪽 위 강아지: 노치/상태바(safe-area-inset-top) 바로 아래까지 올려 답변 칸을 넓게
+const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
-export default function Main({ dog, resetSignal }) {
+export default function Main({ dog, resetSignal, onReadingChange }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -88,6 +89,8 @@ export default function Main({ dog, resetSignal }) {
   const talkTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
+  // 답변 읽기: 대화를 아래로 스크롤하면 말투 버튼·안내문·하단 탭을 내려 숨기고, 위로 스크롤하면 다시 보인다
+  const [reading, setReading] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -143,14 +146,37 @@ export default function Main({ dog, resetSignal }) {
     setPendingKind(null);
     setAvatarState("idle");
     setMode("idle");
+    setReading(false);
   }
 
-  // 새 메시지나 "생각 중"이 생기면 채팅 목록을 맨 아래로 내려 준다
+  // 새 메시지·"생각 중": 질문과 생각 중은 맨 아래로, AI 답변은 답변 첫 줄이 맨 위에 오게(긴 답을 처음부터 읽도록)
   const chatListRef = useRef(null);
+  const scrollState = useRef({ top: 0, quietUntil: 0 });
   useEffect(() => {
     const list = chatListRef.current;
-    list?.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+    if (!list) return;
+    scrollState.current.quietUntil = Date.now() + 800; // 앱이 움직인 스크롤은 숨기기·보이기 판단에 쓰지 않는다
+    const last = list.lastElementChild;
+    const answer = !pending && messages[messages.length - 1]?.role === "ai" && last;
+    const top = answer ? list.scrollTop + last.getBoundingClientRect().top - list.getBoundingClientRect().top - 8 : list.scrollHeight;
+    list.scrollTo({ top, behavior: "smooth" });
   }, [messages, pending, mode]);
+
+  // 보호자가 직접 스크롤: 아래로 읽어 내려가면 숨기고, 위로 올리면(또는 맨 위면) 다시 보인다
+  function handleChatScroll(e) {
+    const el = e.currentTarget;
+    const st = scrollState.current;
+    const top = Math.min(Math.max(el.scrollTop, 0), el.scrollHeight - el.clientHeight); // 끝에서 튕기는 움직임은 무시
+    const d = top - st.top;
+    st.top = top;
+    if (Date.now() < st.quietUntil) return;
+    const next = top <= 2 ? false : d > 6 ? true : d < -6 ? false : reading;
+    if (next !== reading) {
+      setReading(next);
+      st.quietUntil = Date.now() + 350; // 접히는 동안 칸 높이가 바뀌며 생기는 스크롤로 다시 뒤집히지 않게
+    }
+  }
+  useEffect(() => onReadingChange?.(mode === "chat" && reading), [mode, reading, onReadingChange]);
 
   // 채팅의 고치기·지우기 확인 버튼 — 누른 결과를 그 자리에 남긴다
   function resolveConfirm(msgIndex, j, ok) {
@@ -232,20 +258,18 @@ export default function Main({ dog, resetSignal }) {
         const ctx = contextImagesRef.current;
         result = await askAI(dog, question, history, chatMode, ctx.length ? { images: ctx, imagesAreContext: true, signal: controller.signal } : { signal: controller.signal });
       }
-      const { answer, structured, source, actions } = result;
+      const { answer, structured, actions } = result;
       // AI가 "기록해 줘"를 알아들었으면 앱(가계부·일정표·체중·체크리스트·알람)에 실제로 저장
       const records = actions?.length ? applyAppActions(dog, actions) : null;
-      if (source !== "mock") {
-        rememberChat(dog.id, memoryQuestion, answer);
-        const notes = [
-          ...(records?.done || []).map((r) => `기록 완료: ${r}`),
-          ...(records?.confirm || []).map((c) => `${c.type === "delete_record" ? "지우기" : "고치기"} 버튼 띄움(보호자 확인 기다림): ${c.summary}`),
-          ...(records?.failed ? ["일부 기록 실패(형식이 맞지 않음)"] : []),
-        ];
-        if (notes.length) noteChatResult(dog.id, notes.join(" / "));
-      }
+      rememberChat(dog.id, memoryQuestion, answer);
+      const notes = [
+        ...(records?.done || []).map((r) => `기록 완료: ${r}`),
+        ...(records?.confirm || []).map((c) => `${c.type === "delete_record" ? "지우기" : "고치기"} 버튼 띄움(보호자 확인 기다림): ${c.summary}`),
+        ...(records?.failed ? ["일부 기록 실패(형식이 맞지 않음)"] : []),
+      ];
+      if (notes.length) noteChatResult(dog.id, notes.join(" / "));
       if (session !== chatSessionRef.current) return; // 그사이 메인 화면으로 돌아감
-      setMessages((m) => [...m, { role: "ai", text: answer, structured, mock: source === "mock", chatMode, records, fromVideo: Boolean(video) }]);
+      setMessages((m) => [...m, { role: "ai", text: answer, structured, chatMode, records, fromVideo: Boolean(video) }]);
       speak(answer.length);
     } catch (err) {
       // 서버까지는 연결됐는데 분석 자체가 실패한 경우(Gemini 과부하/쿼터 초과 등)엔 서버가 알려준 이유를 그대로 보여준다.
@@ -322,8 +346,9 @@ export default function Main({ dog, resetSignal }) {
         overflow: "hidden",
         overscrollBehavior: "none",
         minHeight: 0,
+        transition: "padding-bottom 0.28s ease",
         padding: isChat
-          ? `calc(${CORNER_TOP} + ${CORNER_SIZE + 12}px) 16px 16px`
+          ? `calc(${CORNER_TOP} + ${CORNER_SIZE + 8}px) 16px ${reading ? "calc(12px + env(safe-area-inset-bottom, 0px))" : "12px"}` // 탭을 숨기면 아이폰 홈 막대만큼 띄움
           : "calc(56px + env(safe-area-inset-top, 0px)) 16px 20px",
       }}
     >
@@ -357,15 +382,10 @@ export default function Main({ dog, resetSignal }) {
         <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : "100%"} breed={chatMode} />
       </div>
 
-      {isChat && avatarState === "thinking" && <ThinkingBubble top={CORNER_TOP} />}
-      {isChat && (
-        <button type="button" className="btn-ghost small" style={{ position: "absolute", top: CORNER_TOP, right: 16, zIndex: 6 }} onClick={goHome}>
-          새 대화
-        </button>
-      )}
+      {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}
 
       {isChat && (
-        <div ref={chatListRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 12 }}>
+        <div ref={chatListRef} onScroll={handleChatScroll} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 12 }}>
           {messages.map((m, i) => {
             if (m.role === "user") {
               return (
@@ -428,7 +448,7 @@ export default function Main({ dog, resetSignal }) {
               >
                 {m.chatMode && (
                   <div className="faint" style={{ marginBottom: 6 }}>
-                    {findChatMode(m.chatMode).icon} {findChatMode(m.chatMode).name}
+                    {findChatMode(m.chatMode).icon} {findChatMode(m.chatMode).breed}
                   </div>
                 )}
                 {m.structured ? (
@@ -471,7 +491,6 @@ export default function Main({ dog, resetSignal }) {
                   </div>
                 ))}
                 {m.records?.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>기록하지 못한 내용이 있어요. 조금 더 자세히 말해 주세요.</div>}
-                {m.mock && <div className="faint" style={{ marginTop: 6 }}>(AI 서버 연결 안 됨)</div>}
               </div>
             );
           })}
@@ -499,7 +518,17 @@ export default function Main({ dog, resetSignal }) {
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      <div role="radiogroup" aria-label="채팅 스타일" style={{ display: "flex", gap: 6, marginTop: 12 }}>
+      <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
+      {!isChat && (
+        <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="추천 질문">
+          {SUGGESTIONS.map((q) => (
+            <button key={q} type="button" disabled={pending} onClick={() => send(q, [])}>
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+      <div role="radiogroup" aria-label="채팅 스타일" style={{ display: "flex", gap: 6, marginTop: isChat ? 12 : 6 }}>
         {CHAT_MODES.map((cm) => {
           const selected = chatMode === cm.key;
           return (
@@ -535,6 +564,7 @@ export default function Main({ dog, resetSignal }) {
         })}
       </div>
       <p className="faint" style={{ textAlign: "center", margin: "6px 0 0" }}>{findChatMode(chatMode).desc}</p>
+      </div></div>
 
       {(attachments.length > 0 || attachError) && (
         <div style={{ marginTop: 10 }}>
@@ -620,9 +650,11 @@ export default function Main({ dog, resetSignal }) {
           🐾
         </button>
       </form>
-      <p className="faint" style={{ textAlign: "center", marginTop: 8, marginBottom: 0 }}>
-        진단·처방을 대신하지 않아요. 응급 상황이면 병원에 문의하세요.
-      </p>
+      <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
+        <p className="faint" style={{ textAlign: "center", marginTop: 8, marginBottom: 0 }}>
+          진단·처방을 대신하지 않아요. 응급 상황이면 병원에 문의하세요.
+        </p>
+      </div></div>
     </div>
   );
 }

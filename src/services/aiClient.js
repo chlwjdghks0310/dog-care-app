@@ -2,9 +2,8 @@ import { getWeightRecords } from "./weightLog";
 import { buildAppSnapshot } from "./appSnapshot";
 import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
-import { answerQuestion } from "./mockAI";
 import { sanitizeStructured, structureAnswer } from "../utils/aiAnswer";
-import { ensureAIConsent } from "../components/AIConsent";
+import { ensureAIConsent } from "./aiConsent";
 
 // env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
 export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
@@ -46,42 +45,34 @@ function withStructure(data) {
   return { answer, structured: sanitizeStructured(data?.structured) || structureAnswer(answer) };
 }
 
-// 실제 Claude API 프록시(server/)에 먼저 물어보고, 서버가 꺼져있거나 오류가 나면
-// 규칙 기반 mock 응답으로 조용히 대체한다 (UI가 끊기지 않도록).
-// 사진을 붙였으면(images: [{ data, mediaType }]) 대체 답이 있을 수 없으니 실패를 그대로 던진다.
+// Claude API 프록시(server/)에 묻는다. 서버가 꺼져 있거나 오류가 나면 그대로 던진다 —
+// 예전엔 규칙 기반 대체 답을 보여 줬지만 질문과 맞지 않는 답이 나와서, 이제는 "다시 시도"를 띄운다(Main.jsx).
 // imagesAreContext: 앞서 보낸 사진을 후속 질문에 다시 붙인 것 — 서버가 새로 분석하지 않고 참고만 한다.
 export async function askAI(dog, question, history, mode, { images, imagesAreContext, signal } = {}) {
   const hasImages = Array.isArray(images) && images.length > 0;
   await ensureAIConsent(); // 처음 한 번: 외부 AI로 보내도 되는지 묻는다(거절하면 아무것도 안 보냄)
-  try {
-    const res = await fetch(`${API_BASE}/api/ask`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dogContext: toDogContext(dog),
-        question,
-        history,
-        mode,
-        categories: getCategories().map((c) => c.name),
-        ...(hasImages && { images, imagesAreContext: Boolean(imagesAreContext) }),
-      }),
-      signal,
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "AI 서버 호출에 실패했어요.");
-    }
-    const data = await res.json();
-    return { ...withStructure(data), source: "ai", actions: Array.isArray(data.actions) ? data.actions : [] };
-  } catch (err) {
-    if (hasImages || err.name === "AbortError") throw err;
-    const answer = answerQuestion(dog, question);
-    return { answer, structured: structureAnswer(answer), source: "mock" };
+  const res = await fetch(`${API_BASE}/api/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      dogContext: toDogContext(dog),
+      question,
+      history,
+      mode,
+      categories: getCategories().map((c) => c.name),
+      ...(hasImages && { images, imagesAreContext: Boolean(imagesAreContext) }),
+    }),
+    signal,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "AI 서버 호출에 실패했어요.");
   }
+  const data = await res.json();
+  return { ...withStructure(data), actions: Array.isArray(data.actions) ? data.actions : [] };
 }
 
-// 사진 분석은 신뢰할 만한 mock 대체 결과가 있을 수 없으므로(건강 관련 허위 안심/허위 경고 위험),
-// 서버 연결 실패 시 mock으로 조용히 대체하지 않고 에러를 그대로 알린다.
+// 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).
 export async function analyzePhoto(dog, file) {
   await ensureAIConsent();
   const imageBase64 = await fileToBase64(file);

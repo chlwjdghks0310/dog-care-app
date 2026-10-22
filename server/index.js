@@ -387,6 +387,8 @@ async function createWithContinuation(params, messages) {
 const KIND = { type: "string", enum: ["expense", "calendar_event", "weight", "alarm", "health_record"], description: "expense=가계부 지출, calendar_event=일정표 일정, weight=체중 기록, alarm=알람, health_record=건강 수치·증상·식사 등 [보호자 기록]/[건강 수치]의 기록" };
 const VITAL_METRIC = { type: "string", enum: ["dry", "wet", "treat", "water", "fluid", "resp", "heart", "temp", "walk"], description: "dry=건식 사료(g), wet=습식(g), treat=간식(개), water=음수량(ml), fluid=피하수액(ml), resp=호흡수(회/분), heart=심박수(회/분), temp=체온(℃), walk=산책(분)" };
 const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
+// 앱 일정표의 종류(src/services/calendarEvents.js EVENT_KINDS와 같은 id)
+const EVENT_KIND = { type: "string", enum: ["vet", "vaccine", "grooming", "med", "stay", "day", "etc"], description: "일정 종류: vet=병원 진료·검진, vaccine=예방접종·심장사상충 등 예방, grooming=미용·목욕, med=약 받기·투약 관련, stay=호텔·유치원·돌봄, day=생일·기념일, etc=그 밖" };
 function appTools(categories) {
   const category = Array.isArray(categories) && categories.length
     ? { type: "string", enum: categories.map(String).slice(0, 40), description: "가장 알맞은 가계부 카테고리" }
@@ -399,7 +401,12 @@ function appTools(categories) {
   return [
     tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category }, ["title", "amount", "date", "category"]),
     tool("set_allowance", "그 달 강아지 용돈(쓸 예산)을 정한다.", { month: { type: "string", description: "YYYY-MM" }, amount: { type: "integer" } }, ["month", "amount"]),
-    tool("add_calendar_event", "일정표에 그 날짜의 일정/메모를 추가한다. 시간이 있으면 제목에 포함.", { date: DATE, title: { type: "string" } }, ["date", "title"]),
+    tool(
+      "add_calendar_event",
+      "일정표에 그 날짜의 일정 1건을 추가한다. 내용에 맞는 종류(kind)를 고르고, 시각을 말했으면 time에 넣는다(제목에는 시각을 넣지 않는다).",
+      { date: DATE, title: { type: "string", description: "짧은 제목. 예: '미용 예약', '종합백신 2차'" }, kind: EVENT_KIND, time: { type: "string", description: "HH:MM(24시간). 시각을 말하지 않았으면 생략" } },
+      ["date", "title", "kind"]
+    ),
     tool("add_weight_record", "체중 관리에 체중 기록을 추가한다.", { weight_kg: { type: "number" }, date: DATE, time: { type: "string", description: "HH:MM, 모르면 생략" } }, ["weight_kg", "date"]),
     tool("set_checklist_done", "오늘 체크리스트 항목을 완료(또는 취소) 표시한다. 앱 기록의 오늘 할 일 제목 중 하나여야 한다.", { title: { type: "string", description: "오늘 할 일 제목 그대로" }, done: { type: "boolean" } }, ["title", "done"]),
     tool(
@@ -444,6 +451,7 @@ function appTools(categories) {
         weight_kg: { type: "number" },
         value: { type: "number", description: "health_record 건강 수치의 새 숫자" },
         time: { type: "string", description: "HH:MM" },
+        event_kind: { ...EVENT_KIND, description: `calendar_event 일정의 새 종류(바꿀 때만). ${EVENT_KIND.description}` },
       },
       ["kind", "id", "summary"]
     ),
@@ -466,6 +474,7 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 지난 답변 끝의 [앱 처리 결과]는 앱에서 실제로 일어난 일이다(기록 완료, 버튼을 눌러 고침·지움, 취소함). 이것과 지금 앱 기록을 기준으로 판단한다:
   이미 기록·처리된 일을 "안 했다"고 말하거나 다시 기록하지 않고, 보호자가 취소한 고치기·지우기를 다시 제안하지 않는다.
   도구는 이번 메시지에서 보호자가 새로 시킨 일에만 쓴다. 지난 대화의 요청을 다시 처리하지 않는다.
+- 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
 - 건강 수치: "건식 50g 먹었어", "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
   사료가 건식인지 습식인지(캔·파우치=습식), 단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
   수치를 보고 진단하지 않는다. [건강 수치]에 참고 범위 밖 값이 있으면 사실만 말하고(예: "잘 때 호흡수가 42회로 적혔어"), 계속되면 동물병원에 문의하라고 한다.

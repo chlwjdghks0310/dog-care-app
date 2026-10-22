@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export const TABS = [
   { key: "main", label: "비서", icon: "🐶" },
@@ -15,6 +15,14 @@ const DOUBLE_TAP_MS = 300;
 // 경로는 다루지 않는다. 이 앱은 폰에서만 쓰는 PWA라 지금은 그 정도로 충분하다.
 export default function BottomNav({ active, onChange, onItemLongPress, onItemDoubleTap }) {
   const pressState = useRef({});
+  // 탭 높이(아이폰 하단 여백 포함)를 CSS에 알려 둔다 — 비서 답변 읽기 때 이만큼 아래로 내려 숨긴다(index.css .reading)
+  const navRef = useRef(null);
+  useEffect(() => {
+    const el = navRef.current;
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty("--nav-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   function getState(key) {
     if (!pressState.current[key]) pressState.current[key] = { timer: null, longPressFired: false, lastTapAt: 0 };
@@ -53,7 +61,7 @@ export default function BottomNav({ active, onChange, onItemLongPress, onItemDou
   }
 
   return (
-    <nav className="bottom-nav">
+    <nav ref={navRef} className="bottom-nav">
       {TABS.map((tab) => (
         <button
           key={tab.key}

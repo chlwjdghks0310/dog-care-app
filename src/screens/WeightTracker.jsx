@@ -177,7 +177,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 뒤로
+        ← 프로필로
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -229,10 +229,10 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: changeSummary.deltaKg > 0 ? "var(--danger)" : changeSummary.deltaKg < 0 ? "var(--success)" : "var(--text-soft)",
+                    color: "var(--text-soft)", // 늘거나 줄었다는 것만으로 좋고 나쁨을 정하지 않는다
                   }}
                 >
-                  {changeSummary.deltaKg > 0 ? "▲" : changeSummary.deltaKg < 0 ? "▼" : "-"} {Math.abs(changeSummary.deltaKg).toFixed(1)}kg (
+                  {changeSummary.deltaKg > 0 ? "▲" : changeSummary.deltaKg < 0 ? "▼" : "-"} {+Math.abs(changeSummary.deltaKg).toFixed(2)}kg (
                   {changeSummary.deltaPercent > 0 ? "+" : ""}
                   {changeSummary.deltaPercent.toFixed(1)}%)
                 </span>
