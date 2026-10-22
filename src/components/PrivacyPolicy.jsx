@@ -39,7 +39,7 @@ export default function PrivacyPolicy({ onClose }) {
       </div>
       <div className="card">
         <p className="subtle" style={{ marginTop: 0 }}>
-          {OPERATOR.name}(이하 "멍케어")는 개인정보 보호법에 따라 이용자의 개인정보를 보호하고 관련 고충을 원활하게 처리하기 위해 다음과 같이 처리방침을 둡니다.
+          {OPERATOR.name}는 개인정보 보호법에 따라 이용자의 개인정보를 보호하고 관련 고충을 원활하게 처리하기 위해 다음과 같이 처리방침을 둡니다.
         </p>
         {SECTIONS.map(([title, body]) => (
           <div key={title} style={{ marginTop: 14 }}>
