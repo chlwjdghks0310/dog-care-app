@@ -4,11 +4,9 @@ import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../servic
 import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIcon } from "../data/categoryIcons";
 import ProgressRing from "../components/ProgressRing";
-import { getWalks } from "../services/walks";
-import { fmtKm } from "../utils/geo";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenWalk, onOpenMain }) {
+export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -61,9 +59,6 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
           <span className="quick-tile-label">알림·알람</span>
         </button>
       </div>
-
-      {/* 산책: 누르면 나이키 런 클럽처럼 시작 화면 → GPS로 코스·거리·시간 기록 */}
-      <WalkCard dog={dog} dateKey={dateKey} onOpen={onOpenWalk} />
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -146,22 +141,5 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         궁금한 점은 비서 탭의 강아지한테 물어보세요!
       </p>
     </div>
-  );
-}
-
-// 체크리스트의 산책 상자 — 오늘 걸은 거리·시간을 보여 주고, 누르면 산책 화면으로
-function WalkCard({ dog, dateKey, onOpen }) {
-  const today = getWalks(dog.id).filter((w) => w.startedAt.startsWith(dateKey));
-  const km = fmtKm(today.reduce((n, w) => n + w.distanceM, 0));
-  const min = Math.round(today.reduce((n, w) => n + w.durationSec, 0) / 60);
-  return (
-    <button type="button" className="card walk-card" onClick={onOpen} style={{ marginBottom: 14 }}>
-      <span className="walk-card-icon" aria-hidden="true">🦮</span>
-      <span style={{ flex: 1, textAlign: "left" }}>
-        <b style={{ fontSize: 17 }}>산책</b>
-        <span className="subtle" style={{ display: "block", fontSize: 14 }}>{today.length ? `오늘 ${today.length}번 · ${km}km · ${min}분` : "오늘은 아직 안 나갔어요 · GPS로 코스 기록"}</span>
-      </span>
-      <span className="walk-card-go">시작 ›</span>
-    </button>
   );
 }

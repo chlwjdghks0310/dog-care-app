@@ -24,7 +24,6 @@ export const SYNCED_KEYS = [
   "dogcare-custom-schedules-v1",
   "dogcare-calendar-events-v1",
   "dogcare-allowance-v1",
-  "dogcare-walks-v1",
 ];
 const DOGS_KEY = "dogcare-dogs-v1";
 const CATEGORIES_KEY = "dogcare-expense-categories-v1";
