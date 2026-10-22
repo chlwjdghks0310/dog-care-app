@@ -8,7 +8,7 @@ import { readJSON, writeJSON } from "../services/storage";
 // ② 막힌 기기(아이폰 홈 화면 앱 등)는 마이크 소리를 0.1초 조각으로 서버(/api/voice-live → Gemini Transcribe Live)에 흘려보내 실시간으로 받아쓴다.
 //    ①을 시도하는 동안의 소리도 모아 두어, ②로 넘어가도 처음 말한 단어가 사라지지 않는다.
 // ③ 실시간 연결이 안 되면 모아 둔 소리를 한 번에 받아쓴다(/api/transcribe).
-// 끝나면 바로 보내지 않고 입력창에 채워서, 확인·수정한 뒤 보내게 한다.
+// 끝나면 onText로 받아쓴 글(입력창에 적혀 있던 글 + 말한 내용)을 넘긴다 — 비서는 바로 질문으로 보낸다(시리처럼).
 const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 const MODE_KEY = "dogcare-voice-mode-v1"; // 브라우저 인식이 이 기기에서 안 됐으면 값이 생긴다 — 다음부턴 바로 ②
 const RATE = 16000;

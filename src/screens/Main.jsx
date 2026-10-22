@@ -174,6 +174,9 @@ export default function Main({ dog, resetSignal }) {
   }
 
   // 보내기: 글만, 사진(여러 장)+글, 영상+글 모두 여기로. 후속 질문 버튼도 같은 길로 실제 질문을 보낸다.
+  // 🎤 음성 인식이 끝나면 바로 질문으로 보낸다(시리처럼). 듣는 동안 화면이 바뀌어도 최신 send를 쓰도록 ref로
+  const sendRef = useRef(null);
+  sendRef.current = (text) => send(text);
   function send(text, files = attachments) {
     const question = text.trim();
     if ((!question && !files.length) || busyRef.current) return; // 보내는 중엔 무시 → 버튼 여러 번 눌러도 요청 하나
@@ -606,7 +609,7 @@ export default function Main({ dog, resetSignal }) {
             background: "var(--surface)",
           }}
         />
-        <VoiceButton getText={() => inputRef.current} onText={setInput} onError={setAttachError} disabled={pending} hints={[dog.name, dog.breed].filter(Boolean)} />
+        <VoiceButton getText={() => inputRef.current} onText={(t) => sendRef.current(t)} onError={setAttachError} disabled={pending} hints={[dog.name, dog.breed].filter(Boolean)} />
         <button
           type="submit"
           className="btn-primary"
