@@ -1,4 +1,4 @@
-import { Fragment, Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
 import { getTodayChecklist } from "./services/careEngine";
@@ -76,6 +76,7 @@ export default function App() {
     if (key === "main" && tab === "main") {
       setMainResetSignal((s) => s + 1);
     }
+    if ((PARENT_TAB[tab] || tab) === key) alignPager(); // 이미 그 탭이면 화면 위치만 다시 맞춘다(하단 탭과 화면이 어긋났을 때 눌러서 바로잡기)
     setTab(key);
   }
 
@@ -92,13 +93,40 @@ export default function App() {
     window.scrollTo(0, 0); // 혹시 문서가 밀려 있었어도(키보드 등) 다른 탭 위쪽이 잘리지 않게
   }, [pageKey]);
 
-  // 탭을 눌러 바꾸면 그 페이지로 바로 이동(손가락으로 끄는 중엔 건드리지 않음)
-  useLayoutEffect(() => {
+  const [visibleIndex, setVisibleIndex] = useState(pageIndex);
+  // 보이는 화면을 현재 탭 위치에 맞춘다(손가락으로 끄는 중엔 건드리지 않음). 하단 탭 표시도 같이 맞춘다.
+  // 아이폰은 앱을 켤 때 위치 지정을 무시하거나, 와이파이가 끊겼다 붙어 화면이 다시 그려질 때 위치를 맨 앞(비서)으로 되돌릴 때가 있어
+  // — 하단 탭은 프로필인데 화면은 비서가 되는 문제 — 켤 때·돌아올 때·연결이 바뀔 때·크기가 바뀔 때마다 다시 맞춘다.
+  const pageIndexRef = useRef(pageIndex);
+  pageIndexRef.current = pageIndex;
+  const alignPager = useCallback(() => {
     const el = pagerRef.current;
-    const page = el?.children[pageIndex];
+    const page = el?.children[pageIndexRef.current];
     if (!page || touchingRef.current) return;
-    if (Math.abs(el.scrollLeft - page.offsetLeft) > 2) el.scrollTo({ left: page.offsetLeft });
-  }, [pageIndex, loading, route]); // 로딩/등록이 끝나 페이저가 처음 그려질 때도 첫 탭(프로필) 위치로
+    if (Math.abs(el.scrollLeft - page.offsetLeft) > 2) el.scrollLeft = page.offsetLeft;
+    setVisibleIndex(pageIndexRef.current);
+  }, []);
+  useLayoutEffect(alignPager, [pageIndex, loading, route, pageVersion, alignPager]);
+  useEffect(() => {
+    const el = pagerRef.current;
+    if (!el) return;
+    // 처음 몇 프레임은 레이아웃이 덜 잡혀 무시될 수 있어 여러 번
+    const frames = [requestAnimationFrame(() => requestAnimationFrame(alignPager))];
+    const timers = [100, 400, 1000].map((ms) => setTimeout(alignPager, ms));
+    const onVisible = () => document.visibilityState === "visible" && alignPager();
+    const events = ["resize", "orientationchange", "online", "offline", "pageshow", "dogcare-synced"];
+    events.forEach((e) => window.addEventListener(e, alignPager));
+    document.addEventListener("visibilitychange", onVisible);
+    const ro = new ResizeObserver(alignPager);
+    ro.observe(el);
+    return () => {
+      frames.forEach(cancelAnimationFrame);
+      timers.forEach(clearTimeout);
+      events.forEach((e) => window.removeEventListener(e, alignPager));
+      document.removeEventListener("visibilitychange", onVisible);
+      ro.disconnect();
+    };
+  }, [loading, route, alignPager]);
 
   // 스와이프가 멈추면(스냅 완료) 보이는 페이지를 현재 탭으로
   function settlePage() {
@@ -112,7 +140,6 @@ export default function App() {
     }, 120);
   }
   // 하단 탭 표시는 끄는 도중에도 화면 절반을 넘는 순간 바로 바뀌게
-  const [visibleIndex, setVisibleIndex] = useState(pageIndex);
   function handlePagerScroll() {
     const el = pagerRef.current;
     if (el && el.children.length > 1) setVisibleIndex(Math.round(el.scrollLeft / (el.children[1].offsetLeft - el.children[0].offsetLeft)));
