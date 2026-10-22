@@ -16,9 +16,9 @@ import AiAnswer from "../components/AiAnswer";
 import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
-  { key: "pomeranian", icon: "🐶", name: "빠르게", breed: "포메라니안", desc: "포메라니안 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
-  { key: "bordercollie", icon: "🐕", name: "자세히", breed: "보더콜리", desc: "보더콜리 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "retriever", icon: "🦮", name: "수다", breed: "리트리버", desc: "리트리버 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "pomeranian", icon: "🐶", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", pending: "음… 생각 중이야…" },
+  { key: "bordercollie", icon: "🐕", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "retriever", icon: "🦮", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 앱을 새로 켜면 항상 포메라니안(첫 번째)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -448,7 +448,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
               >
                 {m.chatMode && (
                   <div className="faint" style={{ marginBottom: 6 }}>
-                    {findChatMode(m.chatMode).icon} {findChatMode(m.chatMode).breed}
+                    {findChatMode(m.chatMode).icon} {findChatMode(m.chatMode).name}
                   </div>
                 )}
                 {m.structured ? (
