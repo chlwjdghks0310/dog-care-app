@@ -45,7 +45,7 @@ export default function HealthCheck({ dog, onBack }) {
       </button>
       <div className="h1">변 상태 확인</div>
       <p className="faint" style={{ marginBottom: 16 }}>
-        수의 임상 기준(퓨리나 대변 점수표 등)과 최신 자료를 찾아 수의사 관점으로 자세히 분석해요. 사진만으로는 한계가
+        수의 임상 기준(퓨리나 대변 점수표 등)과 최신 자료를 찾아 참고용으로 자세히 분석해요. 사진만으로는 한계가
         있어 진단을 대신하지 않으니, 이상이 지속되면 반드시 동물병원에 방문하세요.
       </p>
 

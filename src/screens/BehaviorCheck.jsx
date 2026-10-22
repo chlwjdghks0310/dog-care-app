@@ -51,7 +51,7 @@ export default function BehaviorCheck({ dog, onBack }) {
       </button>
       <div className="h1">활동 상태 확인</div>
       <p className="faint" style={{ marginBottom: 16 }}>
-        영상 속 자세·걸음걸이·호흡·소리를 수의 임상 기준과 최신 자료로 수의사 관점에서 자세히 분석해요. 영상만으로는
+        영상 속 자세·걸음걸이·호흡·소리를 수의 임상 기준과 최신 자료로 참고용으로 자세히 분석해요. 영상만으로는
         한계가 있어 진단을 대신하지 않으니, 이상이 지속되면 병원에 방문하세요. 영상은 분석을 위해 서버를 거쳐 Google Gemini API로 전송돼요.
       </p>
 
