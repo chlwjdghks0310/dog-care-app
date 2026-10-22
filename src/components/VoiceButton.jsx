@@ -24,6 +24,33 @@ const WORKLET = `registerProcessor("pcm-tap", class extends AudioWorkletProcesso
 });`;
 
 const wsBase = () => API_BASE.replace(/^http/, "ws");
+const isIOSApp = () => /iPhone|iPad|iPod/.test(navigator.userAgent) && (navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches);
+
+// 마이크 한 번 허용하면 계속 쓰게: 아이폰은 마이크를 끌 때마다(트랙 종료) 다음에 또 허용을 묻는다.
+// 그래서 받은 마이크를 잠시 살려 두고 다시 쓴다 — 안 쓰는 동안은 소리를 끄고(enabled=false), 3분 동안 안 쓰거나 앱을 내리면 놓아준다.
+// ponytail: 아이폰이 앱을 완전히 껐다 켜면 한 번 더 묻는 건 웹앱에서 막을 수 없다(기기 설정의 몫)
+let micStream = null;
+let micTimer = null;
+async function getMic() {
+  clearTimeout(micTimer);
+  if (micStream?.getAudioTracks().some((t) => t.readyState === "live")) {
+    micStream.getAudioTracks().forEach((t) => (t.enabled = true));
+    return micStream;
+  }
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+  return micStream;
+}
+function releaseMicLater() {
+  micStream?.getAudioTracks().forEach((t) => (t.enabled = false));
+  clearTimeout(micTimer);
+  micTimer = setTimeout(releaseMic, 3 * 60_000);
+}
+function releaseMic() {
+  clearTimeout(micTimer);
+  micStream?.getTracks().forEach((t) => t.stop());
+  micStream = null;
+}
+if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" && releaseMic());
 
 // 아무 샘플레이트 → 16kHz 16비트(선형 보간)
 function toPcm16(float32, fromRate) {
@@ -84,7 +111,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
     const Ctx = window.AudioContext || window.webkitAudioContext;
     r.ctx = new Ctx(); // 누른 순간 만들어야 아이폰에서 소리가 막히지 않는다
     r.ctx.resume?.();
-    r.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+    r.stream = await getMic();
     if (r.finished) return;
     const src = r.ctx.createMediaStreamSource(r.stream);
     if (r.ctx.audioWorklet) {
@@ -107,7 +134,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
 
   function stopCapture(r) {
     r.node?.disconnect?.();
-    r.stream?.getTracks().forEach((t) => t.stop());
+    if (r.stream) releaseMicLater(); // 끄지 않고 잠시 살려 둔다(다음에 다시 묻지 않게)
     r.ctx?.close?.().catch?.(() => {});
     r.node = r.stream = null;
   }
@@ -156,7 +183,8 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
       }
     }
     if (r.finished) return; // 마이크 허용을 기다리는 동안 취소됨
-    const useSR = SR && !readJSON(MODE_KEY, null);
+    // 아이폰 홈 화면 앱은 브라우저 인식이 막혀 있고 별도 허용 창까지 떠서 건너뛴다 → 마이크 허용 한 번만
+    const useSR = SR && !readJSON(MODE_KEY, null) && !isIOSApp();
     if (useSR) {
       try {
         const rec = new SR();
