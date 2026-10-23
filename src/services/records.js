@@ -17,7 +17,7 @@ export const TYPES = {
   weight: { label: "체중", icon: "⚖️", ico: "gauge" },
   symptom: { label: "증상", icon: "🤒", ico: "thermometer" },
   meal: { label: "식사", icon: "🍚", ico: "utensils" },
-  potty: { label: "배변·배뇨", icon: "💩", ico: "droplets" },
+  potty: { label: "배변·배뇨", icon: "💩", ico: "sprout" },
   med: { label: "복약", icon: "💊", ico: "pill" },
   vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope" },
   condition: { label: "컨디션", icon: "🌙", ico: "moon" },

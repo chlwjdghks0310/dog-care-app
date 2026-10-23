@@ -5,7 +5,7 @@ import {
   AlarmClockIcon, ArrowDownIcon, ArrowRightIcon, BellIcon, BellOffIcon, BookOpenIcon, Building2Icon, CalendarDaysIcon, CameraIcon,
   ChartColumnIcon, ChartLineIcon, CircleCheckIcon, CircleStopIcon, ClipboardListIcon, CookieIcon, DogIcon, DropletIcon, DropletsIcon,
   EyeIcon, FootprintsIcon, GaugeIcon, GiftIcon, HandIcon, HeartPulseIcon, HouseIcon, LightbulbIcon, ListChecksIcon, LockIcon, MenuIcon,
-  MicIcon, MoonIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
+  MicIcon, MoonIcon, SproutIcon, ZapIcon, MessageCircleHeartIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
   PillIcon, PinIcon, PipetteIcon, PrinterIcon, RepeatIcon, RulerIcon, ScissorsIcon, SearchIcon, SettingsIcon, ShieldCheckIcon, SirenIcon,
   SparklesIcon, StethoscopeIcon, TargetIcon, ThermometerIcon, TimerIcon, Trash2Icon, TriangleAlertIcon, UsersIcon, UtensilsIcon,
   VideoIcon, Volume2Icon, WalletIcon, WindIcon,
@@ -22,6 +22,7 @@ const ICONS = {
   scissors: ScissorsIcon, search: SearchIcon, settings: SettingsIcon, shield: ShieldCheckIcon, siren: SirenIcon, sparkles: SparklesIcon,
   stethoscope: StethoscopeIcon, target: TargetIcon, thermometer: ThermometerIcon, timer: TimerIcon, trash: Trash2Icon,
   alert: TriangleAlertIcon, users: UsersIcon, utensils: UtensilsIcon, video: VideoIcon, speaker: Volume2Icon, wallet: WalletIcon, wind: WindIcon,
+  sprout: SproutIcon, zap: ZapIcon, chatHeart: MessageCircleHeartIcon,
   puzzle: PuzzleIcon, sprayCan: SprayCanIcon, car: CarIcon, graduation: GraduationCapIcon, umbrella: UmbrellaIcon, shoppingBag: ShoppingBagIcon, box: BoxIcon,
 };
 

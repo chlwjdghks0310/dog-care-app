@@ -2,7 +2,7 @@
 const CATEGORY_ICOS = {
   산책: "footprints",
   식사: "utensils",
-  배변훈련: "droplets",
+  배변훈련: "sprout",
   사회화: "users",
   이갈이: "sparkles",
   "목욕/미용": "scissors",

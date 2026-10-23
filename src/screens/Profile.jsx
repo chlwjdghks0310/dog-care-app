@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
-import { THEMES, getTheme, setTheme } from "../services/themeSettings";
+import { isDark, setDark } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
@@ -42,10 +42,7 @@ const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : nu
 
 export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
-  const [theme, setThemeState] = useState(getTheme());
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const currentTheme = THEMES.find((t) => t.id === theme) || THEMES[0];
-  const [category, setCategory] = useState(currentTheme.category);
+  const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -109,12 +106,6 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
     });
     onUpdateDog?.(updated);
     setEditing(false);
-  }
-
-  function handleSelectTheme(id) {
-    setTheme(id);
-    setThemeState(id);
-    setPickerOpen(false);
   }
 
   async function handleEnableNotifications() {
@@ -326,7 +317,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
         )}
       </div>
 
-      {/* 설정(☰): 가족 공유·강아지 등록·배경 테마·백업 로그인·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
+      {/* 설정(☰): 가족 공유·강아지 등록·다크 모드·백업 로그인·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
       {settingsOpen &&
         createPortal(
           <div className="settings-sheet" role="dialog" aria-label="설정" {...swipeClose}>
@@ -343,136 +334,15 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
               </button>
             </div>
             <div className="card" style={{ marginBottom: 14 }}>
-              <div className="h2">배경 테마</div>
-              <button
-                onClick={() => setPickerOpen((v) => !v)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                }}
-              >
-                <span
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: "50%",
-                    background: currentTheme.swatch,
-                    border: "2px solid var(--border)",
-                    boxShadow: "var(--shadow)",
-                    display: "inline-block",
-                    flexShrink: 0,
-                  }}
-                  aria-hidden="true"
-                />
-                <span className="subtle">{currentTheme.label} · 탭해서 바꾸기</span>
-              </button>
-
-              {pickerOpen && (
-                <div style={{ display: "flex", gap: 14, marginTop: 16 }}>
-                  <button
-                    onClick={() => setCategory("plain")}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        background: "var(--accent)",
-                        border: category === "plain" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
-                        boxShadow: "var(--shadow)",
-                        display: "inline-block",
-                      }}
-                      aria-hidden="true"
-                    />
-                    <span style={{ fontSize: 12, fontWeight: category === "plain" ? 700 : 400, color: category === "plain" ? "var(--accent-strong)" : "var(--text-soft)" }}>
-                      색깔
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setCategory("paw")}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        background: "var(--surface)",
-                        border: category === "paw" ? "2px solid var(--accent-strong)" : "2px solid var(--border)",
-                        boxShadow: "var(--shadow)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 20,
-                      }}
-                    >
-                      🐾
-                    </span>
-                    <span style={{ fontSize: 12, fontWeight: category === "paw" ? 700 : 400, color: category === "paw" ? "var(--accent-strong)" : "var(--text-soft)" }}>
-                      발자국
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              {pickerOpen && (
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-                  {THEMES.filter((t) => t.category === category).map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => handleSelectTheme(t.id)}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "8px 4px",
-                        border: theme === t.id ? "2px solid var(--accent)" : "2px solid transparent",
-                        borderRadius: 12,
-                        background: "none",
-                        width: 64,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          background: t.swatch,
-                          display: "inline-block",
-                          border: "1px solid var(--border)",
-                          boxShadow: "var(--shadow)",
-                        }}
-                        aria-hidden="true"
-                      />
-                      <span style={{ fontSize: 11.5, color: theme === t.id ? "var(--accent-strong)" : "var(--text-soft)", fontWeight: theme === t.id ? 700 : 400 }}>
-                        {t.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
+                <span>
+                  <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+                    <Ico name="moon" size={18} /> 다크 모드
+                  </span>
+                  <span className="faint" style={{ display: "block", marginTop: 4 }}>어두운 화면으로 눈이 덜 부셔요</span>
+                </span>
+                <input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />
+              </label>
             </div>
             <AccountCard />
             <AIConsentCard />

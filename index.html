@@ -42,7 +42,21 @@
       #splash h1 { margin: 0 0 14px; font-size: 26px; font-weight: 800; color: #24456b; letter-spacing: -0.02em; }
       #splash p { margin: 0 0 22px; font-size: 16px; color: #607d9b; }
       #splash small { font-size: 12px; letter-spacing: 0.14em; color: #7d93ad; }
+      /* 다크 모드(설정에서 켬): 첫 화면부터 어둡게 */
+      html[data-theme="dark"], html[data-theme="dark"] #splash { background: #17171c; }
+      html[data-theme="dark"] #splash h1 { color: #ececf0; }
+      html[data-theme="dark"] #splash p { color: #a9a9b3; }
+      html[data-theme="dark"] #splash small { color: #8dbdf6; }
     </style>
+    <script>
+      // 다크 모드면 그리기 전에 먼저 입힌다(밝은 화면이 번쩍이지 않게) — 같은 키를 src/services/themeSettings.js가 쓴다
+      try {
+        if (localStorage.getItem("dogcare-theme-v1") === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#17171c");
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="splash" aria-hidden="true">
