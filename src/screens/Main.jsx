@@ -3,7 +3,8 @@ import { askAI, analyzeBehavior } from "../services/aiClient";
 import { imageForAI } from "../utils/image";
 import { josa, splitHeadline } from "../utils/text";
 import { getChatMemory, rememberChat, noteChatResult } from "../services/chatMemory";
-import { applyAppActions, applyConfirmedAction } from "../services/appActions";
+import { applyAppActions, applyConfirmedAction, saveAskedExpense } from "../services/appActions";
+import { getCategories } from "../services/expenses";
 import { renderEmphasized } from "../components/RichText";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
@@ -177,6 +178,18 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
     );
   }
 
+  // 채팅 지출의 분류를 보호자가 골랐을 때 — 저장하고 그 자리에 결과를 남긴다
+  function resolveAsk(msgIndex, j, categoryId) {
+    const ask = messages[msgIndex]?.records?.ask?.[j];
+    if (!ask || ask.status) return;
+    const status = categoryId ? saveAskedExpense(dog, ask, categoryId) || "저장하지 못했어요." : "기록하지 않았어요.";
+    noteChatResult(dog.id, categoryId ? `보호자가 분류를 골라 기록함 → ${status}` : `보호자가 지출 기록을 취소함 (${ask.title})`);
+    if (categoryId) markFirstSteps(dog.id, { chat: true });
+    setMessages((list) =>
+      list.map((m, i) => (i === msgIndex ? { ...m, records: { ...m.records, ask: m.records.ask.map((c, k) => (k === j ? { ...c, status } : c)) } } : m))
+    );
+  }
+
   function speak(answerLength) {
     setAvatarState("talking");
     const talkDuration = Math.min(4000, Math.max(1200, answerLength * 45));
@@ -251,6 +264,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
       const notes = [
         ...(records?.done || []).map((r) => `기록 완료: ${r}`),
         ...(records?.confirm || []).map((c) => `${c.type === "delete_record" ? "지우기" : "고치기"} 버튼 띄움(보호자 확인 기다림): ${c.summary}`),
+        ...(records?.ask || []).map((a) => `분류 고르기 버튼 띄움(보호자 선택 기다림): ${a.title} ${a.amount}원`),
         ...(records?.failed ? ["일부 기록 실패(형식이 맞지 않음)"] : []),
       ];
       if (notes.length) noteChatResult(dog.id, notes.join(" / "));
@@ -488,6 +502,24 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
                         <button type="button" className="btn-ghost" style={{ flex: 1, padding: "8px 0" }} onClick={() => resolveConfirm(i, j, false)}>
                           취소
                         </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {m.records?.ask?.map((a, j) => (
+                  <div key={`ask${j}`} className="ask-card">
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}><Ico name="wallet" size={15} /> 어느 분류로 적을까요?</div>
+                    <div style={{ marginBottom: 8 }}>{a.title} · {a.amount.toLocaleString("ko-KR")}원 · {a.date.slice(5).replace("-", "/")}</div>
+                    {a.status ? (
+                      <div className="faint">{a.status}</div>
+                    ) : (
+                      <div className="chip-wrap">
+                        {getCategories().map((c) => (
+                          <button key={c.id} type="button" className="chip cat-chip" style={{ "--ev": c.color, fontSize: 13, padding: "5px 10px" }} onClick={() => resolveAsk(i, j, c.id)}>
+                            {c.name}
+                          </button>
+                        ))}
+                        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => resolveAsk(i, j, null)}>기록 안 함</button>
                       </div>
                     )}
                   </div>

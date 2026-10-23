@@ -972,3 +972,12 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .first-hint { margin: -2px 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--c-teal-bg); color: var(--text); font-size: 13.5px; line-height: 1.45; }
 .vt-value.stale { opacity: 0.45; }
 .btn-primary:disabled { opacity: 0.45; box-shadow: none; }
+.ask-card { margin-top: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; line-height: 1.5; }
+/* 가계부 지출 시트·목록 */
+.xs-label { font-size: 13px; font-weight: 700; color: var(--text-soft); margin: 0 2px 6px; }
+.xs-quick { font-size: 13px; padding: 6px 11px; border: 1px solid var(--border); cursor: pointer; }
+.xs-amount { display: flex; align-items: center; gap: 6px; }
+.xs-amount .es-input { flex: 1; font-size: 20px; font-weight: 700; text-align: right; }
+.xs-amount span { font-weight: 700; margin-bottom: 10px; }
+.bud-memo { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bud-record { border: none; cursor: pointer; font-size: 13px; padding: 5px 12px; font-weight: 700; }

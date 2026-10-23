@@ -391,7 +391,7 @@ const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저�
 const EVENT_KIND = { type: "string", enum: ["vet", "vaccine", "grooming", "med", "stay", "day", "etc"], description: "일정 종류: vet=병원 진료·검진, vaccine=예방접종·심장사상충 등 예방, grooming=미용·목욕, med=약 받기·투약 관련, stay=호텔·유치원·돌봄, day=생일·기념일, etc=그 밖" };
 function appTools(categories) {
   const category = Array.isArray(categories) && categories.length
-    ? { type: "string", enum: categories.map(String).slice(0, 40), description: "가장 알맞은 가계부 카테고리" }
+    ? { type: "string", enum: [...categories.map(String).slice(0, 40), "모름"], description: "분명히 맞는 가계부 카테고리. 맞는 게 없거나 애매하면 \"모름\" — 앱이 보호자에게 분류를 고르게 한다(추측해서 아무거나 고르지 말 것)" }
     : { type: "string", description: "가계부 카테고리 이름" };
   const tool = (name, description, properties, required) => ({
     name,
@@ -399,7 +399,7 @@ function appTools(categories) {
     input_schema: { type: "object", properties, required, additionalProperties: false },
   });
   return [
-    tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category }, ["title", "amount", "date", "category"]),
+    tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만. 분류가 애매하면 category를 \"모름\"으로 보내면 앱이 분류 버튼을 띄워 묻는다.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category, memo: { type: "string", description: "병원 이름 등 덧붙일 말(없으면 빈 문자열)" } }, ["title", "amount", "date", "category"]),
     tool("set_allowance", "그 달 강아지 용돈(쓸 예산)을 정한다.", { month: { type: "string", description: "YYYY-MM" }, amount: { type: "integer" } }, ["month", "amount"]),
     tool(
       "add_calendar_event",

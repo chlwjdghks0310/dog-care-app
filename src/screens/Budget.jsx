@@ -5,30 +5,25 @@ import {
   getCategories,
   addCategory,
   deleteCategory,
+  updateCategory,
   getExpenses,
-  addExpense,
-  deleteExpense,
   getAllowance,
   setAllowance,
-  updateExpense,
+  searchExpenses,
+  resolveCategoryId,
   UNKNOWN_CATEGORY,
+  CATEGORY_COLORS,
   CATEGORY_CHOICES,
   categoryIco,
 } from "../services/expenses";
 import { compareSameTime, detectFixed, projectMonth, bigExpenseThreshold, weeklyTotals, topItems, categoryCompare } from "../services/budgetInsights";
 import Ico from "../components/Ico";
+import ExpenseSheet from "../components/ExpenseSheet";
+import { josa } from "../utils/text";
 import { HOLIDAYS } from "../data/holidays";
 
 const inputStyle = { height: 40, border: "1px solid var(--border)", borderRadius: 10, padding: "0 12px", fontSize: 16, minWidth: 0 };
 
-// 카테고리 색 — 카테고리 목록 순서대로 정해져서 달이 바뀌어도 같은 색
-const CATEGORY_COLORS = ["#e8774a", "#4a90e2", "#5cb85c", "#f0b429", "#9b6dd6", "#e05a8a", "#2bb5a5", "#8d6e63", "#7f8c8d", "#c0392b"];
-
-// 받침 있는 이름은 "초롱이의", 없는 이름은 "보리의"
-const withI = (name) => {
-  const code = name.charCodeAt(name.length - 1) - 0xac00;
-  return code >= 0 && code < 11172 && code % 28 !== 0 ? `${name}이` : name;
-};
 
 // 금액 입력칸을 숫자 길이만큼만(뒤의 "원"이 숫자에 붙도록). 비어 있으면 안내 문구 크기.
 const inputWidth = (text) => (text ? `${text.replace(/,/g, "").length * 0.6 + (text.match(/,/g) || []).length * 0.3 + 0.15}em` : "5em");
@@ -45,27 +40,16 @@ export default function Budget({ dog }) {
   const [filterCategoryId, setFilterCategoryId] = useState(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [analysisView, setAnalysisView] = useState("category"); // category | week
-  const [editing, setEditing] = useState(null); // 고치는 중인 지출 { id, title, amountText, categoryId, date }
-
-  const [title, setTitle] = useState("");
-  const [amountText, setAmountText] = useState("");
-  const [categoryId, setCategoryId] = useState(() => getCategories()[0]?.id);
-  const [catPicked, setCatPicked] = useState(false); // 직접 고르기 전엔 적은 내용에 카테고리 이름이 있으면 그걸로("사료" → 사료)
-  function handleTitle(value) {
-    setTitle(value);
-    if (catPicked) return;
-    const hit = categories.find((c) => value.includes(c.name));
-    if (hit) setCategoryId(hit.id);
-  }
+  const [sheet, setSheet] = useState(null); // 지출 추가·고치기 시트 { id?, title?, amount?, categoryId?, date, memo? }
+  const [search, setSearch] = useState(null); // 검색 중이면 검색어(문자열)
+  const [editingCat, setEditingCat] = useState(null); // 분류 관리에서 고치는 분류 id
 
   const [newCatName, setNewCatName] = useState("");
   const [newCatIco, setNewCatIco] = useState(CATEGORY_CHOICES[6]); // [아이콘 이름, 이모지]
 
-  const categoryById = (id) => categories.find((c) => c.id === id) || UNKNOWN_CATEGORY;
-  const colorOf = (id) => {
-    const i = categories.findIndex((c) => c.id === id);
-    return i < 0 ? "#b0a89f" : CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-  };
+  // 지운 분류로 적은 기록은 "기타"(있으면 그 분류, 없으면 임시 기타)로. 합친 분류(장난감 → 용품)는 이어받은 분류로
+  const categoryById = (id) => categories.find((c) => c.id === resolveCategoryId(id)) || categories.find((c) => c.id === "etc") || UNKNOWN_CATEGORY;
+  const colorOf = (id) => categories.find((c) => c.id === id)?.color || "#b0a89f";
 
   const monthPrefix = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
   const [allowance, setAllowanceState] = useState(() => getAllowance(dog.id, monthPrefix));
@@ -114,39 +98,37 @@ export default function Budget({ dog }) {
   const daysLeft = isThisMonth ? new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() - Number(today.slice(8)) + 1 : 0;
   const bigDays = new Set(monthExpenses.filter((e) => e.amount >= bigLine).map((e) => e.date));
 
-  function startEdit(e) {
-    setEditing({ id: e.id, title: e.title, amountText: e.amount.toLocaleString("ko-KR"), categoryId: categoryById(e.categoryId).id === "unknown" ? categories[0]?.id : e.categoryId, date: e.date });
-  }
-  function saveEdit() {
-    const amount = Number(editing.amountText.replace(/\D/g, ""));
-    if (!editing.title.trim() || !amount || !editing.date) return;
-    setExpenses(updateExpense(dog.id, editing.id, { title: editing.title.trim(), amount, categoryId: editing.categoryId, date: editing.date }));
-    setEditing(null);
-  }
-
-  const listed = filterCategoryId
-    ? monthExpenses
-        .filter((e) => categoryById(e.categoryId).id === filterCategoryId)
-        .sort((a, b) => b.date.localeCompare(a.date))
-    : expenses.filter((e) => e.date === selectedDateKey);
-
-  function handleAdd(e) {
-    e.preventDefault();
-    const amount = Number(amountText.replace(/\D/g, ""));
-    if (!title.trim() || !amount || !categoryId) return;
-    setExpenses(addExpense(dog.id, { title: title.trim(), amount, date: selectedDateKey, categoryId }));
-    setTitle("");
-    setCatPicked(false);
-    setAmountText("");
+  const startEdit = (e) => setSheet({ id: e.id, title: e.title, amount: e.amount, categoryId: categoryById(e.categoryId).id === "unknown" ? "" : categoryById(e.categoryId).id, date: e.date, memo: e.memo });
+  const openAdd = (extra = {}) => setSheet({ date: selectedDateKey > today ? today : selectedDateKey, ...extra });
+  function handleSheetSaved(list, date) {
+    setExpenses(list);
+    setSheet(null);
+    setSelectedDateKey(date);
+    setMonthDate(new Date(`${date}T00:00:00`));
+    setFilterCategoryId(null);
   }
 
+  const searching = search !== null;
+  const listed = searching
+    ? searchExpenses(expenses, search, (id) => categoryById(id).name)
+    : filterCategoryId
+      ? monthExpenses.filter((e) => categoryById(e.categoryId).id === filterCategoryId).sort((a, b) => b.date.localeCompare(a.date))
+      : expenses.filter((e) => e.date === selectedDateKey);
+  const listedTotal = listed.reduce((t, e) => t + e.amount, 0);
+
+  // 분류 추가·고치기(기본 분류도 이름·아이콘을 고칠 수 있다)
   function handleAddCategory(e) {
     e.preventDefault();
     const name = newCatName.trim();
     if (!name) return;
-    setCategories(addCategory(name, newCatIco[1], newCatIco[0]));
+    setCategories(editingCat ? updateCategory(editingCat, { name, emoji: newCatIco[1], ico: newCatIco[0] }) : addCategory(name, newCatIco[1], newCatIco[0]));
     setNewCatName("");
-    setShowCategoryManager(false);
+    setEditingCat(null);
+  }
+  function startEditCategory(c) {
+    setEditingCat(c.id);
+    setNewCatName(c.name);
+    setNewCatIco(CATEGORY_CHOICES.find(([ico]) => ico === categoryIco(c)) || [categoryIco(c), c.emoji]);
   }
 
   function handleDeleteCategory(cat) {
@@ -154,13 +136,16 @@ export default function Budget({ dog }) {
     if (used && !window.confirm(`'${cat.name}' 카테고리를 지울까요? 이 카테고리로 적은 기록은 '기타'로 보여요.`)) return;
     const next = deleteCategory(cat.id);
     setCategories(next);
-    if (categoryId === cat.id) setCategoryId(next[0]?.id);
+    if (editingCat === cat.id) (setEditingCat(null), setNewCatName(""));
     if (filterCategoryId === cat.id) setFilterCategoryId(null);
   }
 
   return (
     <div className="screen">
-      <div className="h1" style={{ marginBottom: 10 }}>가계부</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div className="h1" style={{ margin: 0 }}>가계부</div>
+        <button type="button" className="btn-primary small" onClick={() => openAdd()}>＋ 지출</button>
+      </div>
       <div className="card bud-sum" style={{ marginBottom: 14 }}>
         <div className="faint">{monthDate.getMonth() + 1}월 쓴 돈</div>
         <div className="bud-total">{won(monthTotal)}</div>
@@ -174,11 +159,11 @@ export default function Budget({ dog }) {
           </p>
         )}
         {projected != null && projected > monthTotal && (
-          <p className="faint" style={{ margin: "2px 0 0" }}>이대로면 이번 달 약 {won(Math.round(projected / 1000) * 1000)} 쓸 것 같아요 (예상)</p>
+          <p className="faint" style={{ margin: "2px 0 0" }}>이대로면 이번 달 약 {won(Math.round(projected / 1000) * 1000)} (지금까지 기록으로 본 예상)</p>
         )}
 
         <label className="bud-allow">
-          <span className="faint">{withI(dog.name)}의 용돈</span>
+          <span className="faint">{josa(dog.name, "이", "")}의 용돈</span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
             <input
               value={allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")}
@@ -305,7 +290,13 @@ export default function Budget({ dog }) {
                 <span className="bud-row-title">{f.title}</span>
                 <span className="faint">보통 {f.day}일쯤 · 평균 {won(f.avg)}</span>
               </span>
-              {isThisMonth || f.paidThisMonth ? <span className={`bud-badge${f.paidThisMonth ? " done" : ""}`}>{f.paidThisMonth ? "냈어요" : "아직"}</span> : null}
+              {f.paidThisMonth ? (
+                <span className="bud-badge done">냈어요</span>
+              ) : isThisMonth ? (
+                <button type="button" className="chip bud-record" onClick={() => openAdd({ title: f.title, amount: f.lastAmount, categoryId: categoryById(f.categoryId).id, memo: f.memo, date: today })}>
+                  기록
+                </button>
+              ) : null}
             </div>
           ))}
         </div>
@@ -314,66 +305,51 @@ export default function Budget({ dog }) {
       {/* 카테고리 관리를 열면 지출 칸 자리에 대신 보여 준다 */}
       {!showCategoryManager && (
         <div className="card" style={{ marginBottom: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-            <div className="h2" style={{ margin: 0 }}>
-              {filterCategoryId
-                ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> 이번 달 {categoryById(filterCategoryId).name}</>
-                : `${formatKoreanDate(selectedDateKey)} 지출`}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div className="h2" style={{ margin: 0, minWidth: 0 }}>
+              {searching
+                ? "지출 찾기"
+                : filterCategoryId
+                  ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> 이번 달 {categoryById(filterCategoryId).name}</>
+                  : `${formatKoreanDate(selectedDateKey)} 지출`}
             </div>
-            {filterCategoryId ? (
-              <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setFilterCategoryId(null)}>
-                날짜별 보기
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="chip"
-                aria-expanded={showCategoryManager}
-                onClick={() => setShowCategoryManager(true)}
-                style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}
-              >
-                <Ico name="settings" size={15} /> 카테고리 관리
-              </button>
-            )}
+            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              {searching ? (
+                <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setSearch(null)}>닫기</button>
+              ) : filterCategoryId ? (
+                <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setFilterCategoryId(null)}>날짜별 보기</button>
+              ) : (
+                <>
+                  <button type="button" className="chip" aria-label="지출 찾기" onClick={() => setSearch("")} style={{ padding: "5px 9px" }}><Ico name="search" size={15} /></button>
+                  <button type="button" className="chip" onClick={() => setShowCategoryManager(true)} style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}>
+                    <Ico name="settings" size={15} /> 분류 관리
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {!filterCategoryId && dayTotals[selectedDateKey] > 0 && <p className="faint" style={{ margin: "-4px 0 6px" }}>이날 합계 {won(dayTotals[selectedDateKey])}</p>}
+          {searching && (
+            <>
+              <input className="es-input" autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="내용·메모·분류 (예: 병원, 로얄캐닌)" aria-label="지출 찾기" />
+              {search.trim() && <p className="faint" style={{ margin: "0 0 6px" }}>{listed.length}건 · {won(listedTotal)} (전체 기간)</p>}
+            </>
+          )}
+          {!searching && !filterCategoryId && dayTotals[selectedDateKey] > 0 && <p className="faint" style={{ margin: "-4px 0 6px" }}>이날 합계 {won(dayTotals[selectedDateKey])}</p>}
           {listed.length === 0 ? (
-            <p className="subtle" style={{ marginBottom: 10 }}>기록이 없어요.</p>
+            (!searching || search.trim()) && <p className="subtle" style={{ marginBottom: 10 }}>{searching ? "찾는 지출이 없어요." : "기록이 없어요."}</p>
           ) : (
             <div style={{ marginBottom: 10 }}>
               {listed.map((e) => {
                 const cat = categoryById(e.categoryId);
-                if (editing?.id === e.id)
-                  return (
-                    <div key={e.id} className="bud-edit">
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                        {categories.map((c) => (
-                          <button key={c.id} type="button" className="chip cat-chip" onClick={() => setEditing((x) => ({ ...x, categoryId: c.id }))} style={{ "--ev": colorOf(c.id), border: editing.categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}>
-                            <Ico name={categoryIco(c)} size={14} /> {c.name}
-                          </button>
-                        ))}
-                      </div>
-                      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                        <input value={editing.title} onChange={(ev) => setEditing((x) => ({ ...x, title: ev.target.value }))} aria-label="무엇에 썼나요" style={{ ...inputStyle, flex: 2 }} />
-                        <input value={editing.amountText} inputMode="numeric" aria-label="금액" onChange={(ev) => { const d = ev.target.value.replace(/\D/g, ""); setEditing((x) => ({ ...x, amountText: d ? Number(d).toLocaleString("ko-KR") : "" })); }} style={{ ...inputStyle, flex: 1 }} />
-                      </div>
-                      <input type="date" value={editing.date} onChange={(ev) => setEditing((x) => ({ ...x, date: ev.target.value }))} aria-label="날짜" style={{ ...inputStyle, width: "100%", marginBottom: 8 }} />
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button type="button" className="btn-ghost small" style={{ color: "var(--danger)" }} onClick={() => { if (confirm("이 지출을 지울까요?")) { setExpenses(deleteExpense(dog.id, e.id)); setEditing(null); } }}>삭제</button>
-                        <span style={{ flex: 1 }} />
-                        <button type="button" className="btn-ghost small" onClick={() => setEditing(null)}>취소</button>
-                        <button type="button" className="btn-primary small" onClick={saveEdit}>저장</button>
-                      </div>
-                    </div>
-                  );
                 const big = e.amount >= bigLine;
                 return (
                   <button key={e.id} type="button" className="bud-row bud-row-btn" onClick={() => startEdit(e)} aria-label={`${e.title} ${won(e.amount)} 고치기`}>
                     <span className="bud-cat-icon" style={{ background: colorOf(cat.id) }}><Ico name={categoryIco(cat)} size={20} /></span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="bud-row-title">{e.title}</span>
-                      <span className="faint">{cat.name}{filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}{big ? " · 평소보다 큰 지출" : ""}</span>
+                      <span className="faint">{cat.name}{searching || filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}{big ? " · 평소보다 큰 지출" : ""}</span>
+                      {e.memo && <span className="faint bud-memo">{e.memo}</span>}
                     </span>
                     <span className="bud-amt" style={big ? { color: "var(--danger)" } : undefined}>{won(e.amount)}</span>
                   </button>
@@ -382,38 +358,10 @@ export default function Budget({ dog }) {
             </div>
           )}
 
-          {!filterCategoryId && !editing && (
-            <form onSubmit={handleAdd}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                {categories.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className="chip cat-chip"
-                    onClick={() => (setCategoryId(c.id), setCatPicked(true))}
-                    style={{ "--ev": colorOf(c.id), border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
-                  >
-                    <Ico name={categoryIco(c)} size={14} /> {c.name}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input value={title} onChange={(e) => handleTitle(e.target.value)} placeholder="무엇에 썼나요? (예: 예방접종)" style={{ ...inputStyle, flex: 2 }} />
-                <input
-                  value={amountText}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "");
-                    setAmountText(digits ? Number(digits).toLocaleString("ko-KR") : "");
-                  }}
-                  inputMode="numeric"
-                  placeholder="금액(원)"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-              </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: 8 }}>
-                {formatKoreanDate(selectedDateKey)}에 기록하기
-              </button>
-            </form>
+          {!searching && !filterCategoryId && (
+            <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={() => openAdd()}>
+              ＋ {formatKoreanDate(selectedDateKey > today ? today : selectedDateKey)} 지출 기록
+            </button>
           )}
         </div>
       )}
@@ -421,15 +369,17 @@ export default function Budget({ dog }) {
       {showCategoryManager && (
         <div className="card" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-            <div className="h2" style={{ margin: 0 }}>카테고리 관리</div>
-            <button className="faint" style={{ background: "none", border: "none" }} onClick={() => setShowCategoryManager(false)}>
-              취소
+            <div className="h2" style={{ margin: 0 }}>분류 관리</div>
+            <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (setShowCategoryManager(false), setEditingCat(null), setNewCatName(""))}>
+              완료
             </button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
             {categories.map((c) => (
-              <span key={c.id} className="chip cat-chip" style={{ "--ev": colorOf(c.id), fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
-                <Ico name={categoryIco(c)} size={14} /> {c.name}
+              <span key={c.id} className="chip cat-chip" style={{ "--ev": colorOf(c.id), fontSize: 13, padding: "5px 6px 5px 10px", gap: 4, outline: editingCat === c.id ? "2px solid var(--accent)" : "none" }}>
+                <button type="button" aria-label={`${c.name} 고치기`} onClick={() => startEditCategory(c)} style={{ background: "none", border: "none", padding: 0, color: "inherit", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Ico name={categoryIco(c)} size={14} /> {c.name}
+                </button>
                 <button
                   type="button"
                   aria-label={`${c.name} 카테고리 삭제`}
@@ -442,8 +392,9 @@ export default function Budget({ dog }) {
             ))}
           </div>
 
+          <p className="faint" style={{ marginTop: -4 }}>분류를 누르면 이름·아이콘을 고칠 수 있어요. ×를 누르면 지워지고, 그 분류로 적은 기록은 '기타'로 보여요.</p>
           <form onSubmit={handleAddCategory}>
-            <div className="faint" style={{ marginBottom: 6 }}>아이콘 고르기</div>
+            <div className="faint" style={{ marginBottom: 6 }}>{editingCat ? "고치는 중 — 아이콘 고르기" : "새 분류 — 아이콘 고르기"}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>
               {CATEGORY_CHOICES.map((choice, i) => (
                 <button
@@ -463,14 +414,15 @@ export default function Budget({ dog }) {
               <span aria-hidden="true" style={{ ...inputStyle, width: 44, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent-strong)", padding: 0 }}>
                 <Ico name={newCatIco[0]} size={20} />
               </span>
-              <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="새 카테고리 이름 (예: 미용)" style={{ ...inputStyle, flex: 1 }} />
+              <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="분류 이름 (예: 호텔·돌봄)" maxLength={20} aria-label="분류 이름" style={{ ...inputStyle, flex: 1 }} />
               <button type="submit" className="btn-primary" style={{ width: "auto", padding: "0 16px" }}>
-                추가
+                {editingCat ? "저장" : "추가"}
               </button>
             </div>
           </form>
         </div>
       )}
+      {sheet && <ExpenseSheet dog={dog} categories={categories} expenses={expenses} initial={sheet} onClose={() => setSheet(null)} onSaved={handleSheetSaved} />}
     </div>
   );
 }

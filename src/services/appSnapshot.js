@@ -6,7 +6,7 @@ import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getFeedingSettings } from "./feedingSettings";
 import { getWeightRecords } from "./weightLog";
-import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY } from "./expenses";
+import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY, resolveCategoryId } from "./expenses";
 import { toDateKey, todayKey } from "../utils/date";
 import { getRecords, filterTimeline, summarize, TYPES } from "./records";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
@@ -107,7 +107,7 @@ export function buildAppSnapshot(dog) {
 
   // 가계부 — 이번 달·지난달 합계, 이번 달 카테고리별, 최근 기록
   const categories = getCategories();
-  const catName = (id) => (categories.find((c) => c.id === id) || UNKNOWN_CATEGORY).name;
+  const catName = (id) => (categories.find((c) => c.id === resolveCategoryId(id)) || UNKNOWN_CATEGORY).name;
   const expenses = getExpenses(dog.id);
   const now = new Date();
   const thisMonth = monthKey(now);
@@ -125,7 +125,7 @@ export function buildAppSnapshot(dog) {
     const catLine = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${won(v)}`).join(", ");
     if (catLine) lines.push(`이번 달 카테고리별: ${catLine}`);
     const latest = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
-    if (latest.length) lines.push(`최근 지출(최대 30건): ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)}) [id:${e.id}]`).join("; ")}`);
+    if (latest.length) lines.push(`최근 지출(최대 30건): ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)})${e.memo ? ` 메모:${e.memo}` : ""} [id:${e.id}]`).join("; ")}`);
   }
 
   return lines.join("\n");

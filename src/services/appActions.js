@@ -1,4 +1,4 @@
-import { addExpense, deleteExpense, getCategories, getExpenses, setAllowance, updateExpense } from "./expenses";
+import { addExpense, deleteExpense, getCategories, getExpenses, setAllowance, updateExpense, findCategoryByName } from "./expenses";
 import { removeEvent, saveEvent, getEventsByDog, EVENT_KINDS } from "./calendarEvents";
 import { addWeightRecord, deleteWeightRecord, getLatestWeightRecord, getWeightRecords, updateWeightRecord } from "./weightLog";
 import { saveDog } from "./dogRepository";
@@ -23,10 +23,10 @@ function run(dog, a) {
     case "add_expense": {
       const amount = Math.round(Number(a.amount));
       if (!text(a.title) || !(amount > 0) || !isDate(a.date)) return null;
-      const categories = getCategories();
-      const cat = categories.find((c) => c.name === a.category) || categories[0];
-      addExpense(dog.id, { title: text(a.title), amount, date: a.date, categoryId: cat?.id });
-      return `💰 가계부: ${a.date} ${text(a.title)} ${won(amount)} (${cat?.emoji ?? ""}${cat?.name ?? "기타"})`;
+      const cat = findCategoryByName(a.category);
+      if (!cat) return { ask: { type: "expense_category", title: text(a.title), amount, date: a.date, memo: text(a.memo) } }; // 분류가 없거나 "모름" → 보호자에게 묻기
+      addExpense(dog.id, { title: text(a.title), amount, date: a.date, categoryId: cat.id, memo: text(a.memo) });
+      return `💰 가계부: ${a.date} ${text(a.title)} ${won(amount)} (${cat.name})`;
     }
     case "set_allowance": {
       const amount = Math.round(Number(a.amount));
@@ -150,7 +150,7 @@ export function applyConfirmedAction(dog, a) {
       if (text(a.title)) patch.title = text(a.title);
       if (Number(a.amount) > 0) patch.amount = Math.round(Number(a.amount));
       if (isDate(a.date)) patch.date = a.date;
-      const cat = getCategories().find((c) => c.name === a.category);
+      const cat = findCategoryByName(a.category);
       if (cat) patch.categoryId = cat.id;
       if (!Object.keys(patch).length) return null;
       updateExpense(dog.id, a.id, patch);
@@ -196,6 +196,7 @@ export function applyConfirmedAction(dog, a) {
 export function applyAppActions(dog, actions) {
   const done = [];
   const confirm = [];
+  const ask = []; // 보호자에게 물을 것(가계부 분류 고르기)
   let failed = 0;
   for (const a of actions || []) {
     if (a.type === "update_record" || a.type === "delete_record") {
@@ -205,11 +206,20 @@ export function applyAppActions(dog, actions) {
     }
     try {
       const result = run(dog, a);
-      if (result) done.push(result);
+      if (result?.ask) ask.push(result.ask);
+      else if (result) done.push(result);
       else failed += 1;
     } catch {
       failed += 1;
     }
   }
-  return { done, failed, confirm };
+  return { done, failed, confirm, ask };
+}
+
+// 채팅에서 분류를 물은 지출: 보호자가 고른 분류로 저장
+export function saveAskedExpense(dog, a, categoryId) {
+  const cat = getCategories().find((c) => c.id === categoryId);
+  if (!cat) return null;
+  addExpense(dog.id, { title: a.title, amount: a.amount, date: a.date, categoryId, memo: a.memo });
+  return `💰 가계부: ${a.date} ${a.title} ${won(a.amount)} (${cat.name})`;
 }

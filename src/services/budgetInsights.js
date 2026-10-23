@@ -44,6 +44,8 @@ export function detectFixed(expenses, monthPrefix) {
     out.push({
       title: latest.title,
       categoryId: latest.categoryId,
+      lastAmount: latest.amount, // "이번 달도 기록"에 채울 금액·메모(마지막에 적은 것)
+      memo: latest.memo || "",
       avg: Math.round(sum(recent) / months.size),
       day: Math.round(recent.reduce((s, e) => s + Number(e.date.slice(8)), 0) / recent.length), // 보통 나가는 날
       paid: sum(paid),
@@ -53,14 +55,14 @@ export function detectFixed(expenses, monthPrefix) {
   return out.sort((a, b) => b.avg - a.avg);
 }
 
-// 이번 달 예상 지출 = 지금까지 쓴 돈 + 아직 안 나간 고정 지출 + 변동 지출 속도 × 남은 날. 3일 미만이면 계산하지 않는다.
+// 이번 달 예상 지출 = 지금까지 쓴 돈 + 아직 안 나간 고정 지출 + 변동 지출 속도 × 남은 날. 7일 미만이거나 이번 달 기록 10개 미만이면 계산하지 않는다.
 // 수술비처럼 평소보다 큰 한 번짜리 지출(bigLine 이상)은 속도 계산에서 뺀다 — 남은 날에도 또 나갈 돈이 아니라서.
 export function projectMonth(expenses, today, fixed, bigLine = Infinity) {
   const [y, m, d] = today.split("-").map(Number);
-  if (d < 3) return null;
+  if (d < 7) return null;
   const prefix = monthKeyOf(y, m - 1);
   const soFar = expenses.filter((e) => e.date.startsWith(prefix) && e.date <= today);
-  if (!soFar.length) return null;
+  if (soFar.length < 10) return null; // 기록이 적으면 예상이 실제처럼 보여서 안 보여 준다
   const fixedNames = new Set(fixed.map((f) => norm(f.title)));
   const variable = sum(soFar.filter((e) => !fixedNames.has(norm(e.title)) && e.amount < bigLine));
   const unpaidFixed = sum(fixed.filter((f) => !f.paidThisMonth).map((f) => ({ amount: f.avg })));
