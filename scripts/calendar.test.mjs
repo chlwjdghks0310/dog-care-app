@@ -56,3 +56,18 @@ assert.deepEqual(getCustomSchedules("a").map((x) => x.date), ["2026-12-31"]);
 // 다른 강아지 일정·알림은 섞이지 않음
 assert.equal(getCustomSchedules("b").length, 0);
 console.log("일정 확인 통과");
+
+// 반복 일정 "이번만 / 이후 모두"
+{
+  const C = await import("../src/services/calendarEvents.js");
+  const ev = C.saveEvent("rep", "2026-01-05", { title: "심장사상충약", repeat: "monthly" });
+  const dates = () => C.getOccurrences("rep", "2026-01-01", "2026-06-30").map((o) => o.date + ":" + o.event.title);
+  C.skipOccurrence("rep", "2026-01-05", ev.id, "2026-03-05");
+  C.saveEvent("rep", "2026-03-07", { title: "심장사상충약(미룸)" });
+  assert.deepEqual(dates(), ["2026-01-05:심장사상충약", "2026-02-05:심장사상충약", "2026-03-07:심장사상충약(미룸)", "2026-04-05:심장사상충약", "2026-05-05:심장사상충약", "2026-06-05:심장사상충약"], "이번만: 그 회차만 빠지고 바꾼 날에 하나");
+  C.endSeriesBefore("rep", "2026-01-05", ev.id, "2026-05-05");
+  assert.deepEqual(dates().filter((d) => d.endsWith(":심장사상충약")), ["2026-01-05:심장사상충약", "2026-02-05:심장사상충약", "2026-04-05:심장사상충약"], "이후 모두: 그 회차부터 끝");
+  C.endSeriesBefore("rep", "2026-01-05", ev.id, "2026-01-05");
+  assert.equal(dates().filter((d) => d.endsWith(":심장사상충약")).length, 0, "첫 회차부터면 전체 삭제");
+  console.log("반복 일정 범위 확인 통과");
+}

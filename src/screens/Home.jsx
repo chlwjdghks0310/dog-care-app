@@ -6,6 +6,8 @@ import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
 import Ico from "../components/Ico";
 import ProgressRing from "../components/ProgressRing";
 import { getFeedingSettings } from "../services/feedingSettings";
+import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
+import { getRuleById } from "../data/careRules";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
@@ -22,6 +24,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   }, []);
 
   function loadChecklist() {
+    setChecklist(getTodayChecklist(dog, dateKey));
+  }
+  // 앱이 추천한 할 일은 숨길 수 있다(밥 주기처럼 직접 정한 건 제외). 숨긴 건 카드 아래에서 다시 보이게
+  const [hidden, setHidden] = useState(() => getHiddenRules(dog.id));
+  const [showHidden, setShowHidden] = useState(false);
+  const hiddenList = Object.keys(hidden).map(getRuleById).filter(Boolean);
+  function toggleHide(ruleId, nextHidden) {
+    setRuleHidden(dog.id, ruleId, nextHidden);
+    setHidden(getHiddenRules(dog.id));
     setChecklist(getTodayChecklist(dog, dateKey));
   }
   useEffect(loadChecklist, [dog, dateKey]);
@@ -92,15 +103,32 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                 {items.map((item) => (
                   <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
                     <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
                       {item.description && <div className="subtle">{item.description}</div>}
                     </div>
+                    {item.ruleId && !item.ruleId.startsWith("meal-") && (
+                      <button type="button" className="hide-btn" onClick={(e) => (e.preventDefault(), toggleHide(item.ruleId, true))}>숨기기</button>
+                    )}
                   </label>
                 ))}
               </div>
             ))}
           </>
+        )}
+        {hiddenList.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <button type="button" className="link-btn" aria-expanded={showHidden} onClick={() => setShowHidden((v) => !v)}>
+              숨긴 할 일 {hiddenList.length}개 {showHidden ? "▴" : "▾"}
+            </button>
+            {showHidden &&
+              hiddenList.map((rule) => (
+                <div key={rule.id} className="hidden-row">
+                  <span className="subtle">{rule.title}</span>
+                  <button type="button" className="hide-btn" onClick={() => toggleHide(rule.id, false)}>다시 보이기</button>
+                </div>
+              ))}
+          </div>
         )}
         {noMealTimes && (
           <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>

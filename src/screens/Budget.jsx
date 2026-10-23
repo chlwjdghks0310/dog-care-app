@@ -17,6 +17,7 @@ import {
 } from "../services/expenses";
 import { compareSameTime, detectFixed, projectMonth, bigExpenseThreshold, weeklyTotals, topItems, categoryCompare } from "../services/budgetInsights";
 import Ico from "../components/Ico";
+import { HOLIDAYS } from "../data/holidays";
 
 const inputStyle = { height: 40, border: "1px solid var(--border)", borderRadius: 10, padding: "0 12px", fontSize: 16, minWidth: 0 };
 
@@ -213,6 +214,7 @@ export default function Budget({ dog }) {
 
       <div className="card" style={{ marginBottom: 14 }}>
         <MonthGrid
+          holidays={HOLIDAYS}
           monthDate={monthDate}
           onMonthChange={(d) => {
             setMonthDate(d);

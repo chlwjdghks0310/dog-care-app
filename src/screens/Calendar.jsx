@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
 import { todayKey, toDateKey, formatKoreanDate, addDays } from "../utils/date";
-import { getTodayChecklist, getRulesForDate, getRuleStartDateKey } from "../services/careEngine";
-import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getEventsByDog, getOccurrences, kindOf, REPEATS, EVENT_COLORS } from "../services/calendarEvents";
 import EventSheet, { dateLabel, timeLabel } from "../components/EventSheet";
-import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
-import { getRuleById } from "../data/careRules";
-import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
+import { getRecords, summarize } from "../services/records";
+import { HOLIDAYS } from "../data/holidays";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 
@@ -21,20 +18,20 @@ export default function Calendar({ dog }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
-  const [checklist, setChecklist] = useState([]);
   const [events, setEvents] = useState(() => getEventsByDog(dog.id));
-  const [hidden, setHidden] = useState(() => getHiddenRules(dog.id));
-  const [sheet, setSheet] = useState(null); // { start, event? } — 일정 추가·고치기 시트
-
-  useEffect(() => {
-    setChecklist(getTodayChecklist(dog, selectedDateKey));
-  }, [dog, selectedDateKey, hidden]);
+  const [sheet, setSheet] = useState(null); // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
+  // 지난 병원 진료 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
+  const vetByDate = useMemo(() => {
+    const map = {};
+    for (const r of getRecords(dog.id)) if (r.type === "vet") (map[r.at.slice(0, 10)] ||= []).push(r);
+    return map;
+  }, [dog.id]);
 
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // 달력 그리드에는 사용자가 직접 기록한 일정만 표시한다(앱 추천 일정은 아래 별도 박스에서만 보여줌).
+  // 달력: 직접 넣은 일정(점·기간 막대) + 지난 병원 진료 기록(빈 동그라미). 위에서부터 달력 → 고른 날 → 다가오는 일정
   // 하루 일정은 점, 며칠 이어지는 일정은 막대(띠)로.
   const monthFrom = toDateKey(new Date(year, month, 1));
   const monthTo = toDateKey(new Date(year, month, daysInMonth));
@@ -51,25 +48,9 @@ export default function Calendar({ dog }) {
       .slice(0, 3);
   }, [dog.id, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectedRules = useMemo(
-    () => getRulesForDate(dog, selectedDateKey).filter((r) => !hidden[r.id]),
-    [dog, selectedDateKey, hidden]
-  );
-  const weeklyRules = selectedRules.filter((r) => r.frequency === "weekly");
-  const milestones = selectedRules.filter((r) => getRuleStartDateKey(dog, r) === selectedDateKey);
   const selectedOcc = useMemo(() => getOccurrences(dog.id, selectedDateKey, selectedDateKey), [dog.id, selectedDateKey, events]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedAge = calculateAge(dog.birthDate, new Date(selectedDateKey));
-  const hiddenRuleList = Object.keys(hidden).map(getRuleById).filter(Boolean);
-
-  function handleToggleHide(ruleId, nextHidden) {
-    setRuleHidden(dog.id, ruleId, nextHidden);
-    setHidden(getHiddenRules(dog.id));
-  }
-
-  function handleToggleChecklist(itemId) {
-    const next = toggleScheduleItem(dog.id, selectedDateKey, itemId);
-    if (next) setChecklist(next.filter((it) => !hidden[it.ruleId]));
-  }
+  const selectedVet = vetByDate[selectedDateKey] || [];
 
   function handleSheetSaved(start) {
     setEvents(getEventsByDog(dog.id));
@@ -84,42 +65,17 @@ export default function Calendar({ dog }) {
         <button type="button" className="btn-primary small" onClick={() => setSheet({ start: selectedDateKey < today ? today : selectedDateKey })}>＋ 일정</button>
       </div>
 
-      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 일정</div>
-      {upcoming.length === 0 ? (
-        <div className="card subtle" style={{ marginBottom: 14 }}>
-          앞으로 90일 안에 일정이 없어요. 병원·미용·접종처럼 챙길 날을 넣어 두면 미리 알려 드려요.
-        </div>
-      ) : (
-        <div className="up-list">
-          {upcoming.map((o) => {
-            const k = kindOf(o.event);
-            const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
-            return (
-              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card tinted" style={{ "--ev": colorOf(o.event) }} onClick={() => setSheet({ start: o.start, event: o.event })}>
-                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
-                <span className="up-body">
-                  <span className="up-title">{o.event.title}</span>
-                  <span className="up-when">
-                    {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
-                    {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
-                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
-                  </span>
-                </span>
-                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       <div className="card" style={{ marginBottom: 14 }}>
         <MonthGrid
           monthDate={monthDate}
           onMonthChange={setMonthDate}
           selectedDateKey={selectedDateKey}
           onSelect={setSelectedDateKey}
+          onToday={() => (setMonthDate(new Date()), setSelectedDateKey(today))}
+          holidays={HOLIDAYS}
           renderMarker={(key) => {
             const list = byDate[key] || [];
+            const rec = Boolean(vetByDate[key]);
             const bars = list.filter((o) => o.event.endDate).slice(0, 2);
             const dots = [...new Set(list.filter((o) => !o.event.endDate).map((o) => colorOf(o.event)))].slice(0, 3);
             return (
@@ -127,9 +83,10 @@ export default function Calendar({ dog }) {
                 {bars.map((o) => (
                   <span key={o.event.id} className={`cal-bar${o.isStart ? " s" : ""}${o.isEnd ? " e" : ""}`} style={{ background: colorOf(o.event) }} />
                 ))}
-                {dots.length > 0 && (
+                {(dots.length > 0 || rec) && (
                   <span style={{ display: "flex", gap: 2, justifyContent: "center" }}>
                     {dots.map((c) => <span key={c} className="cal-dot" style={{ background: c }} />)}
+                    {rec && <span className="cal-dot rec" title="병원 진료 기록" />}
                   </span>
                 )}
               </div>
@@ -144,8 +101,17 @@ export default function Calendar({ dog }) {
           <span className="faint">{dog.name} {formatAge(selectedAge)}</span>
         </div>
 
+        {selectedVet.map((r) => (
+          <div key={r.id} className="day-rec">
+            <Ico name="stethoscope" size={15} className="cat-ico tone-blue" />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="faint" style={{ fontSize: 12 }}>병원 진료 기록 {r.at.slice(11, 16)}</span>
+              <span style={{ display: "block" }}>{summarize(r)}</span>
+            </span>
+          </div>
+        ))}
         {selectedOcc.length === 0 ? (
-          <p className="subtle" style={{ marginTop: 0 }}>이 날은 일정이 없어요.</p>
+          selectedVet.length === 0 && <p className="subtle" style={{ marginTop: 0 }}>이 날은 일정이 없어요.</p>
         ) : (
           <div style={{ marginBottom: 10 }}>
             {selectedOcc.map((o) => {
@@ -153,7 +119,7 @@ export default function Calendar({ dog }) {
               const dayN = o.event.endDate ? Math.round((new Date(`${o.date}T00:00:00`) - new Date(`${o.start}T00:00:00`)) / 86400000) + 1 : 0;
               const total = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.start}T00:00:00`)) / 86400000) + 1 : 0;
               return (
-                <button key={o.event.id} type="button" className="day-ev" onClick={() => setSheet({ start: o.start, event: o.event })}>
+                <button key={o.event.id} type="button" className="day-ev" onClick={() => setSheet({ start: o.start, event: o.event, date: o.date })}>
                   <span className="day-ev-bar" style={{ background: colorOf(o.event) }} />
                   <span className="day-ev-time">{dayN ? `${dayN}/${total}일째` : timeLabel(o.event.time)}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -171,72 +137,37 @@ export default function Calendar({ dog }) {
         </button>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2" style={{ marginBottom: 10 }}><Ico name="checklist" size={18} /> 체크리스트</div>
+      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 일정</div>
+      {upcoming.length === 0 ? (
+        <div className="card subtle" style={{ marginBottom: 14 }}>
+          앞으로 90일 안에 일정이 없어요. 병원·미용·접종처럼 챙길 날을 넣어 두면 미리 알려 드려요.
+        </div>
+      ) : (
+        <div className="up-list">
+          {upcoming.map((o) => {
+            const k = kindOf(o.event);
+            const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
+            return (
+              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card tinted" style={{ "--ev": colorOf(o.event) }} onClick={() => setSheet({ start: o.start, event: o.event, date: o.date })}>
+                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
+                <span className="up-body">
+                  <span className="up-title">{o.event.title}</span>
+                  <span className="up-when">
+                    {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
+                    {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
+                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
+                  </span>
+                </span>
+                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-        {milestones.length > 0 && (
-          <div style={{ marginBottom: 10 }}>
-            {milestones.map((r) => (
-              <span key={r.id} className="chip" style={{ marginRight: 6 }}><Ico name="sparkles" size={13} /> 오늘부터: {r.title}</span>
-            ))}
-          </div>
-        )}
-
-        <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>이 날 할 일</div>
-        {checklist.length === 0 ? (
-          <p className="subtle" style={{ marginBottom: 14 }}>등록된 할 일이 없어요.</p>
-        ) : (
-          <div style={{ marginBottom: 14 }}>
-            {checklist.map((item) => (
-              <div key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
-                <input type="checkbox" checked={item.completed} onChange={() => handleToggleChecklist(item.id)} />
-                <div style={{ flex: 1 }}>
-                  <div className="checklist-title" style={{ fontWeight: 600 }}>
-                    <Ico name={getCategoryIco(item.category)} size={15} className={`cat-ico tone-${getCategoryTone(item.category)}`} /> {item.title}
-                  </div>
-                </div>
-                {item.ruleId && (
-                  <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(item.ruleId, true)}>
-                    숨기기
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>이 시기에 챙기면 좋은 것</div>
-        {weeklyRules.length === 0 ? (
-          <p className="subtle" style={{ marginBottom: 0 }}>특별히 챙길 항목이 없어요.</p>
-        ) : (
-          <div>
-            {weeklyRules.map((rule) => (
-              <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                <span><Ico name={getCategoryIco(rule.category)} size={15} className={`cat-ico tone-${getCategoryTone(rule.category)}`} /> {rule.title}</span>
-                <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, true)}>
-                  숨기기
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {sheet && <EventSheet dog={dog} initial={sheet} onClose={() => setSheet(null)} onSaved={handleSheetSaved} />}
 
-      {hiddenRuleList.length > 0 && (
-        <div className="card">
-          <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>숨긴 추천 항목</div>
-          {hiddenRuleList.map((rule) => (
-            <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-              <span className="subtle"><Ico name={getCategoryIco(rule.category)} size={15} className={`cat-ico tone-${getCategoryTone(rule.category)}`} /> {rule.title}</span>
-              <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, false)}>
-                다시 보이기
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

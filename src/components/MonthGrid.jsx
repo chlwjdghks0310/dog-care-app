@@ -4,7 +4,8 @@ const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 월 달력. renderMarker(dateKey)로 각 날짜 아래에 표시할 내용(점, 금액 등)을 그린다.
 // cellClass(dateKey)로 날짜 칸에 클래스를 붙일 수 있다(일정 기간 띠 등).
-export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, onSelect, renderMarker, cellClass }) {
+// onToday: 주면 다른 달을 볼 때 "오늘" 버튼이 생긴다. holidays: { "YYYY-MM-DD": "이름" } — 공휴일·일요일은 빨간 숫자
+export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, onSelect, renderMarker, cellClass, onToday, holidays }) {
   const today = todayKey();
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -21,7 +22,12 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
         <button className="btn-ghost" style={{ padding: "4px 10px" }} onClick={() => onMonthChange(new Date(year, month - 1, 1))}>
           ‹
         </button>
-        <div className="h2" style={{ margin: 0 }}>{year}년 {month + 1}월</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="h2" style={{ margin: 0 }}>{year}년 {month + 1}월</div>
+          {onToday && (today.slice(0, 7) !== `${year}-${String(month + 1).padStart(2, "0")}` || selectedDateKey !== today) && (
+            <button type="button" className="chip mg-today" onClick={onToday}>오늘</button>
+          )}
+        </div>
         <button className="btn-ghost" style={{ padding: "4px 10px" }} onClick={() => onMonthChange(new Date(year, month + 1, 1))}>
           ›
         </button>
@@ -39,12 +45,14 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
           const key = toDateKey(new Date(year, month, d));
           const isSelected = key === selectedDateKey;
           const isToday = key === today;
+          const holiday = holidays?.[key];
+          const red = holiday || new Date(year, month, d).getDay() === 0;
           return (
             <button
               key={key}
               type="button"
               className={cellClass?.(key) || undefined}
-              aria-label={`${month + 1}월 ${d}일`}
+              aria-label={`${month + 1}월 ${d}일${holiday ? ` ${holiday}` : ""}`}
               aria-pressed={isSelected}
               onClick={() => onSelect(key)}
               style={{
@@ -59,7 +67,8 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
                 ...(isToday && { background: "var(--accent-soft)" }),
               }}
             >
-              <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400 }}>{d}</span>
+              <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: red ? "var(--danger)" : undefined }}>{d}</span>
+              {holiday && <span className="mg-holiday">{holiday.includes("대체공휴일") ? "대체휴일" : holiday.replace("전국동시지방선거", "지방선거")}</span>}
               {renderMarker?.(key)}
             </button>
           );

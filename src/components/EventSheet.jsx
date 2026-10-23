@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import MonthGrid from "./MonthGrid";
-import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent } from "../services/calendarEvents";
+import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent, skipOccurrence, endSeriesBefore } from "../services/calendarEvents";
 import Ico from "./Ico";
 import { syncPushAlarms } from "../services/notifications";
 
@@ -17,19 +17,27 @@ export const timeLabel = (t) => {
 };
 
 // 일정 추가·고치기 시트 — 무엇을 → 언제 → 알림 카드를 쌓아 두고 한 번에 하나만 펼친다. 접힌 카드엔 고른 내용 요약.
-// initial: { start, event? } (event가 있으면 고치기)
+// initial: { start, event?, date? } (event가 있으면 고치기. date = 누른 회차 — 반복 일정은 그 날짜로 열고 "이번만/이후 모두"를 묻는다)
+const dayDiff = (a, b) => Math.round((new Date(`${a}T00:00:00`) - new Date(`${b}T00:00:00`)) / 86400000);
+const keyPlus = (key, n) => {
+  const d = new Date(`${key}T00:00:00`);
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 export default function EventSheet({ dog, initial, onClose, onSaved }) {
   const ev = initial.event || {};
+  const occ = initial.date || initial.start; // 누른 회차 날짜
+  const [scopeAsk, setScopeAsk] = useState(null); // 반복 일정: "save" | "remove" — 범위를 고르는 중
   const [open, setOpen] = useState(ev.id ? "" : "what");
   const [kind, setKind] = useState(ev.kind || "");
   const [title, setTitle] = useState(ev.title || "");
   const [memo, setMemo] = useState(ev.memo || "");
-  const [start, setStart] = useState(initial.start);
+  const [start, setStart] = useState(occ);
   const [end, setEnd] = useState(ev.endDate || "");
   const [time, setTime] = useState(ev.time || "");
   const [repeat, setRepeat] = useState(ev.repeat || "");
   const [alarm, setAlarm] = useState(ev.alarm || "");
-  const [month, setMonth] = useState(() => new Date(`${initial.start}T00:00:00`));
+  const [month, setMonth] = useState(() => new Date(`${occ}T00:00:00`));
   const [error, setError] = useState("");
 
   const k = kindOf({ kind });
@@ -65,20 +73,45 @@ export default function EventSheet({ dog, initial, onClose, onSaved }) {
       setOpen("alarm");
       return setError("'1시간 전' 알림은 시간을 정해야 쓸 수 있어요.");
     }
+    if (ev.id && ev.repeat) return setScopeAsk("save"); // 범위를 고르는 패널에서 이어서 저장
+    commitSave("all");
+  }
+
+  // scope: "all"(전체) | "this"(이번 회차만) | "after"(이 회차부터)
+  function commitSave(scope) {
+    const t = title.trim() || k?.label || "";
+    const fields = { title: t, kind, color: k?.color || ev.color, time, endDate: multi ? end : "", repeat: multi ? "" : repeat, memo: memo.trim(), alarm };
     try {
-      saveEvent(dog.id, start, { id: ev.id, title: t, kind, color: k?.color || ev.color, time, endDate: multi ? end : "", repeat: multi ? "" : repeat, memo: memo.trim(), alarm });
+      if (scope === "this") {
+        skipOccurrence(dog.id, initial.start, ev.id, occ);
+        saveEvent(dog.id, start, { ...fields, repeat: "" });
+      } else if (scope === "after" && occ > initial.start) {
+        endSeriesBefore(dog.id, initial.start, ev.id, occ);
+        saveEvent(dog.id, start, fields);
+      } else {
+        // 전체: 누른 회차에서 날짜를 옮긴 만큼 반복의 시작일도 옮긴다(앞 회차들이 사라지지 않게)
+        const seriesStart = ev.id && ev.repeat ? keyPlus(initial.start, dayDiff(start, occ)) : start;
+        saveEvent(dog.id, seriesStart, { id: ev.id, ...fields });
+      }
       syncPushAlarms();
       onSaved(start);
     } catch (err) {
+      setScopeAsk(null);
       setError(err.message);
     }
   }
 
   function remove() {
-    if (!confirm(ev.repeat ? "반복 일정 전체를 지울까요?" : "이 일정을 지울까요?")) return;
-    removeEvent(dog.id, initial.start, ev.id);
+    if (ev.repeat) return setScopeAsk("remove");
+    if (!confirm("이 일정을 지울까요?")) return;
+    commitRemove("all");
+  }
+  function commitRemove(scope) {
+    if (scope === "this") skipOccurrence(dog.id, initial.start, ev.id, occ);
+    else if (scope === "after") endSeriesBefore(dog.id, initial.start, ev.id, occ);
+    else removeEvent(dog.id, initial.start, ev.id);
     syncPushAlarms();
-    onSaved(initial.start);
+    onSaved(occ);
   }
 
   // 컴포넌트가 아니라 그리는 함수 — 안에 있는 입력칸이 글자마다 새로 만들어져 포커스를 잃지 않게
@@ -164,6 +197,18 @@ export default function EventSheet({ dog, initial, onClose, onSaved }) {
           </>)}
           {error && <p className="error-text" role="alert" style={{ padding: "0 4px" }}>{error}</p>}
         </div>
+
+        {scopeAsk && (
+          <div className="es-scope" role="alertdialog" aria-label="반복 일정 범위">
+            <div className="es-big" style={{ marginBottom: 4 }}>{scopeAsk === "save" ? "반복 일정을 어떻게 바꿀까요?" : "반복 일정을 어떻게 지울까요?"}</div>
+            <p className="faint" style={{ margin: "0 0 10px" }}>{dateLabel(occ)} 회차를 골랐어요.</p>
+            <button type="button" className="btn-ghost" onClick={() => (scopeAsk === "save" ? commitSave("this") : commitRemove("this"))}>이번 일정만</button>
+            <button type="button" className="btn-ghost" onClick={() => (scopeAsk === "save" ? commitSave("after") : commitRemove("after"))}>
+              {occ > initial.start ? "이 일정과 이후 모두" : "모든 반복 일정"}
+            </button>
+            <button type="button" className="link-btn" style={{ alignSelf: "center" }} onClick={() => setScopeAsk(null)}>취소</button>
+          </div>
+        )}
 
         <div className="es-foot">
           {ev.id ? (

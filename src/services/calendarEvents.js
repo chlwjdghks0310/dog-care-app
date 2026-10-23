@@ -67,9 +67,11 @@ export const ALARMS = [["", "안 받기"], ["morning", "당일 아침 9시"], ["
 const keyAdd = (key, n) => toDateKey(addDays(new Date(`${key}T00:00:00`), n));
 
 // 시작일 기준 반복 날짜(from~to 안). 매달 31일처럼 없는 날은 건너뛴다.
-function repeatDates(start, repeat, from, to) {
+// ev.skip: "이번만" 바꾸거나 지운 회차(날짜 목록) / ev.until: "이후 모두" 바꾸거나 지운 날 — 그 날부터는 이 반복이 끝남
+function repeatDates(start, repeat, from, to, ev = {}) {
   const out = [];
   if (!repeat) return start >= from && start <= to ? [start] : [];
+  const skip = new Set(ev.skip || []);
   const [y, m, d] = start.split("-").map(Number);
   for (let i = 0; i < 1200; i++) {
     let key;
@@ -79,8 +81,8 @@ function repeatDates(start, repeat, from, to) {
       if (dt.getDate() !== d) continue; // 그 달엔 그 날짜가 없음
       key = toDateKey(dt);
     }
-    if (key > to) break;
-    if (key >= from) out.push(key);
+    if (key > to || (ev.until && key >= ev.until)) break;
+    if (key >= from && !skip.has(key)) out.push(key);
   }
   return out;
 }
@@ -95,7 +97,7 @@ export function getOccurrences(dogId, from, to) {
           if (d >= from && d <= to) out.push({ date: d, event, start, isStart: d === start, isEnd: d === event.endDate });
         }
       } else {
-        for (const d of repeatDates(start, event.repeat, from, to)) out.push({ date: d, event, start, isStart: true, isEnd: true });
+        for (const d of repeatDates(start, event.repeat, from, to, event)) out.push({ date: d, event, start, isStart: true, isEnd: true });
       }
     }
   }
@@ -119,6 +121,22 @@ export function saveEvent(dogId, start, input) {
   if (!writeJSON(KEY, all)) throw new Error("저장 공간이 부족해서 일정을 저장하지 못했어요.");
   syncEventAlarms(dogId);
   return event;
+}
+
+// 반복 일정 범위 고치기: 이 회차만 빼기(skip) / 이 회차부터 끝내기(until). 시작 회차부터 끝내면 일정 자체를 지운다.
+function patchEvent(dogId, start, id, fn) {
+  const all = getAll();
+  const list = all[dogId]?.[start];
+  const ev = list?.find((e) => e.id === id);
+  if (!ev) return;
+  fn(ev);
+  writeJSON(KEY, all);
+  syncEventAlarms(dogId);
+}
+export const skipOccurrence = (dogId, start, id, date) => patchEvent(dogId, start, id, (ev) => (ev.skip = [...new Set([...(ev.skip || []), date])]));
+export function endSeriesBefore(dogId, start, id, date) {
+  if (date <= start) return removeEvent(dogId, start, id);
+  patchEvent(dogId, start, id, (ev) => (ev.until = date));
 }
 
 export function removeEvent(dogId, start, id) {
@@ -155,7 +173,7 @@ export function syncEventAlarms(dogId, today = todayKey()) {
 function nextAlarm(start, e, today) {
   const icon = kindOf(e)?.icon || "🗓️";
   const time = e.alarm === "morning" ? "09:00" : e.alarm === "eve" ? "20:00" : e.time ? minutesBefore(e.time, 60) : "09:00";
-  for (const d of repeatDates(start, e.repeat, keyAdd(today, -1), keyAdd(today, 800))) {
+  for (const d of repeatDates(start, e.repeat, keyAdd(today, -1), keyAdd(today, 800), e)) {
     const date = e.alarm === "eve" || (e.alarm === "before1h" && e.time && e.time < "01:00") ? keyAdd(d, -1) : d;
     if (date >= today) return { date, time, title: `${icon} ${e.alarm === "eve" ? "내일 " : ""}${e.title}${e.time ? ` ${e.time}` : ""}` };
   }
