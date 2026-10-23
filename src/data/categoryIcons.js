@@ -1,16 +1,16 @@
 // 체크리스트 분류 → 화면용 선 아이콘 이름(components/Ico.jsx)
 const CATEGORY_ICOS = {
-  산책: "footprints",
-  식사: "utensils",
-  배변훈련: "sprout",
-  사회화: "users",
-  이갈이: "sparkles",
-  "목욕/미용": "scissors",
+  산책: "walk",
+  식사: "bowl",
+  배변훈련: "toilet",
+  사회화: "handHeart",
+  이갈이: "tooth",
+  "목욕/미용": "bath",
   "행동/훈련": "target",
-  "건강/응급상황": "stethoscope",
-  예방접종: "shield",
-  수면: "moon",
-  체중관리: "gauge",
+  "건강/응급상황": "firstAid",
+  예방접종: "syringe",
+  수면: "bed",
+  체중관리: "scales",
   약: "pill",
 };
 export const getCategoryIco = (category) => CATEGORY_ICOS[category] || "pin";

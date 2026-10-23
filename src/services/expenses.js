@@ -8,8 +8,8 @@ const DEFAULT_CATEGORIES = [
   { id: "medical", name: "의료", emoji: "🏥", ico: "stethoscope" },
   { id: "toy", name: "장난감", emoji: "🧸", ico: "puzzle" },
   { id: "supplies", name: "생활용품", emoji: "🧴", ico: "sprayCan" },
-  { id: "snack", name: "간식", emoji: "🦴", ico: "cookie" },
-  { id: "food", name: "사료", emoji: "🍚", ico: "utensils" },
+  { id: "snack", name: "간식", emoji: "🦴", ico: "bone" },
+  { id: "food", name: "사료", emoji: "🍚", ico: "bowl" },
 ];
 
 // 삭제된 카테고리를 쓰던 기록은 이걸로 보여준다.
@@ -17,18 +17,20 @@ export const UNKNOWN_CATEGORY = { id: "unknown", name: "기타", emoji: "📦", 
 
 // 카테고리 추가 때 고르는 아이콘(+ 같은 뜻의 이모지)
 export const CATEGORY_CHOICES = [
-  ["stethoscope", "🏥"], ["pill", "💊"], ["shield", "💉"], ["utensils", "🍚"], ["droplets", "🥫"], ["cookie", "🦴"],
-  ["puzzle", "🧸"], ["sprayCan", "🧴"], ["sparkles", "🛁"], ["scissors", "✂️"], ["footprints", "🦮"], ["shoppingBag", "👕"],
+  ["stethoscope", "🏥"], ["pill", "💊"], ["syringe", "💉"], ["bowl", "🍚"], ["droplets", "🥫"], ["bone", "🦴"],
+  ["puzzle", "🧸"], ["sprayCan", "🧴"], ["bath", "🛁"], ["scissors", "✂️"], ["walk", "🦮"], ["shoppingBag", "👕"],
   ["house", "🏠"], ["car", "🚗"], ["building", "🏨"], ["graduation", "🎓"], ["camera", "📸"], ["umbrella", "🛡️"],
-  ["party", "🎂"], ["gift", "🎀"], ["heart", "❤️"], ["paw", "🐾"], ["box", "📦"], ["wallet", "💰"],
+  ["cake", "🎂"], ["gift", "🎀"], ["heartPlain", "❤️"], ["paw", "🐾"], ["box", "📦"], ["wallet", "💰"],
 ];
 // 예전에 이모지로만 저장된 카테고리(직접 넣은 이모지 포함)도 알맞은 아이콘으로
 const EMOJI_ICO = {
-  "🏥": "stethoscope", "💊": "pill", "💉": "shield", "🧸": "puzzle", "🎾": "puzzle", "🧴": "sprayCan", "🧻": "sprayCan", "🛁": "sparkles",
-  "✂️": "scissors", "🦴": "cookie", "🍖": "cookie", "🍚": "utensils", "🥫": "droplets", "🦮": "footprints", "🎀": "gift", "👕": "shoppingBag",
-  "🏠": "house", "🚗": "car", "🏨": "building", "🎓": "graduation", "📸": "camera", "🛡️": "umbrella", "🎂": "party", "💰": "wallet", "📦": "box",
+  "🏥": "stethoscope", "💊": "pill", "💉": "syringe", "🧸": "puzzle", "🎾": "puzzle", "🧴": "sprayCan", "🧻": "sprayCan", "🛁": "bath",
+  "✂️": "scissors", "🦴": "bone", "🍖": "bone", "🍚": "bowl", "🥫": "droplets", "🦮": "walk", "🎀": "gift", "👕": "shoppingBag",
+  "🏠": "house", "🚗": "car", "🏨": "building", "🎓": "graduation", "📸": "camera", "🛡️": "umbrella", "🎂": "cake", "❤️": "heartPlain", "💰": "wallet", "📦": "box",
 };
-export const categoryIco = (cat) => cat?.ico || EMOJI_ICO[cat?.emoji] || EMOJI_ICO[`${cat?.emoji}\uFE0F`] || "wallet";
+// 저장된 카테고리에 남아 있는 예전 아이콘 이름 → 지금 이름(아이콘을 바꿔도 이미 저장된 카테고리가 빈칸이 되지 않게)
+const RENAMED = { cookie: "bone", utensils: "bowl", shield: "syringe", sparkles: "bath", footprints: "walk", party: "cake", heart: "heartPlain", can: "droplets" };
+export const categoryIco = (cat) => (cat?.ico && (RENAMED[cat.ico] || cat.ico)) || EMOJI_ICO[cat?.emoji] || EMOJI_ICO[`${cat?.emoji}\uFE0F`] || "wallet";
 
 function newId(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;

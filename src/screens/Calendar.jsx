@@ -177,7 +177,7 @@ export default function Calendar({ dog }) {
         {milestones.length > 0 && (
           <p style={{ marginBottom: 10 }}>
             {milestones.map((r) => (
-              <span key={r.id} className="chip" style={{ marginRight: 6 }}><Ico name="party" size={13} /> 오늘부터: {r.title}</span>
+              <span key={r.id} className="chip" style={{ marginRight: 6 }}><Ico name="sparkles" size={13} /> 오늘부터: {r.title}</span>
             ))}
           </p>
         )}

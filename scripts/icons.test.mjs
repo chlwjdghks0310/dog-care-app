@@ -5,7 +5,8 @@ import path from "node:path";
 
 const ico = fs.readFileSync("src/components/Ico.jsx", "utf8");
 const map = ico.slice(ico.indexOf("const ICONS = {"), ico.indexOf("};", ico.indexOf("const ICONS = {"))).replace(/\/\/.*$/gm, ""); // 주석 처리된 건 없는 것
-const known = new Set([...map.matchAll(/(\w+):\s*\w+Icon\b/g)].map((m) => m[1]));
+const ph = ico.slice(ico.indexOf("const PHOSPHOR = {"), ico.indexOf("};", ico.indexOf("const PHOSPHOR = {")));
+const known = new Set([...[...map.matchAll(/(\w+):\s*\w+Icon\b/g)].map((m) => m[1]), ...[...ph.matchAll(/(\w+):\s*[A-Z]\w*/g)].map((m) => m[1])]);
 const emojiMap = ico.slice(ico.indexOf("const EMOJI = {"), ico.indexOf("};", ico.indexOf("const EMOJI = {")));
 
 const used = new Map();

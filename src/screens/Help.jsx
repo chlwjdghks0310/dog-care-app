@@ -77,7 +77,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🩺 건강 체크",
+    category: "🔎 건강 체크",
     items: [
       {
         q: "변 상태 확인은 어떻게 하나요?",

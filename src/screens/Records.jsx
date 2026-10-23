@@ -196,7 +196,7 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2"><Ico name="gauge" size={18} /> 체중 <span className="faint">측정값</span></div>
+        <div className="h2"><Ico name="scales" size={18} /> 체중 <span className="faint">측정값</span></div>
         {!latest ? (
           <Empty text="아직 체중 기록이 없습니다." onAdd={onAdd} />
         ) : (
@@ -240,7 +240,7 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2"><Ico name="thermometer" size={18} /> 이 기간 증상</div>
+        <div className="h2"><Ico name="bandaid" size={18} /> 이 기간 증상</div>
         {symptoms.length === 0 ? (
           <p className="subtle" style={{ margin: 0 }}>최근 {days}일 기록된 증상이 없습니다.</p>
         ) : (

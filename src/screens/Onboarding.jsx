@@ -163,7 +163,7 @@ function ChatMock() {
       <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
       <div className="onb-bubble ai">
         둘 다 적어 뒀어!
-        <div className="onb-record"><Ico name="footprints" size={13} /> 산책 30분 · 건강 기록</div>
+        <div className="onb-record"><Ico name="walk" size={13} /> 산책 30분 · 건강 기록</div>
         <div className="onb-record"><Ico name="wallet" size={13} /> 사료 30,000원 · 가계부</div>
       </div>
     </div>
@@ -184,9 +184,9 @@ function CareMock() {
         <Example />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
           {[
-            ["gauge", "몸무게"],
+            ["scales", "몸무게"],
             ["droplet", "물"],
-            ["footprints", "산책"],
+            ["walk", "산책"],
           ].map(([icon, label]) => (
             <div key={label} className="onb-tile">
               <span style={{ color: "var(--accent-strong)" }}><Ico name={icon} size={18} /></span>

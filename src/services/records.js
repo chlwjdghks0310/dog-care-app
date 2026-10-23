@@ -14,15 +14,15 @@ const KEY = "dogcare-records-v1";
 
 export const LEVELS = ["평소보다 적음", "평소", "평소보다 많음"];
 export const TYPES = {
-  weight: { label: "체중", icon: "⚖️", ico: "gauge", tone: "blue" },
-  symptom: { label: "증상", icon: "🤒", ico: "thermometer", tone: "blue" },
-  meal: { label: "식사", icon: "🍚", ico: "utensils", tone: "rose" },
-  potty: { label: "배변·배뇨", icon: "💩", ico: "sprout", tone: "teal" },
+  weight: { label: "체중", icon: "⚖️", ico: "scales", tone: "blue" },
+  symptom: { label: "증상", icon: "🤒", ico: "bandaid", tone: "blue" },
+  meal: { label: "식사", icon: "🍚", ico: "bowl", tone: "rose" },
+  potty: { label: "배변·배뇨", icon: "💩", ico: "toilet", tone: "teal" },
   med: { label: "복약", icon: "💊", ico: "pill", tone: "teal" },
   vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope", tone: "blue" },
-  condition: { label: "컨디션", icon: "🌙", ico: "moon", tone: "violet" },
-  daily: { label: "일상", icon: "🦮", ico: "footprints", tone: "violet" },
-  life: { label: "성장·추억", icon: "🎉", ico: "party", tone: "rose" },
+  condition: { label: "컨디션", icon: "🌙", ico: "smiley", tone: "violet" },
+  daily: { label: "일상", icon: "🦮", ico: "sun", tone: "violet" },
+  life: { label: "성장·추억", icon: "🎉", ico: "star", tone: "rose" },
   media: { label: "사진", icon: "📷", ico: "camera", tone: "rose" },
   vital: { label: "건강 수치", icon: "📈", ico: "chartLine", tone: "blue" },
 };

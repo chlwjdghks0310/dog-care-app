@@ -2,10 +2,10 @@
 // 참고 범위는 일반적인 성견 안정 시 값 — 개체·측정법마다 다르므로 "참고"로만 보여 주고 판정하지 않는다.
 // 근거: Merck 수의학 매뉴얼(호흡 18~34·심박 70~120·체온 37.5~39.2), VCA·미주리대(수면 호흡 15~30, 30 초과 지속 시 문의). ../자료용/자료/2026-10-21-건강수치-측정법-검증.md
 export const VITALS = [
-  { id: "weight", label: "몸무게", icon: "⚖️", ico: "gauge", tone: "blue", unit: "kg", kind: "point", step: 0.1, min: 0.1, max: 120, external: true },
-  { id: "dry", label: "건식 사료", icon: "🥣", ico: "utensils", tone: "rose", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
+  { id: "weight", label: "몸무게", icon: "⚖️", ico: "scales", tone: "blue", unit: "kg", kind: "point", step: 0.1, min: 0.1, max: 120, external: true },
+  { id: "dry", label: "건식 사료", icon: "🥣", ico: "bowl", tone: "rose", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
   { id: "wet", label: "습식", icon: "🥫", ico: "droplets", tone: "rose", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
-  { id: "treat", label: "간식", icon: "🦴", ico: "cookie", tone: "rose", unit: "개", kind: "sum", step: 1, min: 1, max: 100 },
+  { id: "treat", label: "간식", icon: "🦴", ico: "bone", tone: "rose", unit: "개", kind: "sum", step: 1, min: 1, max: 100 },
   { id: "water", label: "음수량", icon: "💧", ico: "droplet", tone: "teal", unit: "ml", kind: "sum", step: 10, min: 1, max: 5000 },
   { id: "fluid", label: "피하수액", icon: "💉", ico: "pipette", tone: "teal", unit: "ml", kind: "sum", step: 10, min: 1, max: 1000 },
   {
@@ -22,7 +22,7 @@ export const VITALS = [
     id: "temp", label: "체온", icon: "🌡️", ico: "thermometer", tone: "blue", unit: "℃", kind: "point", step: 0.1, min: 30, max: 45, range: [37.5, 39.2],
     note: "항문 체온 기준이에요. 39.2℃를 넘으면 10분 쉬고 다시 재요. 40.0℃ 초과·37.2℃ 미만이면 바로 병원에 가요.",
   },
-  { id: "walk", label: "산책", icon: "🦮", ico: "footprints", tone: "violet", unit: "분", kind: "sum", step: 5, min: 1, max: 600 },
+  { id: "walk", label: "산책", icon: "🦮", ico: "walk", tone: "violet", unit: "분", kind: "sum", step: 5, min: 1, max: 600 },
 ];
 export const VITAL = Object.fromEntries(VITALS.map((v) => [v.id, v]));
 // 프로필에 기본으로 보이는 수치(나머지는 최근 30일 기록이 있거나 [편집]에서 켜면 보임)

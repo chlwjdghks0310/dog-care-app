@@ -64,4 +64,6 @@ assert.equal(E.categoryIco({ emoji: "✂" }), "scissors", "변형 선택자 없�
 assert.equal(E.categoryIco({ emoji: "🦄" }), "wallet");
 assert.equal(E.categoryIco({ emoji: "🏥", ico: "pill" }), "pill");
 assert.ok(E.CATEGORY_CHOICES.every(([ico, emoji]) => ico && emoji));
+assert.equal(E.categoryIco({ emoji: "🦴", ico: "cookie" }), "bone", "예전에 저장된 아이콘 이름");
+assert.equal(E.categoryIco({ emoji: "🍚", ico: "utensils" }), "bowl");
 console.log("가계부 분석 확인 통과");

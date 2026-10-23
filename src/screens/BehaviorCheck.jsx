@@ -95,7 +95,7 @@ export default function BehaviorCheck({ dog, onBack }) {
 
       {result && (
         <div className="card">
-          <div className="h2"><Ico name="stethoscope" size={18} /> 참고 분석 (진단 아님)</div>
+          <div className="h2"><Ico name="scan" size={18} /> 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
         </div>
       )}

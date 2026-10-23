@@ -52,11 +52,11 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenHealth}>
-          <span className="quick-tile-icon tone-blue" aria-hidden="true"><Ico name="stethoscope" size={24} /></span>
+          <span className="quick-tile-icon tone-blue" aria-hidden="true"><Ico name="scan" size={24} /></span>
           <span className="quick-tile-label">건강 체크</span>
         </button>
         <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon tone-rose" aria-hidden="true"><Ico name="utensils" size={24} /></span>
+          <span className="quick-tile-icon tone-rose" aria-hidden="true"><Ico name="bowl" size={24} /></span>
           <span className="quick-tile-label">사료 계산기</span>
         </button>
         <button className="quick-tile" onClick={onOpenAlarms}>
@@ -104,7 +104,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         )}
         {noMealTimes && (
           <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
-            <Ico name="utensils" size={16} /> 밥 시간 정하고 알림 받기
+            <Ico name="bowl" size={16} /> 밥 시간 정하고 알림 받기
           </button>
         )}
       </div>

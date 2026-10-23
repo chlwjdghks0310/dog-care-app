@@ -1,9 +1,9 @@
 // 인터넷 없이 앱을 열면 보여 줄 안내 페이지 하나만 저장해 둔다(앱 파일은 저장하지 않아 업데이트는 그대로 바로 반영).
-const OFFLINE_CACHE = "mungcare-offline-v1";
+const OFFLINE_CACHE = "mungcare-offline-v2"; // 안내 페이지를 바꾸면 숫자를 올려 새로 받게
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(OFFLINE_CACHE).then((c) => c.addAll([OFFLINE_URL])).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(OFFLINE_CACHE).then((c) => c.add(new Request(OFFLINE_URL, { cache: "reload" }))).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(

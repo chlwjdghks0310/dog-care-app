@@ -619,12 +619,12 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
 
 // 건강 기록 목록 — 종류마다 마지막 기록 한 줄, 누르면 그 종류만 모아 보고 ＋로 바로 적기
 const SERVICES = [
-  { key: "symptom", label: "이상 증상", ico: "thermometer", tone: "blue", types: ["symptom"] },
+  { key: "symptom", label: "이상 증상", ico: "bandaid", tone: "blue", types: ["symptom"] },
   { key: "meds", label: "투약 기록", ico: "pill", tone: "teal" },
   { key: "vet", label: "병원 진료", ico: "stethoscope", tone: "blue", types: ["vet"] },
-  { key: "eat", label: "식사·배변", ico: "utensils", tone: "rose", types: ["meal", "potty"], add: "meal" },
-  { key: "condition", label: "컨디션", ico: "moon", tone: "violet", types: ["condition"] },
-  { key: "daily", label: "산책·일상", ico: "footprints", tone: "violet", types: ["daily"] },
+  { key: "eat", label: "식사·배변", ico: "bowl", tone: "rose", types: ["meal", "potty"], add: "meal" },
+  { key: "condition", label: "컨디션", ico: "smiley", tone: "violet", types: ["condition"] },
+  { key: "daily", label: "산책·일상", ico: "walk", tone: "violet", types: ["daily"] },
   { key: "memory", label: "사진·추억", ico: "camera", tone: "rose", types: ["media", "life"], add: "media" },
   { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];

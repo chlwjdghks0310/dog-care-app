@@ -15,6 +15,7 @@
     "@animateicons/react": "0.12.1",
     "@anthropic-ai/sdk": "^0.125.0",
     "@google/genai": "^2.22.0",
+    "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.117.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
