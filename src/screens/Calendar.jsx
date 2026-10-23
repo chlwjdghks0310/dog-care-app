@@ -141,7 +141,7 @@ export default function Calendar({ dog }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
           <div className="h2" style={{ margin: 0 }}>{formatKoreanDate(selectedDateKey)} 내 일정</div>
-          <span className="faint">{formatAge(selectedAge)}</span>
+          <span className="faint">{dog.name} {formatAge(selectedAge)}</span>
         </div>
 
         {selectedOcc.length === 0 ? (

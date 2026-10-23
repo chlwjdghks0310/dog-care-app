@@ -49,6 +49,13 @@ export default function Budget({ dog }) {
   const [title, setTitle] = useState("");
   const [amountText, setAmountText] = useState("");
   const [categoryId, setCategoryId] = useState(() => getCategories()[0]?.id);
+  const [catPicked, setCatPicked] = useState(false); // 직접 고르기 전엔 적은 내용에 카테고리 이름이 있으면 그걸로("사료" → 사료)
+  function handleTitle(value) {
+    setTitle(value);
+    if (catPicked) return;
+    const hit = categories.find((c) => value.includes(c.name));
+    if (hit) setCategoryId(hit.id);
+  }
 
   const [newCatName, setNewCatName] = useState("");
   const [newCatIco, setNewCatIco] = useState(CATEGORY_CHOICES[6]); // [아이콘 이름, 이모지]
@@ -128,6 +135,7 @@ export default function Budget({ dog }) {
     if (!title.trim() || !amount || !categoryId) return;
     setExpenses(addExpense(dog.id, { title: title.trim(), amount, date: selectedDateKey, categoryId }));
     setTitle("");
+    setCatPicked(false);
     setAmountText("");
   }
 
@@ -380,7 +388,7 @@ export default function Budget({ dog }) {
                     key={c.id}
                     type="button"
                     className="chip cat-chip"
-                    onClick={() => setCategoryId(c.id)}
+                    onClick={() => (setCategoryId(c.id), setCatPicked(true))}
                     style={{ "--ev": colorOf(c.id), border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
                   >
                     <Ico name={categoryIco(c)} size={14} /> {c.name}
@@ -388,7 +396,7 @@ export default function Budget({ dog }) {
                 ))}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="무엇에 썼나요? (예: 예방접종)" style={{ ...inputStyle, flex: 2 }} />
+                <input value={title} onChange={(e) => handleTitle(e.target.value)} placeholder="무엇에 썼나요? (예: 예방접종)" style={{ ...inputStyle, flex: 2 }} />
                 <input
                   value={amountText}
                   onChange={(e) => {

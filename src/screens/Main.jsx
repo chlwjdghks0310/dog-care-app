@@ -372,7 +372,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
                   key={i}
                   style={{
                     alignSelf: "flex-end",
-                    background: "var(--accent-soft)",
+                    background: "var(--bubble-me)",
                     border: "1px solid var(--border)",
                     borderRadius: 14,
                     padding: "9px 13px",

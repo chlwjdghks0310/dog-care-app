@@ -6,7 +6,7 @@ export default function ThinkingBubble({ top = "56px" }) {
     <div style={{ position: "absolute", top: `calc(${top} - 18px)`, left: 82, zIndex: 6 }} aria-hidden="true">
       <div
         style={{
-          background: "var(--surface)",
+          background: "var(--field)",
           border: "1px solid var(--border)",
           borderRadius: 16,
           padding: "7px 11px",
@@ -28,7 +28,7 @@ export default function ThinkingBubble({ top = "56px" }) {
           width: 7,
           height: 7,
           borderRadius: "50%",
-          background: "var(--surface)",
+          background: "var(--field)",
           border: "1px solid var(--border)",
         }}
       />
@@ -40,7 +40,7 @@ export default function ThinkingBubble({ top = "56px" }) {
           width: 4,
           height: 4,
           borderRadius: "50%",
-          background: "var(--surface)",
+          background: "var(--field)",
           border: "1px solid var(--border)",
         }}
       />

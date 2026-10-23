@@ -49,24 +49,7 @@ export default function AiAnswer({ structured, onFollowUp, followUpDisabled }) {
       {followUps.length > 0 && onFollowUp && (
         <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }} aria-label="이어서 물어보기">
           {followUps.map((q) => (
-            <button
-              key={q}
-              type="button"
-              disabled={followUpDisabled}
-              onClick={() => onFollowUp(q)}
-              style={{
-                padding: "8px 12px",
-                minHeight: 36,
-                borderRadius: 999,
-                border: "1px solid var(--accent)",
-                background: "var(--surface)",
-                color: "var(--accent-strong)",
-                fontSize: 13.5,
-                fontWeight: 600,
-                textAlign: "left",
-                opacity: followUpDisabled ? 0.5 : 1,
-              }}
-            >
+            <button key={q} type="button" className="ai-followup" disabled={followUpDisabled} onClick={() => onFollowUp(q)} style={{ opacity: followUpDisabled ? 0.5 : 1 }}>
               {q}
             </button>
           ))}

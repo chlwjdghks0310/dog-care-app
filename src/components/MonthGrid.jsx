@@ -33,7 +33,7 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+      <div className="mg-grid">
         {cells.map((d, i) => {
           if (!d) return <div key={`blank-${i}`} />;
           const key = toDateKey(new Date(year, month, d));
@@ -54,9 +54,9 @@ export default function MonthGrid({ monthDate, onMonthChange, selectedDateKey, o
                 gap: 3,
                 padding: "6px 0",
                 minWidth: 0,
-                borderRadius: 10,
+                borderRadius: 0,
                 border: isSelected ? "2px solid var(--accent)" : "2px solid transparent",
-                background: isToday ? "var(--accent-soft)" : "none",
+                ...(isToday && { background: "var(--accent-soft)" }),
               }}
             >
               <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400 }}>{d}</span>
