@@ -11,12 +11,13 @@ import SpeechBubble from "../components/SpeechBubble";
 import AiAnswer from "../components/AiAnswer";
 import Ico from "../components/Ico";
 import VoiceButton from "../components/VoiceButton";
+import { getTodaySummary } from "../services/todaySummary";
 
 const CHAT_MODES = [
-  // hello: 첫 화면 말풍선의 자기소개(고른 강아지마다 다름). {name}은 강아지 이름 + 받침이면 "이"(여름 → 여름이, 여르 → 여르)
-  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", hello: "반가워! 꼼꼼 박사 보더콜리야 🐕\n자료를 찾아보고 차근차근 자세히 알려 줄게.\n대신 조금 오래 걸릴 수 있어!", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", hello: "안녕! 난 포메라니안이야 🐶\n{name} 얘기라면 뭐든 물어봐!\n핵심만 콕콕 빠르게 알려 줄게!", pending: "음… 생각 중이야…" },
-  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", hello: "안녕안녕! 수다쟁이 리트리버야 🦮\n오늘 있었던 일, 나한테 다 얘기해 줘!\n꼬리 흔들면서 들을게 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {call}은 "여름아/여르야"
+  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{call}, 오늘 걸 정리해 봤어 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{call}! 오늘 요약이야 ⚡", pending: "음… 생각 중이야…" },
+  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{call} 안녕! 오늘도 같이 힘내자 🐾", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 버튼 순서: 보더콜리 · 포메라니안(가운데) · 리트리버. 앱을 새로 켜면 항상 포메라니안으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -65,7 +66,7 @@ const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
-export default function Main({ dog, resetSignal, onReadingChange }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile }) {
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
@@ -333,7 +334,11 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
     >
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
-          <SpeechBubble>{findChatMode(chatMode).hello.replace("{name}", josa(dog.name, "이", ""))}</SpeechBubble>
+          <button type="button" className="summary-bubble" onClick={onOpenProfile} aria-label="오늘 요약 — 눌러서 프로필 보기">
+            <SpeechBubble>
+              <TodaySummary dog={dog} open={findChatMode(chatMode).open} />
+            </SpeechBubble>
+          </button>
         </div>
       )}
 
@@ -542,6 +547,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
           );
         })}
       </div>
+      <p className="faint" style={{ textAlign: "center", margin: "6px 0 0" }}>{findChatMode(chatMode).desc}</p>
       </div></div>
 
       {(attachments.length > 0 || attachError) && (
@@ -638,5 +644,32 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
         </p>
       </div></div>
     </div>
+  );
+}
+
+// 첫 화면 말풍선: 고른 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
+function TodaySummary({ dog, open }) {
+  const t = getTodaySummary(dog);
+  const lines = [];
+  if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
+  else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
+  if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
+  else if (t.nextDose) lines.push(["pill", "teal", `${t.nextDose.time} ${t.nextDose.name} ${t.nextDose.dose} 먹을 차례야`]);
+  if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
+  return (
+    <span className="summary">
+      <span className="summary-open">{open.replace("{call}", josa(dog.name, "아", "야"))}</span>
+      {lines.length ? (
+        lines.map(([ico, tone, text]) => (
+          <span key={ico} className="summary-line">
+            <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
+            <span>{text}</span>
+          </span>
+        ))
+      ) : (
+        <span className="summary-line">오늘은 특별히 챙길 게 없어. 궁금한 거 물어봐!</span>
+      )}
+      <span className="summary-more">눌러서 프로필 보기 ›</span>
+    </span>
   );
 }

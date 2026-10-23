@@ -63,7 +63,7 @@ export default function App() {
   const [dog, setDog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [route, setRoute] = useState("onboarding");
-  const [tab, setTab] = useState("profile"); // 앱을 열면 프로필부터
+  const [tab, setTab] = useState("main"); // 앱을 열면 비서부터(말풍선에 오늘 요약, 누르면 프로필)
   const [mainResetSignal, setMainResetSignal] = useState(0);
   const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
@@ -391,7 +391,7 @@ export default function App() {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
     main: (
       <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} />
+        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} />
       </Suspense>
     ),
     home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,

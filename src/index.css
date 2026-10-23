@@ -932,3 +932,10 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .mg-grid > * { background: var(--surface); }
 /* 비서: 이어서 물어보기 버튼은 연하게 */
 .ai-followup { padding: 8px 12px; min-height: 36px; border-radius: 999px; border: 1px solid transparent; background: var(--accent-soft); color: var(--accent-strong); font-size: 13.5px; font-weight: 600; text-align: left; }
+/* 비서 첫 화면 말풍선 = 오늘 요약(누르면 프로필) */
+.summary-bubble { display: block; width: 100%; padding: 0; border: none; background: none; color: inherit; text-align: inherit; }
+.summary { display: flex; flex-direction: column; gap: 6px; text-align: left; font-weight: 500; font-size: 14.5px; }
+.summary-open { font-weight: 800; font-size: 16px; text-align: center; margin-bottom: 2px; }
+.summary-line { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+.summary-line .ico { margin-top: 2px; }
+.summary-more { align-self: center; font-size: 12px; color: var(--text-faint); font-weight: 600; margin-top: 2px; }

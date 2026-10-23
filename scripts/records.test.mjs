@@ -233,3 +233,21 @@ console.log("통합 기록 확인 통과");
   assert.deepEqual(getTodayChecklist(dogW, today).filter((i) => i.category === "식사").map((m) => m.description.slice(0, 5)), ["09:00"], "시각을 바꾸면 안 끝낸 밥 항목도 바뀜");
   console.log("체크리스트 산책·밥 확인 통과");
 }
+
+// 비서 첫 화면 오늘 요약: 남은 할 일, 다음 약(아직 안 먹인 것), 7일 안 일정
+{
+  const { getTodaySummary } = await import("../src/services/todaySummary.js");
+  const { addMed } = await import("../src/services/medications.js");
+  const { saveEvent } = await import("../src/services/calendarEvents.js");
+  const dogS = { id: "sum", name: "콩", breed: "말티즈", birthDate: "2022-01-01", gender: "male" };
+  const late = new Date(`${day(0)}T00:01:00`);
+  addMed("sum", { name: "관절약", dose: "1알", times: ["23:30"], startDate: day(-3) });
+  saveEvent("sum", day(3), { title: "미용", kind: "grooming" });
+  saveEvent("sum", day(20), { title: "먼 일정" });
+  const t = getTodaySummary(dogS, late);
+  assert.ok(t.tasksTotal >= 1 && t.tasksLeft.length === t.tasksTotal, "아무것도 안 했으면 전부 남음");
+  assert.deepEqual(t.nextDose, { time: "23:30", name: "관절약", dose: "1알" });
+  assert.equal(t.checkDoses, 0);
+  assert.deepEqual(t.nextEvent, { title: "미용", time: "", days: 3 }, "7일 안 가장 가까운 일정만");
+  console.log("오늘 요약 확인 통과");
+}
