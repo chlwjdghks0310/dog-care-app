@@ -970,3 +970,5 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .first-check { width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; border: 2px solid var(--check-border); display: inline-flex; align-items: center; justify-content: center; }
 .first-step.done .first-check { background: var(--accent); border-color: var(--accent); color: #fff; }
 .first-hint { margin: -2px 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--c-teal-bg); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+.vt-value.stale { opacity: 0.45; }
+.btn-primary:disabled { opacity: 0.45; box-shadow: none; }

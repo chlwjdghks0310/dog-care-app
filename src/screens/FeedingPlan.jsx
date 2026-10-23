@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
 import { getFeedingPlan, SOAK_WATER_TEMP, SOAK_DURATION } from "../data/feedingGuide";
 import { getFeedingSettings, saveFeedingSettings } from "../services/feedingSettings";
+import { josa } from "../utils/text";
 
 const STOOL_OPTIONS = [
   { value: "normal", label: "정상" },
@@ -40,9 +41,17 @@ export default function FeedingPlan({ dog, onBack }) {
     setSaved(false);
   }
 
+  // 급여 시각은 [저장하기]로. 처음부터 시각이 하나도 없으면 저장할 게 없어서 막는다(저장해 둔 시각을 모두 지울 때는 눌림)
+  const storedTimes = getFeedingSettings(dog.id).times || [];
+  const nothingToSave = settings.times.length === 0 && storedTimes.length === 0;
   function handleSave() {
-    saveFeedingSettings(dog.id, settings);
+    saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), times: settings.times });
     setSaved(true);
+  }
+  // 배변 상태·사료 열량은 고르는 즉시 저장(멀리 위의 저장 버튼을 안 눌러도 남게)
+  function saveNow(patch) {
+    setSettings((s) => ({ ...s, ...patch }));
+    saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), ...patch });
   }
 
   const soakLabel = plan.soak.needed === true ? "필요" : plan.soak.needed === "optional" ? "선택" : "불필요";
@@ -54,7 +63,7 @@ export default function FeedingPlan({ dog, onBack }) {
       </button>
       <div className="h1">사료량·급여시간 계산기</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
-        {dog.name}는 지금 {formatAge(age)}예요. 급여 시각을 정하면, 그 30분 전에 "사료 불리기" 알림을 보내드려요.
+        {josa(dog.name, "은", "는")} 지금 {formatAge(age)}예요. 급여 시각을 정하면, 그 30분 전에 "사료 불리기" 알림을 보내드려요.
       </p>
 
       <div className="card" style={{ marginBottom: 14 }}>
@@ -71,9 +80,10 @@ export default function FeedingPlan({ dog, onBack }) {
         <button className="btn-ghost" style={{ width: "100%", marginBottom: 8 }} onClick={addTime}>
           + 급여 시각 추가 (추천 {plan.mealsPerDay}회)
         </button>
-        <button className="btn-primary" onClick={handleSave}>
-          {saved ? "저장됨 ✓" : "저장하기"}
+        <button className="btn-primary" onClick={handleSave} disabled={nothingToSave}>
+          {saved ? "저장됨 ✓" : settings.times.length === 0 ? "급여 시각 모두 지우기" : "저장하기"}
         </button>
+        {nothingToSave && <p className="faint" style={{ margin: "6px 0 0", textAlign: "center" }}>시각을 하나 이상 추가하면 저장할 수 있어요.</p>}
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
@@ -89,8 +99,7 @@ export default function FeedingPlan({ dog, onBack }) {
                 color: settings.stoolCondition === opt.value ? "var(--accent-strong)" : "var(--text-soft)",
               }}
               onClick={() => {
-                setSettings((s) => ({ ...s, stoolCondition: opt.value }));
-                setSaved(false);
+                saveNow({ stoolCondition: opt.value });
               }}
             >
               {opt.label}
@@ -109,8 +118,7 @@ export default function FeedingPlan({ dog, onBack }) {
           placeholder="예: 380"
           value={settings.kcalPer100g || ""}
           onChange={(e) => {
-            setSettings((s) => ({ ...s, kcalPer100g: e.target.value ? Number(e.target.value) : null }));
-            setSaved(false);
+            saveNow({ kcalPer100g: e.target.value ? Number(e.target.value) : null });
           }}
           style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 16 }}
         />

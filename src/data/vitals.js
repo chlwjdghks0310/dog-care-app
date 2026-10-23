@@ -39,3 +39,20 @@ export const outOfRange = (id, v) => {
   if (!r || VITAL[id].soft) return null;
   return v < r[0] ? "below" : v > r[1] ? "above" : null;
 };
+
+// 프로필 타일 공통 규칙: 이름 / 큰 값 / 작은 "언제". 언제 = 오늘·어제·n일 전(2~6일)·M/D(7일 이상).
+// 합계형은 오늘 합계만 큰 값(오늘 없으면 null → "—", 0과 구분). 측정형은 마지막 값, 오래되면 stale(흐리게): 몸무게 30일, 나머지 7일(써 보며 조정).
+const daysBetween = (a, b) => Math.round((new Date(`${b}T00:00:00`) - new Date(`${a}T00:00:00`)) / 86400000);
+export function whenLabel(dateKey, today) {
+  const n = daysBetween(dateKey, today);
+  if (n <= 0) return "오늘";
+  if (n === 1) return "어제";
+  if (n < 7) return `${n}일 전`;
+  return `${Number(dateKey.slice(5, 7))}/${Number(dateKey.slice(8, 10))}`;
+}
+export function tileState(v, last, todayValue, today) {
+  if (!last) return { value: null, sub: "", stale: false, never: true };
+  const lastDay = last.at.slice(0, 10);
+  if (v.kind === "sum") return todayValue != null ? { value: todayValue, sub: "오늘", stale: false } : { value: null, sub: `마지막 ${whenLabel(lastDay, today)}`, stale: false };
+  return { value: last.value, sub: whenLabel(lastDay, today), stale: daysBetween(lastDay, today) > (v.id === "weight" ? 30 : 7) };
+}

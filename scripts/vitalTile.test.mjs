@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import { VITAL, whenLabel, tileState } from "../src/data/vitals.js";
+const T = "2026-10-23";
+assert.equal(whenLabel(T, T), "오늘");
+assert.equal(whenLabel("2026-10-22", T), "어제");
+assert.equal(whenLabel("2026-10-17", T), "6일 전");
+assert.equal(whenLabel("2026-10-16", T), "10/16");
+const e = (d, value) => ({ at: `${d}T08:00`, value });
+assert.deepEqual(tileState(VITAL.water, e(T, 120), 300, T), { value: 300, sub: "오늘", stale: false });
+assert.deepEqual(tileState(VITAL.water, e("2026-10-22", 120), undefined, T), { value: null, sub: "마지막 어제", stale: false }, "합계형 오늘 없음 → —");
+assert.equal(tileState(VITAL.water, e(T, 0), 0, T).value, 0, "0은 0으로");
+assert.equal(tileState(VITAL.resp, e("2026-10-15", 24), undefined, T).stale, true, "호흡 8일 → 흐리게");
+assert.equal(tileState(VITAL.weight, e("2026-10-01", 4.2), undefined, T).stale, false, "몸무게 22일 → 그대로");
+assert.equal(tileState(VITAL.resp, null, undefined, T).never, true);
+console.log("타일 규칙 확인 통과");

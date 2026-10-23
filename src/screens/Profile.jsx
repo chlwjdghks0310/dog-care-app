@@ -11,7 +11,7 @@ import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
 import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summarize, md } from "../services/records";
 import { readJSON, writeJSON } from "../services/storage";
-import { VITALS, DEFAULT_PINS, fmtValue, outOfRange } from "../data/vitals";
+import { VITALS, DEFAULT_PINS, fmtValue, outOfRange, tileState } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
 import { AIConsentCard } from "../components/AIConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
@@ -547,9 +547,8 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
       {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요(투약은 끄면 숨겨져요).</p>}
       <div className="vt-grid">
         {shown.map(({ v, todayRow, last }) => {
-          const value = v.kind === "sum" ? todayRow?.value : last?.value;
-          const sub = v.kind === "sum" ? (todayRow ? "오늘" : last ? `마지막 ${md(last.at.slice(0, 10))}` : "기록 없음") : last ? (last.at.slice(0, 10) === today ? `오늘 ${last.at.slice(11)}` : md(last.at.slice(0, 10))) : "기록 없음";
-          const flag = v.kind === "point" && last && outOfRange(v.id, last.value);
+          const { value, sub, stale, never } = tileState(v, last, todayRow?.value, today);
+          const flag = v.kind === "point" && last && !stale && outOfRange(v.id, last.value);
           const on = pins.includes(v.id);
           return (
             <button
@@ -557,7 +556,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
               type="button"
               className={`vt-tile${editingPins ? (on ? " pinned" : " unpinned") : ""}`}
               aria-pressed={editingPins ? on : undefined}
-              aria-label={`${v.label} ${value != null ? `${fmtValue(v.id, value)}${v.unit}` : "기록 없음"}`}
+              aria-label={`${v.label} ${value != null ? `${fmtValue(v.id, value)}${v.unit} ${sub}` : never ? "기록 없음" : `오늘 기록 없음, ${sub}`}`}
               onClick={() => (editingPins ? togglePin(v.id) : v.external ? onOpenWeight() : onOpenVital(v.id))}
             >
               <span className="vt-top">
@@ -565,15 +564,15 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
                 <span className="vt-label">{v.label}</span>
                 {editingPins && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
               </span>
-              {value != null ? (
-                <span className="vt-value">
-                  {fmtValue(v.id, value)}
-                  <span className="vt-unit">{v.unit}</span>
-                </span>
-              ) : (
+              {never ? (
                 <span className="vt-empty">＋ 적기</span>
+              ) : (
+                <span className={`vt-value${stale ? " stale" : ""}`}>
+                  {value != null ? fmtValue(v.id, value) : "—"}
+                  {value != null && <span className="vt-unit">{v.unit}</span>}
+                </span>
               )}
-              {(value != null || sub !== "기록 없음") && <span className={`vt-sub${flag ? " warn" : ""}`}>{flag ? "참고 범위 밖" : sub}</span>}
+              {!never && <span className={`vt-sub${flag ? " warn" : ""}`}>{flag ? `참고 범위 밖 · ${sub}` : sub}</span>}
             </button>
           );
         })}
@@ -609,10 +608,12 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
           {done}/{doses.length}
           <span className="vt-unit">회</span>
         </span>
+      ) : hasMeds ? (
+        <span className="vt-value">—</span>
       ) : (
-        <span className="vt-empty">{hasMeds ? "오늘은 없음" : "＋ 약 등록"}</span>
+        <span className="vt-empty">＋ 약 등록</span>
       )}
-      {doses.length > 0 && <span className={`vt-sub${toCheck ? " warn" : ""}`}>{toCheck ? `확인 필요 ${toCheck}` : "오늘"}</span>}
+      {(doses.length > 0 || hasMeds) && <span className={`vt-sub${toCheck ? " warn" : ""}`}>{toCheck ? `확인 필요 ${toCheck}` : doses.length ? "오늘" : "오늘 일정 없음"}</span>}
     </button>
   );
 }
