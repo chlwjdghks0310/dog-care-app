@@ -14,17 +14,17 @@ const KEY = "dogcare-records-v1";
 
 export const LEVELS = ["평소보다 적음", "평소", "평소보다 많음"];
 export const TYPES = {
-  weight: { label: "체중", icon: "⚖️" },
-  symptom: { label: "증상", icon: "🤒" },
-  meal: { label: "식사", icon: "🍚" },
-  potty: { label: "배변·배뇨", icon: "💩" },
-  med: { label: "복약", icon: "💊" },
-  vet: { label: "병원 진료", icon: "🏥" },
-  condition: { label: "컨디션", icon: "🌙" },
-  daily: { label: "일상", icon: "🦮" },
-  life: { label: "성장·추억", icon: "🎉" },
-  media: { label: "사진", icon: "📷" },
-  vital: { label: "건강 수치", icon: "📈" },
+  weight: { label: "체중", icon: "⚖️", ico: "gauge" },
+  symptom: { label: "증상", icon: "🤒", ico: "thermometer" },
+  meal: { label: "식사", icon: "🍚", ico: "utensils" },
+  potty: { label: "배변·배뇨", icon: "💩", ico: "droplets" },
+  med: { label: "복약", icon: "💊", ico: "pill" },
+  vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope" },
+  condition: { label: "컨디션", icon: "🌙", ico: "moon" },
+  daily: { label: "일상", icon: "🦮", ico: "footprints" },
+  life: { label: "성장·추억", icon: "🎉", ico: "party" },
+  media: { label: "사진", icon: "📷", ico: "camera" },
+  vital: { label: "건강 수치", icon: "📈", ico: "chartLine" },
 };
 // 새 기록 추가에서 고르는 순서
 export const ADD_ORDER = ["weight", "symptom", "meal", "potty", "med", "vet", "media", "daily", "condition", "life"];

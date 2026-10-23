@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import Ico from "./Ico";
 // AI(Kling/Runway/Pika/DomoAI 등)로 만든 짧은 반복 영상을 상태에 따라 바꿔 재생한다.
 // 영상 배경이 순수 그린스크린은 아니지만 밝은 회색/흰색 배경이라, "밝고 채도 낮은 픽셀을
 // 투명하게" 만드는 방식으로 크로마키와 비슷한 효과를 낸다. 캐릭터가 어두운/채도 있는 색이라
@@ -247,7 +248,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
     <div style={{ position: "relative", width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {readySrc !== src && (
         <span className="avatar-loading" role="img" aria-label="강아지 불러오는 중">
-          🐾
+          <Ico name="paw" size={36} />
         </span>
       )}
       <video

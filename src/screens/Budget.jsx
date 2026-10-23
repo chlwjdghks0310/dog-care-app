@@ -15,6 +15,7 @@ import {
 } from "../services/expenses";
 import { compareSameTime, detectFixed, projectMonth, bigExpenseThreshold, weeklyTotals, topItems, categoryCompare } from "../services/budgetInsights";
 
+import Ico from "../components/Ico";
 const EMOJI_CHOICES = ["🏥", "💊", "💉", "🧸", "🎾", "🧴", "🛁", "✂️", "🦴", "🍖", "🍚", "🥫", "🦮", "🎀", "👕", "🏠", "🚗", "🏨", "🎓", "📸", "🛡️", "🎂", "🧻", "💰"];
 
 const inputStyle = { height: 40, border: "1px solid var(--border)", borderRadius: 10, padding: "0 12px", fontSize: 16, minWidth: 0 };
@@ -322,7 +323,7 @@ export default function Budget({ dog }) {
                 onClick={() => setShowCategoryManager(true)}
                 style={{ fontSize: 13, padding: "5px 10px", whiteSpace: "nowrap" }}
               >
-                ⚙️ 카테고리 관리
+                <Ico name="settings" size={15} /> 카테고리 관리
               </button>
             )}
           </div>

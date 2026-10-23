@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSwipeClose } from "../components/SwipeBack";
 import { todayKey } from "../utils/date";
+import Ico from "../components/Ico";
 import { getVetNote, saveVetNote, buildVetSummary, summaryToText, SYMPTOMS, SECTIONS, PERIODS } from "../services/vetSummary";
 
 // 병원용 기록 — 위에서 이번 진료 메모와 넣을 항목을 고르고, 아래 정리본을 진료실에서 보여 주거나 읽어 준다.
@@ -124,11 +125,11 @@ export default function VetSummary({ dog, onBack }) {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <button className="btn-primary" style={{ flex: 2 }} onClick={() => setShowing(true)}>🩺 보여 주기</button>
-        <button className="btn-ghost" style={{ flex: 1 }} onClick={speak}>{speaking ? "⏹ 멈춤" : "🔊 읽어 주기"}</button>
+        <button className="btn-primary" style={{ flex: 2 }} onClick={() => setShowing(true)}><Ico name="stethoscope" size={18} /> 보여 주기</button>
+        <button className="btn-ghost" style={{ flex: 1 }} onClick={speak}>{speaking ? <><Ico name="stop" size={17} /> 멈춤</> : <><Ico name="speaker" size={17} /> 읽어 주기</>}</button>
         <button className="btn-ghost" style={{ flex: 1 }} onClick={share}>공유</button>
       </div>
-      <button className="btn-ghost" style={{ width: "100%", marginBottom: 8 }} onClick={printDoc}>🖨️ 인쇄 · PDF로 저장</button>
+      <button className="btn-ghost" style={{ width: "100%", marginBottom: 8 }} onClick={printDoc}><Ico name="printer" size={17} /> 인쇄 · PDF로 저장</button>
       {shareMsg && <p className="faint" style={{ margin: "0 0 8px" }}>{shareMsg}</p>}
 
       <SummaryDoc dog={dog} sections={sections} />

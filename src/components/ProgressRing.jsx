@@ -1,3 +1,4 @@
+import Ico from "./Ico";
 // 오늘 진행 상황을 동그라미로 — done/total만 보여 준다(점수나 건강 판정이 아님).
 export default function ProgressRing({ done, total, size = 64, stroke = 7, label }) {
   const r = (size - stroke) / 2;
@@ -22,7 +23,7 @@ export default function ProgressRing({ done, total, size = 64, stroke = 7, label
           className="ring-bar"
         />
       </svg>
-      <span className="ring-text" style={{ fontSize: size * 0.22 }}>{full ? "🎉" : `${done}/${total}`}</span>
+      <span className="ring-text" style={{ fontSize: size * 0.22 }}>{full ? <Ico name="party" size={Math.round(size * 0.3)} /> : `${done}/${total}`}</span>
     </div>
   );
 }

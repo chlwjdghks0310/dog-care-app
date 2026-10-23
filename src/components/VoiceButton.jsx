@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { API_BASE } from "../services/aiClient";
 import { ensureAIConsent } from "../services/aiConsent";
+import Ico from "./Ico";
 import { readJSON, writeJSON } from "../services/storage";
 
 // 비서 입력창 🎤 — 시리처럼: 누르면 듣기 화면이 뜨고, 말하는 동안 단어가 바로바로 보이고, 말을 멈추면 저절로 끝난다.
@@ -299,7 +300,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
   return (
     <>
       <button type="button" onClick={() => state === "idle" && start()} disabled={disabled || open} className="voice-btn" aria-label="말로 입력하기">
-        🎤
+        <Ico name="mic" size={20} />
       </button>
       {open &&
         createPortal(
@@ -313,7 +314,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
               </div>
               <button type="button" className={`voice-orb${state === "transcribing" ? " busy" : ""}`} onClick={stop} aria-label="말하기 끝내기" disabled={state === "transcribing"}>
                 <span ref={orbRef} className="voice-orb-glow" aria-hidden="true" />
-                <span className="voice-orb-core" aria-hidden="true">🎤</span>
+                <span className="voice-orb-core" aria-hidden="true"><Ico name="mic" size={34} /></span>
               </button>
               <div className="faint" style={{ fontSize: 13 }}>{state === "transcribing" ? "잠시만요" : "말을 멈추면 저절로 끝나요 · 동그라미를 누르면 바로 끝"}</div>
             </div>

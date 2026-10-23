@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { readJSON, writeJSON } from "../services/storage";
 
+import Ico from "./Ico";
 // 분석에 걸린 시간을 재고, 최근 실제 걸린 시간(최대 5회)으로 예상 시간을 알려준다.
 // 기록이 없으면 서버에서 측정한 기본값(fallback [최소, 최대] 초)을 쓴다.
 export function useAnalysisTimer(storageKey, fallback) {
@@ -47,7 +48,7 @@ export function AnalysisTimeInfo({ timer, note }) {
     return (
       <div style={{ marginTop: 10 }} aria-live="polite">
         <div className="subtle" style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-          <span>⏱ 분석 중… {elapsed}초 지났어요</span>
+          <span><Ico name="timer" size={14} /> 분석 중… {elapsed}초 지났어요</span>
           <span>보통 {range(estimate)}</span>
         </div>
         <div style={{ height: 6, borderRadius: 3, background: "var(--accent-soft)" }}>
@@ -60,7 +61,7 @@ export function AnalysisTimeInfo({ timer, note }) {
 
   return (
     <p className="faint" style={{ margin: "10px 0 0", textAlign: "center" }}>
-      {lastSeconds !== null ? `⏱ 이번 분석에 ${lastSeconds}초 걸렸어요` : `⏱ 분석에 보통 ${range(estimate)} 걸려요${note ? ` (${note})` : ""}`}
+      <Ico name="timer" size={14} /> {lastSeconds !== null ? `이번 분석에 ${lastSeconds}초 걸렸어요` : `분석에 보통 ${range(estimate)} 걸려요${note ? ` (${note})` : ""}`}
     </p>
   );
 }

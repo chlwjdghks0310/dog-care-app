@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
-import { getCategoryIcon } from "../data/categoryIcons";
+import { getCategoryIco } from "../data/categoryIcons";
+import Ico from "../components/Ico";
 import ProgressRing from "../components/ProgressRing";
 import { getFeedingSettings } from "../services/feedingSettings";
 
@@ -51,15 +52,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenHealth}>
-          <span className="quick-tile-icon" aria-hidden="true">🩺</span>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="stethoscope" size={26} /></span>
           <span className="quick-tile-label">건강 체크</span>
         </button>
         <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon" aria-hidden="true">🍚</span>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="utensils" size={26} /></span>
           <span className="quick-tile-label">사료 계산기</span>
         </button>
         <button className="quick-tile" onClick={onOpenAlarms}>
-          <span className="quick-tile-icon" aria-hidden="true">⏰</span>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={26} /></span>
           <span className="quick-tile-label">알림·알람</span>
         </button>
       </div>
@@ -85,7 +86,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
             {groupedChecklist.map(([category, items]) => (
               <div key={category} className="category-group">
                 <div className="category-label">
-                  <span aria-hidden="true">{getCategoryIcon(category)}</span>
+                  <Ico name={getCategoryIco(category)} size={16} />
                   <span>{category}</span>
                 </div>
                 {items.map((item) => (
@@ -103,7 +104,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         )}
         {noMealTimes && (
           <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
-            🍚 밥 시간 정하고 알림 받기
+            <Ico name="utensils" size={16} /> 밥 시간 정하고 알림 받기
           </button>
         )}
       </div>
@@ -139,7 +140,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       )}
 
       <button className="btn-ghost" style={{ width: "100%" }} onClick={onOpenInfo}>
-        📖 월령별 케어 정보 더 보기
+        <Ico name="book" size={18} /> 월령별 케어 정보 더 보기
       </button>
 
       <p

@@ -6,6 +6,7 @@ import WeightChart from "../components/WeightChart";
 import RecordForm from "./RecordForm";
 import DogReaction from "../components/DogReaction";
 import { VITAL } from "../data/vitals";
+import Ico from "../components/Ico";
 import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
@@ -94,7 +95,7 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
             <div className="chip-wrap" style={{ margin: "10px 0" }}>
               {FILTER_ORDER.map((t) => (
                 <button key={t} type="button" className={`seg${types.includes(t) ? " on" : ""}`} aria-pressed={types.includes(t)} onClick={() => setTypes((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t]))}>
-                  {TYPES[t].icon} {TYPES[t].label}
+                  <Ico name={TYPES[t].ico} size={15} /> {TYPES[t].label}
                 </button>
               ))}
             </div>
@@ -145,12 +146,12 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete }) {
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
-        <span className="rec-icon" aria-hidden="true">{TYPES[rec.type].icon}</span>
+        <span className="rec-icon" aria-hidden="true"><Ico name={TYPES[rec.type].ico} size={20} /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="rec-item-title">{(rec.type === "vital" && VITAL[rec.data?.metric]?.label) || TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
           <span className="rec-item-text">{summarize(rec) || "내용 없음"}</span>
         </span>
-        {rec.photos?.length > 0 && <span className="faint">📎{rec.photos.length}</span>}
+        {rec.photos?.length > 0 && <span className="faint"><Ico name="clip" size={14} />{rec.photos.length}</span>}
       </button>
       {open && (
         <div className="rec-detail">
@@ -195,7 +196,7 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2">⚖️ 체중 <span className="faint">측정값</span></div>
+        <div className="h2"><Ico name="gauge" size={18} /> 체중 <span className="faint">측정값</span></div>
         {!latest ? (
           <Empty text="아직 체중 기록이 없습니다." onAdd={onAdd} />
         ) : (
@@ -215,7 +216,7 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2">📝 보호자 관찰 추세</div>
+        <div className="h2"><Ico name="note" size={18} /> 보호자 관찰 추세</div>
         <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
           {TREND_FIELDS.map(([k, label]) => (
             <button key={k} type="button" className={`seg${field === k ? " on" : ""}`} onClick={() => setField(k)}>{label}</button>
@@ -239,7 +240,7 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2">🤒 이 기간 증상</div>
+        <div className="h2"><Ico name="thermometer" size={18} /> 이 기간 증상</div>
         {symptoms.length === 0 ? (
           <p className="subtle" style={{ margin: 0 }}>최근 {days}일 기록된 증상이 없습니다.</p>
         ) : (
@@ -250,12 +251,14 @@ function Trends({ dog, items, onAdd }) {
       </div>
 
       <div className="card">
-        <div className="h2">📊 이 기간 기록</div>
+        <div className="h2"><Ico name="chart" size={18} /> 이 기간 기록</div>
         {inPeriod.length === 0 ? (
           <Empty text={`최근 ${days}일 기록이 없습니다.`} onAdd={onAdd} />
         ) : (
           <div className="vet-line">
-            {Object.entries(TYPES).map(([t, v]) => [v, inPeriod.filter((r) => r.type === t).length]).filter(([, n]) => n).map(([v, n]) => `${v.icon} ${v.label} ${n}`).join(" · ")}
+            {Object.entries(TYPES).map(([t, v]) => [v, inPeriod.filter((r) => r.type === t).length]).filter(([, n]) => n).map(([v, n], i) => (
+              <span key={v.label} style={{ whiteSpace: "nowrap" }}>{i ? " · " : ""}<Ico name={v.ico} size={14} /> {v.label} {n}</span>
+            ))}
           </div>
         )}
         {observed > 0 && observed < 5 && <p className="faint">관찰 기록이 적어요. 식사·배변·컨디션을 며칠 더 남기면 변화가 더 잘 보여요.</p>}

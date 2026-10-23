@@ -799,7 +799,7 @@ button {
 .dog-react.concern { border-color: var(--warning); background: var(--warning-bg); }
 .dog-react-row { display: flex; align-items: center; gap: 12px; }
 .dog-react-face { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex-shrink: 0; animation: dog-hop 0.6s ease 1; }
-.dog-react-face.emoji { display: flex; align-items: center; justify-content: center; font-size: 34px; background: var(--accent-soft); }
+.dog-react-face.emoji { display: flex; align-items: center; justify-content: center; font-size: 34px; background: var(--accent-soft); color: var(--accent-strong); }
 .dog-react-bubble { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px 12px; font-weight: 700; font-size: 15px; line-height: 1.45; }
 .dog-react-tip { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--accent-soft); font-size: 13.5px; line-height: 1.5; color: var(--text); }
 .dog-react.concern .dog-react-tip { background: var(--surface); }
@@ -818,7 +818,7 @@ button {
 
 /* 사진으로 채우기 (변 사진) */
 .pc-start { display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1.5px dashed var(--accent); border-radius: var(--radius-lg); background: var(--accent-soft); cursor: pointer; color: var(--text); }
-.pc-start-icon { font-size: 30px; }
+.pc-start-icon { font-size: 30px; color: var(--accent-strong); display: flex; }
 .pc { text-align: center; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .pc-circle { position: relative; width: 168px; height: 168px; margin: 0 auto; border-radius: 50%; padding: 6px; background: var(--accent); }
 .pc-circle img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 4px solid var(--surface); }
@@ -1014,7 +1014,7 @@ button {
   .onb-slide .onb-trust-note { margin-top: 2px !important; line-height: 1.35; }
 }
 /* 비서 입력창 🎤(VoiceButton) — 시리처럼 아래에서 듣기 화면이 올라온다. 동그라미는 목소리 크기에 따라 커진다 */
-.voice-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 18px; flex-shrink: 0; box-shadow: var(--shadow); color: var(--text); }
+.voice-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 18px; flex-shrink: 0; box-shadow: var(--shadow); color: var(--text); display: flex; align-items: center; justify-content: center; }
 .voice-sheet-back { position: fixed; inset: 0; z-index: 140; background: rgba(20, 24, 32, 0.35); display: flex; align-items: flex-end; justify-content: center; animation: voice-fade 0.2s ease; }
 .voice-sheet { position: relative; width: 100%; max-width: 480px; background: var(--surface); border-radius: 26px 26px 0 0; padding: 26px 20px calc(env(safe-area-inset-bottom) + 22px); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; animation: es-up 0.25s ease; }
 .voice-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--accent-soft); color: var(--text-soft); font-size: 15px; }
@@ -1038,3 +1038,7 @@ button {
 .chat-suggest::-webkit-scrollbar { display: none; }
 .chat-suggest button { flex-shrink: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13.5px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .bottom-nav, .collapse-y { transition: none; } }
+/* 선 아이콘(components/Ico.jsx) — 글자 줄에 맞춰 가운데 */
+.ico { display: inline-flex; align-items: center; justify-content: center; line-height: 0; vertical-align: -0.22em; flex-shrink: 0; }
+.sv-icon, .vt-top .ico, .quick-tile-icon, .rec-icon, .vd-icon { color: var(--accent-strong); }
+.up-icon { color: #fff; }

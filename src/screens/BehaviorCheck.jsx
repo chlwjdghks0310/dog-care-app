@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
+import Ico from "../components/Ico";
 import { analyzeBehavior } from "../services/aiClient";
 
 const MAX_SIZE_MB = 500;
@@ -94,7 +95,7 @@ export default function BehaviorCheck({ dog, onBack }) {
 
       {result && (
         <div className="card">
-          <div className="h2">🩺 참고 분석 (진단 아님)</div>
+          <div className="h2"><Ico name="stethoscope" size={18} /> 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
         </div>
       )}

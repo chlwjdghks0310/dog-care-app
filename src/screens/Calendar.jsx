@@ -7,7 +7,8 @@ import { getEventsByDog, getOccurrences, kindOf, REPEATS, EVENT_COLORS } from ".
 import EventSheet, { dateLabel, timeLabel } from "../components/EventSheet";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
-import { getCategoryIcon } from "../data/categoryIcons";
+import { getCategoryIco } from "../data/categoryIcons";
+import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
@@ -95,13 +96,13 @@ export default function Calendar({ dog }) {
             const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
             return (
               <button key={`${o.event.id}-${o.date}`} type="button" className="up-card" onClick={() => setSheet({ start: o.start, event: o.event })}>
-                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true">{k?.icon || "🗓️"}</span>
+                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
                 <span className="up-body">
                   <span className="up-title">{o.event.title}</span>
                   <span className="up-when">
                     {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
                     {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
-                    {o.event.alarm ? " · 🔔" : ""}
+                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
                   </span>
                 </span>
                 <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
@@ -156,7 +157,7 @@ export default function Calendar({ dog }) {
                   <span className="day-ev-bar" style={{ background: colorOf(o.event) }} />
                   <span className="day-ev-time">{dayN ? `${dayN}/${total}일째` : timeLabel(o.event.time)}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span className="day-ev-title">{k ? `${k.icon} ` : ""}{o.event.title}{o.event.repeat ? " 🔁" : ""}{o.event.alarm ? " 🔔" : ""}</span>
+                    <span className="day-ev-title">{k && <><Ico name={k.ico} size={15} />{" "}</>}{o.event.title}{o.event.repeat && <>{" "}<Ico name="repeat" size={13} /></>}{o.event.alarm && <>{" "}<Ico name="bell" size={13} /></>}</span>
                     {o.event.memo && <span className="faint" style={{ display: "block" }}>{o.event.memo}</span>}
                   </span>
                   <span className="faint">›</span>
@@ -171,12 +172,12 @@ export default function Calendar({ dog }) {
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <div className="h2" style={{ marginBottom: 10 }}>🐶 체크리스트</div>
+        <div className="h2" style={{ marginBottom: 10 }}><Ico name="checklist" size={18} /> 체크리스트</div>
 
         {milestones.length > 0 && (
           <p style={{ marginBottom: 10 }}>
             {milestones.map((r) => (
-              <span key={r.id} className="chip" style={{ marginRight: 6 }}>🎉 오늘부터: {r.title}</span>
+              <span key={r.id} className="chip" style={{ marginRight: 6 }}><Ico name="party" size={13} /> 오늘부터: {r.title}</span>
             ))}
           </p>
         )}
@@ -191,7 +192,7 @@ export default function Calendar({ dog }) {
                 <input type="checkbox" checked={item.completed} onChange={() => handleToggleChecklist(item.id)} />
                 <div style={{ flex: 1 }}>
                   <div className="checklist-title" style={{ fontWeight: 600 }}>
-                    {getCategoryIcon(item.category)} {item.title}
+                    <Ico name={getCategoryIco(item.category)} size={15} /> {item.title}
                   </div>
                 </div>
                 {item.ruleId && (
@@ -211,7 +212,7 @@ export default function Calendar({ dog }) {
           <div>
             {weeklyRules.map((rule) => (
               <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                <span>{getCategoryIcon(rule.category)} {rule.title}</span>
+                <span><Ico name={getCategoryIco(rule.category)} size={15} /> {rule.title}</span>
                 <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, true)}>
                   숨기기
                 </button>
@@ -228,7 +229,7 @@ export default function Calendar({ dog }) {
           <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>숨긴 추천 항목</div>
           {hiddenRuleList.map((rule) => (
             <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-              <span className="subtle">{getCategoryIcon(rule.category)} {rule.title}</span>
+              <span className="subtle"><Ico name={getCategoryIco(rule.category)} size={15} /> {rule.title}</span>
               <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, false)}>
                 다시 보이기
               </button>

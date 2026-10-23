@@ -6,6 +6,7 @@ import {
   updateCustomSchedule,
   deleteCustomSchedule,
 } from "../services/customSchedules";
+import Ico from "../components/Ico";
 import {
   isNotificationSupported,
   getPermission,
@@ -103,7 +104,7 @@ export default function AlarmSettings({ dog, onBack }) {
           {notifPermission === "granted" && (pushOn || !isPushSupported()) ? (
             <>
               <p className="subtle" style={{ marginBottom: 10 }}>
-                ✅ 알림이 켜져 있어요. {pushOn ? "앱을 꺼 둬도 약·밥·알람 시간에 알려 드려요." : "앱을 열어 둔 동안 알려 드려요."}
+                <Ico name="check" size={16} style={{ color: "var(--success)" }} /> 알림이 켜져 있어요. {pushOn ? "앱을 꺼 둬도 약·밥·알람 시간에 알려 드려요." : "앱을 열어 둔 동안 알려 드려요."}
               </p>
               {pushOn && (
                 <button className="btn-ghost small" onClick={handleTestPush} disabled={pushBusy}>
@@ -117,7 +118,7 @@ export default function AlarmSettings({ dog, onBack }) {
                 앱을 꺼 둬도 약·밥·알람 시간에 알림이 와요. 아이폰은 사파리 공유 버튼 → "홈 화면에 추가"로 설치한 앱에서만 켤 수 있어요.
               </p>
               <button className="btn-primary" onClick={handleEnable} disabled={pushBusy}>
-                {pushBusy ? "켜는 중…" : "🔔 알림 켜기"}
+                {pushBusy ? "켜는 중…" : <><Ico name="bell" size={18} /> 알림 켜기</>}
               </button>
             </>
           )}

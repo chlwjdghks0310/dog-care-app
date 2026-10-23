@@ -6,6 +6,7 @@ import { syncPushAlarms } from "../services/notifications";
 import { quickStoolCheck } from "../services/aiClient";
 import { normalizeStoolResult } from "../services/photoCheck";
 import { VITALS, VITAL } from "../data/vitals";
+import Ico from "../components/Ico";
 import {
   TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule,
@@ -30,7 +31,7 @@ function TypePicker({ onPick, onCancel }) {
       <div className="rec-type-grid">
         {ADD_ORDER.map((t) => (
           <button key={t} type="button" className="quick-tile" onClick={() => onPick(t)}>
-            <span className="quick-tile-icon" aria-hidden="true">{TYPES[t].icon}</span>
+            <span className="quick-tile-icon" aria-hidden="true"><Ico name={TYPES[t].ico} size={26} /></span>
             <span className="quick-tile-label">{TYPES[t].label}</span>
           </button>
         ))}
@@ -121,7 +122,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
   return (
     <div className="card">
       <div className="rec-head">
-        <div className="h2" style={{ margin: 0 }}>{TYPES[type].icon} {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
+        <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
         <button type="button" className="btn-ghost small" onClick={onBack}>{initial ? "취소" : "← 종류"}</button>
       </div>
 
@@ -136,7 +137,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
           <Field label="어떤 수치">
             <select value={data.metric || ""} onChange={set("metric")} disabled={Boolean(initial)}>
               <option value="" disabled>골라 주세요</option>
-              {VITALS.filter((v) => !v.external).map((v) => <option key={v.id} value={v.id}>{v.icon} {v.label} ({v.unit})</option>)}
+              {VITALS.filter((v) => !v.external).map((v) => <option key={v.id} value={v.id}>{v.label} ({v.unit})</option>)}
             </select>
           </Field>
           {data.metric && <Field label={`${VITAL[data.metric].label} (${VITAL[data.metric].unit})`}>{input("value", { type: "number", inputMode: "decimal", step: VITAL[data.metric].step })}</Field>}
@@ -293,7 +294,7 @@ function PhotoCheck({ dog, onFilled }) {
   if (step === "idle")
     return (
       <label className="pc-start">
-        <span className="pc-start-icon" aria-hidden="true">📷</span>
+        <span className="pc-start-icon" aria-hidden="true"><Ico name="camera" size={28} /></span>
         <span>
           <b>사진으로 채우기</b>
           <span className="faint" style={{ display: "block" }}>변 사진을 찍거나 앨범에서 고르면 보이는 모양·색을 정리해서 아래 칸을 채워 줘요. 진단은 아니에요.</span>

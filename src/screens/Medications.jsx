@@ -19,6 +19,7 @@ import {
   stockNow,
   validateMed,
 } from "../services/medications";
+import Ico from "../components/Ico";
 import { getPermission, syncPushAlarms } from "../services/notifications";
 
 const STATUS = {
@@ -100,12 +101,12 @@ export default function Medications({ dog, focusDose, onBack }) {
 
       {lowStock.map(({ med, stock }) => (
         <div key={med.id} className="card med-alert" style={{ marginBottom: 10 }}>
-          ⚠️ {josa(med.name, "이", "가")} {stock.remaining <= 0 ? "다 떨어졌어요" : stock.daysLeft < 1 ? `하루치도 안 남았어요` : `${stock.daysLeft}일치쯤 남았어요`} (기록 기준 {stock.remaining}개). 미리 병원에 문의해 두세요.
+          <Ico name="alert" size={16} /> {josa(med.name, "이", "가")} {stock.remaining <= 0 ? "다 떨어졌어요" : stock.daysLeft < 1 ? `하루치도 안 남았어요` : `${stock.daysLeft}일치쯤 남았어요`} (기록 기준 {stock.remaining}개). 미리 병원에 문의해 두세요.
         </div>
       ))}
       {remindOff && (
         <p className="faint" style={{ margin: "0 0 10px" }}>
-          🔕 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 체크리스트 → 알림·알람에서 켤 수 있어요.
+          <Ico name="bellOff" size={15} /> 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 체크리스트 → 알림·알람에서 켤 수 있어요.
         </p>
       )}
 
@@ -206,7 +207,7 @@ function MedSummary({ med, stock, ended, onClick, onDelete }) {
   const Tag = onClick ? "button" : "div";
   return (
     <Tag type={onClick ? "button" : undefined} className="med-summary" onClick={onClick}>
-      {med.photo ? <img src={med.photo} alt="" className="med-photo" /> : <span className="med-photo">💊</span>}
+      {med.photo ? <img src={med.photo} alt="" className="med-photo" /> : <span className="med-photo"><Ico name="pill" size={22} style={{ color: "var(--accent-strong)" }} /></span>}
       <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
         <div style={{ fontWeight: 700 }}>{med.name} <span className="subtle" style={{ fontWeight: 400 }}>{med.dose}</span></div>
         <div className="faint">

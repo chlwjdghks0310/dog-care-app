@@ -52,13 +52,13 @@ export function deleteEvent(dogId, dateKey, id) {
 // ── 일정 종류·시간·기간·반복·알림 (기존 일정 { id, title, color }은 그대로 "하루, 종일, 반복 없음"으로 읽힌다) ──
 // Event += { kind?, time?("HH:MM"), endDate?(기간 끝, 포함), repeat?("weekly"|"monthly"|"yearly"), memo?, alarm?("morning"|"before1h"|"eve"), alarmId?, alarmAt? }
 export const EVENT_KINDS = [
-  { id: "vet", label: "병원", icon: "🏥", color: "#e05f5f" },
-  { id: "vaccine", label: "접종", icon: "💉", color: "#9350b8" },
-  { id: "grooming", label: "미용", icon: "✂️", color: "#3fa578" },
-  { id: "med", label: "약", icon: "💊", color: "#dba329" },
-  { id: "stay", label: "호텔·돌봄", icon: "🏨", color: "#3f8fe0" },
-  { id: "day", label: "기념일", icon: "🎂", color: "#e98aa8" },
-  { id: "etc", label: "기타", icon: "📝", color: "#7a6f63" },
+  { id: "vet", label: "병원", icon: "🏥", ico: "stethoscope", color: "#e05f5f" },
+  { id: "vaccine", label: "접종", icon: "💉", ico: "shield", color: "#9350b8" },
+  { id: "grooming", label: "미용", icon: "✂️", ico: "scissors", color: "#3fa578" },
+  { id: "med", label: "약", icon: "💊", ico: "pill", color: "#dba329" },
+  { id: "stay", label: "호텔·돌봄", icon: "🏨", ico: "building", color: "#3f8fe0" },
+  { id: "day", label: "기념일", icon: "🎂", ico: "gift", color: "#e98aa8" },
+  { id: "etc", label: "기타", icon: "📝", ico: "note", color: "#7a6f63" },
 ];
 export const kindOf = (e) => EVENT_KINDS.find((k) => k.id === e.kind) || null;
 export const REPEATS = [["", "한 번"], ["weekly", "매주"], ["monthly", "매달"], ["yearly", "매년"]];

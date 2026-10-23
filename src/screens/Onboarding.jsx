@@ -13,6 +13,7 @@ import { supabase } from "../services/supabase";
 import { readJSON, writeJSON } from "../services/storage";
 import { acceptInvite } from "../services/sync/family";
 
+import Ico from "../components/Ico";
 // 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 4장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 알림 켜기 → ⑤ 인사.
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
@@ -145,8 +146,8 @@ function PhotoMock() {
         <div className="onb-photo">🐶</div>
         <div style={{ fontWeight: 800, lineHeight: 1.4 }}>사진에서 본 걸 정리했어!</div>
       </div>
-      <div className="onb-section">👀 사진에서 본 것</div>
-      <div className="onb-section caution">🏥 이럴 땐 병원에</div>
+      <div className="onb-section"><Ico name="eye" size={13} /> 사진에서 본 것</div>
+      <div className="onb-section caution"><Ico name="stethoscope" size={13} /> 이럴 땐 병원에</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
         <span className="onb-followup">집에서 확인할 것은?</span>
         <span className="onb-followup">병원 가야 할 때는?</span>
@@ -162,8 +163,8 @@ function ChatMock() {
       <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
       <div className="onb-bubble ai">
         둘 다 적어 뒀어!
-        <div className="onb-record">🐾 산책 30분 · 건강 기록</div>
-        <div className="onb-record">💰 사료 30,000원 · 가계부</div>
+        <div className="onb-record"><Ico name="footprints" size={13} /> 산책 30분 · 건강 기록</div>
+        <div className="onb-record"><Ico name="wallet" size={13} /> 사료 30,000원 · 가계부</div>
       </div>
     </div>
   );
@@ -173,7 +174,7 @@ function CareMock() {
   return (
     <div style={{ width: "100%", maxWidth: 300 }}>
       <div className="onb-notice">
-        <span style={{ fontSize: 20 }}>🔔</span>
+        <span style={{ color: "var(--accent-strong)" }}><Ico name="bell" size={20} /></span>
         <div style={{ textAlign: "left", lineHeight: 1.4 }}>
           <b>멍케어</b>
           <div className="subtle" style={{ fontSize: 14 }}>산책 갈 시간이에요!</div>
@@ -183,12 +184,12 @@ function CareMock() {
         <Example />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
           {[
-            ["⚖️", "몸무게"],
-            ["💧", "물"],
-            ["🦮", "산책"],
+            ["gauge", "몸무게"],
+            ["droplet", "물"],
+            ["footprints", "산책"],
           ].map(([icon, label]) => (
             <div key={label} className="onb-tile">
-              <span style={{ fontSize: 18 }}>{icon}</span>
+              <span style={{ color: "var(--accent-strong)" }}><Ico name={icon} size={18} /></span>
               <span>{label}</span>
             </div>
           ))}
@@ -200,7 +201,7 @@ function CareMock() {
           <div key={t} className="onb-mock-row">
             <span className={`onb-check${done ? " on" : ""}`}>{done ? "✓" : ""}</span>
             <span style={{ flex: 1, textAlign: "left", textDecoration: done ? "line-through" : "none", color: done ? "var(--text-faint)" : "var(--text)" }}>{t}</span>
-            <span className="faint">⏰ {time}</span>
+            <span className="faint"><Ico name="alarm" size={13} /> {time}</span>
           </div>
         ))}
       </div>
@@ -213,7 +214,7 @@ const TRUST_SOURCES = [["WSAVA", "세계소동물수의사회"], ["AAHA", "미�
 function TrustMock() {
   return (
     <div className="onb-mock" style={{ textAlign: "left" }}>
-      <div className="onb-trust-head" style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}>📚 이런 자료를 바탕으로 해요</div>
+      <div className="onb-trust-head" style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}><Ico name="book" size={14} /> 이런 자료를 바탕으로 해요</div>
       <div className="onb-trust-chips">
         {TRUST_SOURCES.map(([short, full]) => (
           <span key={short}>
@@ -223,12 +224,12 @@ function TrustMock() {
         ))}
       </div>
       {[
-        ["🔎", "숫자마다 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
-        ["🩺", "진단하지 않아요", "참고 범위와 병원에 물어볼 때만 알려요"],
-        ["🔒", "기록은 나와 가족만", "백업은 암호화해 보내고, 초대한 가족만 볼 수 있어요"],
+        ["search", "숫자마다 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
+        ["stethoscope", "진단하지 않아요", "참고 범위와 병원에 물어볼 때만 알려요"],
+        ["lock", "기록은 나와 가족만", "백업은 암호화해 보내고, 초대한 가족만 볼 수 있어요"],
       ].map(([icon, head, sub]) => (
         <div key={head} className="onb-mock-row">
-          <span style={{ fontSize: 18, width: 28, textAlign: "center" }}>{icon}</span>
+          <span style={{ width: 28, textAlign: "center", color: "var(--accent-strong)" }}><Ico name={icon} size={18} /></span>
           <span style={{ flex: 1, lineHeight: 1.35 }}>
             <b style={{ fontSize: 14 }}>{head}</b>
             <div className="faint onb-trust-sub" style={{ fontSize: 12.5 }}>{sub}</div>
@@ -245,13 +246,13 @@ function GestureMock() {
   return (
     <div className="onb-mock" style={{ textAlign: "left" }}>
       {[
-        ["👆👆", "프로필 탭 두 번 톡", "다음 강아지로 바꾸기"],
-        ["✋", "프로필 탭 꾹 누르기", "강아지 목록 열기"],
-        ["⬇️", "화면 맨 위에서 아래로 당기기", "새로고침 · 가족 기록 받기"],
-        ["➡️", "왼쪽에서 오른쪽으로 밀기", "이전 화면으로"],
+        ["tap", "프로필 탭 두 번 톡", "다음 강아지로 바꾸기"],
+        ["hand", "프로필 탭 꾹 누르기", "강아지 목록 열기"],
+        ["arrowDown", "화면 맨 위에서 아래로 당기기", "새로고침 · 가족 기록 받기"],
+        ["arrowRight", "왼쪽에서 오른쪽으로 밀기", "이전 화면으로"],
       ].map(([icon, how, what]) => (
         <div key={how} className="onb-mock-row">
-          <span style={{ fontSize: 18, width: 40, textAlign: "center", whiteSpace: "nowrap", letterSpacing: -4 }}>{icon}</span>
+          <span style={{ width: 40, textAlign: "center", color: "var(--accent-strong)" }}><Ico name={icon} size={20} /></span>
           <span style={{ flex: 1, lineHeight: 1.35 }}>
             <b style={{ fontSize: 14 }}>{how}</b>
             <div className="faint" style={{ fontSize: 13 }}>{what}</div>
@@ -425,7 +426,7 @@ function Setup({ onRegistered, restore }) {
 
           {key === "breed" && (
             <>
-              <input value={breedQuery} onChange={(e) => setBreedQuery(e.target.value)} placeholder="🔍 견종 검색 (예: 푸들)" />
+              <input value={breedQuery} onChange={(e) => setBreedQuery(e.target.value)} placeholder="견종 검색 (예: 푸들)" />
               <div className="onb-chips">
                 {filteredBreeds.map((b) => (
                   <button key={b} type="button" className="chip" style={chip(form.breed === b)} onClick={() => update("breed", b)}>
@@ -525,7 +526,7 @@ function NotifyStep({ busy, status, onEnable }) {
   return (
     <>
       <button type="button" className="btn-primary" onClick={onEnable} disabled={busy || status === "ok"}>
-        {status === "ok" ? "알림이 켜졌어요 ✓" : busy ? "켜는 중…" : "🔔 알림 켜기"}
+        {status === "ok" ? "알림이 켜졌어요 ✓" : busy ? "켜는 중…" : <><Ico name="bell" size={18} /> 알림 켜기</>}
       </button>
       {status && status !== "ok" && <p className="error-text" style={{ marginTop: 8 }}>{status}</p>}
     </>

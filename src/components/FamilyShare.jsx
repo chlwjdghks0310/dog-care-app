@@ -4,6 +4,7 @@ import { setActiveDogId } from "../services/dogRepository";
 import { syncNow } from "../services/sync";
 import { LoginSheet, useSyncStatus } from "./AccountCard";
 
+import Ico from "./Ico";
 // 설정의 "가족 공유" 카드 — 지금 보고 있는 강아지 기준. 로그인 전에는 로그인 안내를 보여 준다.
 // 보호자: 초대 코드 만들기·복사·공유·새로 만들기, 가족 내보내기 / 가족: 목록 보기, 나가기.
 // 이 강아지의 가족 목록. 백업·실시간 맞추기가 끝날 때마다(lastSyncedAt) 다시 불러온다. members: null = 불러오는 중
@@ -35,7 +36,7 @@ export function FamilyBadge({ dogId }) {
   if (!others.length) return null;
   return (
     <div className="faint" style={{ marginTop: 6, fontSize: 13 }}>
-      👨‍👩‍👧 가족 공유 중 · {others.map((m) => `${label(m)}${m.role === "owner" ? "(보호자)" : ""}`).join(", ")}
+      <Ico name="users" size={14} /> 가족 공유 중 · {others.map((m) => `${label(m)}${m.role === "owner" ? "(보호자)" : ""}`).join(", ")}
     </div>
   );
 }

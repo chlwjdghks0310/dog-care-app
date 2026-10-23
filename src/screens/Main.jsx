@@ -9,6 +9,7 @@ import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 import AiAnswer from "../components/AiAnswer";
+import Ico from "../components/Ico";
 import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
@@ -442,7 +443,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
                 )}
                 {m.records?.done.length > 0 && (
                   <div style={{ marginTop: 10, padding: "8px 10px", borderRadius: 10, background: "var(--accent-soft)", fontSize: 13, lineHeight: 1.6 }}>
-                    <strong>📝 앱에 기록했어요</strong>
+                    <strong><Ico name="note" size={15} /> 앱에 기록했어요</strong>
                     {m.records.done.map((r) => (
                       <div key={r}>{r}</div>
                     ))}
@@ -451,7 +452,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
                 {m.records?.confirm?.map((c, j) => (
                   <div key={j} style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 13, lineHeight: 1.5 }}>
                     <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                      {c.type === "delete_record" ? "🗑️ 이 기록을 지울까요?" : "✏️ 이렇게 고칠까요?"}
+                      {c.type === "delete_record" ? <><Ico name="trash" size={15} /> 이 기록을 지울까요?</> : <><Ico name="pencil" size={15} /> 이렇게 고칠까요?</>}
                     </div>
                     <div style={{ marginBottom: 8 }}>{c.summary}</div>
                     {c.status ? (
@@ -554,7 +555,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
                   ) : (
                     <img src={a.url} alt="보낼 사진" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 12, display: "block" }} />
                   )}
-                  {a.kind === "video" && <span style={{ position: "absolute", left: 4, bottom: 4, fontSize: 12 }}>🎥</span>}
+                  {a.kind === "video" && <span style={{ position: "absolute", left: 4, bottom: 4, color: "#fff" }}><Ico name="video" size={14} /></span>}
                   <button
                     type="button"
                     onClick={() => removeAttachment(a.id)}
@@ -594,10 +595,14 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
             fontSize: 18,
             flexShrink: 0,
             boxShadow: "var(--shadow)",
+            color: "var(--text)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           aria-label="사진/영상 보내기"
         >
-          📷
+          <Ico name="camera" size={20} />
         </button>
         <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handlePick} style={{ display: "none" }} />
         <input
@@ -620,11 +625,11 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
         <button
           type="submit"
           className="btn-primary"
-          style={{ width: 44, height: 44, minHeight: 44, padding: 0, borderRadius: "50%", fontSize: 18, flexShrink: 0 }}
+          style={{ width: 44, height: 44, minHeight: 44, padding: 0, borderRadius: "50%", fontSize: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
           disabled={pending}
           aria-label="전송"
         >
-          🐾
+          <Ico name="paw" size={22} />
         </button>
       </form>
       <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>

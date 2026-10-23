@@ -1,3 +1,4 @@
+import Ico from "./Ico";
 // 바텀내비 프로필 아이콘을 길게 누르면 뜨는 강아지 전환 목록 (인스타그램 계정 전환과 같은 동작).
 export default function DogSwitcherSheet({ dogs, activeDogId, onSelect, onAddDog, onClose }) {
   return (
@@ -56,10 +57,11 @@ export default function DogSwitcherSheet({ dogs, activeDogId, onSelect, onAddDog
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 20,
+                  color: "var(--accent-strong)",
                 }}
                 aria-hidden="true"
               >
-                🐶
+                <Ico name="dog" size={24} />
               </div>
             )}
             <div style={{ flex: 1 }}>

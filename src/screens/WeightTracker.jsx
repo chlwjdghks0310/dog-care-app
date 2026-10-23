@@ -7,6 +7,7 @@ import { saveDog } from "../services/dogRepository";
 import { getWeightAssessment, getWeightStatusText, STATUS_COLOR } from "../data/weightGuide";
 import WeightChart from "../components/WeightChart";
 import InfoAccordionItem from "../components/InfoAccordion";
+import Ico from "../components/Ico";
 import { VITAL_TIPS } from "../data/vitalTips";
 
 const METHODS = [
@@ -194,9 +195,10 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
               alignItems: "center",
               justifyContent: "center",
               fontSize: 24,
+              color: "var(--accent-strong)",
             }}
           >
-            🐶
+            <Ico name="dog" size={26} />
           </div>
         )}
         <div>
@@ -206,7 +208,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
       </div>
 
       <div className="vd-how">
-        <div className="vd-how-title">📏 이렇게 재요</div>
+        <div className="vd-how-title"><Ico name="ruler" size={15} /> 이렇게 재요</div>
         <ul>
           {VITAL_TIPS.weight.how.map((t) => (
             <li key={t}>{t}</li>

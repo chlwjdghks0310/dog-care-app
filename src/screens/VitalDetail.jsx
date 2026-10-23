@@ -3,6 +3,7 @@ import { todayKey, toDateKey, addDays } from "../utils/date";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
 import { VITAL_TIPS } from "../data/vitalTips";
 import InfoAccordionItem from "../components/InfoAccordion";
+import Ico from "../components/Ico";
 import { getVitalEntries, vitalDaily, saveRecord, deleteRecord, getRecords, localNow, newRecordId, validateRecord, md } from "../services/records";
 
 const PERIODS = [7, 30, 90];
@@ -81,7 +82,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 프로필로</button>
       <div className="vd-head">
-        <span className="vd-icon" aria-hidden="true">{def.icon}</span>
+        <span className="vd-icon" aria-hidden="true"><Ico name={def.ico} size={26} /></span>
         <div>
           <div className="h1" style={{ margin: 0 }}>{def.label}</div>
           <div className="faint">{def.kind === "sum" ? "하루 동안 적은 걸 합쳐서 보여 줘요" : "잴 때마다 따로 적어요"}</div>
@@ -90,7 +91,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
 
       {tips && (
         <div className="vd-how">
-          <div className="vd-how-title">📏 이렇게 재요</div>
+          <div className="vd-how-title"><Ico name="ruler" size={15} /> 이렇게 재요</div>
           <ul>
             {tips.how.map((t) => (
               <li key={t}>{t}</li>
@@ -249,7 +250,7 @@ function TapCounter({ seconds, how, onResult }) {
       <div className="vd-counter">
         <p className="faint" style={{ margin: "0 0 8px" }}>{how}</p>
         <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={() => ((tapsRef.current = 0), setTaps(0), setLeft(seconds))}>
-          ⏱ {seconds}초 동안 탭해서 세기
+          <Ico name="timer" size={17} /> {seconds}초 동안 탭해서 세기
         </button>
       </div>
     );

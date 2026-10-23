@@ -16,6 +16,7 @@ import AccountCard from "../components/AccountCard";
 import { AIConsentCard } from "../components/AIConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
+import Ico from "../components/Ico";
 import Help from "./Help";
 import Contact from "./Contact";
 import DogRegister from "./DogRegister";
@@ -155,7 +156,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
     <div className="screen">
       <div className="settings-bar">
         <button type="button" className="btn-ghost settings-btn" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
-          ☰
+          <Ico name="menu" size={22} />
         </button>
       </div>
       <div className="card" style={{ marginBottom: 14 }}>
@@ -181,7 +182,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
                 }}
                 aria-hidden="true"
               >
-                🐶
+                <Ico name="dog" size={44} style={{ color: "var(--accent-strong)" }} />
               </div>
             )}
             <span
@@ -200,7 +201,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
                 fontSize: 12,
               }}
             >
-              📷
+              <Ico name="camera" size={13} />
             </span>
             <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
           </label>
@@ -213,12 +214,12 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
           </div>
 
           {isNotificationSupported() && notifPermission !== "granted" && (
-            <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={handleEnableNotifications}>
-              🔔
+            <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={handleEnableNotifications} aria-label="알림 켜기">
+              <Ico name="bell" size={18} />
             </button>
           )}
           {isNotificationSupported() && notifPermission === "granted" && (
-            <span className="faint" title="정해진 시간에 케어 알림을 보내드려요">🔔</span>
+            <span className="faint" title="정해진 시간에 케어 알림을 보내드려요"><Ico name="bell" size={18} /></span>
           )}
         </div>
         <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={startEdit}>
@@ -662,7 +663,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
               onClick={() => (editingPins ? togglePin(v.id) : v.external ? onOpenWeight() : onOpenVital(v.id))}
             >
               <span className="vt-top">
-                <span aria-hidden="true">{v.icon}</span>
+                <Ico name={v.ico} size={16} />
                 <span className="vt-label">{v.label}</span>
                 {editingPins && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
               </span>
@@ -701,7 +702,7 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
       aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}
     >
       <span className="vt-top">
-        <span aria-hidden="true">💊</span>
+        <Ico name="pill" size={16} />
         <span className="vt-label">투약</span>
         {editing && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
       </span>
@@ -720,14 +721,14 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
 
 // 건강 기록 목록 — 종류마다 마지막 기록 한 줄, 누르면 그 종류만 모아 보고 ＋로 바로 적기
 const SERVICES = [
-  { key: "symptom", label: "이상 증상", icon: "🤒", types: ["symptom"] },
-  { key: "meds", label: "투약 기록", icon: "💊" },
-  { key: "vet", label: "병원 진료", icon: "🏥", types: ["vet"] },
-  { key: "eat", label: "식사·배변", icon: "🍚", types: ["meal", "potty"], add: "meal" },
-  { key: "condition", label: "컨디션", icon: "🌙", types: ["condition"] },
-  { key: "daily", label: "산책·일상", icon: "🦮", types: ["daily"] },
-  { key: "memory", label: "사진·추억", icon: "📷", types: ["media", "life"], add: "media" },
-  { key: "report", label: "병원용 기록", icon: "📋" },
+  { key: "symptom", label: "이상 증상", ico: "thermometer", types: ["symptom"] },
+  { key: "meds", label: "투약 기록", ico: "pill" },
+  { key: "vet", label: "병원 진료", ico: "stethoscope", types: ["vet"] },
+  { key: "eat", label: "식사·배변", ico: "utensils", types: ["meal", "potty"], add: "meal" },
+  { key: "condition", label: "컨디션", ico: "moon", types: ["condition"] },
+  { key: "daily", label: "산책·일상", ico: "footprints", types: ["daily"] },
+  { key: "memory", label: "사진·추억", ico: "camera", types: ["media", "life"], add: "media" },
+  { key: "report", label: "병원용 기록", ico: "clipboard" },
 ];
 function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet }) {
   const recs = getRecords(dog.id);
@@ -750,7 +751,7 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
       {SERVICES.map((svc) => (
         <div key={svc.key} className="sv-row">
           <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>
-            <span className="sv-icon" aria-hidden="true">{svc.icon}</span>
+            <span className="sv-icon" aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span className="sv-label">{svc.label}</span>
               <span className={`sv-sub${svc.key === "meds" && check ? " warn" : ""}`}>{subFor(svc)}</span>

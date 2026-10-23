@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import MonthGrid from "./MonthGrid";
 import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent } from "../services/calendarEvents";
+import Ico from "./Ico";
 import { syncPushAlarms } from "../services/notifications";
 
 const WEEK = "일월화수목금토";
@@ -101,7 +102,7 @@ export default function EventSheet({ dog, initial, onClose, onSaved }) {
         </div>
 
         <div className="es-scroll">
-          {section("what", "무엇을", `${k?.icon || "📝"} ${title.trim() || k?.label || "골라 주세요"}`, <>
+          {section("what", "무엇을", <><Ico name={k?.ico || "note"} size={15} /> {title.trim() || k?.label || "골라 주세요"}</>, <>
             <div className="es-big">어떤 일정인가요?</div>
             <div className="es-kinds">
               {EVENT_KINDS.map((x) => (
@@ -110,7 +111,7 @@ export default function EventSheet({ dog, initial, onClose, onSaved }) {
                     if (!title.trim() || EVENT_KINDS.some((y) => y.label === title)) setTitle(x.label);
                     if (x.id === "stay" && !ev.id) (setMulti(true), setAwaitEnd(true));
                   }}>
-                  <span aria-hidden="true">{x.icon}</span>
+                  <Ico name={x.ico} size={16} />
                   {x.label}
                 </button>
               ))}

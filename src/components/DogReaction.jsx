@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { reactionFor } from "../data/recordReactions";
 
+import Ico from "./Ico";
 export default function DogReaction({ dog, rec, onClose }) {
   const r = reactionFor(rec);
   // 축하 조각 위치는 한 번만 정한다
@@ -15,7 +16,7 @@ export default function DogReaction({ dog, rec, onClose }) {
         </div>
       )}
       <div className="dog-react-row">
-        {dog.photo ? <img className="dog-react-face" src={dog.photo} alt="" /> : <span className="dog-react-face emoji" aria-hidden="true">🐶</span>}
+        {dog.photo ? <img className="dog-react-face" src={dog.photo} alt="" /> : <span className="dog-react-face emoji" aria-hidden="true"><Ico name="dog" size={26} /></span>}
         <div className="dog-react-bubble">
           <span className="faint">{dog.name}</span>
           <div>{r.line}</div>

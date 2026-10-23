@@ -1,3 +1,4 @@
+import Ico from "../components/Ico";
 export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) {
   return (
     <div className="screen">
@@ -14,7 +15,7 @@ export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) 
         onClick={onOpenStool}
         style={{ display: "block", width: "100%", textAlign: "left", marginBottom: 12, border: "1px solid var(--border)" }}
       >
-        <div className="h2">📷 변 상태 확인</div>
+        <div className="h2"><Ico name="camera" size={20} /> 변 상태 확인</div>
         <p className="subtle">사진으로 대변 굳기/색상을 퓨리나 대변 점수표 기준으로 확인해요.</p>
       </button>
 
@@ -23,7 +24,7 @@ export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) 
         onClick={onOpenBehavior}
         style={{ display: "block", width: "100%", textAlign: "left", border: "1px solid var(--border)" }}
       >
-        <div className="h2">🎥 활동 상태 확인</div>
+        <div className="h2"><Ico name="video" size={20} /> 활동 상태 확인</div>
         <p className="subtle">짧은 영상으로 자세·걸음걸이·스트레스 신호를 확인해요.</p>
       </button>
     </div>

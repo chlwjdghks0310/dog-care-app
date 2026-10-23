@@ -1,6 +1,7 @@
 import { useState } from "react";
 import InfoAccordionItem from "../components/InfoAccordion";
 
+import Ico from "../components/Ico";
 const CONTACT_EMAIL = "meongcare.app@gmail.com";
 
 // 자주 묻는 질문 — 문의 전에 먼저 보여 준다(앱에 실제로 있는 메뉴 이름으로 안내)
@@ -22,7 +23,7 @@ export default function Contact({ onBack }) {
   if (sent) {
     return (
       <div className="screen" style={{ display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center" }}>
-        <div style={{ fontSize: 56, marginBottom: 8 }} aria-hidden="true">🐾</div>
+        <div style={{ marginBottom: 8, color: "var(--accent-strong)" }}><Ico name="paw" size={60} /></div>
         <div className="h1">문의해 주셔서 고마워요!</div>
         <p className="subtle" style={{ margin: "8px 0 4px" }}>
           보내 주신 내용은 꼼꼼히 읽고 <b style={{ color: "var(--text)" }}>1시간 이내</b>에 메일로 답변드릴게요.
