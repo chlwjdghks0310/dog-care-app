@@ -22,7 +22,7 @@
   --bg-pattern-size: auto;
   --surface-pattern: none;
   --surface-pattern-size: auto;
-  /* 보조색(자료용 조사 2026-10-23 1안) — 아이콘·작은 아이콘 바탕에만. 대표색은 소프트블루(--accent).
+  /* 보조색(자료용 조사 2026-10-23 1안 "생기 있게"로 확정) — 아이콘·작은 아이콘 바탕에만. 대표색은 소프트블루(--accent).
      아이콘 색(--c-*)은 연한 바탕(--c-*-bg) 위에서도 3:1 이상 되게 진한 값을 쓴다. */
   --c-teal: #1d7673;
   --c-teal-bg: #d9f1ef;
@@ -857,10 +857,6 @@ button {
 @media (prefers-reduced-motion: reduce) { .bottom-nav, .collapse-y { transition: none; } }
 /* 선 아이콘(components/Ico.jsx) — 글자 줄에 맞춰 가운데 */
 .ico { display: inline-flex; align-items: center; justify-content: center; line-height: 0; vertical-align: -0.22em; flex-shrink: 0; }
-/* 색 조합 대안(설정 → 색 조합): A = 장미 대신 회청색(붉은 기운은 위험 표시만), B = 청록·보라 두 색(장미 자리를 보라가) */
-:root[data-palette="a"] { --c-rose: #4d5b70; --c-rose-bg: #e6eaf0; }
-:root[data-theme="dark"][data-palette="a"] { --c-rose: #9fb0c6; --c-rose-bg: #2c3340; }
-:root[data-palette="b"] { --c-rose: var(--c-violet); --c-rose-bg: var(--c-violet-bg); }
 /* 아이콘 색: 요소에 tone-* 클래스를 붙이면 그 색, 없으면 대표색 */
 .tone-blue { --tone: var(--accent-strong); --tone-bg: var(--accent-soft); }
 .tone-teal { --tone: var(--c-teal); --tone-bg: var(--c-teal-bg); }

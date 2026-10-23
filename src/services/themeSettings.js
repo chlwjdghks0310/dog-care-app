@@ -22,36 +22,8 @@ export function setDark(on) {
 }
 
 export function applyTheme(dark = isDark()) {
-  applyPalette();
   if (dark) document.documentElement.setAttribute("data-theme", "dark");
   else document.documentElement.removeAttribute("data-theme");
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? BAR.dark : BAR.light);
 }
 
-// 보조색 조합(설정 → 색 조합). 대표색 소프트블루는 그대로이고, 아이콘 보조색만 바뀐다 — index.css :root[data-palette]
-const PALETTE_KEY = "dogcare-palette-v1";
-export const PALETTES = [
-  { id: "1", name: "생기 있게", desc: "청록 · 보라 · 장미", swatches: ["var(--c-teal)", "var(--c-violet)", "#d6648f"] },
-  { id: "a", name: "차분하게", desc: "청록 · 보라 · 회청색", swatches: ["var(--c-teal)", "var(--c-violet)", "#6b7a90"] },
-  { id: "b", name: "단정하게", desc: "청록 · 보라", swatches: ["var(--c-teal)", "var(--c-violet)"] },
-];
-export function getPalette() {
-  try {
-    return localStorage.getItem(PALETTE_KEY) || "1";
-  } catch {
-    return "1";
-  }
-}
-export function setPalette(id) {
-  try {
-    if (id === "1") localStorage.removeItem(PALETTE_KEY);
-    else localStorage.setItem(PALETTE_KEY, id);
-  } catch {
-    // 저장 못 하면 이번에만
-  }
-  applyPalette(id);
-}
-export function applyPalette(id = getPalette()) {
-  if (id === "1") document.documentElement.removeAttribute("data-palette");
-  else document.documentElement.setAttribute("data-palette", id);
-}
