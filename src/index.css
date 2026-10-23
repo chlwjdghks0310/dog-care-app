@@ -591,9 +591,10 @@ button {
 
 /* 진행 동그라미 */
 .ring { position: relative; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
-.ring svg { position: absolute; inset: 0; }
+.ring > svg { position: absolute; inset: 0; } /* 진행 동그라미만(안의 아이콘 svg엔 적용 안 함) */
 .ring-bar { transition: stroke-dashoffset 0.5s ease; }
-.ring-text { position: relative; font-weight: 800; color: var(--text); }
+.ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text); }
+.ring-text .ico { vertical-align: 0; }
 .today-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
 
 /* 기록 저장 후 강아지 반응 */
