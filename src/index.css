@@ -886,8 +886,8 @@ button {
 .quick-tile.filled .quick-tile-label { font-weight: 700; } /* 작은 글자는 본문색(색 글자는 대비 4.5 미달) */
 .quick-tile.filled:active { filter: brightness(0.96); }
 /* 다가오는 일정: 일정 종류 색(--ev)을 카드 바탕에 연하게 */
-.up-card.tinted { background: color-mix(in srgb, var(--ev) 13%, var(--surface)); border-color: color-mix(in srgb, var(--ev) 26%, var(--surface)); }
-.up-card.tinted:active { background: color-mix(in srgb, var(--ev) 20%, var(--surface)); }
+.up-card.tinted { background: color-mix(in srgb, var(--ev) 7%, var(--surface)); border-color: color-mix(in srgb, var(--ev) 16%, var(--surface)); }
+.up-card.tinted:active { background: color-mix(in srgb, var(--ev) 13%, var(--surface)); }
 /* 가계부 카테고리: 칩은 그 카테고리 색(--ev)으로 연하게 채우고 아이콘은 그 색, 아이콘 고르기 칸도 색으로 채움(고른 칸은 진하게) */
 .chip.cat-chip { background: color-mix(in srgb, var(--ev) 16%, var(--surface)); }
 .chip.cat-chip .ico { color: color-mix(in srgb, var(--ev) 80%, var(--text)); }
@@ -907,3 +907,12 @@ button {
 .login-seg button.on { background: var(--surface); color: var(--accent-strong); box-shadow: var(--shadow); }
 .login-guest-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .login-guest-list li { display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 1.45; }
+/* 가족 역할 표시: 보호자=파랑, 가족=보라 */
+.chip.role-chip { font-size: 12px; padding: 2px 9px; font-weight: 700; background: var(--tone-bg); color: var(--tone); }
+/* 설정 → 우리 강아지 목록(누르면 그 강아지로) */
+.dog-list { display: flex; flex-direction: column; gap: 6px; }
+.dog-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-align: left; }
+.dog-row.on { background: var(--accent-soft); border: 2px solid var(--accent); }
+.dog-row-face { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-strong); }
+.dog-row.on .dog-row-face:not(img) { background: var(--surface); }
+.dog-row-name { display: block; font-weight: 700; }

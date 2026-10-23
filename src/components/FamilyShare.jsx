@@ -141,7 +141,7 @@ export default function FamilyShare({ dog }) {
                 {label(m)}
                 {m.is_me && <span className="faint"> (나)</span>}
               </span>
-              <span className="chip" style={{ fontSize: 12, padding: "2px 8px" }}>{m.role === "owner" ? "보호자" : "가족"}</span>
+              <span className={`chip role-chip tone-${m.role === "owner" ? "blue" : "violet"}`}>{m.role === "owner" ? "보호자" : "가족"}</span>
               {isOwner && !m.is_me && m.role !== "owner" && (
                 <button type="button" className="btn-ghost small" disabled={busy} onClick={() => kick(m)}>
                   내보내기

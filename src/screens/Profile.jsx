@@ -329,9 +329,21 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
             </div>
             <FamilyShare dog={dog} />
             <div className="card" style={{ marginBottom: 14 }}>
-              <div className="h2">강아지 등록</div>
-              <p className="subtle" style={{ margin: "0 0 12px" }}>함께 사는 강아지를 더 등록할 수 있어요. 지금 강아지 기록은 그대로예요.</p>
-              <button type="button" className="btn-ghost" onClick={() => setSettingsSub("add-dog")}>
+              <div className="h2">우리 강아지</div>
+              <p className="subtle" style={{ margin: "0 0 8px" }}>누르면 그 강아지로 바뀌어요.</p>
+              <div className="dog-list" role="radiogroup" aria-label="보고 있는 강아지">
+                {getDogs().map((d) => (
+                  <button key={d.id} type="button" role="radio" aria-checked={d.id === dog.id} className={`dog-row${d.id === dog.id ? " on" : ""}`} onClick={() => d.id !== dog.id && onUpdateDog?.(d)}>
+                    {d.photo ? <img src={d.photo} alt="" className="dog-row-face" /> : <span className="dog-row-face"><Ico name="dog" size={22} /></span>}
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="dog-row-name">{d.name}</span>
+                      <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ")}</span>
+                    </span>
+                    {d.id === dog.id && <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} />}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="btn-ghost" style={{ marginTop: 10 }} onClick={() => setSettingsSub("add-dog")}>
                 + 새 강아지 등록하기
               </button>
             </div>
