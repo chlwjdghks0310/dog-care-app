@@ -8,7 +8,8 @@ import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import { localNow } from "../services/records";
 import DogAvatarVideo from "../components/DogAvatarVideo";
-import { LoginForm, LoginSheet, useSyncStatus } from "../components/AccountCard";
+import { BottomSheet, EmailLogin, LoginForm, LoginSheet, PolicyLine, useSyncStatus } from "../components/AccountCard";
+import SpeechBubble from "../components/SpeechBubble";
 import { supabase } from "../services/supabase";
 import { readJSON, writeJSON } from "../services/storage";
 import { acceptInvite } from "../services/sync/family";
@@ -53,24 +54,45 @@ export default function Onboarding({ onRegistered, skipIntro = false, preview })
   return <Setup onRegistered={done} restore={!skipIntro && !preview} preview={Boolean(preview)} />;
 }
 
+// 로그인 첫 화면: 강아지 + 한 줄 인사, 버튼은 카카오·이메일 두 개만. 이메일과 "로그인 없이"는 밑에서 올라오는 시트로
 function Login({ onGuest }) {
+  const [sheet, setSheet] = useState(null); // null | "email" | "guest"
   return (
     <div className="onb">
-      <div className="onb-setup" style={{ textAlign: "center" }}>
-        <img src="/icon-192.png?v=5" alt="" width="72" height="72" style={{ borderRadius: 18, margin: "auto auto 8px", display: "block", flexShrink: 0 }} />
-        <div style={{ fontWeight: 800, color: "var(--accent-strong)", marginBottom: 14 }}>멍케어</div>
-        <div className="onb-title">우리 아이 기록, 안전하게 보관해요</div>
-        <p className="onb-text">로그인하면 폰을 바꿔도 기록을 그대로 불러오고{"\n"}가족과 함께 볼 수 있어요.</p>
-        <div className="onb-login">
-          <LoginForm />
-        </div>
-        <button type="button" className="btn-ghost" onClick={onGuest} style={{ marginTop: 18 }}>
-          로그인 없이 시작하기
-        </button>
-        <p className="faint" style={{ margin: "8px 4px auto", paddingBottom: 12 }}>
-          게스트는 기록이 이 폰에만 저장돼요. 앱을 지우거나 폰을 바꾸면 기록이 사라지고, 가족과 공유할 수 없어요. 나중에 설정에서 언제든 로그인할 수 있어요.
-        </p>
+      <div className="login-hero">
+        <SpeechBubble>안녕! 나랑 같이 시작해 볼래? 🐾</SpeechBubble>
+        <DogAvatarVideo state="idle" height={210} breed="pomeranian" />
+        <div className="onb-title" style={{ marginBottom: 6 }}>멍케어</div>
+        <p className="onb-text" style={{ margin: "0 auto" }}>우리 아이 기록·알림·AI 비서를 한곳에</p>
       </div>
+      <div className="login-bottom">
+        <LoginForm onEmail={() => setSheet("email")} />
+        <button type="button" className="link-btn login-guest" onClick={() => setSheet("guest")}>
+          로그인 없이 둘러보기
+        </button>
+        <PolicyLine />
+      </div>
+      {sheet === "email" && (
+        <BottomSheet title="이메일로 계속하기" onClose={() => setSheet(null)}>
+          <EmailLogin />
+        </BottomSheet>
+      )}
+      {sheet === "guest" && (
+        <BottomSheet title="로그인 없이 시작할까요?" onClose={() => setSheet(null)}>
+          <ul className="login-guest-list">
+            <li><Ico name="lock" size={18} className="cat-ico tone-teal" /> 기록은 이 폰에만 저장돼요</li>
+            <li><Ico name="alert" size={18} className="cat-ico tone-rose" /> 앱을 지우거나 폰을 바꾸면 기록이 사라질 수 있어요</li>
+            <li><Ico name="users" size={18} className="cat-ico tone-violet" /> 가족과 함께 보려면 로그인이 필요해요</li>
+            <li><Ico name="settings" size={18} className="cat-ico tone-blue" /> 나중에 설정에서 언제든 로그인할 수 있어요</li>
+          </ul>
+          <button type="button" className="btn-primary" onClick={onGuest}>
+            그래도 시작하기
+          </button>
+          <button type="button" className="btn-ghost" onClick={() => setSheet(null)}>
+            로그인할게요
+          </button>
+        </BottomSheet>
+      )}
     </div>
   );
 }
