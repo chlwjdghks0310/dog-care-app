@@ -14,10 +14,10 @@ import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 
 const CHAT_MODES = [
-  // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {call}은 "여름아/여르야"
-  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{call}, 오늘 걸 정리해 봤어 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{call}! 오늘 요약이야 ⚡", pending: "음… 생각 중이야…" },
-  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{call} 안녕! 오늘도 같이 힘내자 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {nameI}는 이름 + 받침이면 "이"(여름이·여르)
+  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{nameI}의 관리는 내가 책임져! 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{nameI}의 오늘 할 일을 정리해 봤어 ⚡", pending: "음… 생각 중이야…" },
+  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{nameI}의 이야기 들어줄게 🐾", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 버튼 순서: 보더콜리 · 포메라니안(가운데) · 리트리버. 앱을 새로 켜면 항상 포메라니안으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -658,7 +658,7 @@ function TodaySummary({ dog, open }) {
   if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
   return (
     <span className="summary">
-      <span className="summary-open">{open.replace("{call}", josa(dog.name, "아", "야"))}</span>
+      <span className="summary-open">{open.replace("{nameI}", josa(dog.name, "이", ""))}</span>
       {lines.length ? (
         lines.map(([ico, tone, text]) => (
           <span key={ico} className="summary-line">

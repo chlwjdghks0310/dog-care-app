@@ -71,8 +71,6 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
     });
     setEditError("");
     setEditing(true);
-    setInfoOpen(true);
-    setTimeout(() => document.getElementById("dog-info")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
   function handleSaveEdit() {
@@ -199,10 +197,14 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
             <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
           </label>
 
-          <div style={{ flex: 1 }}>
-            <div className="h1" style={{ marginBottom: 4 }}>{dog.name}</div>
-            <span className="chip">{formatAge(age)}</span>
-            <span className="faint" style={{ marginLeft: 8 }}>{dog.breed}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="h1" style={{ marginBottom: 6 }}>{dog.name}</div>
+            <div className="dog-chips">
+              <span className="chip">{formatAge(age)}</span>
+              {dog.breed && <span className="chip quiet">{dog.breed}</span>}
+              {dog.weight ? <span className="chip quiet">{dog.weight}kg</span> : null}
+              {dog.neutered && <span className="chip quiet">중성화</span>}
+            </div>
             <FamilyBadge dogId={dog.id} />
           </div>
 
@@ -215,39 +217,52 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
             <span className="faint" title="정해진 시간에 케어 알림을 보내드려요"><Ico name="bell" size={18} /></span>
           )}
         </div>
-        <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={startEdit}>
-          프로필 편집
-        </button>
+        <HealthLines dog={dog} onEdit={startEdit} />
+        {infoOpen && (
+          <div className="dog-info-rows">
+            <Row label="생년월일" value={dog.birthDate ? `${formatKoreanDate(dog.birthDate)}${dog.ageEstimated ? " (추정)" : ""}` : ""} />
+            <Row label="성별" value={GENDER_LABEL[dog.gender]} />
+            <Row label="입양일" value={dog.adoptionDate ? formatKoreanDate(dog.adoptionDate) : ""} />
+            {EDIT_FIELDS.filter(([k]) => !["name", "birthDate", "gender", "breed", "adoptionDate", "allergies"].includes(k)).map(([k, label]) => (
+              <Row key={k} label={label} value={dog[k]} />
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button type="button" className="btn-ghost small" style={{ flex: 1 }} aria-expanded={infoOpen} onClick={() => setInfoOpen((v) => !v)}>
+            {infoOpen ? "정보 접기 ▴" : "정보 전체 보기 ▾"}
+          </button>
+          <button type="button" className="btn-ghost small" style={{ flex: 1 }} onClick={startEdit}>
+            프로필 편집
+          </button>
+        </div>
       </div>
 
-      <HealthSummary dog={dog} onEdit={startEdit} />
+      <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
 
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
       <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} />
 
-      <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
+      {/* 어디서든 바로 새 기록(화면 아래에 붙어 따라다님) */}
+      <div className="fab-wrap">
+        <button type="button" className="fab" onClick={() => onNewRecord()} aria-label="새 기록">
+          <Ico name="pencil" size={22} />
+          <span>새 기록</span>
+        </button>
+      </div>
 
-      <div id="dog-info" className="card" style={{ marginBottom: 14, scrollMarginTop: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <button type="button" className="info-toggle" aria-expanded={infoOpen || editing} onClick={() => !editing && setInfoOpen((v) => !v)}>
-            <span className="h2" style={{ margin: 0 }}>강아지 정보</span>
-            {!editing && <span className="subtle">{infoOpen ? "접기 ▴" : "전체 보기 ▾"}</span>}
-          </button>
-          {editing && (
-            <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12.5 }} onClick={() => setEditing(false)}>
-                취소
-              </button>
-              <button className="btn-primary" style={{ width: "auto", minHeight: 32, padding: "4px 12px", fontSize: 13 }} onClick={handleSaveEdit}>
-                저장
-              </button>
+      {editing &&
+        createPortal(
+          <div className="settings-sheet" role="dialog" aria-label="프로필 편집" style={{ zIndex: 120 }}>
+            <div className="settings-head">
+              <div className="h1" style={{ margin: 0 }}>프로필 편집</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" className="btn-ghost" onClick={() => setEditing(false)}>취소</button>
+                <button type="button" className="btn-primary" style={{ width: "auto", padding: "0 16px" }} onClick={handleSaveEdit}>저장</button>
+              </div>
             </div>
-          )}
-        </div>
-
-        {editing ? (
-          <div style={{ marginTop: 10 }}>
+            <div className="card">
             <div className="field">
               <label>이름</label>
               <input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
@@ -301,23 +316,10 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
             ))}
             {editError && <p className="error-text" role="alert">{editError}</p>}
             <button className="btn-primary" onClick={handleSaveEdit}>저장</button>
-          </div>
-        ) : (
-          infoOpen && (
-            <div style={{ marginTop: 6 }}>
-              <Row label="생년월일" value={dog.birthDate ? `${formatKoreanDate(dog.birthDate)}${dog.ageEstimated ? " (추정)" : ""}` : ""} />
-              <Row label="견종" value={dog.breed} />
-              <Row label="성별" value={GENDER_LABEL[dog.gender]} />
-              <Row label="체중" value={dog.weight ? `${dog.weight}kg` : ""} />
-              <Row label="중성화" value={dog.neutered ? "완료" : "미완료"} />
-              <Row label="입양일" value={dog.adoptionDate ? formatKoreanDate(dog.adoptionDate) : ""} />
-              {EDIT_FIELDS.filter(([k]) => !["name", "birthDate", "gender", "breed", "adoptionDate"].includes(k)).map(([k, label]) => (
-                <Row key={k} label={label} value={dog[k]} />
-              ))}
             </div>
-          )
+          </div>,
+          document.body
         )}
-      </div>
 
       {/* 설정(☰): 가족 공유·강아지 등록·다크 모드·백업 로그인·도움말·문의하기·삭제 — 하단 탭 위까지 덮어야 해서 body에 띄운다 */}
       {settingsOpen &&
@@ -471,33 +473,29 @@ const EDIT_FIELDS = [
 
 const VISIT_WORDS = /병원|진료|검진|검사|접종|백신|수술|재진|예방|심장사상충/;
 
-function HealthSummary({ dog, onEdit }) {
-  const meds = getMeds(dog.id).filter((m) => !isEnded(m));
-  const lines = [
-    ["알레르기", dog.allergies],
-    ["질환·수술", dog.illnesses],
-    ["접종·건강", dog.vaccines],
-    ["다니는 병원", dog.hospital],
-    ["먹는 약", [...new Set(meds.map((m) => m.name))].join(", ")],
-  ].filter(([, v]) => v);
+// 강아지 카드 안 건강 한 줄: 먹는 약·알레르기(없으면 적어 두라는 안내). 나머지(질환·병원 등)는 [정보 전체 보기]
+function HealthLines({ dog, onEdit }) {
+  const meds = [...new Set(getMeds(dog.id).filter((m) => !isEnded(m)).map((m) => m.name))].join(", ");
+  const lines = [["pill", "teal", "먹는 약", meds], ["alert", "rose", "알레르기", dog.allergies]].filter(([, , , v]) => v);
+  if (!lines.length)
+    return (
+      <p className="faint" style={{ margin: "10px 0 0" }}>
+        알레르기·먹는 약을 적어 두면 여기에 보여요.{" "}
+        <button type="button" className="link-btn" style={{ padding: 0 }} onClick={onEdit}>적기</button>
+      </p>
+    );
   return (
-    <div className="card" style={{ marginBottom: 14 }}>
-      <div className="h2">건강 요약</div>
-      {lines.length === 0 ? (
-        <div className="subtle">
-          아직 기록이 없습니다. 알레르기·질환·다니는 병원을 적어 두면 여기에 모여요.{" "}
-          <button type="button" className="link-btn" onClick={onEdit}>정보 추가</button>
+    <div className="dog-health">
+      {lines.map(([ico, tone, k, v]) => (
+        <div key={k} className="dog-health-line">
+          <Ico name={ico} size={15} className={`cat-ico tone-${tone}`} />
+          <span className="faint">{k}</span>
+          <span style={{ minWidth: 0 }}>{v}</span>
         </div>
-      ) : (
-        lines.map(([k, v]) => (
-          <div key={k} className="vet-line"><span className="faint">{k}</span> {v}</div>
-        ))
-      )}
+      ))}
     </div>
   );
 }
-
-
 
 function UpcomingCard({ dog, onOpenCalendar }) {
   const today = todayKey();
@@ -508,21 +506,18 @@ function UpcomingCard({ dog, onOpenCalendar }) {
     .map((o) => ({ date: o.date, title: `${o.event.title}${o.event.time ? ` ${o.event.time}` : ""}` }))
     .slice(0, 3);
   const dday = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
+  if (!items.length) return null; // 일정이 있을 때만 보인다
   return (
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}>다가오는 병원·접종</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenCalendar}>일정표 ›</button>
       </div>
-      {items.length === 0 ? (
-        <p className="subtle" style={{ margin: 0 }}>앞으로 60일 안에 병원·접종 일정이 없습니다. 병원 기록에 다음 진료일을 적으면 여기에 나와요.</p>
-      ) : (
-        items.map((e, i) => (
+      {items.map((e, i) => (
           <div key={i} className="vet-line">
             <b>{md(e.date)}</b> <span className="faint">{dday(e.date) === 0 ? "오늘" : `${dday(e.date)}일 뒤`}</span> {e.title}
           </div>
-        ))
-      )}
+        ))}
     </div>
   );
 }
@@ -639,7 +634,9 @@ const SERVICES = [
   { key: "memory", label: "사진·추억", ico: "camera", tone: "rose", types: ["media", "life"], add: "media" },
   { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
+const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
 function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet }) {
+  const [more, setMore] = useState(false);
   const recs = getRecords(dog.id);
   const meds = getMeds(dog.id).filter((m) => !isEnded(m));
   const doses = getDosesForDate(dog.id, todayKey());
@@ -657,7 +654,7 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
         <div className="h2" style={{ margin: 0 }}>건강 기록</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => onOpenRecords()}>전체 보기 ›</button>
       </div>
-      {SERVICES.map((svc) => (
+      {SERVICES.filter((svc) => svc.key !== "report" && (more || MAIN_SERVICES.includes(svc.key))).map((svc) => (
         <div key={svc.key} className="sv-row">
           <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>
             <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
@@ -672,8 +669,11 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
           )}
         </div>
       ))}
-      <button type="button" className="btn-primary" style={{ marginTop: 12 }} onClick={() => onNewRecord()}>
-        ＋ 새 기록
+      <button type="button" className="link-btn" style={{ display: "block", margin: "6px auto 0" }} aria-expanded={more} onClick={() => setMore((v) => !v)}>
+        {more ? "접기 ▴" : "컨디션·산책·사진 기록 더 보기 ▾"}
+      </button>
+      <button type="button" className="btn-ghost report-btn" onClick={onOpenVet}>
+        <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록 — 수의사에게 보여 줄 정리본
       </button>
     </div>
   );
