@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
-import { getCategoryIco } from "../data/categoryIcons";
+import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
 import Ico from "../components/Ico";
 import ProgressRing from "../components/ProgressRing";
 import { getFeedingSettings } from "../services/feedingSettings";
@@ -52,15 +52,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenHealth}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="stethoscope" size={26} /></span>
+          <span className="quick-tile-icon tone-blue" aria-hidden="true"><Ico name="stethoscope" size={24} /></span>
           <span className="quick-tile-label">건강 체크</span>
         </button>
         <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="utensils" size={26} /></span>
+          <span className="quick-tile-icon tone-rose" aria-hidden="true"><Ico name="utensils" size={24} /></span>
           <span className="quick-tile-label">사료 계산기</span>
         </button>
         <button className="quick-tile" onClick={onOpenAlarms}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={26} /></span>
+          <span className="quick-tile-icon tone-violet" aria-hidden="true"><Ico name="alarm" size={24} /></span>
           <span className="quick-tile-label">알림·알람</span>
         </button>
       </div>
@@ -86,7 +86,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
             {groupedChecklist.map(([category, items]) => (
               <div key={category} className="category-group">
                 <div className="category-label">
-                  <Ico name={getCategoryIco(category)} size={16} />
+                  <Ico name={getCategoryIco(category)} size={16} className={`cat-ico tone-${getCategoryTone(category)}`} />
                   <span>{category}</span>
                 </div>
                 {items.map((item) => (

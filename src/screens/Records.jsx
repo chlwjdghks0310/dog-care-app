@@ -146,7 +146,7 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete }) {
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
-        <span className="rec-icon" aria-hidden="true"><Ico name={TYPES[rec.type].ico} size={20} /></span>
+        <span className={`rec-icon tone-${(rec.type === "vital" && VITAL[rec.data?.metric]?.tone) || TYPES[rec.type].tone}`} aria-hidden="true"><Ico name={(rec.type === "vital" && VITAL[rec.data?.metric]?.ico) || TYPES[rec.type].ico} size={19} /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="rec-item-title">{(rec.type === "vital" && VITAL[rec.data?.metric]?.label) || TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
           <span className="rec-item-text">{summarize(rec) || "내용 없음"}</span>

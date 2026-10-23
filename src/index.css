@@ -22,6 +22,14 @@
   --bg-pattern-size: auto;
   --surface-pattern: none;
   --surface-pattern-size: auto;
+  /* 보조색(자료용 조사 2026-10-23 1안) — 아이콘·작은 아이콘 바탕에만. 대표색은 소프트블루(--accent).
+     아이콘 색(--c-*)은 연한 바탕(--c-*-bg) 위에서도 3:1 이상 되게 진한 값을 쓴다. */
+  --c-teal: #1d7673;
+  --c-teal-bg: #d9f1ef;
+  --c-violet: #5b4fb8;
+  --c-violet-bg: #e8e5fa;
+  --c-rose: #b0406c;
+  --c-rose-bg: #fae0ea;
   color-scheme: light;
 }
 
@@ -44,6 +52,12 @@
   --warning: #e6b45c;
   --warning-bg: #352b18;
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --c-teal: #4fc3bf;
+  --c-teal-bg: #1f3a3a;
+  --c-violet: #a69bef;
+  --c-violet-bg: #2f2b4a;
+  --c-rose: #ee86ac;
+  --c-rose-bg: #47283a;
   color-scheme: dark;
 }
 
@@ -843,7 +857,15 @@ button {
 @media (prefers-reduced-motion: reduce) { .bottom-nav, .collapse-y { transition: none; } }
 /* 선 아이콘(components/Ico.jsx) — 글자 줄에 맞춰 가운데 */
 .ico { display: inline-flex; align-items: center; justify-content: center; line-height: 0; vertical-align: -0.22em; flex-shrink: 0; }
-.sv-icon, .vt-top .ico, .quick-tile-icon, .rec-icon, .vd-icon { color: var(--accent-strong); }
+/* 아이콘 색: 요소에 tone-* 클래스를 붙이면 그 색, 없으면 대표색 */
+.tone-blue { --tone: var(--accent-strong); --tone-bg: var(--accent-soft); }
+.tone-teal { --tone: var(--c-teal); --tone-bg: var(--c-teal-bg); }
+.tone-violet { --tone: var(--c-violet); --tone-bg: var(--c-violet-bg); }
+.tone-rose { --tone: var(--c-rose); --tone-bg: var(--c-rose-bg); }
+.sv-icon, .vt-top .ico, .quick-tile-icon, .rec-icon, .vd-icon, .cat-ico { color: var(--tone, var(--accent-strong)); }
+.sv-icon, .vd-icon { background: var(--tone-bg, var(--accent-soft)); }
+.quick-tile-icon { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
+.rec-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
 .up-icon { color: #fff; }
 
 /* 켜고 끄는 스위치(다크 모드) */

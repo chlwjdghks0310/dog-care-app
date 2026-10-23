@@ -82,7 +82,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 프로필로</button>
       <div className="vd-head">
-        <span className="vd-icon" aria-hidden="true"><Ico name={def.ico} size={26} /></span>
+        <span className={`vd-icon tone-${def.tone}`} aria-hidden="true"><Ico name={def.ico} size={26} /></span>
         <div>
           <div className="h1" style={{ margin: 0 }}>{def.label}</div>
           <div className="faint">{def.kind === "sum" ? "하루 동안 적은 걸 합쳐서 보여 줘요" : "잴 때마다 따로 적어요"}</div>

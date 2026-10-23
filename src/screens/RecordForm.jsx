@@ -31,7 +31,7 @@ function TypePicker({ onPick, onCancel }) {
       <div className="rec-type-grid">
         {ADD_ORDER.map((t) => (
           <button key={t} type="button" className="quick-tile" onClick={() => onPick(t)}>
-            <span className="quick-tile-icon" aria-hidden="true"><Ico name={TYPES[t].ico} size={26} /></span>
+            <span className={`quick-tile-icon tone-${TYPES[t].tone}`} aria-hidden="true"><Ico name={TYPES[t].ico} size={24} /></span>
             <span className="quick-tile-label">{TYPES[t].label}</span>
           </button>
         ))}

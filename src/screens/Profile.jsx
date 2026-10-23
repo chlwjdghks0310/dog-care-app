@@ -533,7 +533,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
               onClick={() => (editingPins ? togglePin(v.id) : v.external ? onOpenWeight() : onOpenVital(v.id))}
             >
               <span className="vt-top">
-                <Ico name={v.ico} size={16} />
+                <Ico name={v.ico} size={16} className={`tone-${v.tone}`} />
                 <span className="vt-label">{v.label}</span>
                 {editingPins && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
               </span>
@@ -572,7 +572,7 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
       aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}
     >
       <span className="vt-top">
-        <Ico name="pill" size={16} />
+        <Ico name="pill" size={16} className="tone-teal" />
         <span className="vt-label">투약</span>
         {editing && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
       </span>
@@ -591,14 +591,14 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
 
 // 건강 기록 목록 — 종류마다 마지막 기록 한 줄, 누르면 그 종류만 모아 보고 ＋로 바로 적기
 const SERVICES = [
-  { key: "symptom", label: "이상 증상", ico: "thermometer", types: ["symptom"] },
-  { key: "meds", label: "투약 기록", ico: "pill" },
-  { key: "vet", label: "병원 진료", ico: "stethoscope", types: ["vet"] },
-  { key: "eat", label: "식사·배변", ico: "utensils", types: ["meal", "potty"], add: "meal" },
-  { key: "condition", label: "컨디션", ico: "moon", types: ["condition"] },
-  { key: "daily", label: "산책·일상", ico: "footprints", types: ["daily"] },
-  { key: "memory", label: "사진·추억", ico: "camera", types: ["media", "life"], add: "media" },
-  { key: "report", label: "병원용 기록", ico: "clipboard" },
+  { key: "symptom", label: "이상 증상", ico: "thermometer", tone: "blue", types: ["symptom"] },
+  { key: "meds", label: "투약 기록", ico: "pill", tone: "teal" },
+  { key: "vet", label: "병원 진료", ico: "stethoscope", tone: "blue", types: ["vet"] },
+  { key: "eat", label: "식사·배변", ico: "utensils", tone: "rose", types: ["meal", "potty"], add: "meal" },
+  { key: "condition", label: "컨디션", ico: "moon", tone: "violet", types: ["condition"] },
+  { key: "daily", label: "산책·일상", ico: "footprints", tone: "violet", types: ["daily"] },
+  { key: "memory", label: "사진·추억", ico: "camera", tone: "rose", types: ["media", "life"], add: "media" },
+  { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
 function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet }) {
   const recs = getRecords(dog.id);
@@ -621,7 +621,7 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
       {SERVICES.map((svc) => (
         <div key={svc.key} className="sv-row">
           <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>
-            <span className="sv-icon" aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
+            <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span className="sv-label">{svc.label}</span>
               <span className={`sv-sub${svc.key === "meds" && check ? " warn" : ""}`}>{subFor(svc)}</span>

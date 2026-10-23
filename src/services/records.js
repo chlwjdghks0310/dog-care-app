@@ -14,18 +14,19 @@ const KEY = "dogcare-records-v1";
 
 export const LEVELS = ["평소보다 적음", "평소", "평소보다 많음"];
 export const TYPES = {
-  weight: { label: "체중", icon: "⚖️", ico: "gauge" },
-  symptom: { label: "증상", icon: "🤒", ico: "thermometer" },
-  meal: { label: "식사", icon: "🍚", ico: "utensils" },
-  potty: { label: "배변·배뇨", icon: "💩", ico: "sprout" },
-  med: { label: "복약", icon: "💊", ico: "pill" },
-  vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope" },
-  condition: { label: "컨디션", icon: "🌙", ico: "moon" },
-  daily: { label: "일상", icon: "🦮", ico: "footprints" },
-  life: { label: "성장·추억", icon: "🎉", ico: "party" },
-  media: { label: "사진", icon: "📷", ico: "camera" },
-  vital: { label: "건강 수치", icon: "📈", ico: "chartLine" },
+  weight: { label: "체중", icon: "⚖️", ico: "gauge", tone: "blue" },
+  symptom: { label: "증상", icon: "🤒", ico: "thermometer", tone: "blue" },
+  meal: { label: "식사", icon: "🍚", ico: "utensils", tone: "rose" },
+  potty: { label: "배변·배뇨", icon: "💩", ico: "sprout", tone: "teal" },
+  med: { label: "복약", icon: "💊", ico: "pill", tone: "teal" },
+  vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope", tone: "blue" },
+  condition: { label: "컨디션", icon: "🌙", ico: "moon", tone: "violet" },
+  daily: { label: "일상", icon: "🦮", ico: "footprints", tone: "violet" },
+  life: { label: "성장·추억", icon: "🎉", ico: "party", tone: "rose" },
+  media: { label: "사진", icon: "📷", ico: "camera", tone: "rose" },
+  vital: { label: "건강 수치", icon: "📈", ico: "chartLine", tone: "blue" },
 };
+// tone: 아이콘 색(blue=대표 소프트블루·몸 상태, teal=물·약, violet=산책·활동, rose=식사·추억) — index.css .tone-*
 // 새 기록 추가에서 고르는 순서
 export const ADD_ORDER = ["weight", "symptom", "meal", "potty", "med", "vet", "media", "daily", "condition", "life"];
 // 전체 기록 필터에 쓰는 종류(건강 수치는 프로필의 수치 칸에서 적는다)

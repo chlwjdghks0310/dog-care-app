@@ -7,7 +7,7 @@ import { getEventsByDog, getOccurrences, kindOf, REPEATS, EVENT_COLORS } from ".
 import EventSheet, { dateLabel, timeLabel } from "../components/EventSheet";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
-import { getCategoryIco } from "../data/categoryIcons";
+import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 
@@ -192,7 +192,7 @@ export default function Calendar({ dog }) {
                 <input type="checkbox" checked={item.completed} onChange={() => handleToggleChecklist(item.id)} />
                 <div style={{ flex: 1 }}>
                   <div className="checklist-title" style={{ fontWeight: 600 }}>
-                    <Ico name={getCategoryIco(item.category)} size={15} /> {item.title}
+                    <Ico name={getCategoryIco(item.category)} size={15} className={`cat-ico tone-${getCategoryTone(item.category)}`} /> {item.title}
                   </div>
                 </div>
                 {item.ruleId && (
@@ -212,7 +212,7 @@ export default function Calendar({ dog }) {
           <div>
             {weeklyRules.map((rule) => (
               <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                <span><Ico name={getCategoryIco(rule.category)} size={15} /> {rule.title}</span>
+                <span><Ico name={getCategoryIco(rule.category)} size={15} className={`cat-ico tone-${getCategoryTone(rule.category)}`} /> {rule.title}</span>
                 <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, true)}>
                   숨기기
                 </button>
@@ -229,7 +229,7 @@ export default function Calendar({ dog }) {
           <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>숨긴 추천 항목</div>
           {hiddenRuleList.map((rule) => (
             <div key={rule.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
-              <span className="subtle"><Ico name={getCategoryIco(rule.category)} size={15} /> {rule.title}</span>
+              <span className="subtle"><Ico name={getCategoryIco(rule.category)} size={15} className={`cat-ico tone-${getCategoryTone(rule.category)}`} /> {rule.title}</span>
               <button className="faint" style={{ background: "none", border: "none" }} onClick={() => handleToggleHide(rule.id, false)}>
                 다시 보이기
               </button>
