@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
@@ -244,13 +244,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
 
       <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} />
 
-      {/* 어디서든 바로 새 기록(화면 아래에 붙어 따라다님) */}
-      <div className="fab-wrap">
-        <button type="button" className="fab" onClick={() => onNewRecord()} aria-label="새 기록">
-          <Ico name="pencil" size={22} />
-          <span>새 기록</span>
-        </button>
-      </div>
+      <NewRecordFab onClick={() => onNewRecord()} />
 
       {editing &&
         createPortal(
@@ -674,6 +668,33 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
       </button>
       <button type="button" className="btn-ghost report-btn" onClick={onOpenVet}>
         <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록 — 수의사에게 보여 줄 정리본
+      </button>
+    </div>
+  );
+}
+
+// 새 기록 둥근 버튼(가계부 탭 바로 위): 아래로 내리면 숨고, 위로 올리거나 맨 위면 나타난다
+function NewRecordFab({ onClick }) {
+  const ref = useRef(null);
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    const page = ref.current?.closest(".screen"); // 프로필은 .screen이 스크롤된다
+    if (!page) return;
+    let last = page.scrollTop;
+    const onScroll = () => {
+      const top = page.scrollTop;
+      if (top <= 8) setShow(true);
+      else if (top > last + 4) setShow(false);
+      else if (top < last - 4) setShow(true);
+      last = top;
+    };
+    page.addEventListener("scroll", onScroll, { passive: true });
+    return () => page.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <div ref={ref} className="fab-wrap">
+      <button type="button" className={`fab${show ? "" : " hidden"}`} onClick={onClick} aria-label="새 기록" tabIndex={show ? 0 : -1}>
+        <Ico name="pencil" size={24} />
       </button>
     </div>
   );

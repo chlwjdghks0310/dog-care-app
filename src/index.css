@@ -946,7 +946,8 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .dog-health-line { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.45; }
 .dog-health-line .faint { flex-shrink: 0; min-width: 52px; }
 .dog-info-rows { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
-.fab-wrap { position: sticky; bottom: 14px; display: flex; justify-content: flex-end; pointer-events: none; margin-top: 4px; z-index: 4; }
-.fab { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 52px; padding: 0 20px 0 16px; border: none; border-radius: 999px; background: var(--accent); color: #fff; font-size: 15px; font-weight: 800; box-shadow: 0 8px 20px rgba(75, 144, 226, 0.4); }
+.fab-wrap { position: sticky; bottom: -82px; /* .screen 아래 여백(96px) 안쪽까지 내려 탭 바로 위(약 14px)에 */ display: flex; justify-content: flex-end; pointer-events: none; margin: 4px -2px 0 0; z-index: 4; } /* 오른쪽 끝 = 가계부 탭 바로 위 */
+.fab { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; padding: 0; border: none; border-radius: 50%; background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(75, 144, 226, 0.4); transition: transform 0.22s ease, opacity 0.22s ease; }
+.fab.hidden { transform: translateY(90px); opacity: 0; pointer-events: none; }
 .fab:active { transform: scale(0.96); }
 .report-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 14px; }
