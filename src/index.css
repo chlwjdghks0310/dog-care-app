@@ -504,7 +504,7 @@ button {
 .onb-section.caution { background: var(--danger-bg); border-left: 3px solid var(--danger); }
 .onb-followup { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent-strong); background: var(--surface); }
 .onb-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 600; }
-.onb-notice { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; border-radius: 16px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 6px 18px rgba(43, 35, 32, 0.12); }
+.onb-notice { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(43, 35, 32, 0.12); }
 .onb-setup { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 20px 0; overflow-y: auto; }
 .onb-login { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; margin-top: 22px; text-align: left; }
 .onb-login + .btn-ghost, .onb-login ~ .faint { width: 100%; max-width: 360px; }
@@ -873,3 +873,23 @@ button {
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); transition: transform 0.2s ease; }
 .switch:checked { background: var(--accent); }
 .switch:checked::after { transform: translateX(20px); }
+/* 설정 → 테스트: 온보딩·로그인 화면 미리보기(앱 위에 꽉 차게) */
+.onb-preview { position: fixed; inset: 0; z-index: 140; background-color: var(--bg); display: flex; flex-direction: column; }
+.onb-preview > .onb { flex: 1; min-height: 0; }
+.onb-preview-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(env(safe-area-inset-top) + 8px) 12px 8px 16px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.onb-preview-bar .btn-ghost { display: inline-flex; align-items: center; gap: 4px; }
+.onb-preview > .onb { padding-top: 12px; } /* 상태바 여백은 위 띠가 이미 차지 */
+
+/* 색을 꽉 채운 타일(체크리스트 빠른 메뉴): 타일 바탕 = 그 종류의 연한 색, 아이콘·글자 = 진한 색 */
+.quick-tile.filled { background: var(--tone-bg); border-color: transparent; box-shadow: none; }
+.quick-tile.filled .quick-tile-icon { background: transparent; }
+.quick-tile.filled .quick-tile-label { font-weight: 700; } /* 작은 글자는 본문색(색 글자는 대비 4.5 미달) */
+.quick-tile.filled:active { filter: brightness(0.96); }
+/* 다가오는 일정: 일정 종류 색(--ev)을 카드 바탕에 연하게 */
+.up-card.tinted { background: color-mix(in srgb, var(--ev) 13%, var(--surface)); border-color: color-mix(in srgb, var(--ev) 26%, var(--surface)); }
+.up-card.tinted:active { background: color-mix(in srgb, var(--ev) 20%, var(--surface)); }
+/* 가계부 카테고리: 칩은 그 카테고리 색(--ev)으로 연하게 채우고 아이콘은 그 색, 아이콘 고르기 칸도 색으로 채움(고른 칸은 진하게) */
+.chip.cat-chip { background: color-mix(in srgb, var(--ev) 16%, var(--surface)); }
+.chip.cat-chip .ico { color: color-mix(in srgb, var(--ev) 80%, var(--text)); }
+.cat-pick { display: flex; justify-content: center; align-items: center; aspect-ratio: 1; padding: 0; border-radius: 12px; border: 2px solid transparent; background: color-mix(in srgb, var(--ev) 16%, var(--surface)); color: color-mix(in srgb, var(--ev) 80%, var(--text)); }
+.cat-pick.on { background: var(--ev); color: #fff; border-color: var(--ev); }

@@ -95,7 +95,7 @@ export default function Calendar({ dog }) {
             const k = kindOf(o.event);
             const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
             return (
-              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card" onClick={() => setSheet({ start: o.start, event: o.event })}>
+              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card tinted" style={{ "--ev": colorOf(o.event) }} onClick={() => setSheet({ start: o.start, event: o.event })}>
                 <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
                 <span className="up-body">
                   <span className="up-title">{o.event.title}</span>
@@ -175,11 +175,11 @@ export default function Calendar({ dog }) {
         <div className="h2" style={{ marginBottom: 10 }}><Ico name="checklist" size={18} /> 체크리스트</div>
 
         {milestones.length > 0 && (
-          <p style={{ marginBottom: 10 }}>
+          <div style={{ marginBottom: 10 }}>
             {milestones.map((r) => (
               <span key={r.id} className="chip" style={{ marginRight: 6 }}><Ico name="sparkles" size={13} /> 오늘부터: {r.title}</span>
             ))}
-          </p>
+          </div>
         )}
 
         <div className="h2" style={{ fontSize: 14.5, marginBottom: 6 }}>이 날 할 일</div>

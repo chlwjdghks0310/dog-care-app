@@ -38,18 +38,19 @@ const loadProgress = () => readJSON(PROGRESS_KEY, null) || {};
 const saveProgress = (patch) => writeJSON(PROGRESS_KEY, { ...loadProgress(), ...patch });
 const clearProgress = () => writeJSON(PROGRESS_KEY, null);
 
-export default function Onboarding({ onRegistered, skipIntro = false }) {
-  const [phase, setPhase] = useState(() => (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
+// preview: 설정 → 테스트용 미리보기("login" | "intro"에서 시작). 진행 상황·강아지를 저장하지 않고, 초대 코드도 연결하지 않는다.
+export default function Onboarding({ onRegistered, skipIntro = false, preview }) {
+  const [phase, setPhase] = useState(() => preview || (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
   const { user } = useSyncStatus();
   // 로그인 화면에서 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개로
-  const current = phase === "login" && user ? "intro" : phase;
+  const current = phase === "login" && user && !preview ? "intro" : phase;
   useEffect(() => {
-    if (!skipIntro) saveProgress({ phase: current });
-  }, [current, skipIntro]);
-  const done = (dog) => (clearProgress(), onRegistered(dog));
+    if (!skipIntro && !preview) saveProgress({ phase: current });
+  }, [current, skipIntro, preview]);
+  const done = (dog) => (preview || clearProgress(), onRegistered(dog));
   if (current === "login") return <Login onGuest={() => setPhase("intro")} />;
   if (current === "intro") return <Intro onDone={() => setPhase("setup")} />;
-  return <Setup onRegistered={done} restore={!skipIntro} />;
+  return <Setup onRegistered={done} restore={!skipIntro && !preview} preview={Boolean(preview)} />;
 }
 
 function Login({ onGuest }) {
@@ -123,12 +124,12 @@ function ModesMock() {
       <DogAvatarVideo state="idle" height={110} breed="pomeranian" />
       <div className="onb-mock" style={{ marginTop: 6, padding: "6px 14px" }}>
         {[
-          ["🐶", "포메라니안", "핵심만 빠르게"],
-          ["🐕", "보더콜리", "자료 찾아 꼼꼼하게"],
-          ["🦮", "리트리버", "수다 친구처럼"],
-        ].map(([icon, name, desc]) => (
+          ["book", "보더콜리", "자료 찾아 꼼꼼하게", "violet"],
+          ["zap", "포메라니안", "핵심만 빠르게", "blue"],
+          ["chatHeart", "리트리버", "수다 친구처럼", "rose"],
+        ].map(([icon, name, desc, tone]) => (
           <div key={name} className="onb-mock-row">
-            <span style={{ fontSize: 20 }}>{icon}</span>
+            <span className={`sv-icon tone-${tone}`} style={{ width: 32, height: 32, borderRadius: 10 }}><Ico name={icon} size={17} /></span>
             <b style={{ minWidth: 76 }}>{name}</b>
             <span className="subtle" style={{ fontSize: 14 }}>{desc}</span>
           </div>
@@ -143,7 +144,7 @@ function PhotoMock() {
     <div className="onb-mock" style={{ textAlign: "left" }}>
       <Example />
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-        <div className="onb-photo">🐶</div>
+        <div className="onb-photo sv-icon tone-rose"><Ico name="camera" size={22} /></div>
         <div style={{ fontWeight: 800, lineHeight: 1.4 }}>사진에서 본 걸 정리했어!</div>
       </div>
       <div className="onb-section"><Ico name="eye" size={13} /> 사진에서 본 것</div>
@@ -163,7 +164,7 @@ function ChatMock() {
       <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
       <div className="onb-bubble ai">
         둘 다 적어 뒀어!
-        <div className="onb-record"><Ico name="walk" size={13} /> 산책 30분 · 건강 기록</div>
+        <div className="onb-record"><Ico name="walk" size={13} className="cat-ico tone-violet" /> 산책 30분 · 건강 기록</div>
         <div className="onb-record"><Ico name="wallet" size={13} /> 사료 30,000원 · 가계부</div>
       </div>
     </div>
@@ -184,12 +185,12 @@ function CareMock() {
         <Example />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
           {[
-            ["scales", "몸무게"],
-            ["droplet", "물"],
-            ["walk", "산책"],
-          ].map(([icon, label]) => (
+            ["scales", "몸무게", "blue"],
+            ["droplet", "물", "teal"],
+            ["walk", "산책", "violet"],
+          ].map(([icon, label, tone]) => (
             <div key={label} className="onb-tile">
-              <span style={{ color: "var(--accent-strong)" }}><Ico name={icon} size={18} /></span>
+              <Ico name={icon} size={18} className={`cat-ico tone-${tone}`} />
               <span>{label}</span>
             </div>
           ))}
@@ -267,7 +268,7 @@ function GestureMock() {
 const STEPS = ["name", "breed", "birthDate", "gender", "weight", "notify", "done"];
 const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
 
-function Setup({ onRegistered, restore }) {
+function Setup({ onRegistered, restore, preview }) {
   const saved = restore ? loadProgress() : {};
   const [step, setStep] = useState(saved.step || 0);
   const [form, setForm] = useState(saved.form || { name: "", breed: "", birthDate: "", gender: "", neutered: false, weight: "" });
@@ -292,6 +293,7 @@ function Setup({ onRegistered, restore }) {
 
   // 초대 코드로 가족 강아지와 연결: 서버가 코드를 확인하고 가족으로 넣으면, 그 강아지 기록 전체를 받아 와 바로 연다(새 강아지는 만들지 않음)
   async function joinFamily() {
+    if (preview) return setInviteError("미리보기에서는 초대 코드를 연결하지 않아요.");
     setInviteError("");
     if (!user) {
       setInviteError("초대 코드로 연결하려면 먼저 로그인해 주세요.");
@@ -324,8 +326,10 @@ function Setup({ onRegistered, restore }) {
     if (key === "weight") {
       // 필수 정보가 다 모였으니 여기서 저장 — 알림 켜기가 이 강아지의 알람까지 서버에 등록하도록
       const created = createDog(form);
-      saveDog(created);
-      if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
+      if (!preview) {
+        saveDog(created);
+        if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
+      }
       setDog(created);
       if (restore) clearProgress();
     }

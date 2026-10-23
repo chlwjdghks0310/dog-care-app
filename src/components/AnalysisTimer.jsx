@@ -60,8 +60,8 @@ export function AnalysisTimeInfo({ timer, note }) {
   }
 
   return (
-    <p className="faint" style={{ margin: "10px 0 0", textAlign: "center" }}>
+    <div className="faint" style={{ margin: "10px 0 0", textAlign: "center" }}>
       <Ico name="timer" size={14} /> {lastSeconds !== null ? `이번 분석에 ${lastSeconds}초 걸렸어요` : `분석에 보통 ${range(estimate)} 걸려요${note ? ` (${note})` : ""}`}
-    </p>
+    </div>
   );
 }

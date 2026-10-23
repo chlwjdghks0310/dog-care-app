@@ -5,7 +5,7 @@ import {
   AlarmClockIcon, ArrowDownIcon, ArrowRightIcon, BellIcon, BellOffIcon, BookOpenIcon, Building2Icon, CalendarDaysIcon, CameraIcon,
   ChartColumnIcon, ChartLineIcon, CircleCheckIcon, CircleStopIcon, ClipboardListIcon, DogIcon, DropletIcon, DropletsIcon,
   EyeIcon, GiftIcon, HandIcon, HeartPulseIcon, HouseIcon, LightbulbIcon, ListChecksIcon, LockIcon, MenuIcon,
-  MicIcon, MoonIcon, ZapIcon, MessageCircleHeartIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
+  MicIcon, MoonIcon, XIcon, ZapIcon, MessageCircleHeartIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
   PillIcon, PinIcon, PipetteIcon, PrinterIcon, RepeatIcon, RulerIcon, ScissorsIcon, SearchIcon, SettingsIcon, SirenIcon,
   SparklesIcon, StethoscopeIcon, TargetIcon, ThermometerIcon, TimerIcon, Trash2Icon, TriangleAlertIcon, UsersIcon,   VideoIcon, Volume2Icon, WalletIcon, WindIcon,
 } from "@animateicons/react/lucide";
@@ -26,7 +26,7 @@ const ICONS = {
   scissors: ScissorsIcon, search: SearchIcon, settings: SettingsIcon, siren: SirenIcon, sparkles: SparklesIcon,
   stethoscope: StethoscopeIcon, target: TargetIcon, thermometer: ThermometerIcon, timer: TimerIcon, trash: Trash2Icon,
   alert: TriangleAlertIcon, users: UsersIcon, video: VideoIcon, speaker: Volume2Icon, wallet: WalletIcon, wind: WindIcon,
-  zap: ZapIcon, chatHeart: MessageCircleHeartIcon,
+  x: XIcon, zap: ZapIcon, chatHeart: MessageCircleHeartIcon,
   puzzle: PuzzleIcon, sprayCan: SprayCanIcon, car: CarIcon, graduation: GraduationCapIcon, umbrella: UmbrellaIcon, shoppingBag: ShoppingBagIcon, box: BoxIcon,
 };
 

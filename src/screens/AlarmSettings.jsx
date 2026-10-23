@@ -103,9 +103,9 @@ export default function AlarmSettings({ dog, onBack }) {
           <div className="h2">알림 받기</div>
           {notifPermission === "granted" && (pushOn || !isPushSupported()) ? (
             <>
-              <p className="subtle" style={{ marginBottom: 10 }}>
+              <div className="subtle" style={{ marginBottom: 10 }}>
                 <Ico name="check" size={16} style={{ color: "var(--success)" }} /> 알림이 켜져 있어요. {pushOn ? "앱을 꺼 둬도 약·밥·알람 시간에 알려 드려요." : "앱을 열어 둔 동안 알려 드려요."}
-              </p>
+              </div>
               {pushOn && (
                 <button className="btn-ghost small" onClick={handleTestPush} disabled={pushBusy}>
                   {pushBusy ? "보내는 중…" : "알림 확인하기"}

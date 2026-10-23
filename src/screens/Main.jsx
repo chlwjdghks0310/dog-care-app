@@ -14,9 +14,9 @@ import VoiceButton from "../components/VoiceButton";
 
 const CHAT_MODES = [
   // hello: 첫 화면 말풍선의 자기소개(고른 강아지마다 다름). {name}은 강아지 이름 + 받침이면 "이"(여름 → 여름이, 여르 → 여르)
-  { key: "bordercollie", ico: "book", name: "보더콜리", hello: "반가워! 꼼꼼 박사 보더콜리야 🐕\n자료를 찾아보고 차근차근 자세히 알려 줄게.\n대신 조금 오래 걸릴 수 있어!", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "pomeranian", ico: "zap", name: "포메라니안", hello: "안녕! 난 포메라니안이야 🐶\n{name} 얘기라면 뭐든 물어봐!\n핵심만 콕콕 빠르게 알려 줄게!", pending: "음… 생각 중이야…" },
-  { key: "retriever", ico: "chatHeart", name: "리트리버", hello: "안녕안녕! 수다쟁이 리트리버야 🦮\n오늘 있었던 일, 나한테 다 얘기해 줘!\n꼬리 흔들면서 들을게 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", hello: "반가워! 꼼꼼 박사 보더콜리야 🐕\n자료를 찾아보고 차근차근 자세히 알려 줄게.\n대신 조금 오래 걸릴 수 있어!", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", hello: "안녕! 난 포메라니안이야 🐶\n{name} 얘기라면 뭐든 물어봐!\n핵심만 콕콕 빠르게 알려 줄게!", pending: "음… 생각 중이야…" },
+  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", hello: "안녕안녕! 수다쟁이 리트리버야 🦮\n오늘 있었던 일, 나한테 다 얘기해 줘!\n꼬리 흔들면서 들을게 🐾", pending: "꼬리 흔들면서 생각 중…" },
 ];
 // 버튼 순서: 보더콜리 · 포메라니안(가운데) · 리트리버. 앱을 새로 켜면 항상 포메라니안으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -427,7 +427,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
               >
                 {m.chatMode && (
                   <div className="faint" style={{ marginBottom: 6 }}>
-                    <Ico name={findChatMode(m.chatMode).ico} size={13} /> {findChatMode(m.chatMode).name}
+                    <Ico name={findChatMode(m.chatMode).ico} size={13} className={`cat-ico tone-${findChatMode(m.chatMode).tone}`} /> {findChatMode(m.chatMode).name}
                   </div>
                 )}
                 {m.structured ? (
@@ -537,7 +537,7 @@ export default function Main({ dog, resetSignal, onReadingChange }) {
                 whiteSpace: "nowrap",
               }}
             >
-              <Ico name={cm.ico} size={15} /> {cm.name}
+              <Ico name={cm.ico} size={15} className={`cat-ico tone-${cm.tone}`} /> {cm.name}
             </button>
           );
         })}

@@ -339,7 +339,7 @@ export default function Budget({ dog }) {
                     <div key={e.id} className="bud-edit">
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                         {categories.map((c) => (
-                          <button key={c.id} type="button" className="chip" onClick={() => setEditing((x) => ({ ...x, categoryId: c.id }))} style={{ border: editing.categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}>
+                          <button key={c.id} type="button" className="chip cat-chip" onClick={() => setEditing((x) => ({ ...x, categoryId: c.id }))} style={{ "--ev": colorOf(c.id), border: editing.categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}>
                             <Ico name={categoryIco(c)} size={14} /> {c.name}
                           </button>
                         ))}
@@ -379,9 +379,9 @@ export default function Budget({ dog }) {
                   <button
                     key={c.id}
                     type="button"
-                    className="chip"
+                    className="chip cat-chip"
                     onClick={() => setCategoryId(c.id)}
-                    style={{ border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
+                    style={{ "--ev": colorOf(c.id), border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
                   >
                     <Ico name={categoryIco(c)} size={14} /> {c.name}
                   </button>
@@ -418,7 +418,7 @@ export default function Budget({ dog }) {
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
             {categories.map((c) => (
-              <span key={c.id} className="chip" style={{ fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
+              <span key={c.id} className="chip cat-chip" style={{ "--ev": colorOf(c.id), fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
                 <Ico name={categoryIco(c)} size={14} /> {c.name}
                 <button
                   type="button"
@@ -435,22 +435,15 @@ export default function Budget({ dog }) {
           <form onSubmit={handleAddCategory}>
             <div className="faint" style={{ marginBottom: 6 }}>아이콘 고르기</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>
-              {CATEGORY_CHOICES.map((choice) => (
+              {CATEGORY_CHOICES.map((choice, i) => (
                 <button
                   key={choice[0]}
                   type="button"
+                  className={`cat-pick${newCatIco[0] === choice[0] ? " on" : ""}`}
                   aria-label={`아이콘 ${choice[0]}`}
                   aria-pressed={newCatIco[0] === choice[0]}
                   onClick={() => setNewCatIco(choice)}
-                  style={{
-                    padding: "6px 0",
-                    borderRadius: 8,
-                    color: newCatIco[0] === choice[0] ? "var(--accent-strong)" : "var(--text)",
-                    background: newCatIco[0] === choice[0] ? "var(--accent-soft)" : "none",
-                    border: newCatIco[0] === choice[0] ? "2px solid var(--accent)" : "2px solid transparent",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
+                  style={{ "--ev": CATEGORY_COLORS[i % CATEGORY_COLORS.length] }}
                 >
                   <Ico name={choice[0]} size={20} />
                 </button>

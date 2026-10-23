@@ -51,16 +51,16 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
     <div className="screen">
       <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile" onClick={onOpenHealth}>
-          <span className="quick-tile-icon tone-blue" aria-hidden="true"><Ico name="scan" size={24} /></span>
+        <button className="quick-tile tone-blue filled" onClick={onOpenHealth}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} /></span>
           <span className="quick-tile-label">건강 체크</span>
         </button>
-        <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon tone-rose" aria-hidden="true"><Ico name="bowl" size={24} /></span>
+        <button className="quick-tile tone-rose filled" onClick={onOpenFeeding}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
           <span className="quick-tile-label">사료 계산기</span>
         </button>
-        <button className="quick-tile" onClick={onOpenAlarms}>
-          <span className="quick-tile-icon tone-violet" aria-hidden="true"><Ico name="alarm" size={24} /></span>
+        <button className="quick-tile tone-violet filled" onClick={onOpenAlarms}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
           <span className="quick-tile-label">알림·알람</span>
         </button>
       </div>
