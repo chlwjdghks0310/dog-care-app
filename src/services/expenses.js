@@ -17,15 +17,15 @@ export const UNKNOWN_CATEGORY = { id: "unknown", name: "기타", emoji: "📦", 
 
 // 카테고리 추가 때 고르는 아이콘(+ 같은 뜻의 이모지)
 export const CATEGORY_CHOICES = [
-  ["stethoscope", "🏥"], ["pill", "💊"], ["shield", "💉"], ["utensils", "🍚"], ["can", "🥫"], ["cookie", "🦴"],
-  ["puzzle", "🧸"], ["sprayCan", "🧴"], ["droplets", "🛁"], ["scissors", "✂️"], ["footprints", "🦮"], ["shoppingBag", "👕"],
+  ["stethoscope", "🏥"], ["pill", "💊"], ["shield", "💉"], ["utensils", "🍚"], ["droplets", "🥫"], ["cookie", "🦴"],
+  ["puzzle", "🧸"], ["sprayCan", "🧴"], ["sparkles", "🛁"], ["scissors", "✂️"], ["footprints", "🦮"], ["shoppingBag", "👕"],
   ["house", "🏠"], ["car", "🚗"], ["building", "🏨"], ["graduation", "🎓"], ["camera", "📸"], ["umbrella", "🛡️"],
   ["party", "🎂"], ["gift", "🎀"], ["heart", "❤️"], ["paw", "🐾"], ["box", "📦"], ["wallet", "💰"],
 ];
 // 예전에 이모지로만 저장된 카테고리(직접 넣은 이모지 포함)도 알맞은 아이콘으로
 const EMOJI_ICO = {
-  "🏥": "stethoscope", "💊": "pill", "💉": "shield", "🧸": "puzzle", "🎾": "puzzle", "🧴": "sprayCan", "🧻": "sprayCan", "🛁": "droplets",
-  "✂️": "scissors", "🦴": "cookie", "🍖": "cookie", "🍚": "utensils", "🥫": "can", "🦮": "footprints", "🎀": "gift", "👕": "shoppingBag",
+  "🏥": "stethoscope", "💊": "pill", "💉": "shield", "🧸": "puzzle", "🎾": "puzzle", "🧴": "sprayCan", "🧻": "sprayCan", "🛁": "sparkles",
+  "✂️": "scissors", "🦴": "cookie", "🍖": "cookie", "🍚": "utensils", "🥫": "droplets", "🦮": "footprints", "🎀": "gift", "👕": "shoppingBag",
   "🏠": "house", "🚗": "car", "🏨": "building", "🎓": "graduation", "📸": "camera", "🛡️": "umbrella", "🎂": "party", "💰": "wallet", "📦": "box",
 };
 export const categoryIco = (cat) => cat?.ico || EMOJI_ICO[cat?.emoji] || EMOJI_ICO[`${cat?.emoji}\uFE0F`] || "wallet";

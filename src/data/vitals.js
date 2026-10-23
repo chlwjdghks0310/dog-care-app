@@ -4,7 +4,7 @@
 export const VITALS = [
   { id: "weight", label: "몸무게", icon: "⚖️", ico: "gauge", unit: "kg", kind: "point", step: 0.1, min: 0.1, max: 120, external: true },
   { id: "dry", label: "건식 사료", icon: "🥣", ico: "utensils", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
-  { id: "wet", label: "습식", icon: "🥫", ico: "can", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
+  { id: "wet", label: "습식", icon: "🥫", ico: "droplets", unit: "g", kind: "sum", step: 1, min: 1, max: 3000 },
   { id: "treat", label: "간식", icon: "🦴", ico: "cookie", unit: "개", kind: "sum", step: 1, min: 1, max: 100 },
   { id: "water", label: "음수량", icon: "💧", ico: "droplet", unit: "ml", kind: "sum", step: 10, min: 1, max: 5000 },
   { id: "fluid", label: "피하수액", icon: "💉", ico: "pipette", unit: "ml", kind: "sum", step: 10, min: 1, max: 1000 },
