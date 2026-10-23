@@ -391,7 +391,7 @@ export default function App() {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
     main: (
       <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} />
+        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
       </Suspense>
     ),
     home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,

@@ -648,6 +648,9 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
         <div className="h2" style={{ margin: 0 }}>건강 기록</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => onOpenRecords()}>전체 보기 ›</button>
       </div>
+      {recs.length === 0 && meds.length === 0 && (
+        <p className="first-hint">＋를 누르거나, 비서에게 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
+      )}
       {SERVICES.filter((svc) => svc.key !== "report" && (more || MAIN_SERVICES.includes(svc.key))).map((svc) => (
         <div key={svc.key} className="sv-row">
           <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>

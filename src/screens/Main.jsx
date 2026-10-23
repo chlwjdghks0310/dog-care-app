@@ -12,6 +12,7 @@ import AiAnswer from "../components/AiAnswer";
 import Ico from "../components/Ico";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
+import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 
 const CHAT_MODES = [
   // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {nameI}는 이름 + 받침이면 "이"(여름이·여르)
@@ -68,7 +69,8 @@ const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile, onOpenFeeding, onOpenWeight }) {
+  const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
@@ -244,6 +246,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile 
       const { answer, structured, actions } = result;
       // AI가 "기록해 줘"를 알아들었으면 앱(가계부·일정표·체중·체크리스트·알람)에 실제로 저장
       const records = actions?.length ? applyAppActions(dog, actions) : null;
+      if (records?.done?.length) markFirstSteps(dog.id, { chat: true }); // 첫 걸음 ③ "말로 기록해 보기" 완료
       rememberChat(dog.id, memoryQuestion, answer);
       const notes = [
         ...(records?.done || []).map((r) => `기록 완료: ${r}`),
@@ -337,11 +340,23 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile 
     >
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
-          <button type="button" className="summary-bubble" onClick={onOpenProfile} aria-label="오늘 요약 — 눌러서 프로필 보기">
+          {getFirstSteps(dog.id).show ? (
             <SpeechBubble>
-              <TodaySummary dog={dog} open={findChatMode(chatMode).open} />
+              <FirstSteps
+                dog={dog}
+                onMeal={onOpenFeeding}
+                onWeight={onOpenWeight}
+                onChat={() => (setInput(RECORD_EXAMPLE), inputElRef.current?.focus())}
+                onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
+              />
             </SpeechBubble>
-          </button>
+          ) : (
+            <button type="button" className="summary-bubble" onClick={onOpenProfile} aria-label="오늘 요약 — 눌러서 프로필 보기">
+              <SpeechBubble>
+                <TodaySummary dog={dog} open={findChatMode(chatMode).open} />
+              </SpeechBubble>
+            </button>
+          )}
         </div>
       )}
 
@@ -677,6 +692,30 @@ function TodaySummary({ dog, open }) {
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 궁금한 거 물어봐!</span>
       )}
       <span className="summary-more">눌러서 프로필 보기 ›</span>
+    </span>
+  );
+}
+
+// 처음 쓰는 사람: 말풍선이 "첫 걸음 3가지"를 말한다. 한 것은 ✓(실제 기록으로 판단), 누르면 그 화면으로
+function FirstSteps({ dog, onMeal, onWeight, onChat, onLater }) {
+  const { steps } = getFirstSteps(dog.id);
+  const items = [
+    ["meal", "bowl", "rose", "밥 시간 정하기", onMeal],
+    ["weight", "scales", "blue", "몸무게 적기", onWeight],
+    ["chat", "pencil", "teal", "나한테 말로 기록해 보기", onChat],
+  ];
+  return (
+    <span className="summary">
+      <span className="summary-open">{josa(dog.name, "이랑", "랑")} 처음 만났네! 이것부터 해 볼까?</span>
+      {items.map(([key, ico, tone, label, onClick]) => (
+        <button key={key} type="button" className={`first-step${steps[key] ? " done" : ""}`} onClick={onClick}>
+          <span className="first-check" aria-hidden="true">{steps[key] && <Ico name="check" size={16} />}</span>
+          <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
+          <span style={{ flex: 1 }}>{label}</span>
+          {!steps[key] && <span className="faint" aria-hidden="true">›</span>}
+        </button>
+      ))}
+      <button type="button" className="link-btn summary-more" onClick={onLater}>다음에 할게</button>
     </span>
   );
 }
