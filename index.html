@@ -55,6 +55,8 @@
           document.documentElement.setAttribute("data-theme", "dark");
           document.querySelector('meta[name="theme-color"]').setAttribute("content", "#17171c");
         }
+        var pal = localStorage.getItem("dogcare-palette-v1");
+        if (pal) document.documentElement.setAttribute("data-palette", pal);
       } catch (e) {}
     </script>
   </head>

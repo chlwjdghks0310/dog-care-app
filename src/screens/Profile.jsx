@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
-import { isDark, setDark } from "../services/themeSettings";
+import { isDark, setDark, PALETTES, getPalette, setPalette } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
@@ -43,6 +43,7 @@ const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : nu
 export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
+  const [palette, setPaletteState] = useState(getPalette);
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -343,6 +344,33 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
                 </span>
                 <input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />
               </label>
+            </div>
+            <div className="card" style={{ marginBottom: 14 }}>
+              <div className="h2" style={{ marginBottom: 2 }}>색 조합</div>
+              <p className="faint" style={{ margin: "0 0 10px" }}>대표색 소프트블루는 그대로, 아이콘에 들어가는 보조색만 바뀌어요</p>
+              <div role="radiogroup" aria-label="색 조합" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {PALETTES.map((pl) => (
+                  <button
+                    key={pl.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={palette === pl.id}
+                    onClick={() => (setPalette(pl.id), setPaletteState(pl.id))}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 14, textAlign: "left", background: palette === pl.id ? "var(--accent-soft)" : "var(--surface)", border: palette === pl.id ? "2px solid var(--accent)" : "1px solid var(--border)", color: "var(--text)" }}
+                  >
+                    <span style={{ display: "flex", gap: 4 }} aria-hidden="true">
+                      {["var(--accent)", ...pl.swatches].map((c, i) => (
+                        <span key={i} style={{ width: 18, height: 18, borderRadius: "50%", background: c }} />
+                      ))}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontWeight: 700 }}>{pl.name}</span>
+                      <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{pl.desc}</span>
+                    </span>
+                    {palette === pl.id && <Ico name="check" size={18} style={{ color: "var(--accent-strong)" }} />}
+                  </button>
+                ))}
+              </div>
             </div>
             <AccountCard />
             <AIConsentCard />
