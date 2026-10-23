@@ -56,4 +56,12 @@ assert.deepEqual(B.topItems(list.filter((e) => e.date.startsWith("2026-10"))).ma
 const cc = B.categoryCompare(list, "2026-10", (id) => id);
 assert.deepEqual(cc[0], { id: "medical", total: 350000, prev: 30000 });
 assert.equal(cc.find((x) => x.id === "snack").prev, 10000);
+// 카테고리 아이콘: 새 카테고리는 ico, 예전에 이모지로만 저장된 것도 알맞은 아이콘, 모르는 이모지는 지갑
+globalThis.localStorage ||= { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+const E = await import("../src/services/expenses.js");
+assert.equal(E.categoryIco({ emoji: "🏥" }), "stethoscope");
+assert.equal(E.categoryIco({ emoji: "✂" }), "scissors", "변형 선택자 없는 이모지");
+assert.equal(E.categoryIco({ emoji: "🦄" }), "wallet");
+assert.equal(E.categoryIco({ emoji: "🏥", ico: "pill" }), "pill");
+assert.ok(E.CATEGORY_CHOICES.every(([ico, emoji]) => ico && emoji));
 console.log("가계부 분석 확인 통과");

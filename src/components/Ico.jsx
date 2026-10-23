@@ -5,7 +5,7 @@ import {
   AlarmClockIcon, ArrowDownIcon, ArrowRightIcon, BellIcon, BellOffIcon, BookOpenIcon, Building2Icon, CalendarDaysIcon, CameraIcon,
   ChartColumnIcon, ChartLineIcon, CircleCheckIcon, CircleStopIcon, ClipboardListIcon, CookieIcon, DogIcon, DropletIcon, DropletsIcon,
   EyeIcon, FootprintsIcon, GaugeIcon, GiftIcon, HandIcon, HeartPulseIcon, HouseIcon, LightbulbIcon, ListChecksIcon, LockIcon, MenuIcon,
-  MicIcon, MoonIcon, MousePointerClickIcon, NotebookPenIcon, PackageOpenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
+  MicIcon, MoonIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, FishIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
   PillIcon, PinIcon, PipetteIcon, PrinterIcon, RepeatIcon, RulerIcon, ScissorsIcon, SearchIcon, SettingsIcon, ShieldCheckIcon, SirenIcon,
   SparklesIcon, StethoscopeIcon, TargetIcon, ThermometerIcon, TimerIcon, Trash2Icon, TriangleAlertIcon, UsersIcon, UtensilsIcon,
   VideoIcon, Volume2Icon, WalletIcon, WindIcon,
@@ -17,11 +17,12 @@ const ICONS = {
   check: CircleCheckIcon, stop: CircleStopIcon, clipboard: ClipboardListIcon, cookie: CookieIcon, dog: DogIcon, droplet: DropletIcon,
   droplets: DropletsIcon, eye: EyeIcon, footprints: FootprintsIcon, gauge: GaugeIcon, gift: GiftIcon, hand: HandIcon, heart: HeartPulseIcon,
   house: HouseIcon, idea: LightbulbIcon, checklist: ListChecksIcon, lock: LockIcon, menu: MenuIcon, mic: MicIcon, moon: MoonIcon,
-  tap: MousePointerClickIcon, note: NotebookPenIcon, can: PackageOpenIcon, clip: PaperclipIcon, party: PartyPopperIcon, paw: PawPrintIcon,
+  tap: MousePointerClickIcon, note: NotebookPenIcon, can: FishIcon, // 습식(캔·파우치) clip: PaperclipIcon, party: PartyPopperIcon, paw: PawPrintIcon,
   pencil: PencilIcon, pill: PillIcon, pin: PinIcon, pipette: PipetteIcon, printer: PrinterIcon, repeat: RepeatIcon, ruler: RulerIcon,
   scissors: ScissorsIcon, search: SearchIcon, settings: SettingsIcon, shield: ShieldCheckIcon, siren: SirenIcon, sparkles: SparklesIcon,
   stethoscope: StethoscopeIcon, target: TargetIcon, thermometer: ThermometerIcon, timer: TimerIcon, trash: Trash2Icon,
   alert: TriangleAlertIcon, users: UsersIcon, utensils: UtensilsIcon, video: VideoIcon, speaker: Volume2Icon, wallet: WalletIcon, wind: WindIcon,
+  puzzle: PuzzleIcon, sprayCan: SprayCanIcon, car: CarIcon, graduation: GraduationCapIcon, umbrella: UmbrellaIcon, shoppingBag: ShoppingBagIcon, box: BoxIcon,
 };
 
 // AI 답변 소제목 앞 이모지 → 아이콘(모르는 이모지는 글자 그대로 둔다)

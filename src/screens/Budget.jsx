@@ -12,11 +12,11 @@ import {
   setAllowance,
   updateExpense,
   UNKNOWN_CATEGORY,
+  CATEGORY_CHOICES,
+  categoryIco,
 } from "../services/expenses";
 import { compareSameTime, detectFixed, projectMonth, bigExpenseThreshold, weeklyTotals, topItems, categoryCompare } from "../services/budgetInsights";
-
 import Ico from "../components/Ico";
-const EMOJI_CHOICES = ["🏥", "💊", "💉", "🧸", "🎾", "🧴", "🛁", "✂️", "🦴", "🍖", "🍚", "🥫", "🦮", "🎀", "👕", "🏠", "🚗", "🏨", "🎓", "📸", "🛡️", "🎂", "🧻", "💰"];
 
 const inputStyle = { height: 40, border: "1px solid var(--border)", borderRadius: 10, padding: "0 12px", fontSize: 16, minWidth: 0 };
 
@@ -51,7 +51,7 @@ export default function Budget({ dog }) {
   const [categoryId, setCategoryId] = useState(() => getCategories()[0]?.id);
 
   const [newCatName, setNewCatName] = useState("");
-  const [newCatEmoji, setNewCatEmoji] = useState("🎾");
+  const [newCatIco, setNewCatIco] = useState(CATEGORY_CHOICES[6]); // [아이콘 이름, 이모지]
 
   const categoryById = (id) => categories.find((c) => c.id === id) || UNKNOWN_CATEGORY;
   const colorOf = (id) => {
@@ -134,9 +134,8 @@ export default function Budget({ dog }) {
   function handleAddCategory(e) {
     e.preventDefault();
     const name = newCatName.trim();
-    const emoji = newCatEmoji.trim();
-    if (!name || !emoji) return;
-    setCategories(addCategory(name, emoji));
+    if (!name) return;
+    setCategories(addCategory(name, newCatIco[1], newCatIco[0]));
     setNewCatName("");
     setShowCategoryManager(false);
   }
@@ -262,7 +261,7 @@ export default function Budget({ dog }) {
               const diff = total - prev;
               return (
                 <button key={id} type="button" className={`bud-cat${active ? " on" : ""}`} aria-pressed={active} onClick={() => setFilterCategoryId(active ? null : id)}>
-                  <span className="bud-cat-icon" style={{ background: colorOf(id) }}>{cat.emoji}</span>
+                  <span className="bud-cat-icon" style={{ background: colorOf(id) }}><Ico name={categoryIco(cat)} size={20} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="bud-cat-name">{cat.name} <span className="faint">{Math.round((total / monthTotal) * 100)}%</span></span>
                     {prev > 0 && diff !== 0 && <span className={`bud-cat-diff ${diff > 0 ? "up" : "down"}`}>지난달보다 {won(Math.abs(diff))} {diff > 0 ? "더" : "덜"}</span>}
@@ -276,7 +275,7 @@ export default function Budget({ dog }) {
                 <div className="faint" style={{ marginBottom: 6 }}>이번 달 자주 산 것</div>
                 <div className="chip-wrap">
                   {top.map((t) => (
-                    <span key={t.title} className="bud-top">{categoryById(t.categoryId).emoji} {t.title} <b>{t.count}번</b></span>
+                    <span key={t.title} className="bud-top"><Ico name={categoryIco(categoryById(t.categoryId))} size={14} /> {t.title} <b>{t.count}번</b></span>
                   ))}
                 </div>
               </div>
@@ -291,7 +290,7 @@ export default function Budget({ dog }) {
           <p className="faint" style={{ marginTop: 0 }}>최근 3달 중 2달 이상 같은 이름으로 적은 지출이에요.</p>
           {fixed.map((f) => (
             <div key={f.title} className="bud-row">
-              <span className="bud-cat-icon" style={{ background: colorOf(categoryById(f.categoryId).id) }}>{categoryById(f.categoryId).emoji}</span>
+              <span className="bud-cat-icon" style={{ background: colorOf(categoryById(f.categoryId).id) }}><Ico name={categoryIco(categoryById(f.categoryId))} size={20} /></span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span className="bud-row-title">{f.title}</span>
                 <span className="faint">보통 {f.day}일쯤 · 평균 {won(f.avg)}</span>
@@ -308,7 +307,7 @@ export default function Budget({ dog }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
             <div className="h2" style={{ margin: 0 }}>
               {filterCategoryId
-                ? `${categoryById(filterCategoryId).emoji} 이번 달 ${categoryById(filterCategoryId).name}`
+                ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> 이번 달 {categoryById(filterCategoryId).name}</>
                 : `${formatKoreanDate(selectedDateKey)} 지출`}
             </div>
             {filterCategoryId ? (
@@ -341,7 +340,7 @@ export default function Budget({ dog }) {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                         {categories.map((c) => (
                           <button key={c.id} type="button" className="chip" onClick={() => setEditing((x) => ({ ...x, categoryId: c.id }))} style={{ border: editing.categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}>
-                            {c.emoji} {c.name}
+                            <Ico name={categoryIco(c)} size={14} /> {c.name}
                           </button>
                         ))}
                       </div>
@@ -361,7 +360,7 @@ export default function Budget({ dog }) {
                 const big = e.amount >= bigLine;
                 return (
                   <button key={e.id} type="button" className="bud-row bud-row-btn" onClick={() => startEdit(e)} aria-label={`${e.title} ${won(e.amount)} 고치기`}>
-                    <span className="bud-cat-icon" style={{ background: colorOf(cat.id) }}>{cat.emoji}</span>
+                    <span className="bud-cat-icon" style={{ background: colorOf(cat.id) }}><Ico name={categoryIco(cat)} size={20} /></span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="bud-row-title">{e.title}</span>
                       <span className="faint">{cat.name}{filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}{big ? " · 평소보다 큰 지출" : ""}</span>
@@ -384,7 +383,7 @@ export default function Budget({ dog }) {
                     onClick={() => setCategoryId(c.id)}
                     style={{ border: categoryId === c.id ? "2px solid var(--accent)" : "2px solid transparent", fontSize: 13, padding: "5px 10px" }}
                   >
-                    {c.emoji} {c.name}
+                    <Ico name={categoryIco(c)} size={14} /> {c.name}
                   </button>
                 ))}
               </div>
@@ -420,7 +419,7 @@ export default function Budget({ dog }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
             {categories.map((c) => (
               <span key={c.id} className="chip" style={{ fontSize: 13, padding: "5px 6px 5px 10px", gap: 4 }}>
-                {c.emoji} {c.name}
+                <Ico name={categoryIco(c)} size={14} /> {c.name}
                 <button
                   type="button"
                   aria-label={`${c.name} 카테고리 삭제`}
@@ -434,32 +433,33 @@ export default function Budget({ dog }) {
           </div>
 
           <form onSubmit={handleAddCategory}>
-            <div className="faint" style={{ marginBottom: 6 }}>이모티콘 고르기 (키보드 이모티콘도 직접 넣을 수 있어요)</div>
+            <div className="faint" style={{ marginBottom: 6 }}>아이콘 고르기</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>
-              {EMOJI_CHOICES.map((em) => (
+              {CATEGORY_CHOICES.map((choice) => (
                 <button
-                  key={em}
+                  key={choice[0]}
                   type="button"
-                  onClick={() => setNewCatEmoji(em)}
+                  aria-label={`아이콘 ${choice[0]}`}
+                  aria-pressed={newCatIco[0] === choice[0]}
+                  onClick={() => setNewCatIco(choice)}
                   style={{
-                    fontSize: 20,
-                    padding: "4px 0",
+                    padding: "6px 0",
                     borderRadius: 8,
-                    background: newCatEmoji === em ? "var(--accent-soft)" : "none",
-                    border: newCatEmoji === em ? "2px solid var(--accent)" : "2px solid transparent",
+                    color: newCatIco[0] === choice[0] ? "var(--accent-strong)" : "var(--text)",
+                    background: newCatIco[0] === choice[0] ? "var(--accent-soft)" : "none",
+                    border: newCatIco[0] === choice[0] ? "2px solid var(--accent)" : "2px solid transparent",
+                    display: "flex",
+                    justifyContent: "center",
                   }}
                 >
-                  {em}
+                  <Ico name={choice[0]} size={20} />
                 </button>
               ))}
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <input
-                value={newCatEmoji}
-                onChange={(e) => setNewCatEmoji(e.target.value)}
-                aria-label="카테고리 이모티콘"
-                style={{ ...inputStyle, width: 56, textAlign: "center", fontSize: 20, padding: 0 }}
-              />
+              <span aria-hidden="true" style={{ ...inputStyle, width: 44, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent-strong)", padding: 0 }}>
+                <Ico name={newCatIco[0]} size={20} />
+              </span>
               <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="새 카테고리 이름 (예: 미용)" style={{ ...inputStyle, flex: 1 }} />
               <button type="submit" className="btn-primary" style={{ width: "auto", padding: "0 16px" }}>
                 추가
