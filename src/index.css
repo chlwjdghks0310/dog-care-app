@@ -951,3 +951,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .fab.hidden { transform: translateY(90px); opacity: 0; pointer-events: none; }
 .fab:active { transform: scale(0.96); }
 .report-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 14px; }
+/* 나가면 지워진다는 안내(건강 체크) */
+.leave-note { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 12px; background: var(--warning-bg); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+.leave-note .ico { color: var(--warning); flex-shrink: 0; }
+.chat-suggest .record-example { display: inline-flex; align-items: center; gap: 5px; background: var(--c-teal-bg); color: var(--c-teal); border-color: transparent; font-weight: 700; }

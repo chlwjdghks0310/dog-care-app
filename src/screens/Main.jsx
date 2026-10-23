@@ -40,6 +40,8 @@ const CHAT_MODE_INTROS = {
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES.find((m) => m.key === "pomeranian");
 // 첫 화면 추천 질문 — 눌러서 바로 물어보기(기록 근거로 답하는 것들)
 const SUGGESTIONS = ["오늘 뭐 챙겨야 해?", "이번 주 기록 정리해 줘", "밥은 얼마나 줘야 해?", "다음 일정 뭐야?"];
+// 말로 기록할 수 있다는 걸 보여 주는 예시 — 누르면 보내지 않고 입력칸에 채운다(예시를 눌렀다고 가짜 기록이 생기지 않게)
+const RECORD_EXAMPLE = "산책 30분 했어";
 
 // 첨부 제한 — 사진은 앱에서 줄여 보내고, 영상은 서버를 거쳐 Gemini로 간다(서버 한도 500MB보다 작게 잡음)
 const MAX_IMAGES = 4;
@@ -72,6 +74,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile 
   const [chatMode, setChatMode] = useState(() => findChatMode(loadChatMode()).key);
   const [input, setInput] = useState("");
   const inputRef = useRef("");
+  const inputElRef = useRef(null);
   inputRef.current = input; // 🎤가 말하기 시작할 때의 입력 내용에 이어 붙이도록
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
@@ -505,6 +508,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile 
       <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
       {!isChat && (
         <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="추천 질문">
+          <button type="button" className="record-example" disabled={pending} onClick={() => (setInput(RECORD_EXAMPLE), inputElRef.current?.focus())}>
+            <Ico name="pencil" size={14} /> {RECORD_EXAMPLE}
+          </button>
           {SUGGESTIONS.map((q) => (
             <button key={q} type="button" disabled={pending} onClick={() => send(q, [])}>
               {q}
@@ -612,9 +618,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile 
         </button>
         <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handlePick} style={{ display: "none" }} />
         <input
+          ref={inputElRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={attachments.length ? "궁금한 점(안 적어도 돼요)" : "나한테 물어봐!"}
+          placeholder={attachments.length ? "궁금한 점(안 적어도 돼요)" : "물어보거나 기록해 줘"}
           style={{
             flex: 1,
             minWidth: 0, // 입력창은 기본 최소 너비가 있어 좁은 화면(확대 모드 320px)에서 전송 버튼을 밀어냄

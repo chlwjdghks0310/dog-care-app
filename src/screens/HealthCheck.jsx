@@ -50,6 +50,9 @@ export default function HealthCheck({ dog, onBack }) {
         있어 진단을 대신하지 않으니, 이상이 지속되면 반드시 동물병원에 방문하세요.
       </p>
 
+      <div className="leave-note" style={{ marginBottom: 12 }}>
+        <Ico name="alert" size={15} /> 이 화면을 나가면 올린 사진과 분석 결과가 지워져서 다시 해야 해요.
+      </div>
       <div className="card" style={{ marginBottom: 16 }}>
         {previewUrl ? (
           <img src={previewUrl} alt="선택한 사진 미리보기" style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />
@@ -91,6 +94,9 @@ export default function HealthCheck({ dog, onBack }) {
         <div className="card">
           <div className="h2"><Ico name="scan" size={18} /> 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
+          <div className="leave-note" style={{ marginTop: 12 }}>
+            <Ico name="alert" size={15} /> 이 화면을 나가면 결과가 지워져요. 남겨 두려면 화면을 캡처해 주세요.
+          </div>
         </div>
       )}
     </div>
