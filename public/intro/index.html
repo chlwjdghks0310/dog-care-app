@@ -31,8 +31,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=2" />
-  <noscript><link rel="stylesheet" href="/intro/nojs.css?v=1" /></noscript>
+  <link rel="stylesheet" href="/intro/intro.css?v=4" />
+  <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -66,14 +66,18 @@
   </div>
 
   <main id="main">
-    <!-- 2. 히어로: 슬로건 + 누르면 움직이는 휴대폰(실제 앱 화면). 아래 탭을 누르면 화면이 넘어가고, 그 기능을 비서 강아지가 설명하는 패널이 휴대폰에서 열린다(intro.js).
-         JS가 없으면 패널이 휴대폰 아래에 차례로 보인다. 접근성: tablist/tab/tabpanel(W3C APG), ←/→로 탭 이동 -->
+    <!-- 2. 히어로: 슬로건 + 누르면 바뀌는 휴대폰(실제 앱 화면). 아래 탭을 누르면 화면이 바뀌고, 비서 강아지가 그 기능을 설명하는 창이 떠오른다(intro.js).
+         JS가 없으면 설명 창이 휴대폰 아래에 차례로 보인다(nojs.css). 접근성: tablist/tab/tabpanel(W3C APG), ←/→로 탭 이동 -->
     <section class="hero" id="top">
+      <div class="hero-bg" aria-hidden="true"></div>
       <div class="wrap hero-in">
         <div class="hero-text">
-          <p class="eyebrow">강아지 케어 AI 비서 · 멍케어</p>
-          <h1>우리 아이<br />맞춤형 AI</h1>
-          <p class="lead">산책·밥·약·병원·지출을 말로 남기면 알아서 정리하고, 오늘 챙길 일과 다음 일정을 먼저 알려 주는 강아지 비서예요.</p>
+          <p class="eyebrow"><span class="dot"></span>강아지 케어 AI 비서 · 멍케어</p>
+          <h1><span class="h1-sub">우리 아이</span><span class="h1-main"><mark>맞춤형</mark> AI</span></h1>
+          <p class="lead"><b>말로 기록</b>하면 알아서 정리하고, <b>오늘 챙길 일</b>과 <b>다음 일정</b>을 먼저 알려 주는 강아지 비서예요.</p>
+          <ul class="hero-points">
+            <li><span class="pt pt-blue">말로 기록</span></li><li><span class="pt pt-amber">오늘 할 일</span></li><li><span class="pt pt-violet">병원용 기록</span></li>
+          </ul>
           <div class="cta-row">
             <a class="btn btn-lg" href="/">무료로 시작하기</a>
             <a class="btn btn-lg btn-ghost" href="#demo">휴대폰으로 둘러보기</a>
@@ -86,120 +90,116 @@
           <p class="note pc-note">컴퓨터에서도 바로 써 볼 수 있어요. 휴대폰과 기록을 이어 보려면 로그인해 주세요.</p>
         </div>
         <div class="demo" id="demo">
-          <p class="demo-hint" aria-hidden="true">아래 탭을 눌러 보세요 👇</p>
+          <p class="demo-hint" aria-hidden="true"><span class="hand">👆</span> 아래 탭을 눌러 보세요</p>
           <div class="phone demo-phone">
-            <div class="strip" id="strip"><img src="/intro/img/assistant.jpg" alt="" width="300" height="649" fetchpriority="high" /><img src="/intro/img/checklist.jpg" alt="" width="300" height="649" loading="lazy" /><img src="/intro/img/profile.jpg" alt="" width="300" height="649" loading="lazy" /><img src="/intro/img/calendar.jpg" alt="" width="300" height="649" loading="lazy" /><img src="/intro/img/budget.jpg" alt="" width="300" height="649" loading="lazy" /></div>
+            <div class="screens"><img class="scr on" src="/intro/img/assistant.jpg" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/checklist.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/profile.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/calendar.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/budget.jpg" alt="" width="300" height="649" loading="lazy" /></div>
             <span class="tag">예시 화면</span>
-            <div class="hots" role="tablist" aria-label="멍케어 기능 둘러보기"><button type="button" role="tab" id="tab-assistant" class="hot" aria-selected="true" aria-controls="panel-assistant" tabindex="0" data-i="0"><span class="sr">비서</span></button><button type="button" role="tab" id="tab-checklist" class="hot" aria-selected="false" aria-controls="panel-checklist" tabindex="-1" data-i="1"><span class="sr">체크리스트</span></button><button type="button" role="tab" id="tab-profile" class="hot" aria-selected="false" aria-controls="panel-profile" tabindex="-1" data-i="2"><span class="sr">프로필</span></button><button type="button" role="tab" id="tab-calendar" class="hot" aria-selected="false" aria-controls="panel-calendar" tabindex="-1" data-i="3"><span class="sr">일정표</span></button><button type="button" role="tab" id="tab-budget" class="hot" aria-selected="false" aria-controls="panel-budget" tabindex="-1" data-i="4"><span class="sr">가계부</span></button></div>
+            <div class="nav-glow" aria-hidden="true"><span>여기를 눌러 보세요</span></div>
+            <div class="hots" role="tablist" aria-label="멍케어 기능 둘러보기"><button type="button" role="tab" id="tab-assistant" class="hot" aria-selected="true" aria-controls="panel-assistant" tabindex="0"><span class="sr">비서 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-checklist" class="hot" aria-selected="false" aria-controls="panel-checklist" tabindex="-1"><span class="sr">체크리스트 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-profile" class="hot" aria-selected="false" aria-controls="panel-profile" tabindex="-1"><span class="sr">프로필 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-calendar" class="hot" aria-selected="false" aria-controls="panel-calendar" tabindex="-1"><span class="sr">일정표 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-budget" class="hot" aria-selected="false" aria-controls="panel-budget" tabindex="-1"><span class="sr">가계부 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button></div>
           </div>
+          <div class="float f1" aria-hidden="true">✅ 산책 30분 기록했어요</div>
+          <div class="float f2" aria-hidden="true">🔔 내일 10:30 종합백신</div>
+          <div class="float f3" aria-hidden="true">📋 병원용 기록 준비됐어요</div>
         </div>
       </div>
       <div class="wrap svc-wrap" id="svcs">
-          <section class="svc" id="panel-assistant" role="tabpanel" aria-labelledby="svc-title-assistant" tabindex="-1">
+          <section class="svc tone-blue" id="panel-assistant" role="tabpanel" aria-labelledby="svc-title-assistant" tabindex="-1">
             <div class="svc-head">
-              <img class="svc-dog" src="/intro/img/dog-pomeranian.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
+              <img class="svc-dog" src="/intro/img/dog-yeoreum-sit.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">여름 <span>· 포메라니안</span></p>
                 <h3 id="svc-title-assistant">비서</h3>
-                <p class="svc-say">안녕! 나는 여름이야. 밥·산책·병원 이야기를 말해 주면 내가 알아서 기록해 둘게!</p>
+                <p class="svc-say">안녕! 나는 <em>여름</em>이야. 밥·산책·병원 이야기를 <em>말로 해 주면</em> 내가 알아서 기록해 둘게!</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 건강 기록·가계부·일정표 등 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>궁금한 건 언제든 물어보세요. 기록해 둔 우리 아이 정보를 바탕으로 답하고, 지난번 나눈 이야기도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 참고용으로 정리하고, 이어서 물어볼 질문도 골라 줘요.</span></li><li><b>세 친구 중에 골라요</b><span>빠른 요약 여름, 수다 친구 가을, 꼼꼼한 겨울 — 그날 기분에 맞는 비서를 고르세요.</span></li></ul>
-              <p class="svc-note">비서의 답은 AI가 만든 참고용 안내라 틀릴 수 있어요.</p>
+              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 <b>건강 기록·가계부·일정표</b> 중 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>우리 아이 기록을 바탕으로 답하고, <b>지난번 나눈 이야기</b>도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 정리하고, 이어서 물어볼 질문까지 골라 줘요.</span></li><li><b>세 친구 중에 골라요</b><span>빠른 요약 <b>여름</b>, 수다 친구 <b>가을</b>, 꼼꼼한 <b>겨울</b> — 그날 기분에 맞게 골라요.</span></li></ul>
+              <p class="svc-note">WSAVA·Merck 수의학 매뉴얼 같은 공개 수의학 자료와 우리 아이 기록을 바탕으로 AI가 정리해 드려요. 판단이 필요한 상황이면 병원에 가도록 먼저 알려 드려요.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/assistant.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg" alt="비서 관련 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
-            <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/assistant.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-foot">
+              <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            </div>
           </section>
-          <section class="svc" id="panel-checklist" role="tabpanel" aria-labelledby="svc-title-checklist" tabindex="-1">
+          <section class="svc tone-amber" id="panel-checklist" role="tabpanel" aria-labelledby="svc-title-checklist" tabindex="-1">
             <div class="svc-head">
-              <img class="svc-dog" src="/intro/img/dog-retriever.png" alt="리트리버 가을" width="180" height="180" loading="lazy" />
+              <img class="svc-dog" src="/intro/img/dog-gaeul-sit.png" alt="리트리버 가을" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">가을 <span>· 리트리버</span></p>
                 <h3 id="svc-title-checklist">체크리스트</h3>
-                <p class="svc-say">나는 가을이야! 오늘 뭘 챙겨야 할지 헷갈리면 내가 하나씩 알려 줄게.</p>
+                <p class="svc-say">나는 <em>가을</em>이야! 오늘 뭘 챙겨야 할지 헷갈리면 내가 <em>하나씩</em> 알려 줄게.</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>나이·견종 맞춤 할 일</b><span>오늘 할 일과 이번 주 핵심이 체크리스트로 나와요. 필요 없는 건 숨길 수 있어요.</span></li><li><b>밥 시간 알림</b><span>사료 계산기에서 정한 밥 시간이 할 일이 되고, 시간이 되면 알림이 와요.</span></li><li><b>기록하면 저절로 완료</b><span>산책을 기록하면 산책 할 일은 따로 체크하지 않아도 완료돼요.</span></li><li><b>사료 계산기</b><span>하루 급여량을 계산하고, 사료 봉투 사진으로 열량을 읽어 와요.</span></li></ul>
-              
-              
+              <ul class="svc-cards"><li><b>나이·견종 맞춤 할 일</b><span>오늘 할 일과 <b>이번 주 핵심</b>이 체크리스트로 나와요. 필요 없는 건 숨길 수 있어요.</span></li><li><b>기록하면 저절로 완료</b><span>산책을 기록하면 산책 할 일은 따로 체크하지 않아도 완료돼요.</span></li></ul>
+              <div class="svc-spots"><div class="spot"><figure class="phone mini"><img src="/intro/img/healthcheck.jpg" alt="건강 체크 화면 예시" width="300" height="649" loading="lazy" /><span class="tag">예시 화면</span></figure><div><b>건강 체크</b><p>변 사진이나 걷는 영상을 찍어 보내면 <b>보이는 모습을 참고용으로 정리</b>해 줘요.</p></div></div><div class="spot"><figure class="phone mini"><img src="/intro/img/feeding.jpg" alt="사료 계산기 화면 예시" width="300" height="649" loading="lazy" /><span class="tag">예시 화면</span></figure><div><b>사료 계산기</b><p>나이·몸무게로 <b>하루 급여량</b>을 계산하고, 사료 봉투 사진으로 열량을 읽어 와요. 밥 시간을 정하면 할 일과 알림이 생겨요.</p></div></div><div class="spot"><figure class="phone mini"><img src="/intro/img/alarms.jpg" alt="알림·알람 화면 예시" width="300" height="649" loading="lazy" /><span class="tag">예시 화면</span></figure><div><b>알림·알람</b><p>약·밥·산책처럼 <b>원하는 시간에 알림</b>을 받아요. 하루만 울리는 알람도 만들 수 있어요.</p></div></div></div>
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/checklist.jpg" alt="체크리스트 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
-            <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            <div class="svc-foot">
+              <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            </div>
           </section>
-          <section class="svc" id="panel-profile" role="tabpanel" aria-labelledby="svc-title-profile" tabindex="-1">
+          <section class="svc tone-violet" id="panel-profile" role="tabpanel" aria-labelledby="svc-title-profile" tabindex="-1">
             <div class="svc-head">
-              <img class="svc-dog" src="/intro/img/dog-bordercollie.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
+              <img class="svc-dog" src="/intro/img/dog-gyeoul-sit.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">겨울 <span>· 보더콜리</span></p>
                 <h3 id="svc-title-profile">프로필</h3>
-                <p class="svc-say">나는 꼼꼼한 겨울이야. 몸무게부터 병원 기록까지 한곳에 정리해서, 진료실에서 바로 보여 줄 수 있게 할게.</p>
+                <p class="svc-say">나는 꼼꼼한 <em>겨울</em>이야. 몸무게부터 병원 기록까지 <em>한곳에</em> 정리해서, 진료실에서 바로 보여 줄 수 있게 할게.</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>건강 수치</b><span>몸무게·식사량·음수량·호흡수·체온을 기록하고, 일반적인 참고 범위와 출처를 함께 보여 줘요.</span></li><li><b>건강 기록</b><span>증상·식사·배변·병원 진료·예방접종을 남기면 날짜순으로 모여요.</span></li><li><b>병원용 기록</b><span>진료실에서 정리본을 크게 보여 주거나, 읽어 주거나, 공유·PDF로 저장해요.</span></li><li><b>약 관리</b><span>먹일 시간에 알림이 오고, 먹인 기록과 남은 양을 챙겨요.</span></li></ul>
+              <ul class="svc-cards"><li><b>건강 수치</b><span>몸무게·식사량·음수량·호흡수·체온을 기록하고, <b>참고 범위와 출처</b>를 함께 보여 줘요.</span></li><li><b>건강 기록</b><span>증상·식사·배변·병원 진료·예방접종을 남기면 날짜순으로 모여요.</span></li><li><b>병원용 기록</b><span>진료실에서 정리본을 <b>크게 보여 주거나, 읽어 주거나, PDF로 저장</b>해요.</span></li><li><b>약 관리</b><span>먹일 시간에 알림이 오고, 먹인 기록과 남은 양을 챙겨요.</span></li><li><b>여러 마리·가족 공유</b><span>강아지마다 따로 관리하고, 로그인하면 <b>초대한 가족과 같은 기록</b>을 함께 봐요.</span></li><li><b>내 취향대로</b><span>색 조합·발바닥 배경 테마와 다크 모드를 고를 수 있어요.</span></li></ul>
               <p class="svc-note">멍케어는 진료를 하지 않아요. 기록과 정보를 챙겨 보호자를 돕는 비서예요.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/profile.jpg" alt="프로필 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/vet.jpg" alt="프로필 관련 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
-            <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/profile.jpg" alt="프로필 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/vet.jpg" alt="프로필 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-foot">
+              <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            </div>
           </section>
-          <section class="svc" id="panel-calendar" role="tabpanel" aria-labelledby="svc-title-calendar" tabindex="-1">
+          <section class="svc tone-blue" id="panel-calendar" role="tabpanel" aria-labelledby="svc-title-calendar" tabindex="-1">
             <div class="svc-head">
-              <img class="svc-dog" src="/intro/img/dog-pomeranian.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
+              <img class="svc-dog" src="/intro/img/dog-yeoreum-wave.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">여름 <span>· 포메라니안</span></p>
                 <h3 id="svc-title-calendar">일정표</h3>
-                <p class="svc-say">또 나야, 여름! 접종이랑 미용 날짜, 내가 대신 기억해 둘게.</p>
+                <p class="svc-say">또 나야, <em>여름</em>! 접종이랑 미용 날짜, 내가 <em>대신 기억</em>해 둘게.</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>반복·기간 일정</b><span>매달 약, 매년 접종, 며칠 이어지는 호텔링까지 넣을 수 있어요.</span></li><li><b>미리 알림</b><span>전날 저녁이나 당일 아침, 1시간 전에 알려 줘요.</span></li><li><b>공휴일 표시</b><span>달력에 공휴일이 보여서 병원 예약 잡기 편해요.</span></li><li><b>다녀온 병원도 함께</b><span>지난 병원 진료 기록이 달력에 보이고, 다녀온 일정에서 바로 진료 내용을 적을 수 있어요.</span></li></ul>
-              
+              <ul class="svc-cards"><li><b>반복·기간 일정</b><span>매달 먹는 약, 매년 접종, 며칠 이어지는 호텔링까지 넣을 수 있어요.</span></li><li><b>미리 알림</b><span><b>전날 저녁·당일 아침·1시간 전</b> 중에 골라 알려 줘요.</span></li><li><b>공휴일 표시</b><span>달력에 공휴일이 보여서 병원 예약 잡기 편해요.</span></li><li><b>다녀온 병원도 함께</b><span>지난 병원 진료 기록이 달력에 보이고, 다녀온 일정에서 <b>바로 진료 내용</b>을 적을 수 있어요.</span></li></ul>
               
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/calendar.jpg" alt="일정표 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
-            <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            <div class="svc-foot">
+              <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            </div>
           </section>
-          <section class="svc" id="panel-budget" role="tabpanel" aria-labelledby="svc-title-budget" tabindex="-1">
+          <section class="svc tone-violet" id="panel-budget" role="tabpanel" aria-labelledby="svc-title-budget" tabindex="-1">
             <div class="svc-head">
-              <img class="svc-dog" src="/intro/img/dog-bordercollie.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
+              <img class="svc-dog" src="/intro/img/dog-gyeoul-think.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">겨울 <span>· 보더콜리</span></p>
                 <h3 id="svc-title-budget">가계부</h3>
-                <p class="svc-say">겨울이가 정리해 줄게. 우리 아이한테 쓴 돈, 분류별로 한눈에 볼 수 있어.</p>
+                <p class="svc-say">음… <em>겨울</em>이가 정리해 볼게. 우리 아이한테 쓴 돈, <em>분류별로 한눈에</em> 보여 줄게.</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>분류와 용돈</b><span>사료·병원·미용 등 분류별 합계와 이번 달 용돈이 얼마 남았는지 보여 줘요.</span></li><li><b>매달 나가는 돈</b><span>보험료·정기 배송처럼 매달 나가는 돈은 등록해 두면 그날 저절로 기록돼요.</span></li><li><b>보험 청구 표시</b><span>청구 전·청구함·받음을 표시하고, 기다리는 병원비를 모아 볼 수 있어요.</span></li><li><b>찾기와 내보내기</b><span>전체 기간에서 검색하고, 엑셀용 파일로 내보낼 수 있어요.</span></li></ul>
-              
+              <ul class="svc-cards"><li><b>분류와 용돈</b><span>사료·병원·미용 등 분류별 합계와 <b>이번 달 용돈이 얼마 남았는지</b> 보여 줘요.</span></li><li><b>매달 나가는 돈</b><span>보험료·정기 배송처럼 매달 나가는 돈은 등록해 두면 <b>그날 저절로 기록</b>돼요.</span></li><li><b>보험 청구 표시</b><span>청구 전·청구함·받음을 표시하고, 기다리는 병원비를 모아 볼 수 있어요.</span></li><li><b>찾기와 내보내기</b><span>전체 기간에서 검색하고, 엑셀용 파일로 내보낼 수 있어요.</span></li></ul>
               
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/budget.jpg" alt="가계부 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
-            <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            <div class="svc-foot">
+              <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
+            </div>
           </section>
-      </div>
-    </section>
-
-    <!-- 5. 그 밖에: 작은 목록 -->
-    <section class="more" aria-labelledby="more-title">
-      <div class="wrap">
-        <h2 id="more-title" class="sec-title sec-title-sm">그 밖에도</h2>
-        <ul class="more-grid">
-          <li><b>사료 계산기</b><span>하루 급여량 계산, 사료 봉투 사진으로 열량 읽기</span></li>
-          <li><b>약 관리</b><span>먹일 시간 알림, 먹인 기록과 남은 양</span></li>
-          <li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 참고용으로 정리하고 이어서 물어볼 질문까지</span></li>
-          <li><b>여러 마리</b><span>강아지마다 기록을 따로 관리</span></li>
-          <li><b>가족 공유</b><span>로그인하면 초대한 가족과 같은 기록을 함께 봐요</span></li>
-          <li><b>배경 테마</b><span>색 조합·발바닥 테마와 다크 모드</span></li>
-        </ul>
       </div>
     </section>
 
     <!-- 6. 시작 방법: 실제 앱 순서(설치 안내 → 로그인 선택 → 우리 아이 소개)와 같게 -->
     <section class="start" id="start" aria-labelledby="start-title">
       <div class="wrap">
-        <h2 id="start-title" class="sec-title">이렇게 시작해요</h2>
+        <h2 id="start-title" class="sec-title">이렇게 <em>시작</em>해요</h2>
         <ol class="steps">
           <li>
             <span class="step-num">1</span>
@@ -240,11 +240,11 @@
     <!-- 7. 믿을 수 있게: 사실만 (숫자·후기·제휴 없음) -->
     <section class="trust" id="trust" aria-labelledby="trust-title">
       <div class="wrap">
-        <h2 id="trust-title" class="sec-title">믿고 쓸 수 있게</h2>
+        <h2 id="trust-title" class="sec-title"><em class="v">믿고</em> 쓸 수 있게</h2>
         <div class="trust-grid">
           <div class="trust-card">
             <b>진료가 아니라 비서예요</b>
-            <p>멍케어는 진찰·진단·처방을 하지 않아요. 비서의 답은 AI가 만든 참고용 안내예요. 수치는 일반적인 참고 범위와 함께 기록된 사실만 보여 주고, 판단이 필요하면 동물병원에 물어보라고 안내해요.</p>
+            <p>멍케어는 진찰·진단·처방을 하지 않아요. 비서의 답은 <b>공개 수의학 자료와 우리 아이 기록</b>을 바탕으로 AI가 정리한 안내이고, 판단이 필요한 상황이면 병원에 가도록 먼저 알려 드려요.</p>
           </div>
           <div class="trust-card">
             <b>참고 수치에는 출처를</b>
@@ -297,7 +297,7 @@
     <!-- 8. 자주 묻는 질문 -->
     <section class="faq" id="faq" aria-labelledby="faq-title">
       <div class="wrap faq-in">
-        <h2 id="faq-title" class="sec-title">자주 묻는 질문</h2>
+        <h2 id="faq-title" class="sec-title">자주 묻는 <em class="a">질문</em></h2>
         <details>
           <summary>정말 무료인가요?</summary>
           <p>지금은 베타 기간이라 모든 기능을 무료로 쓸 수 있어요. 결제나 구독 기능이 없어서 카드 등록도 필요 없고, 광고도 없어요.</p>
@@ -323,8 +323,8 @@
           <p>아이폰은 홈 화면에 설치한 멍케어로 열었을 때만 알림을 받을 수 있어요. 앱의 알림·알람 화면에서 알림을 켜 주세요. 한 번 거절했다면 아이폰 설정 → 알림 → 멍케어에서 켤 수 있어요.</p>
         </details>
         <details>
-          <summary>AI 답이 틀린 것 같으면요?</summary>
-          <p>AI가 만든 답은 틀릴 수 있어요. 기록과 일반 정보를 정리하는 참고용으로 써 주시고, 몸 상태가 걱정되면 동물병원에 문의해 주세요. 이상한 답은 문의하기로 알려 주시면 고칠게요.</p>
+          <summary>AI 비서의 답은 무엇을 바탕으로 하나요?</summary>
+          <p>WSAVA(세계소동물수의사회)·Merck 수의학 매뉴얼 같은 공개 수의학 자료와 우리 아이 기록을 바탕으로 AI가 정리해요. 응급 신호가 보이면 바로 병원에 가라고 먼저 알려 드리고, 약 이름이나 용량은 말하지 않아요. 궁금한 답이 있으면 문의하기로 알려 주세요. 바로 확인해 고칠게요.</p>
         </details>
         <details>
           <summary>여러 마리나 가족과 함께 쓸 수 있나요?</summary>
@@ -337,7 +337,7 @@
     <section class="final" aria-labelledby="final-title">
       <div class="wrap final-in">
         <img src="/icon-192.png?v=6" alt="" width="64" height="64" loading="lazy" />
-        <h2 id="final-title">기억할 건 멍케어에게 맡기고,<br />오늘은 우리 아이와 더 놀아요</h2>
+        <h2 id="final-title">기억할 건 <em>멍케어</em>에게 맡기고,<br />오늘은 우리 아이와 더 놀아요</h2>
         <a class="btn btn-lg" href="/">무료로 시작하기</a>
         <p class="note">로그인 없이도 시작할 수 있어요</p>
       </div>
@@ -361,6 +361,6 @@
     <p class="wrap copy">© 2026 멍케어</p>
   </footer>
 
-  <script src="/intro/intro.js?v=2" defer></script>
+  <script src="/intro/intro.js?v=4" defer></script>
 </body>
 </html>
