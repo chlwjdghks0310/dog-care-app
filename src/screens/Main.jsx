@@ -97,6 +97,15 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
 
   useEffect(() => () => clearTimeout(talkTimerRef.current), []);
 
+  // 강아지를 바꾸면 대화를 비운다(앞 강아지 이야기·사진이 새 강아지 질문에 섞이지 않게)
+  const dogIdRef = useRef(dog.id);
+  useEffect(() => {
+    if (dogIdRef.current === dog.id) return;
+    dogIdRef.current = dog.id;
+    goHome();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dog.id]);
+
   // 메인 탭을 이미 보고 있는 상태에서 메인을 다시 누르면 채팅 중이어도 메인 화면으로 돌아간다.
   useEffect(() => {
     if (resetSignal) goHome();

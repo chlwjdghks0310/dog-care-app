@@ -37,8 +37,8 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   }
   useEffect(loadChecklist, [dog, dateKey]);
 
-  const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog]);
-  const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog]);
+  const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
+  const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const groupedChecklist = useMemo(() => {
     const map = new Map();
@@ -102,10 +102,10 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                 </div>
                 {items.map((item) => (
                   <label key={item.id} className={`checklist-item${item.completed ? " completed" : ""}`}>
-                    <input type="checkbox" checked={item.completed} onChange={() => handleToggle(item.id)} />
+                    <input type="checkbox" checked={item.completed} disabled={item.autoDone} onChange={() => handleToggle(item.id)} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="checklist-title" style={{ fontWeight: 600 }}>{item.title}</div>
-                      {item.description && <div className="subtle">{item.description}</div>}
+                      {item.autoDone ? <div className="subtle">오늘 산책 기록이 있어서 완료로 표시했어요.</div> : item.description && <div className="subtle">{item.description}</div>}
                     </div>
                     {item.ruleId && !item.ruleId.startsWith("meal-") && (
                       <button type="button" className="hide-btn" onClick={(e) => (e.preventDefault(), toggleHide(item.ruleId, true))}>숨기기</button>
@@ -158,7 +158,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
 
       {upcoming.length > 0 && (
         <div className="card" style={{ marginBottom: 14 }}>
-          <div className="h2">다가오는 일정</div>
+          <div className="h2">곧 시작하는 관리</div>
           {upcoming.map((rule) => (
             <div key={rule.id} className="subtle" style={{ marginBottom: 6 }}>
               약 {rule.startsInWeeks}주 후 · {rule.title}
@@ -171,13 +171,9 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         <Ico name="book" size={18} /> 월령별 케어 정보 더 보기
       </button>
 
-      <p
-        className="subtle"
-        style={{ textAlign: "center", marginTop: 14, marginBottom: 0, cursor: "pointer" }}
-        onClick={onOpenMain}
-      >
-        궁금한 점은 비서 탭의 강아지한테 물어보세요!
-      </p>
+      <button type="button" className="link-btn" style={{ display: "block", margin: "14px auto 0" }} onClick={onOpenMain}>
+        궁금한 점은 비서 탭의 강아지한테 물어보세요 ›
+      </button>
     </div>
   );
 }

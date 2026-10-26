@@ -39,7 +39,8 @@ export function getTodayChecklist(dog, dateKey = todayKey()) {
   const walked = getRecords(dog.id).some(
     (r) => r.at?.startsWith(dateKey) && ((r.type === "vital" && r.data?.metric === "walk") || (r.type === "daily" && r.data?.kind === "산책"))
   );
-  return items.filter((it) => !hidden[it.ruleId]).map((it) => (walked && it.category === "산책" && !it.completed ? { ...it, completed: true } : it));
+  // autoDone: 기록 때문에 완료로 보이는 것 — 체크칸을 눌러도 바뀌지 않으니 화면에서 잠그고 이유를 보여 준다
+  return items.filter((it) => !hidden[it.ruleId]).map((it) => (walked && it.category === "산책" && !it.completed ? { ...it, completed: true, autoDone: true } : it));
 }
 
 // 사료 계산기에서 정한 급여 시각 → "아침 밥 주기" 같은 할 일(그 시각에 체크리스트 알림도 온다).
@@ -48,11 +49,13 @@ function withMealItems(dog, dateKey, items) {
   const times = [...(getFeedingSettings(dog.id).times || [])].sort();
   const mealId = (t) => `sch-${dateKey}-meal-${t}`;
   const kept = items.filter((it) => !it.ruleId?.startsWith("meal-") || it.completed || times.includes(it.ruleId.slice(5)));
+  // 같은 때(아침·점심·저녁)에 두 번이면 "아침 밥 주기 (07:00)"처럼 시각을 붙여 구분한다
+  const label = (t) => (Number(t.slice(0, 2)) < 11 ? "아침" : Number(t.slice(0, 2)) < 16 ? "점심" : "저녁");
   const added = times
     .filter((t) => !kept.some((it) => it.id === mealId(t)))
     .map((t) => {
-      const h = Number(t.slice(0, 2));
-      return createScheduleItem({ id: mealId(t), dogId: dog.id, ruleId: `meal-${t}`, title: `${h < 11 ? "아침" : h < 16 ? "점심" : "저녁"} 밥 주기`, description: `${t} · 사료 계산기에서 정한 시각`, date: dateKey, category: "식사", suggestedTimes: [t] });
+      const twice = times.filter((x) => label(x) === label(t)).length > 1;
+      return createScheduleItem({ id: mealId(t), dogId: dog.id, ruleId: `meal-${t}`, title: `${label(t)} 밥 주기${twice ? ` (${t})` : ""}`, description: `${t} · 사료 계산기에서 정한 시각`, date: dateKey, category: "식사", suggestedTimes: [t] });
     });
   if (!added.length && kept.length === items.length) return items;
   const next = [...kept, ...added];

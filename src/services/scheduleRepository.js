@@ -16,10 +16,16 @@ export function getScheduleForDate(dogId, dateKey) {
   return all[dogId]?.[dateKey] || null;
 }
 
+// ponytail: 90일 지난 날짜의 체크리스트는 지운다(매일 쌓여 폰 저장 공간·가족 동기화가 커지지 않게) — 더 긴 기록이 필요하면 기간을 늘릴 것
+const KEEP_DAYS = 90;
 export function setScheduleForDate(dogId, dateKey, items) {
   const all = getAll();
   if (!all[dogId]) all[dogId] = {};
   all[dogId][dateKey] = items;
+  const cut = new Date(`${dateKey}T00:00:00`);
+  cut.setDate(cut.getDate() - KEEP_DAYS);
+  const cutKey = `${cut.getFullYear()}-${String(cut.getMonth() + 1).padStart(2, "0")}-${String(cut.getDate()).padStart(2, "0")}`;
+  for (const k of Object.keys(all[dogId])) if (k < cutKey) delete all[dogId][k];
   saveAll(all);
 }
 
