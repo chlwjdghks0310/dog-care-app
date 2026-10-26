@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
+import { getRecords, saveRecord } from "../services/records";
 import { addExpense, updateExpense, deleteExpense, quickItems, categoryIco, isMedical, VET_ITEMS, CLAIMS, saveFixedExpense, deleteFixedExpense } from "../services/expenses";
 
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
@@ -48,15 +49,28 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
     if (!amount) return setError("금액을 적어 주세요.");
     if (!categoryId) return setError("분류를 골라 주세요.");
     if (!date) return setError("날짜를 골라 주세요.");
+    if (medical && claim === "paid" && Number(claimPaidText.replace(/\D/g, "")) > amount) return setError("받은 보험금이 병원비보다 커요. 금액을 확인해 주세요.");
     const fields = {
       title: title.trim(), amount, categoryId, date, memo: memo.trim(),
       items: medical ? items : [], claim: medical ? claim : "", claimPaid: medical && claim === "paid" ? Number(claimPaidText.replace(/\D/g, "")) || null : null,
     };
-    onSaved(editing ? updateExpense(dog.id, initial.id, fields) : addExpense(dog.id, fields), date);
+    const list = editing ? updateExpense(dog.id, initial.id, fields) : addExpense(dog.id, fields);
+    syncVetRecord(amount);
+    onSaved(list, date);
+  }
+
+  // 병원 진료 기록에서 온 진료비면 그 기록의 진료비도 같이 바꾼다(지우면 기록에서 진료비·연결을 뺀다)
+  function syncVetRecord(amount) {
+    const rec = initial.recordId && getRecords(dog.id).find((r) => r.id === initial.recordId);
+    if (!rec) return;
+    const { cost, ...data } = rec.data; // eslint-disable-line no-unused-vars
+    if (amount) saveRecord(dog.id, { ...rec, data: { ...data, cost: String(amount) } });
+    else saveRecord(dog.id, { ...rec, data, expenseId: undefined });
   }
 
   function remove() {
-    if (!confirm("이 지출을 지울까요?")) return;
+    if (!confirm(initial.recordId ? "이 지출을 지울까요? 병원 진료 기록에 적힌 진료비도 같이 지워져요." : "이 지출을 지울까요?")) return;
+    syncVetRecord(0);
     onSaved(deleteExpense(dog.id, initial.id), date);
   }
 

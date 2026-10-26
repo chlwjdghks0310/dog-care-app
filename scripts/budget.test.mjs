@@ -116,5 +116,13 @@ console.log("가계부 분석 확인 통과");
   assert.equal(E3.applyFixedExpenses("fx", "2026-10-26"), 0, "두 번 돌려도 그대로");
   assert.deepEqual(E3.getExpenses("fx").map((e) => `${e.date} ${e.title}`).sort(), ["2026-08-31 펫보험", "2026-09-30 펫보험", "2026-10-05 정기 사료"]);
   assert.equal(E3.applyFixedExpenses("fx", "2026-10-31"), 1, "10/31 보험");
+  // 저절로 기록된 걸 지우면 그 달은 다시 안 생김
+  const oct = E3.getExpenses("fx").find((e) => e.date === "2026-10-31");
+  E3.deleteExpense("fx", oct.id);
+  assert.equal(E3.applyFixedExpenses("fx", "2026-10-31"), 0, "지운 달은 건너뜀");
+  // 등록 전에 같은 달에 직접 적었으면 다시 안 적음
+  E3.addExpense("fx2", { title: "정기 사료", amount: 45000, date: "2026-10-03", categoryId: "food" });
+  E3.saveFixedExpense("fx2", { title: "정기사료", amount: 45000, categoryId: "food", day: 20 }, "2026-10-10");
+  assert.equal(E3.applyFixedExpenses("fx2", "2026-10-26"), 0, "이번 달은 이미 직접 적음");
   console.log("매달 나가는 돈 등록 통과");
 }

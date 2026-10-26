@@ -111,7 +111,8 @@ export default function Budget({ dog }) {
   const daysLeft = isThisMonth ? new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() - Number(today.slice(8)) + 1 : 0;
   const bigDays = new Set(monthExpenses.filter((e) => e.amount >= bigLine).map((e) => e.date));
 
-  const startEdit = (e) => setSheet({ id: e.id, title: e.title, amount: e.amount, categoryId: categoryById(e.categoryId).id === "unknown" ? "" : categoryById(e.categoryId).id, date: e.date, memo: e.memo });
+  // 고칠 때 병원비 항목·보험 청구도 같이 넘긴다(안 넘기면 저장할 때 지워짐)
+  const startEdit = (e) => setSheet({ id: e.id, title: e.title, amount: e.amount, categoryId: categoryById(e.categoryId).id === "unknown" ? "" : categoryById(e.categoryId).id, date: e.date, memo: e.memo, items: e.items, claim: e.claim, claimPaid: e.claimPaid, recordId: e.recordId });
   const openAdd = (extra = {}) => setSheet({ date: selectedDateKey > today ? today : selectedDateKey, ...extra });
   function handleSheetSaved(list, date) {
     setExpenses(list);
@@ -164,7 +165,7 @@ export default function Budget({ dog }) {
 
   function handleDeleteCategory(cat) {
     const used = expenses.some((e) => e.categoryId === cat.id);
-    if (used && !window.confirm(`'${cat.name}' 카테고리를 지울까요? 이 카테고리로 적은 기록은 '기타'로 보여요.`)) return;
+    if (used && !window.confirm(`'${cat.name}' 분류를 지울까요? 이 분류로 적은 기록은 '기타'로 보여요.`)) return;
     const next = deleteCategory(cat.id);
     setCategories(next);
     if (editingCat === cat.id) (setEditingCat(null), setNewCatName(""));
@@ -241,11 +242,17 @@ export default function Budget({ dog }) {
           onMonthChange={(d) => {
             setMonthDate(d);
             setFilterCategoryId(null);
+            // 달을 넘기면 그 달의 날짜를 고른다(이번 달이면 오늘, 아니면 1일) — 아래 목록이 다른 달 날짜로 남지 않게
+            const prefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+            setSelectedDateKey(today.startsWith(prefix) ? today : `${prefix}-01`);
           }}
+          onToday={() => (setMonthDate(new Date()), setSelectedDateKey(today), setFilterCategoryId(null))}
           selectedDateKey={selectedDateKey}
           onSelect={(key) => {
             setSelectedDateKey(key);
             setFilterCategoryId(null);
+            setClaimView(false);
+            setSearch(null);
           }}
           renderMarker={(key) => (
             <span style={{ fontSize: 10, height: 12, color: bigDays.has(key) ? "var(--danger)" : "var(--accent-strong)", fontWeight: 600, whiteSpace: "nowrap" }}>
@@ -259,12 +266,12 @@ export default function Budget({ dog }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div className="h2" style={{ margin: 0 }}>지출 분석</div>
           <div style={{ display: "flex", gap: 4 }}>
-            <button type="button" className={`seg${analysisView === "category" ? " on" : ""}`} style={{ flex: "0 0 auto", padding: "6px 12px", whiteSpace: "nowrap" }} onClick={() => setAnalysisView("category")}>카테고리</button>
+            <button type="button" className={`seg${analysisView === "category" ? " on" : ""}`} style={{ flex: "0 0 auto", padding: "6px 12px", whiteSpace: "nowrap" }} onClick={() => setAnalysisView("category")}>분류</button>
             <button type="button" className={`seg${analysisView === "week" ? " on" : ""}`} style={{ flex: "0 0 auto", padding: "6px 12px", whiteSpace: "nowrap" }} onClick={() => setAnalysisView("week")}>주별</button>
           </div>
         </div>
         {byCategory.length === 0 ? (
-          <p className="subtle" style={{ margin: 0 }}>이번 달 기록이 아직 없어요.</p>
+          <p className="subtle" style={{ margin: 0 }}>{isThisMonth ? "이번 달" : `${monthDate.getMonth() + 1}월`} 기록이 아직 없어요.</p>
         ) : analysisView === "week" ? (
           <div className="bud-weeks">
             {weeks.map((w) => {
@@ -305,7 +312,7 @@ export default function Budget({ dog }) {
             <p className="faint bud-avg">참고: 농림축산식품부 2025 반려동물 양육현황 조사 기준, 개 1마리 양육비 월평균 약 13.5만 원(병원비 포함)</p>
             {top.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div className="faint" style={{ marginBottom: 6 }}>이번 달 자주 산 것</div>
+                <div className="faint" style={{ marginBottom: 6 }}>{isThisMonth ? "이번 달" : `${monthDate.getMonth() + 1}월`} 자주 산 것</div>
                 <div className="chip-wrap">
                   {top.map((t) => (
                     <span key={t.title} className="bud-top"><Ico name={categoryIco(categoryById(t.categoryId))} size={14} /> {t.title} <b>{t.count}번</b></span>
@@ -333,7 +340,14 @@ export default function Budget({ dog }) {
                 <span className="bud-row-title">{f.title}</span>
                 <span className="faint">매달 {f.day}일 · {won(f.amount)} · 자동 기록</span>
               </span>
-              <span className={`bud-badge${paid ? " done" : ""}`}>{paid ? "기록됨" : `${Number(fixedDate(f, monthPrefix).slice(8))}일 예정`}</span>
+              {(() => {
+                // 보는 달 기준: 기록됨 / (앞으로) N일 예정 / 지난 달인데 기록 없음(건너뜀·지움) / 등록 전 달은 표시 없음
+                const due = fixedDate(f, monthPrefix);
+                if (paid) return <span className="bud-badge done">기록됨</span>;
+                if (due < f.from) return null;
+                if (due > today) return <span className="bud-badge">{Number(due.slice(8))}일 예정</span>;
+                return <span className="bud-badge">기록 없음</span>;
+              })()}
             </button>
           );
         })}
@@ -367,7 +381,7 @@ export default function Budget({ dog }) {
                 : searching
                 ? "지출 찾기"
                 : filterCategoryId
-                  ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> 이번 달 {categoryById(filterCategoryId).name}</>
+                  ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> {isThisMonth ? "이번 달" : `${monthDate.getMonth() + 1}월`} {categoryById(filterCategoryId).name}</>
                   : `${formatKoreanDate(selectedDateKey)} 지출`}
             </div>
             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>

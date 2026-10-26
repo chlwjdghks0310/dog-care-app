@@ -133,6 +133,12 @@ export function addExpense(dogId, { title, amount, date, categoryId, ...rest }) 
 
 export function deleteExpense(dogId, id) {
   const all = readJSON(EXPENSES_KEY, {});
+  // 저절로 기록된 매달 나가는 돈을 지우면 그 달은 건너뛴 것으로 남긴다(다음에 앱을 열 때 다시 생기지 않게)
+  const gone = (all[dogId] || []).find((e) => e.id === id);
+  if (gone?.fixedId) {
+    const month = gone.id.startsWith(`fix-${gone.fixedId}-`) ? gone.id.slice(-7) : gone.date.slice(0, 7);
+    writeFixed(dogId, getFixedExpenses(dogId).map((f) => (f.id === gone.fixedId ? { ...f, skip: [...new Set([...(f.skip || []), month])] } : f)));
+  }
   all[dogId] = (all[dogId] || []).filter((e) => e.id !== id);
   writeJSON(EXPENSES_KEY, all);
   return all[dogId];
@@ -233,6 +239,9 @@ export function applyFixedExpenses(dogId, today) {
   const all = readJSON(EXPENSES_KEY, {});
   const list = all[dogId] || [];
   const ids = new Set(list.map((e) => e.id));
+  // 같은 달에 같은 이름을 이미 직접 적었으면(등록 전에 적은 것 등) 그 달은 다시 안 적는다
+  const norm = (t) => t.replace(/\s+/g, "").toLowerCase();
+  const manual = new Set(list.filter((e) => !e.fixedId).map((e) => `${norm(e.title)}|${e.date.slice(0, 7)}`));
   const added = [];
   for (const f of items) {
     let [y, m] = f.from.slice(0, 7).split("-").map(Number);
@@ -241,7 +250,7 @@ export function applyFixedExpenses(dogId, today) {
       if (month > today.slice(0, 7)) break;
       const date = fixedDate(f, month);
       const id = `fix-${f.id}-${month}`;
-      if (date >= f.from && date <= today && !ids.has(id)) {
+      if (date >= f.from && date <= today && !ids.has(id) && !(f.skip || []).includes(month) && !manual.has(`${norm(f.title)}|${month}`)) {
         added.push({ id, title: f.title, amount: f.amount, date, categoryId: f.categoryId, fixedId: f.id, ...(f.memo ? { memo: f.memo } : {}) });
         ids.add(id);
       }
