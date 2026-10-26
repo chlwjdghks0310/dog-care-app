@@ -55,6 +55,10 @@
           document.documentElement.setAttribute("data-theme", "dark");
           document.querySelector('meta[name="theme-color"]').setAttribute("content", "#17171c");
         }
+        // 배경 테마(색 조합·발바닥) — src/services/themeSettings.js applyColor와 같은 규칙
+        var c = (localStorage.getItem("dogcare-color-v1") || "").split("-");
+        if (c[0]) document.documentElement.setAttribute("data-color", c[0]);
+        if (c[1]) document.documentElement.setAttribute("data-paw", "");
       } catch (e) {}
     </script>
   </head>

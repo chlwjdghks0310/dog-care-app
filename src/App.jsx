@@ -31,7 +31,7 @@ import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
 import PullToRefresh from "./components/PullToRefresh";
-import { applyTheme } from "./services/themeSettings";
+import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow } from "./services/sync";
 
 const PARENT_TAB = {
@@ -57,6 +57,7 @@ const BACK_OF = { ...PARENT_TAB, "health-stool": "health", "health-behavior": "h
 const Main = lazy(() => import("./screens/Main"));
 
 // 렌더링 전에 바로 적용해서 기본 테마가 잠깐 보였다가 바뀌는 깜빡임을 막는다.
+applyColor();
 applyTheme();
 
 export default function App() {

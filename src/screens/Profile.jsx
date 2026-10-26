@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
-import { isDark, setDark } from "../services/themeSettings";
+import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
@@ -354,6 +354,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
                 <input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />
               </label>
             </div>
+            <ThemeCard dark={dark} />
             <AccountCard />
             <AIConsentCard />
 
@@ -700,6 +701,32 @@ function NewRecordFab({ onClick }) {
       <button type="button" className={`fab${show ? "" : " hidden"}`} onClick={onClick} aria-label="새 기록" tabIndex={show ? 0 : -1}>
         <Ico name="pencil" size={24} />
       </button>
+    </div>
+  );
+}
+
+// 배경 테마: 색 조합 5개 + 같은 색 발바닥 5개(기본은 소프트블루). 누르면 바로 바뀌고 저장된다
+function ThemeCard({ dark }) {
+  const [cur, setCur] = useState(getColorTheme);
+  const pick = (id) => (setColorTheme(id), setCur(id));
+  const swatch = (t, paw) => {
+    const id = t.id && paw ? `${t.id}-paw` : t.id;
+    const on = cur === id;
+    return (
+      <button key={id || "base"} type="button" className={`theme-sw${on ? " on" : ""}`} aria-pressed={on} onClick={() => pick(id)} style={{ "--sw-bg": t.bg, "--sw-ac": t.accent }}>
+        <span className="theme-dot" aria-hidden="true">{paw ? <Ico name="paw" size={16} /> : null}</span>
+        <span className="theme-name">{t.label}</span>
+      </button>
+    );
+  };
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="h2" style={{ display: "flex", alignItems: "center", gap: 6 }}><Ico name="sparkles" size={18} /> 배경 테마</div>
+      {dark && <p className="faint" style={{ marginTop: -4 }}>다크 모드에서는 어두운 색으로 보여요. 다크 모드를 끄면 고른 테마가 적용돼요.</p>}
+      <div className="faint" style={{ margin: "0 0 6px" }}>색 조합</div>
+      <div className="theme-grid">{COLOR_THEMES.map((t) => swatch(t, false))}</div>
+      <div className="faint" style={{ margin: "12px 0 6px" }}>발바닥</div>
+      <div className="theme-grid">{COLOR_THEMES.filter((t) => t.id).map((t) => swatch(t, true))}</div>
     </div>
   );
 }

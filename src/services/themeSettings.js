@@ -24,6 +24,46 @@ export function setDark(on) {
 export function applyTheme(dark = isDark()) {
   if (dark) document.documentElement.setAttribute("data-theme", "dark");
   else document.documentElement.removeAttribute("data-theme");
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? BAR.dark : BAR.light);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? BAR.dark : COLOR_THEMES.find((t) => t.id === getColorTheme().split("-")[0])?.bg || BAR.light);
 }
 
+
+// 배경 테마(설정 → 배경 테마): 색 조합 5개 + 같은 색 발바닥 5개. 색은 index.css :root[data-color] / [data-paw].
+// 다크 모드를 켜면 다크 색이 우선이고, 끄면 고른 테마로 돌아온다. index.html도 같은 키를 읽어 첫 화면부터 입힌다.
+const COLOR_KEY = "dogcare-color-v1"; // "coral" | "coral-paw" | ... | 없음(기본 소프트블루)
+export const COLOR_THEMES = [
+  { id: "", label: "소프트 블루", accent: "#4b90e2", bg: "#f0f6ff" },
+  { id: "coral", label: "크림 코랄", accent: "#e0695a", bg: "#fff7f2" },
+  { id: "mint", label: "민트 포레스트", accent: "#2f9e84", bg: "#eff8f4" },
+  { id: "lavender", label: "라벤더", accent: "#7b61d6", bg: "#f5f2fd" },
+  { id: "peach", label: "피치 핑크", accent: "#e06a8c", bg: "#fff4f7" },
+  { id: "sage", label: "세이지", accent: "#5f8f5a", bg: "#f3f7f0" },
+];
+
+export function getColorTheme() {
+  try {
+    return localStorage.getItem(COLOR_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function setColorTheme(id) {
+  try {
+    if (id) localStorage.setItem(COLOR_KEY, id);
+    else localStorage.removeItem(COLOR_KEY);
+  } catch {
+    // 저장 못 하는 환경이면 이번에만 적용
+  }
+  applyColor(id);
+}
+
+export function applyColor(id = getColorTheme()) {
+  const [color, paw] = id.split("-");
+  const root = document.documentElement;
+  if (color) root.setAttribute("data-color", color);
+  else root.removeAttribute("data-color");
+  if (paw) root.setAttribute("data-paw", "");
+  else root.removeAttribute("data-paw");
+  if (!isDark()) document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR_THEMES.find((t) => t.id === color)?.bg || BAR.light);
+}
