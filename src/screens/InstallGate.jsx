@@ -39,15 +39,15 @@ const DotsGlyph = () => (
 );
 
 const IOS_STEPS = [
-  [<>화면 아래(또는 위)의 <b>공유 버튼</b> <ShareGlyph /> 누르기 <span className="faint">(안 보이면 <b>···</b> 메뉴 → 공유)</span></>],
+  [<>사파리에서 <b>공유 버튼</b> <ShareGlyph /> 누르기 <span className="faint">(안 보이면 <b>⋯</b> 메뉴 → 공유)</span></>],
   [<>목록을 내려서 <b>홈 화면에 추가</b> <PlusGlyph /> 누르기</>],
-  [<>오른쪽 위 <b>추가</b> 누르기</>],
+  [<><b>웹 앱으로 열기</b>가 켜져 있으면 그대로 두고, 오른쪽 위 <b>추가</b> 누르기</>],
   [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>],
 ];
 const ANDROID_STEPS = (samsung) =>
   samsung
-    ? [[<>아래쪽 <b>메뉴(≡)</b> 누르기</>], [<><b>현재 페이지 추가</b> → <b>홈 화면</b> 누르기</>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]]
-    : [[<>오른쪽 위 <b>점 세 개</b> <DotsGlyph /> 누르기</>], [<><b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 누르기</>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]];
+    ? [[<>아래쪽 <b>메뉴(≡)</b> 누르기 <span className="faint">(버전에 따라 도구 안)</span></>], [<><b>현재 페이지 추가</b> → <b>홈 화면</b> → <b>추가</b></>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]]
+    : [[<>오른쪽 위 <b>점 세 개</b> <DotsGlyph /> 누르기</>], [<><b>설치 및 바로가기 만들기</b> → <b>설치</b> <span className="faint">(기기에 따라 "앱 설치"·"홈 화면에 추가")</span></>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]];
 
 export default function InstallGate() {
   const [os, setOs] = useState(isAndroid() ? "android" : "ios");
