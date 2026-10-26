@@ -2,6 +2,9 @@ import { useState } from "react";
 import { createDog } from "../models/dog";
 import { saveDog } from "../services/dogRepository";
 import { BREEDS } from "../data/breeds";
+import { addWeightRecord } from "../services/weightLog";
+import { localNow } from "../services/records";
+import { todayKey } from "../utils/date";
 
 const DEV_TEST_DOG = {
   name: "여름",
@@ -16,6 +19,7 @@ export default function DogRegister({ onRegistered, onCancel }) {
   const [form, setForm] = useState({
     name: "",
     birthDate: "",
+    ageEstimated: false,
     breed: "",
     gender: "female",
     weight: "",
@@ -41,12 +45,12 @@ export default function DogRegister({ onRegistered, onCancel }) {
       setError("이름, 생년월일, 견종, 성별은 필수 항목이에요.");
       return;
     }
-    if (form.weight && Number(form.weight) <= 0) {
-      setError("체중은 0보다 큰 값으로 입력해 주세요.");
-      return;
-    }
+    if (form.birthDate > todayKey()) return setError("생년월일을 오늘 이전 날짜로 골라 주세요.");
+    if (form.weight && !(Number(form.weight) > 0 && Number(form.weight) < 120)) return setError("체중을 0.1~120kg 사이로 적어 주세요.");
     const dog = createDog(form);
     saveDog(dog);
+    // 처음 등록과 같게: 적은 체중은 체중 관리에도 기록(프로필 몸무게 칸·그래프에 바로 보이게)
+    if (dog.weight) addWeightRecord(dog.id, { weightKg: dog.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
     onRegistered(dog);
   }
 
@@ -65,7 +69,7 @@ export default function DogRegister({ onRegistered, onCancel }) {
       <form onSubmit={handleSubmit}>
         <div className="field">
           <label>이름 *</label>
-          <input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="예: 여름" />
+          <input value={form.name} maxLength={20} onChange={(e) => update("name", e.target.value)} placeholder="예: 여름" />
         </div>
 
         <div className="field">
@@ -73,9 +77,13 @@ export default function DogRegister({ onRegistered, onCancel }) {
           <input
             type="date"
             value={form.birthDate}
-            max={new Date().toISOString().slice(0, 10)}
+            max={todayKey()}
             onChange={(e) => update("birthDate", e.target.value)}
           />
+          <label className="rec-check" style={{ marginTop: 6 }}>
+            <input type="checkbox" checked={form.ageEstimated} onChange={(e) => update("ageEstimated", e.target.checked)} />
+            정확하지 않은 추정 날짜예요
+          </label>
         </div>
 
         <div className="field">
@@ -139,7 +147,7 @@ export default function DogRegister({ onRegistered, onCancel }) {
         </div>
 
         <div className="field">
-          <label>특이사항</label>
+          <label>보호자 메모</label>
           <textarea rows={3} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
         </div>
 

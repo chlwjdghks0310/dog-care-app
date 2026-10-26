@@ -24,9 +24,9 @@ import Ico from "../components/Ico";
 const SLIDES = [
   { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n말투는 세 가지 중에 골라요." },
   { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
-  { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n가계부·일정·체중·약까지 알아서 적어요." },
-  { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에 모이고\n밥·산책·약 시간엔 알림이 와요." },
-  { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n숫자마다 출처를 밝혀요." },
+  { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n건강 기록·가계부·일정·체중까지 알아서 적어요." },
+  { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에, 일정·가계부도 한곳에\n밥·약·일정 시간엔 알림이 와요." },
+  { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n참고 수치에는 출처를 밝혀요." },
   { title: "손끝으로 빠르게", text: "아래 프로필 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
 ];
 const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock, TrustMock, GestureMock];
@@ -186,7 +186,7 @@ function ChatMock() {
       <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
       <div className="onb-bubble ai">
         둘 다 적어 뒀어!
-        <div className="onb-record"><Ico name="walk" size={13} className="cat-ico tone-violet" /> 산책 30분 · 건강 기록</div>
+        <div className="onb-record"><Ico name="walk" size={13} className="cat-ico tone-violet" /> 산책 30분 · 건강 수치</div>
         <div className="onb-record"><Ico name="wallet" size={13} /> 사료 30,000원 · 가계부</div>
       </div>
     </div>
@@ -208,7 +208,7 @@ function CareMock() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
           {[
             ["scales", "몸무게", "blue"],
-            ["droplet", "물", "teal"],
+            ["droplet", "음수량", "teal"],
             ["walk", "산책", "violet"],
           ].map(([icon, label, tone]) => (
             <div key={label} className="onb-tile">
@@ -218,8 +218,8 @@ function CareMock() {
           ))}
         </div>
         {[
-          ["밥 주기", "08:00", true],
-          ["산책", "18:00", false],
+          ["아침 밥 주기", "08:00", true],
+          ["규칙적인 산책", "18:00", false],
         ].map(([t, time, done]) => (
           <div key={t} className="onb-mock-row">
             <span className={`onb-check${done ? " on" : ""}`}>{done ? "✓" : ""}</span>
@@ -247,7 +247,7 @@ function TrustMock() {
         ))}
       </div>
       {[
-        ["search", "숫자마다 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
+        ["search", "참고 수치에 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
         ["stethoscope", "진단하지 않아요", "참고 범위와 병원에 물어볼 때만 알려요"],
         ["lock", "기록은 나와 가족만", "백업은 암호화해 보내고, 초대한 가족만 볼 수 있어요"],
       ].map(([icon, head, sub]) => (
@@ -293,7 +293,7 @@ const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
 function Setup({ onRegistered, restore, preview }) {
   const saved = restore ? loadProgress() : {};
   const [step, setStep] = useState(saved.step || 0);
-  const [form, setForm] = useState(saved.form || { name: "", breed: "", birthDate: "", gender: "", neutered: false, weight: "" });
+  const [form, setForm] = useState(saved.form || { name: "", breed: "", birthDate: "", ageEstimated: false, gender: "", neutered: false, weight: "" });
   const [breedQuery, setBreedQuery] = useState("");
   const [invite, setInvite] = useState("");
   const [inviteError, setInviteError] = useState("");
@@ -341,7 +341,7 @@ function Setup({ onRegistered, restore, preview }) {
     breed: Boolean(form.breed),
     birthDate: Boolean(form.birthDate) && form.birthDate <= todayKey(),
     gender: Boolean(form.gender),
-    weight: !form.weight || Number(form.weight) > 0,
+    weight: !form.weight || (Number(form.weight) > 0 && Number(form.weight) < 120), // 프로필 편집과 같은 범위
   }[key];
 
   function next() {
@@ -467,6 +467,10 @@ function Setup({ onRegistered, restore, preview }) {
           {key === "birthDate" && (
             <>
               <input type="date" value={form.birthDate} max={todayKey()} onChange={(e) => update("birthDate", e.target.value)} />
+              <label className="rec-check" style={{ marginTop: 8 }}>
+                <input type="checkbox" checked={Boolean(form.ageEstimated)} onChange={(e) => update("ageEstimated", e.target.checked)} />
+                정확하지 않은 추정 날짜예요
+              </label>
               <p className="faint" style={{ marginTop: 6 }}>정확히 모르면 대략적인 날짜도 괜찮아요. 나이에 맞는 케어를 알려 드려요.</p>
             </>
           )}
@@ -496,6 +500,7 @@ function Setup({ onRegistered, restore, preview }) {
                 <input type="number" inputMode="decimal" step="0.1" value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="예: 3.2" />
                 <span style={{ fontWeight: 700 }}>kg</span>
               </div>
+              {form.weight && !valid && <p className="error-text" style={{ marginTop: 6 }}>0.1~120kg 사이로 적어 주세요.</p>}
               <p className="faint" style={{ marginTop: 6 }}>모르면 건너뛰어도 돼요. 사료·알레르기 같은 정보는 나중에 프로필에서 적을 수 있어요.</p>
             </>
           )}

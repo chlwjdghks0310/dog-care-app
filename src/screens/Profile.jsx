@@ -265,6 +265,15 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
               </div>
             </div>
             <div className="card">
+            {dog.photo && (
+              <div className="field" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <img src={dog.photo} alt="" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover" }} />
+                <span style={{ flex: 1 }} className="faint">사진을 바꾸려면 프로필 화면의 사진을 눌러 주세요.</span>
+                <button type="button" className="btn-ghost small" style={{ color: "var(--danger)" }} onClick={() => window.confirm("프로필 사진을 지울까요?") && onUpdateDog?.(saveDog({ ...dog, photo: null }))}>
+                  사진 지우기
+                </button>
+              </div>
+            )}
             <div className="field">
               <label>이름</label>
               <input value={editForm.name} maxLength={20} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />

@@ -13,6 +13,7 @@ export function createDog(input) {
     gender: input.gender,
     weight: input.weight ? Number(input.weight) : null,
     neutered: Boolean(input.neutered),
+    ageEstimated: Boolean(input.ageEstimated), // 생일을 정확히 모르는 경우(프로필에 "추정"으로 표시)
     adoptionDate: input.adoptionDate || null,
     food: input.food?.trim() || "",
     allergies: input.allergies?.trim() || "",
