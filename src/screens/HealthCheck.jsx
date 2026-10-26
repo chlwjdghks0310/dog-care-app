@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
 import Ico from "../components/Ico";
+import AskBox from "../components/AskBox";
 import { analyzePhoto } from "../services/aiClient";
 
 export default function HealthCheck({ dog, onBack }) {
@@ -10,6 +11,7 @@ export default function HealthCheck({ dog, onBack }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [question, setQuestion] = useState("");
   const timer = useAnalysisTimer("dogcare-timing-stool-v1", [50, 60]);
 
   function handleFileChange(e) {
@@ -28,7 +30,7 @@ export default function HealthCheck({ dog, onBack }) {
     setResult(null);
     timer.start();
     try {
-      const answer = await analyzePhoto(dog, file);
+      const answer = await analyzePhoto(dog, file, question.trim());
       setResult(answer);
       timer.stop(true);
     } catch (err) {
@@ -78,6 +80,7 @@ export default function HealthCheck({ dog, onBack }) {
           <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
         </label>
 
+        <AskBox value={question} onChange={setQuestion} examples={["언제부터 지켜봐야 해?", "사료를 바꿔야 할까?", "어제보다 묽어졌어", "병원 가기 전에 뭘 확인해?"]} />
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>
           {pending ? "분석 중…" : "확인하기"}
         </button>

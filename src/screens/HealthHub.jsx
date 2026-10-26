@@ -7,7 +7,7 @@ export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) 
       </button>
       <div className="h1">건강 체크</div>
       <p className="subtle" style={{ marginBottom: 16 }}>
-        {dog.name}의 상태를 사진/영상으로 확인해보세요. 참고용 분석이며 진단을 대신하지 않아요.
+        {dog.name}의 상태를 사진/영상으로 확인하고, 궁금한 점도 같이 물어보세요. 참고용 분석이며 진단을 대신하지 않아요.
       </p>
 
       <button

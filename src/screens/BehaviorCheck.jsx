@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
 import Ico from "../components/Ico";
+import AskBox from "../components/AskBox";
 import { analyzeBehavior } from "../services/aiClient";
 
 const MAX_SIZE_MB = 500;
@@ -12,6 +13,7 @@ export default function BehaviorCheck({ dog, onBack }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [question, setQuestion] = useState("");
   const timer = useAnalysisTimer("dogcare-timing-video-v1", [35, 60]);
 
   function handleFileChange(e) {
@@ -34,7 +36,7 @@ export default function BehaviorCheck({ dog, onBack }) {
     setResult(null);
     timer.start();
     try {
-      const { answer } = await analyzeBehavior(dog, file, undefined, "vet");
+      const { answer } = await analyzeBehavior(dog, file, undefined, "vet", { question: question.trim() });
       setResult(answer);
       timer.stop(true);
     } catch (err) {
@@ -84,6 +86,7 @@ export default function BehaviorCheck({ dog, onBack }) {
           <input type="file" accept="video/*" onChange={handleFileChange} style={{ display: "none" }} />
         </label>
 
+        <AskBox value={question} onChange={setQuestion} examples={["다리를 저는 것 같아", "숨이 빨라 보여", "이 행동이 스트레스야?", "병원 가기 전에 뭘 확인해?"]} />
         <button className="btn-primary" onClick={handleSubmit} disabled={!file || pending}>
           {pending ? "분석 중…" : "확인하기"}
         </button>

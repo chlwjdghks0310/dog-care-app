@@ -73,13 +73,13 @@ export async function askAI(dog, question, history, mode, { images, imagesAreCon
 }
 
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).
-export async function analyzePhoto(dog, file) {
+export async function analyzePhoto(dog, file, question) {
   await ensureAIConsent();
   const imageBase64 = await fileToBase64(file);
   const res = await fetch(`${API_BASE}/api/analyze-photo`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type }),
+    body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type, question }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
