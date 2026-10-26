@@ -3,7 +3,8 @@ import { calculateAge, formatAge } from "../utils/age";
 import { getFeedingPlan, SOAK_WATER_TEMP, SOAK_DURATION } from "../data/feedingGuide";
 import { getFeedingSettings, saveFeedingSettings } from "../services/feedingSettings";
 import { josa } from "../utils/text";
-import { findFoodInfo } from "../services/aiClient";
+import { findFoodInfo, readFoodLabel } from "../services/aiClient";
+import { resizeImageFile } from "../utils/image";
 import Ico from "../components/Ico";
 
 const STOOL_OPTIONS = [
@@ -189,10 +190,38 @@ function FoodCard({ dog, settings, onUse }) {
     }
   }
 
+  // 봉투 뒷면 사진 → 적힌 열량·성분(가장 정확한 출처). 작은 글씨라 긴 변 1800px로 보낸다
+  async function readPhoto(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || busy) return;
+    setBusy("photo");
+    setError("");
+    try {
+      const dataUrl = await resizeImageFile(file, 1800, 0.85);
+      const label = await readFoodLabel(dataUrl.split(",")[1]);
+      if (!label.is_label) return setError(label.retake || "사료 봉투 뒷면의 성분·열량 표시가 잘 보이게 다시 찍어 주세요.");
+      const q = label.product_name || name.trim() || "사료";
+      const next = {
+        name: q,
+        info: { found: true, product_name: label.product_name, kcal_per_kg: label.kcal_per_kg, kcal_text: label.kcal_text, kcal_source: "봉투 사진", edition: "국내판", life_stage: label.life_stage, main_ingredients: label.main_ingredients, analysis: label.analysis, cautions: "", candidates: [] },
+        sources: [],
+        at: new Date().toISOString().slice(0, 10),
+      };
+      setResult(next);
+      if (label.product_name && !name.trim()) setName(label.product_name);
+      onUse({ foodName: name.trim() || q, foodInfo: next });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const info = result?.info;
   // 일반 건사료 열량 범위를 크게 벗어나면(검색 실수 가능성) 계산 버튼을 주지 않는다 — ponytail: 범위는 넉넉히 2,500~5,500kcal/kg, 습식·동결건조는 따로 다루지 않음
   const per100 = info?.kcal_per_kg >= 2500 && info.kcal_per_kg <= 5500 ? Math.round(info.kcal_per_kg / 10) : 0;
-  const official = info?.kcal_source === "제조사 한국 공식";
+  const official = info?.kcal_source === "제조사 한국 공식" || info?.kcal_source === "봉투 사진";
   const using = per100 && settings.kcalPer100g === per100;
   const rows = info?.found
     ? [["대상", [info.life_stage, info.dog_size].filter(Boolean).join(" · ")], ["주원료", info.main_ingredients], ["등록성분량", info.analysis], ["알아 둘 점", info.cautions]].filter(([, v]) => v)
@@ -203,11 +232,16 @@ function FoodCard({ dog, settings, onUse }) {
       <div className="h2">먹이는 사료</div>
       <div style={{ display: "flex", gap: 8 }}>
         <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder="예: 로얄캐닌 미니 인도어 어덜트" maxLength={80} aria-label="사료 이름" style={{ flex: 1, minWidth: 0, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 16 }} />
-        <button type="button" className="btn-primary" style={{ width: "auto", padding: "0 14px", whiteSpace: "nowrap" }} disabled={busy || !name.trim()} onClick={() => search()}>
-          {busy ? "찾는 중…" : "정보 찾기"}
+        <button type="button" className="btn-primary" style={{ width: "auto", padding: "0 14px", whiteSpace: "nowrap" }} disabled={Boolean(busy) || !name.trim()} onClick={() => search()}>
+          {busy === true ? "찾는 중…" : "정보 찾기"}
         </button>
       </div>
-      {busy && <p className="faint" style={{ margin: "8px 0 0" }}>제조사·판매처 자료를 찾고 있어요. 20~40초쯤 걸려요.</p>}
+      <label className={`btn-ghost food-photo${busy ? " disabled" : ""}`}>
+        <Ico name="camera" size={17} /> {busy === "photo" ? "사진 읽는 중…" : "봉투 뒷면 사진으로 읽기"}
+        <input type="file" accept="image/*" capture="environment" onChange={readPhoto} disabled={Boolean(busy)} hidden />
+      </label>
+      {busy === true && <p className="faint" style={{ margin: "8px 0 0" }}>제조사·판매처 자료를 찾고 있어요. 20~40초쯤 걸려요.</p>}
+      {!info && !busy && <p className="faint" style={{ margin: "8px 0 0" }}>봉투 뒷면의 "대사에너지(kcal)"와 등록성분량이 보이게 찍으면 가장 정확해요.</p>}
       {error && <p className="error-text" role="alert">{error}</p>}
 
       {info && !busy && (
@@ -222,7 +256,7 @@ function FoodCard({ dog, settings, onUse }) {
                     {!official && <span className="food-ref">참고 값 — 국내 공식 자료로 확인하지 못했어요. 봉투에 적힌 열량이 있으면 그걸 쓰세요.</span>}
                   </>
                 ) : (
-                  <span className="faint">열량을 kcal/kg로 확인하지 못했어요{info.kcal_text ? ` (적힌 표기: ${info.kcal_text})` : ""}. 사료 봉투 뒷면의 "대사에너지"를 아래 칸에 적어 주세요.</span>
+                  <span className="faint">열량을 kcal/kg로 확인하지 못했어요{info.kcal_text ? ` (적힌 표기: ${info.kcal_text})` : ""}. {info.kcal_source === "봉투 사진" ? "열량 부분이 잘 보이게 다시 찍거나" : "봉투 뒷면 사진으로 읽거나"} 아래 칸에 직접 적어 주세요.</span>
                 )}
               </div>
               {rows.map(([k, v]) => (
@@ -233,7 +267,9 @@ function FoodCard({ dog, settings, onUse }) {
                   {using ? "✓ 이 열량으로 계산하고 있어요" : official ? "이 열량으로 계산" : "참고 값으로 계산"}
                 </button>
               )}
-              <p className="faint" style={{ margin: "8px 0 0" }}>AI가 웹에서 찾은 정보라 틀릴 수 있어요. 사료 봉투에 적힌 열량과 같은지 한 번 확인해 주세요.</p>
+              <p className="faint" style={{ margin: "8px 0 0" }}>
+                {info.kcal_source === "봉투 사진" ? "사진에서 AI가 읽은 값이에요. 봉투의 숫자와 같은지 한 번 확인해 주세요." : "AI가 웹에서 찾은 정보라 틀릴 수 있어요. 사료 봉투에 적힌 열량과 같은지 한 번 확인해 주세요."}
+              </p>
             </>
           ) : (
             <>

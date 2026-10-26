@@ -696,6 +696,57 @@ app.post("/api/food-info", async (req, res) => {
   }
 });
 
+// 사료 계산기 "봉투 사진으로 읽기" — 사료 포장 뒷면 사진에서 적힌 글자만 읽는다(검색 없음). 안 보이는 값은 지어내지 않는다.
+const LABEL_TOOL = {
+  name: "food_label",
+  description: "사료 포장 사진에 적힌 내용을 그대로 기록한다. 사진에 안 보이거나 흐린 값은 0 또는 빈 문자열.",
+  input_schema: {
+    type: "object",
+    properties: {
+      is_label: { type: "boolean", description: "사료 포장의 성분·열량 표시가 읽을 수 있게 보이면 true" },
+      retake: { ...TEXT, description: "잘 안 보일 때 다시 찍는 방법 한 문장, 아니면 빈 문자열" },
+      product_name: { ...TEXT, description: "사진에 보이는 제품명, 없으면 빈 문자열" },
+      kcal_per_kg: { type: "number", description: "적힌 대사에너지(ME)를 kcal/kg로. kcal/100g이면 ×10, kcal/g이면 ×1000. 컵당만 있고 컵 g이 없으면 0. 안 보이면 0" },
+      kcal_text: { ...TEXT, description: "사진에 적힌 열량 표기 그대로(예: 대사에너지 3,850kcal/kg). 없으면 빈 문자열" },
+      analysis: { ...TEXT, description: "등록성분량 그대로 한 줄(조단백질 ○% 이상, 조지방 ○% 이상 …). 없으면 빈 문자열" },
+      life_stage: { ...TEXT, description: "적힌 대상 나이·크기, 없으면 빈 문자열" },
+      main_ingredients: { ...TEXT, description: "원료 앞쪽 3~5개, 안 보이면 빈 문자열" },
+    },
+    required: ["is_label", "retake", "product_name", "kcal_per_kg", "kcal_text", "analysis", "life_stage", "main_ingredients"],
+    additionalProperties: false,
+  },
+};
+
+app.post("/api/food-label", async (req, res) => {
+  const { imageBase64, mediaType } = req.body || {};
+  if (!imageBase64 || typeof imageBase64 !== "string") return res.status(400).json({ error: "사진이 필요해요." });
+  const now = Date.now();
+  const hits = (foodHits.get(req.ip) || []).filter((t) => now - t < 60 * 60 * 1000);
+  if (hits.length >= 20) return res.status(429).json({ error: "너무 많이 읽었어요. 잠시 뒤에 다시 해 주세요." });
+  foodHits.set(req.ip, [...hits, now]);
+  const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
+  try {
+    const response = await client.beta.messages.create({
+      ...CLAUDE_MODEL,
+      max_tokens: 2000,
+      output_config: { effort: "low" },
+      system: [
+        "보호자가 강아지 사료 포장(뒷면 성분·열량 표시) 사진을 올렸습니다. 반드시 food_label 도구를 한 번 호출해 사진에 적힌 것만 기록하세요. 도구 밖에 다른 글은 쓰지 않습니다.",
+        "숫자는 사진에 보이는 그대로 옮기고, 흐리거나 잘린 숫자는 추측하지 말고 0 또는 빈 문자열로 둡니다.",
+        "열량은 '대사에너지', 'ME', 'Calorie Content', 'kcal' 표기를 찾습니다. 건물기준(DM) 값이면 kcal_per_kg는 0으로 두고 kcal_text에 그대로 적습니다.",
+      ].join("\n"),
+      tools: [LABEL_TOOL],
+      messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: type, data: imageBase64 } }, { type: "text", text: "이 사료 포장에 적힌 열량과 성분을 읽어 주세요." }] }],
+    });
+    const out = response.content.find((b) => b.type === "tool_use" && b.name === "food_label")?.input;
+    if (!out || response.stop_reason === "refusal") return res.json({ label: { is_label: false, retake: "사료 봉투 뒷면의 성분·열량 표시가 잘 보이게 다시 찍어 주세요." } });
+    res.json({ label: out });
+  } catch (err) {
+    console.error("[server] food-label error:", err.message);
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+  }
+});
+
 // 음성 → 글자(비서 입력창 🎤). 브라우저 음성 인식이 안 되는 기기(아이폰 홈 화면 앱 등)에서만 쓴다.
 // 받아쓰기만 시키는 가벼운 일이라 가장 싼 Flash-Lite(음성 1분 ≈ 1,500토큰). 음성은 저장하지 않는다.
 app.post("/api/transcribe", async (req, res) => {

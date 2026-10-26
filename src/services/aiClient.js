@@ -112,6 +112,15 @@ export async function findFoodInfo(name, signal) {
   return data;
 }
 
+// 사료 봉투 사진 → 적힌 열량·성분(검색 없이 읽기만). 반환: label
+export async function readFoodLabel(imageBase64, signal) {
+  await ensureAIConsent();
+  const res = await fetch(`${API_BASE}/api/food-label`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageBase64, mediaType: "image/jpeg" }), signal });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "사진을 읽지 못했어요. 다시 시도해 주세요.");
+  return data.label;
+}
+
 // 영상 분석은 Gemini(구글)로 처리한다 — 영상을 그대로 넘기면 Gemini가 1초에 약 1장씩 장면을 나눠 보고 소리도 듣는다.
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.

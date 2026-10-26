@@ -1104,3 +1104,5 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .theme-card.locked .theme-head { cursor: not-allowed; }
 .theme-head .theme-dot { background: var(--sw-ac); }
 .theme-head > .faint:last-child { font-size: 16px; padding: 0 2px; }
+.food-photo { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 8px; cursor: pointer; }
+.food-photo.disabled { opacity: 0.5; pointer-events: none; }
