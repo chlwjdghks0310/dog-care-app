@@ -17,11 +17,11 @@ import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 
 const CHAT_MODES = [
   // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {nameI}는 이름 + 받침이면 "이"(여름이·여르)
-  { key: "bordercollie", ico: "book", tone: "violet", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{nameI}의 관리는 내가 책임져! 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
-  { key: "pomeranian", ico: "zap", tone: "blue", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{nameI}의 오늘 할 일을 정리해 봤어 ⚡", pending: "음… 생각 중이야…" },
-  { key: "retriever", ico: "chatHeart", tone: "rose", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{nameI}의 이야기 들어줄게 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "pomeranian", ico: "zap", tone: "blue", call: "여름", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{nameI}의 오늘 할 일을 정리해 봤어 ⚡", pending: "음… 생각 중이야…" },
+  { key: "retriever", ico: "chatHeart", tone: "rose", call: "가을", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{nameI}의 이야기 들어줄게 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "bordercollie", ico: "book", tone: "violet", call: "겨울", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{nameI}의 관리는 내가 책임져! 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
 ];
-// 버튼 순서: 보더콜리 · 포메라니안(가운데) · 리트리버. 앱을 새로 켜면 항상 포메라니안으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
+// call: 비서 강아지 이름(여름=포메라니안, 가을=리트리버, 겨울=보더콜리). 버튼 순서: 여름 · 가을 · 겨울. 앱을 새로 켜면 항상 여름(포메라니안)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
 const loadChatMode = () => {
   try { return sessionStorage.getItem(CHAT_MODE_KEY); } catch { return null; }
@@ -33,11 +33,11 @@ const saveChatMode = (key) => {
 // 첫 줄은 크게, 나머지는 작게 보인다.
 const CHAT_MODE_INTROS = {
   pomeranian:
-    "안녕! 난 포메라니안이야 🐶\n궁금한 건 **핵심만 빠르고 짧게** 알려 줄게!\n바쁠 때나 간단히 확인하고 싶을 때 나를 불러 줘. 더 자세히 알고 싶으면 보더콜리한테 물어봐도 좋아!",
+    "안녕! 난 포메라니안 여름이야 🐶\n궁금한 건 **핵심만 빠르고 짧게** 알려 줄게!\n바쁠 때나 간단히 확인하고 싶을 때 나를 불러 줘. 더 자세히 알고 싶으면 보더콜리 겨울이한테 물어봐도 좋아!",
   bordercollie:
-    "안녕! 난 꼼꼼 박사 보더콜리야 🐕\n여러 자료를 **직접 찾아보고 자세하게** 설명해 줄게!\n확인하는 방법, 생각할 수 있는 원인, 집에서 해 볼 것, 병원에 가야 하는 기준까지 차근차근 알려 줘. 대신 자료를 찾느라 **조금 오래 걸릴 수 있어.**",
+    "안녕! 난 꼼꼼 박사 보더콜리 겨울이야 🐕\n여러 자료를 **직접 찾아보고 자세하게** 설명해 줄게!\n확인하는 방법, 생각할 수 있는 원인, 집에서 해 볼 것, 병원에 가야 하는 기준까지 차근차근 알려 줘. 대신 자료를 찾느라 **조금 오래 걸릴 수 있어.**",
   retriever:
-    "안녕! 난 수다쟁이 리트리버야 🦮\n**네 이야기를 들어 주고 같이 노는 걸** 제일 좋아해!\n심심할 때, 오늘 있었던 일을 말하고 싶을 때 언제든 말 걸어 줘. 꼬리 흔들면서 기다릴게!",
+    "안녕! 난 수다쟁이 리트리버 가을이야 🦮\n**네 이야기를 들어 주고 같이 노는 걸** 제일 좋아해!\n심심할 때, 오늘 있었던 일을 말하고 싶을 때 언제든 말 걸어 줘. 꼬리 흔들면서 기다릴게!",
 };
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES.find((m) => m.key === "pomeranian");
 // 첫 화면 추천 질문 — 눌러서 바로 물어보기(기록 근거로 답하는 것들)
@@ -474,7 +474,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
               >
                 {m.chatMode && (
                   <div className="faint" style={{ marginBottom: 6 }}>
-                    <Ico name={findChatMode(m.chatMode).ico} size={13} className={`cat-ico tone-${findChatMode(m.chatMode).tone}`} /> {findChatMode(m.chatMode).name}{!m.intro && " · AI가 만든 답변이라 틀릴 수 있어요"}
+                    <Ico name={findChatMode(m.chatMode).ico} size={13} className={`cat-ico tone-${findChatMode(m.chatMode).tone}`} /> {findChatMode(m.chatMode).call}{!m.intro && " · AI가 만든 답변이라 틀릴 수 있어요"}
                   </div>
                 )}
                 {m.structured ? (
@@ -603,9 +603,15 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
                 background: selected ? "var(--accent-soft)" : "var(--surface)",
                 color: selected ? "var(--accent-strong)" : "var(--text-soft)",
                 whiteSpace: "nowrap",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                lineHeight: 1.2,
               }}
+              aria-label={`${cm.call} (${cm.name})`}
             >
-              <Ico name={cm.ico} size={15} className={`cat-ico tone-${cm.tone}`} /> {cm.name}
+              <span><Ico name={cm.ico} size={15} className={`cat-ico tone-${cm.tone}`} /> {cm.call}</span>
+              <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>{cm.name}</span>
             </button>
           );
         })}

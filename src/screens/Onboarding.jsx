@@ -22,7 +22,7 @@ import Ico from "../components/Ico";
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
 // 6장(신뢰·손동작 포함), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
 const SLIDES = [
-  { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n말투는 세 가지 중에 골라요." },
+  { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n비서 강아지 여름·가을·겨울 중에 골라요." },
   { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
   { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n건강 기록·가계부·일정·체중까지 알아서 적어요." },
   { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에, 일정·가계부도 한곳에\n밥·약·일정 시간엔 알림이 와요." },
@@ -145,13 +145,13 @@ function ModesMock() {
       <DogAvatarVideo state="idle" height={110} breed="pomeranian" />
       <div className="onb-mock" style={{ marginTop: 6, padding: "6px 14px" }}>
         {[
-          ["book", "보더콜리", "자료 찾아 꼼꼼하게", "violet"],
-          ["zap", "포메라니안", "핵심만 빠르게", "blue"],
-          ["chatHeart", "리트리버", "수다 친구처럼", "rose"],
+          ["zap", "여름", "포메라니안 · 핵심만 빠르게", "blue"],
+          ["chatHeart", "가을", "리트리버 · 수다 친구처럼", "rose"],
+          ["book", "겨울", "보더콜리 · 자료 찾아 꼼꼼하게", "violet"],
         ].map(([icon, name, desc, tone]) => (
           <div key={name} className="onb-mock-row">
             <span className={`sv-icon tone-${tone}`} style={{ width: 32, height: 32, borderRadius: 10 }}><Ico name={icon} size={17} /></span>
-            <b style={{ minWidth: 76 }}>{name}</b>
+            <b style={{ minWidth: 40 }}>{name}</b>
             <span className="subtle" style={{ fontSize: 14 }}>{desc}</span>
           </div>
         ))}
