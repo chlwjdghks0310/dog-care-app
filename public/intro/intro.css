@@ -1,6 +1,6 @@
 /* 멍케어 소개 페이지 — 색은 앱(src/index.css :root·다크)과 같은 값. 반응형 명세: ../자료용/자료/homepage-responsive-spec.md */
 :root {
-  --bg: #f0f6ff; --surface: #fff; --border: #d6e4f5; --text: #2b2320; --soft: #7a6f63;
+  --bg: #ffffff; --surface: #fff; /* 소개 페이지는 항상 흰 배경(다크 모드 없음) */ --border: #d6e4f5; --text: #2b2320; --soft: #7a6f63;
   --accent: #4b90e2; --accent-soft: #dde9fa; --accent-strong: #2f6fbd;
   /* 버튼: 흰 글씨 대비 4.5:1 이상(자료용 점검 — #4b90e2는 3.29:1이라 한 단계 진하게) */
   --btn: #2f6fbd; --btn-hover: #2a64ad; --btn-text: #fff;
@@ -8,16 +8,6 @@
   --shadow: 0 4px 14px rgba(43, 35, 32, 0.07); --phone-shadow: 0 18px 40px rgba(43, 70, 120, 0.18);
   --radius: 20px; --gutter: 20px; --head: 56px;
   color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #17171c; --surface: #222229; --border: #33333d; --text: #ececf0; --soft: #a9a9b3;
-    --accent: #5b9ff0; --accent-soft: #1f2d42; --accent-strong: #8dbdf6;
-    --btn: #5b9ff0; --btn-hover: #7ab1f3; --btn-text: #17171c; /* 다크: 밝은 버튼 + 어두운 글씨(6.5:1) */
-    --teal: #4fc3bf; --teal-bg: #1f3a3a; --violet: #a69bef; --violet-bg: #2f2b4a; --rose: #ee86ac; --rose-bg: #47283a;
-    --shadow: 0 4px 16px rgba(0, 0, 0, 0.35); --phone-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-    color-scheme: dark;
-  }
 }
 @media (min-width: 720px) { :root { --gutter: 32px; --head: 64px; } }
 @media (min-width: 1024px) { :root { --gutter: 40px; } }
