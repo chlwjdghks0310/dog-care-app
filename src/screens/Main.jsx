@@ -41,7 +41,8 @@ const CHAT_MODE_INTROS = {
 };
 const findChatMode = (key) => CHAT_MODES.find((m) => m.key === key) || CHAT_MODES.find((m) => m.key === "pomeranian");
 // 첫 화면 추천 질문 — 눌러서 바로 물어보기(기록 근거로 답하는 것들)
-const SUGGESTIONS = ["오늘 뭐 챙겨야 해?", "이번 주 기록 정리해 줘", "밥은 얼마나 줘야 해?", "다음 일정 뭐야?"];
+// "지난번 얘기": 비서는 강아지별 최근 대화를 기억하고 있어서(chatMemory) 화면을 비워도 이어서 말할 수 있다
+const SUGGESTIONS = ["지난번에 무슨 얘기 했었지?", "이번 주 기록 정리해 줘", "밥은 얼마나 줘야 해?", "다음 일정 뭐야?"];
 // 말로 기록할 수 있다는 걸 보여 주는 예시 — 누르면 보내지 않고 입력칸에 채운다(예시를 눌렀다고 가짜 기록이 생기지 않게)
 const RECORD_EXAMPLE = "산책 30분 했어";
 

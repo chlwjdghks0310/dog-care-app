@@ -397,10 +397,11 @@ export default function App() {
         <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
       </Suspense>
     ),
-    home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,
-    calendar: <Calendar key={pageVersion} dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "calendar" }), setTab("records-new"))} />,
+    // 강아지를 바꾸면(dog.id) 화면을 새로 그려 앞 강아지의 상태(숨긴 할 일·수치 칸 등)가 남지 않게
+    home: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(homeScreens, "home")}</Fragment>,
+    calendar: <Calendar key={`${dog.id}-${pageVersion}`} dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "calendar" }), setTab("records-new"))} />,
     budget: <Budget key={`${dog.id}-${pageVersion}`} dog={dog} />,
-    profile: <Fragment key={pageVersion}>{renderStack(profileScreens, "profile")}</Fragment>,
+    profile: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(profileScreens, "profile")}</Fragment>,
   };
 
   return (

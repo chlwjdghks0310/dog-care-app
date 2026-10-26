@@ -9,6 +9,8 @@ import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
+import { isVisitEvent } from "../services/vetVisits";
+import { josa } from "../utils/text";
 import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, summarize, md } from "../services/records";
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange, tileState } from "../data/vitals";
@@ -111,12 +113,14 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
   async function handleEnableNotifications() {
     const result = await requestPermission();
     setNotifPermission(result);
+    // 한 번 거절하면 앱에서 다시 물을 수 없다 — 눌러도 아무 일 없던 문제
+    if (result === "denied") window.alert("알림이 꺼져 있어요. 아이폰 설정 → 알림 → 멍케어에서 알림을 켜 주세요.");
     if (result === "granted") syncPushAlarms(); // 권한을 켜면 앱이 꺼져 있어도 오는 푸시까지 바로 연결
   }
 
   async function handleDeleteCurrent() {
     if ((await roleOf(dog.id)) === "family") {
-      if (!window.confirm(`${dog.name}은(는) 가족이 공유한 강아지예요. 이 폰에서 빼고 가족 공유에서 나갈까요? 다른 가족의 기록은 그대로 남아요.`)) return;
+      if (!window.confirm(`${josa(dog.name, "은", "는")} 가족이 공유한 강아지예요. 이 폰에서 빼고 가족 공유에서 나갈까요? 다른 가족의 기록은 그대로 남아요.`)) return;
       // 서버에서 먼저 빠진다 → 맞추기가 이 폰의 사본만 지우고, 화면은 dogcare-synced로 바뀐다
       return leavePet(dog.id).catch((err) => window.alert(err.message));
     }
@@ -137,10 +141,14 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
+    e.target.value = ""; // 같은 사진을 다시 골라도 바뀌게
     if (!file) return;
-    const photo = await resizeImageFile(file);
-    const updated = saveDog({ ...dog, photo });
-    onUpdateDog?.(updated);
+    try {
+      const photo = await resizeImageFile(file);
+      onUpdateDog?.(saveDog({ ...dog, photo }));
+    } catch {
+      window.alert("사진을 불러오지 못했어요. 다른 사진으로 해 주세요.");
+    }
   }
 
   return (
@@ -259,7 +267,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
             <div className="card">
             <div className="field">
               <label>이름</label>
-              <input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+              <input value={editForm.name} maxLength={20} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="field">
               <label>생년월일</label>
@@ -466,7 +474,6 @@ const EDIT_FIELDS = [
   ["notes", "보호자 메모", "예: 낯선 사람을 무서워해요", true],
 ];
 
-const VISIT_WORDS = /병원|진료|검진|검사|접종|백신|수술|재진|예방|심장사상충/;
 
 // 강아지 카드 안 건강 한 줄: 먹는 약·알레르기(없으면 적어 두라는 안내). 나머지(질환·병원 등)는 [정보 전체 보기]
 function HealthLines({ dog, onEdit }) {
@@ -475,8 +482,8 @@ function HealthLines({ dog, onEdit }) {
   if (!lines.length)
     return (
       <p className="faint" style={{ margin: "10px 0 0" }}>
-        알레르기·먹는 약을 적어 두면 여기에 보여요.{" "}
-        <button type="button" className="link-btn" style={{ padding: 0 }} onClick={onEdit}>적기</button>
+        알레르기를 적어 두면 여기에 보여요(먹는 약은 약 관리에 등록하면 보여요).{" "}
+        <button type="button" className="link-btn" style={{ padding: 0 }} onClick={onEdit}>알레르기 적기</button>
       </p>
     );
   return (
@@ -497,7 +504,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
   const until = toDateKey(addDays(new Date(), 60));
   const seen = new Set(); // 반복 일정은 가장 가까운 회차만
   const items = getOccurrences(dog.id, today, until)
-    .filter((o) => o.isStart && (o.event.kind === "vet" || o.event.kind === "vaccine" || VISIT_WORDS.test(o.event.title)) && !seen.has(o.event.id) && seen.add(o.event.id))
+    .filter((o) => o.isStart && isVisitEvent(o.event) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원용 기록·일정표와 같은 기준(집에서 먹이는 약 일정은 빠짐)
     .map((o) => ({ date: o.date, title: `${o.event.title}${o.event.time ? ` ${o.event.time}` : ""}` }))
     .slice(0, 3);
   const dday = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
