@@ -671,6 +671,7 @@ app.post("/api/food-info", async (req, res) => {
         output_config: { effort: "medium" },
         system: [
           "보호자가 강아지 사료 이름을 적었습니다. web_search로 그 사료의 열량과 정보를 찾은 뒤 반드시 food_info 도구를 한 번 호출하세요. 도구 밖에 다른 글은 쓰지 않습니다.",
+          "검색 순서: ① 브랜드 한국 공식 사이트에서 제품명으로(예: hillspet.co.kr, royalcanin.com/kr) ② 브랜드 해외 공식 사이트의 같은 제품 ③ 공식 판매처. 검색 결과 목록만 보지 말고 제품 상세 페이지 내용을 확인합니다.",
           "출처 우선순위: 제조사 한국 공식 > 제조사 해외 공식(같은 제품일 때만, edition=해외판) > 공식 판매처 > 쇼핑몰 상세. 블로그·카페 글의 숫자는 쓰지 않습니다.",
           "국내 사료는 공식 페이지에도 열량이 없는 경우가 많습니다(예: 로얄캐닌 코리아). 그럴 때 해외 공식 값을 쓰면 edition=해외판, kcal_source=제조사 해외 공식으로 밝히고 cautions에 '국내판과 다를 수 있음'을 적습니다.",
           "열량은 급여 상태(as-fed) 대사에너지 kcal/kg로. kcal/100g이면 ×10. 컵당 열량은 컵이 몇 g인지 함께 적혀 있을 때만 kcal/kg로 바꾸고(kcal/kg = 컵당 kcal × 1000 ÷ 컵 g), 아니면 kcal_per_kg는 0. 건물기준(DM, Dry Matter) 표는 쓰지 않습니다(힐스 영양소 표는 건물기준).",
@@ -678,7 +679,8 @@ app.post("/api/food-info", async (req, res) => {
           "퍼피·어덜트·시니어(8+ 등), 소형견·대형견, 맛까지 적힌 이름과 정확히 같은 제품의 값만 씁니다. 애매하면 found=false와 candidates에 후보를 넣습니다.",
           "확인 못 한 값은 지어내지 말고 0 또는 빈 문자열로 둡니다.",
         ].join("\n"),
-        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 4 }, FOOD_TOOL],
+        // ponytail: 검색 8회(첫 시험에서 4회로는 공식 페이지까지 못 감) — 느리면 브랜드별 공식 도메인 목록으로 줄일 것
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }, FOOD_TOOL],
       },
       [{ role: "user", content: `사료 이름: ${name}` }]
     );
