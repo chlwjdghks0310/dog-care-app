@@ -32,7 +32,7 @@ const inputWidth = (text) => (text ? `${text.replace(/,/g, "").length * 0.6 + (t
 
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 // 달력 칸에 들어갈 짧은 금액: 12,000 → 1.2만
-const shortWon = (n) => (n >= 10000 ? `${(n / 10000).toFixed(1).replace(/\.0$/, "")}만` : n.toLocaleString("ko-KR"));
+const shortWon = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1).replace(/\.0$/, "")}억` : n >= 10000 ? `${Math.round(n / 1000) / 10}만`.replace(/\.0만$/, "만") : n.toLocaleString("ko-KR"));
 
 export default function Budget({ dog }) {
   const [monthDate, setMonthDate] = useState(() => new Date());

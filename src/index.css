@@ -92,6 +92,7 @@ body {
   line-height: 1.5;
   letter-spacing: -0.01em;
   word-break: keep-all;
+  overflow-wrap: anywhere; /* 띄어쓰기 없는 긴 글·링크도 화면 안에서 줄바꿈(keep-all만으론 화면 밖으로 이어짐) */
   -webkit-font-smoothing: antialiased;
 }
 
@@ -285,6 +286,7 @@ button {
   font-weight: 600;
   background: var(--accent-soft);
   color: var(--accent-strong);
+  max-width: 100%; /* 긴 이름(견종·자주 산 것 등)도 칸 밖으로 안 나가게 */
 }
 
 .checklist-item {
