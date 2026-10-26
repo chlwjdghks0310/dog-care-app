@@ -39,18 +39,19 @@ const loadProgress = () => readJSON(PROGRESS_KEY, null) || {};
 const saveProgress = (patch) => writeJSON(PROGRESS_KEY, { ...loadProgress(), ...patch });
 const clearProgress = () => writeJSON(PROGRESS_KEY, null);
 
-export default function Onboarding({ onRegistered, skipIntro = false }) {
-  const [phase, setPhase] = useState(() => (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
+// preview: 설정 → 테스트용 미리보기("login" | "intro"에서 시작). 진행 상황·강아지를 저장하지 않고, 초대 코드도 연결하지 않는다.
+export default function Onboarding({ onRegistered, skipIntro = false, preview }) {
+  const [phase, setPhase] = useState(() => preview || (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
   const { user } = useSyncStatus();
   // 로그인 화면에서 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개로
-  const current = phase === "login" && user ? "intro" : phase;
+  const current = phase === "login" && user && !preview ? "intro" : phase;
   useEffect(() => {
-    if (!skipIntro) saveProgress({ phase: current });
-  }, [current, skipIntro]);
-  const done = (dog) => (clearProgress(), onRegistered(dog));
+    if (!skipIntro && !preview) saveProgress({ phase: current });
+  }, [current, skipIntro, preview]);
+  const done = (dog) => (preview || clearProgress(), onRegistered(dog));
   if (current === "login") return <Login onGuest={() => setPhase("intro")} />;
   if (current === "intro") return <Intro onDone={() => setPhase("setup")} />;
-  return <Setup onRegistered={done} restore={!skipIntro} />;
+  return <Setup onRegistered={done} restore={!skipIntro && !preview} preview={Boolean(preview)} />;
 }
 
 // 로그인 첫 화면: 강아지 + 한 줄 인사, 버튼은 카카오·이메일 두 개만. 이메일과 "로그인 없이"는 밑에서 올라오는 시트로
@@ -289,7 +290,7 @@ function GestureMock() {
 const STEPS = ["name", "breed", "birthDate", "gender", "weight", "notify", "done"];
 const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
 
-function Setup({ onRegistered, restore }) {
+function Setup({ onRegistered, restore, preview }) {
   const saved = restore ? loadProgress() : {};
   const [step, setStep] = useState(saved.step || 0);
   const [form, setForm] = useState(saved.form || { name: "", breed: "", birthDate: "", ageEstimated: false, gender: "", neutered: false, weight: "" });
@@ -314,6 +315,7 @@ function Setup({ onRegistered, restore }) {
 
   // 초대 코드로 가족 강아지와 연결: 서버가 코드를 확인하고 가족으로 넣으면, 그 강아지 기록 전체를 받아 와 바로 연다(새 강아지는 만들지 않음)
   async function joinFamily() {
+    if (preview) return setInviteError("미리보기에서는 초대 코드를 연결하지 않아요.");
     setInviteError("");
     if (!user) {
       setInviteError("초대 코드로 연결하려면 먼저 로그인해 주세요.");
@@ -346,8 +348,10 @@ function Setup({ onRegistered, restore }) {
     if (key === "weight") {
       // 필수 정보가 다 모였으니 여기서 저장 — 알림 켜기가 이 강아지의 알람까지 서버에 등록하도록
       const created = createDog(form);
-      saveDog(created);
-      if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
+      if (!preview) {
+        saveDog(created);
+        if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
+      }
       setDog(created);
       if (restore) clearProgress();
     }
