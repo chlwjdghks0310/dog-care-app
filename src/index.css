@@ -981,3 +981,5 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .xs-amount span { font-weight: 700; margin-bottom: 10px; }
 .bud-memo { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bud-record { border: none; cursor: pointer; font-size: 13px; padding: 5px 12px; font-weight: 700; }
+.day-ev-rec { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 8px; background: var(--field); color: var(--text-soft); font-size: 12.5px; line-height: 1.4; }
+.es-record-visit { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; font-size: 14.5px; text-align: left; }

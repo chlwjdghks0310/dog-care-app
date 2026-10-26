@@ -21,7 +21,7 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, startType, initialTypes, onBack, onOpenMeds }) {
+export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 프로필로", onOpenMeds }) {
   const [view, setView] = useState("list");
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
@@ -64,7 +64,7 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
 
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 프로필로</button>
+      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>
       <div className="h1">{dog.name}의 기록</div>
       <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
         <button type="button" className={`seg${view === "list" ? " on" : ""}`} onClick={() => setView("list")}>전체 기록</button>
@@ -72,7 +72,7 @@ export default function Records({ dog, startNew, startType, initialTypes, onBack
       </div>
 
       {form ? (
-        <RecordForm dog={dog} initial={form.initial} startType={form.type} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
+        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
       ) : (
         <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (setNotice(""), setReaction(null), setForm({ initial: null }))}>
           ＋ 새 기록

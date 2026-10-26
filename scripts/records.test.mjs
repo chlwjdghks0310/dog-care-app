@@ -99,7 +99,7 @@ assert.match(get("symptoms"), /구토 \(가끔\) · 메모: 노란 토/);
 assert.match(get("observe"), /식욕: 평소보다 적음 1번\(.+\), 평소 1번/);
 assert.match(get("observe"), /대변: 무름 1번/);
 assert.doesNotMatch(get("observe"), /수면|활동량/, "기록 없는 항목은 만들지 않음");
-assert.match(get("visits"), /행복병원 구토[\s\S]*검사: 혈액검사 정상/);
+assert.match(get("visits"), /행복병원 · 구토[\s\S]*검사: 혈액검사 정상/);
 assert.match(get("memos"), /산책 후/);
 
 // 저장 후 강아지 반응 — 걱정되는 기록엔 축하하지 않는다(진단 문구 없음)

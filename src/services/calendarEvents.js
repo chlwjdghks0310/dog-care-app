@@ -24,10 +24,10 @@ export function getEventsForDate(dogId, dateKey) {
   return getEventsByDog(dogId)[dateKey] || [];
 }
 
-export function addEvent(dogId, dateKey, title, color = EVENT_COLORS[0]) {
+export function addEvent(dogId, dateKey, title, color = EVENT_COLORS[0], kind) {
   const all = getAll();
   if (!all[dogId]) all[dogId] = {};
-  const event = { id: nextId(), title, color };
+  const event = { id: nextId(), title, color, ...(kind ? { kind } : {}) };
   all[dogId][dateKey] = [...(all[dogId][dateKey] || []), event];
   writeJSON(KEY, all);
   return event;

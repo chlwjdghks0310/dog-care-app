@@ -104,7 +104,7 @@ export function deleteRecord(dogId, id) {
 
 // 다음 진료·접종 날짜가 있는 기록 → 일정표에 일정 하나(+원하면 그날 아침 알람). 기록을 고치면 일정을 옮기고, 지우면 같이 지운다.
 // 일정표에서 사용자가 그 일정을 먼저 지웠으면 다시 만들지 않는다(eventId가 사라진 걸로 판단).
-export function syncSchedule(dogId, rec, { title, date, alarm }) {
+export function syncSchedule(dogId, rec, { title, date, alarm, kind }) {
   const old = rec.links || {};
   const sameDate = old.eventDate === date;
   const eventAlive = old.eventId && getEventsForDate(dogId, old.eventDate).some((e) => e.id === old.eventId);
@@ -118,7 +118,7 @@ export function syncSchedule(dogId, rec, { title, date, alarm }) {
     delete links.alarmId;
   }
   if (date && date >= todayKey()) {
-    if (!sameDate || !old.eventId) links = { ...links, eventDate: date, eventId: addEvent(dogId, date, title, "#3f8fe0").id };
+    if (!sameDate || !old.eventId) links = { ...links, eventDate: date, eventId: addEvent(dogId, date, title, "#3f8fe0", kind).id };
     else if (!eventAlive) links = { ...links, eventId: null };
     if (alarm && !links.alarmId) links.alarmId = addCustomSchedule(dogId, { title, time: "09:00", date }).id;
   }

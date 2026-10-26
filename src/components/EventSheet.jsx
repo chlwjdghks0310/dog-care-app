@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import MonthGrid from "./MonthGrid";
 import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent, skipOccurrence, endSeriesBefore } from "../services/calendarEvents";
+import { isVisitEvent, eventTitle } from "../services/vetVisits";
+import { todayKey } from "../utils/date";
 import Ico from "./Ico";
 import { syncPushAlarms } from "../services/notifications";
 
@@ -24,7 +26,8 @@ const keyPlus = (key, n) => {
   d.setDate(d.getDate() + n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-export default function EventSheet({ dog, initial, onClose, onSaved }) {
+// onRecordVisit: 지난 병원 일정이면 "진료 내용 기록하기"(병원 진료 기록을 이 날짜·제목으로 채워 연다). 이미 그날 기록이 있으면 안 준다
+export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVisit }) {
   const ev = initial.event || {};
   const occ = initial.date || initial.start; // 누른 회차 날짜
   const [scopeAsk, setScopeAsk] = useState(null); // 반복 일정: "save" | "remove" — 범위를 고르는 중
@@ -135,6 +138,15 @@ export default function EventSheet({ dog, initial, onClose, onSaved }) {
         </div>
 
         <div className="es-scroll">
+          {onRecordVisit && ev.id && isVisitEvent(ev) && occ <= todayKey() && (
+            <button
+              type="button"
+              className="es-record-visit"
+              onClick={() => onRecordVisit({ at: `${occ}T${ev.time || "10:00"}`, data: { reason: eventTitle(ev).replace(/^.*병원\s*/, "") || eventTitle(ev) } })}
+            >
+              <Ico name="note" size={16} /> 다녀왔나요? 진료 내용 기록하기 ›
+            </button>
+          )}
           {section("what", "무엇을", <><Ico name={k?.ico || "note"} size={15} /> {title.trim() || k?.label || "골라 주세요"}</>, <>
             <div className="es-big">어떤 일정인가요?</div>
             <div className="es-kinds">

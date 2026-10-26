@@ -4,6 +4,7 @@ import { todayKey, toDateKey, formatKoreanDate, addDays } from "../utils/date";
 import { getEventsByDog, getOccurrences, kindOf, REPEATS, EVENT_COLORS } from "../services/calendarEvents";
 import EventSheet, { dateLabel, timeLabel } from "../components/EventSheet";
 import { getRecords, summarize } from "../services/records";
+import { isVisitEvent, isVisitRecord } from "../services/vetVisits";
 import { HOLIDAYS } from "../data/holidays";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
@@ -14,16 +15,17 @@ const dDay = (today, date) => {
   return n === 0 ? "오늘" : n === 1 ? "내일" : `D-${n}`;
 };
 
-export default function Calendar({ dog }) {
+export default function Calendar({ dog, onRecordVisit }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
   const [events, setEvents] = useState(() => getEventsByDog(dog.id));
   const [sheet, setSheet] = useState(null); // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
-  // 지난 병원 진료 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
+  // 지난 병원 진료·접종 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
+  // 같은 날 병원 일정이 있으면 그 일정 카드 안에 붙여 하나로 보여 준다
   const vetByDate = useMemo(() => {
     const map = {};
-    for (const r of getRecords(dog.id)) if (r.type === "vet") (map[r.at.slice(0, 10)] ||= []).push(r);
+    for (const r of getRecords(dog.id)) if (isVisitRecord(r)) (map[r.at.slice(0, 10)] ||= []).push(r);
     return map;
   }, [dog.id]);
 
@@ -51,6 +53,9 @@ export default function Calendar({ dog }) {
   const selectedOcc = useMemo(() => getOccurrences(dog.id, selectedDateKey, selectedDateKey), [dog.id, selectedDateKey, events]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedAge = calculateAge(dog.birthDate, new Date(selectedDateKey));
   const selectedVet = vetByDate[selectedDateKey] || [];
+  // 지난 날: 진료 기록을 그날 첫 병원 일정 카드에 붙인다. 붙일 일정이 없으면 기록만 따로
+  const mergeInto = selectedDateKey <= today && selectedVet.length ? selectedOcc.find((o) => isVisitEvent(o.event))?.event.id : null;
+  const recLine = (r) => (r.type === "vet" ? summarize(r) : `${r.data.kind}${r.data.title ? ` ${r.data.title}` : ""}`);
 
   function handleSheetSaved(start) {
     setEvents(getEventsByDog(dog.id));
@@ -75,7 +80,7 @@ export default function Calendar({ dog }) {
           holidays={HOLIDAYS}
           renderMarker={(key) => {
             const list = byDate[key] || [];
-            const rec = Boolean(vetByDate[key]);
+            const rec = Boolean(vetByDate[key]) && !list.some((o) => isVisitEvent(o.event)); // 병원 일정 점이 있으면 기록 동그라미는 생략
             const bars = list.filter((o) => o.event.endDate).slice(0, 2);
             const dots = [...new Set(list.filter((o) => !o.event.endDate).map((o) => colorOf(o.event)))].slice(0, 3);
             return (
@@ -101,12 +106,12 @@ export default function Calendar({ dog }) {
           <span className="faint">{dog.name} {formatAge(selectedAge)}</span>
         </div>
 
-        {selectedVet.map((r) => (
+        {!mergeInto && selectedVet.map((r) => (
           <div key={r.id} className="day-rec">
             <Ico name="stethoscope" size={15} className="cat-ico tone-blue" />
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="faint" style={{ fontSize: 12 }}>병원 진료 기록 {r.at.slice(11, 16)}</span>
-              <span style={{ display: "block" }}>{summarize(r)}</span>
+              <span className="faint" style={{ fontSize: 12 }}>{r.type === "vet" ? "병원 진료 기록" : "건강 기록"} {r.at.slice(11, 16)}</span>
+              <span style={{ display: "block" }}>{recLine(r)}</span>
             </span>
           </div>
         ))}
@@ -125,6 +130,10 @@ export default function Calendar({ dog }) {
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="day-ev-title">{k && <><Ico name={k.ico} size={15} />{" "}</>}{o.event.title}{o.event.repeat && <>{" "}<Ico name="repeat" size={13} /></>}{o.event.alarm && <>{" "}<Ico name="bell" size={13} /></>}</span>
                     {o.event.memo && <span className="faint" style={{ display: "block" }}>{o.event.memo}</span>}
+                    {mergeInto === o.event.id &&
+                      selectedVet.map((r) => (
+                        <span key={r.id} className="day-ev-rec"><Ico name="note" size={13} /> 진료 기록: {recLine(r)}</span>
+                      ))}
                   </span>
                   <span className="faint">›</span>
                 </button>
@@ -166,7 +175,15 @@ export default function Calendar({ dog }) {
       )}
 
 
-      {sheet && <EventSheet dog={dog} initial={sheet} onClose={() => setSheet(null)} onSaved={handleSheetSaved} />}
+      {sheet && (
+        <EventSheet
+          dog={dog}
+          initial={sheet}
+          onClose={() => setSheet(null)}
+          onSaved={handleSheetSaved}
+          onRecordVisit={onRecordVisit && sheet.event && !(vetByDate[sheet.date || sheet.start] || []).length ? (prefill) => (setSheet(null), onRecordVisit(prefill)) : null}
+        />
+      )}
 
     </div>
   );

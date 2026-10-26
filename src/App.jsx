@@ -374,7 +374,7 @@ export default function App() {
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back ? "← 일정표로" : undefined} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("profile"))} onOpenMeds={() => setTab("meds")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
   // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
@@ -395,7 +395,7 @@ export default function App() {
       </Suspense>
     ),
     home: <Fragment key={pageVersion}>{renderStack(homeScreens, "home")}</Fragment>,
-    calendar: <Calendar key={pageVersion} dog={dog} />,
+    calendar: <Calendar key={pageVersion} dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "calendar" }), setTab("records-new"))} />,
     budget: <Budget key={`${dog.id}-${pageVersion}`} dog={dog} />,
     profile: <Fragment key={pageVersion}>{renderStack(profileScreens, "profile")}</Fragment>,
   };

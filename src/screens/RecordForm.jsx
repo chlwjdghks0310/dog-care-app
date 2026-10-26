@@ -15,10 +15,11 @@ import {
 const MAX_PHOTOS = 4;
 
 // 새 기록 추가: 종류를 고르면 그 종류에 필요한 칸만 보여 준다. initial이 있으면 그 기록 고치기.
-export default function RecordForm({ dog, initial, startType, onSaved, onCancel, onOpenMeds }) {
+// prefill: 새 기록에 미리 채울 { at?, data? } (예: 지난 병원 일정에서 "진료 내용 기록하기")
+export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds }) {
   const [type, setType] = useState(initial?.type || startType || null);
   if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : setType(t))} onCancel={onCancel} />;
-  return <Form key={type} dog={dog} type={type} initial={initial} onSaved={onSaved} onBack={initial ? onCancel : () => setType(null)} />;
+  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : () => setType(null)} />;
 }
 
 function TypePicker({ onPick, onCancel }) {
@@ -64,10 +65,10 @@ function Field({ label, children }) {
   );
 }
 
-function Form({ dog, type, initial, onSaved, onBack }) {
+function Form({ dog, type, initial, prefill, onSaved, onBack }) {
   const [id] = useState(() => initial?.id || newRecordId()); // 같은 id로 저장해 두 번 눌러도 기록은 하나
-  const [at, setAt] = useState(initial?.at || localNow());
-  const [data, setData] = useState(() => ({ ...defaults(type, dog), ...initial?.data }));
+  const [at, setAt] = useState(initial?.at || prefill?.at || localNow());
+  const [data, setData] = useState(() => ({ ...defaults(type, dog), ...prefill?.data, ...initial?.data }));
   const [memo, setMemo] = useState(initial?.memo || "");
   const [photos, setPhotos] = useState(initial?.photos || []);
   const [error, setError] = useState("");
@@ -107,7 +108,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
         const next = type === "vet" ? data.nextDate : type === "life" && data.kind === "예방접종" ? data.nextDate : "";
         if (next || initial?.links) {
           const title = type === "vet" ? `🏥 ${data.hospital ? `${data.hospital} ` : ""}진료 (${data.reason.trim()})` : `💉 예방접종${data.title ? ` (${data.title.trim()})` : ""}`;
-          const links = syncSchedule(dog.id, saved, { title, date: next, alarm: Boolean(data.nextAlarm) });
+          const links = syncSchedule(dog.id, saved, { title, date: next, alarm: Boolean(data.nextAlarm), kind: type === "vet" ? "vet" : "vaccine" });
           saved = saveRecord(dog.id, { ...saved, links });
           syncPushAlarms(); // 알람이 바뀌었을 수 있다 — 실패해도 기록은 이미 저장됨
         }
@@ -123,7 +124,7 @@ function Form({ dog, type, initial, onSaved, onBack }) {
     <div className="card">
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
-        <button type="button" className="btn-ghost small" onClick={onBack}>{initial ? "취소" : "← 종류"}</button>
+        <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill ? "취소" : "← 종류"}</button>
       </div>
 
       <Field label={type === "vet" ? "방문 날짜·시각" : type === "symptom" ? "본 날짜·시각" : "날짜·시각"}>

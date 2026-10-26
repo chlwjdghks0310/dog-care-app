@@ -42,7 +42,7 @@ assert.match(get("meds"), /심장약 1회 1알, 매일 08:00·20:00/);
 assert.match(get("meds"), /(6|7|8)번 중 1번 먹임, 1번 건너뜀, (4|5|6)번 기록 없음/);
 assert.match(get("weight"), /4kg → 3\.6kg \(-0\.4kg, -10%\)/);
 assert.match(get("visits"), /심장 초음파/);
-assert.match(get("visits"), /병원 재진 \(예정\)/);
+assert.match(get("visits"), /다음 예약: .* 병원 재진/);
 assert.doesNotMatch(get("visits"), /간식|미용/);
 assert.match(get("chat"), /밤에 기침/);
 
@@ -54,5 +54,21 @@ assert.match(V.buildVetSummary(dog, note, today).find((x) => x.key === "meds").l
 const off = V.buildVetSummary({ id: "empty", name: "보리", breed: "말티즈" }, { ...V.getVetNote("empty"), sections: { note: true, meds: true } }, today);
 assert.deepEqual(off.map((x) => [x.key, x.lines]), [["note", ["기록 없음"]], ["meds", ["기록 없음"]]]);
 assert.match(V.summaryToText(dog, s, today), new RegExp(`^\\[콩이 병원용 기록\\] ${today}\\n\\n■ 보호자 메모`));
+
+// 같은 날 진료 기록 + 병원 일정 + 진료비 → 한 줄(기록 내용 + 진료비), 일정 제목은 따로 안 나옴. 약 일정은 병원 기록 아님
+{
+  const { saveRecord } = await import("../src/services/records.js");
+  const { saveEvent } = await import("../src/services/calendarEvents.js");
+  const d2 = { id: "d2", name: "보리", breed: "말티즈" };
+  saveRecord(d2.id, { id: "r1", type: "vet", at: `${day(-6)}T10:00`, data: { hospital: "행복동물병원", reason: "슬개골 검사", prescription: "소염제 5일" } });
+  saveEvent(d2.id, day(-6), { title: "행복동물병원 재진", kind: "vet" });
+  addExpense(d2.id, { title: "검진", amount: 80000, date: day(-6), categoryId: "medical" });
+  addExpense(d2.id, { title: "종합백신", amount: 30000, date: day(-6), categoryId: "prevent" });
+  saveEvent(d2.id, day(-3), { title: "심장사상충약", kind: "med" });
+  saveEvent(d2.id, day(-2), { title: "치과 검진", kind: "vet" });
+  const v = V.buildVetSummary(d2, { ...V.getVetNote(d2.id), sections: { visits: true } }, today)[0].lines;
+  const dd = (n) => { const k = day(n); return `${Number(k.slice(5, 7))}/${Number(k.slice(8, 10))}`; };
+  assert.deepEqual(v, [`${dd(-2)} 치과 검진`, `${dd(-6)} 행복동물병원 · 슬개골 검사 (진료비 110,000원)`, "  처방: 소염제 5일"]);
+}
 
 console.log("병원용 기록 확인 통과");

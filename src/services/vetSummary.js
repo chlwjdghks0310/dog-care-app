@@ -3,8 +3,8 @@ import { calculateAge, formatAge } from "../utils/age";
 import { addDays, toDateKey, todayKey } from "../utils/date";
 import { getWeightRecords } from "./weightLog";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
-import { getExpenses } from "./expenses";
-import { getEventsByDog } from "./calendarEvents";
+import { getOccurrences } from "./calendarEvents";
+import { visitsByDate, isVisitEvent, eventTitle } from "./vetVisits";
 import { getChatMemory } from "./chatMemory";
 import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
@@ -42,7 +42,6 @@ export function saveVetNote(dogId, note) {
 }
 
 const GENDER = { female: "암컷", male: "수컷" };
-const VISIT_WORDS = /병원|진료|검진|검사|접종|수술|처방|입원|재진|약/;
 const md = (dateKey) => `${Number(dateKey.slice(5, 7))}/${Number(dateKey.slice(8, 10))}`;
 
 // 반환: [{ key, title, lines: [string] }] — 화면·공유·읽어주기가 같은 내용을 쓴다
@@ -158,22 +157,31 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   }
   add("vitals", `건강 수치 (보호자 측정, 최근 ${note.period}일)`, vitalLines);
 
-  // 최근 병원 기록: 가계부 의료 지출 + 일정표의 병원 관련 일정 (기간과 상관없이 최근 90일)
+  // 최근 병원 기록(90일): 하루 한 묶음 — 진료 기록이 있으면 그것만(내용까지), 없으면 그날 병원 일정·지출 제목. 진료비는 그날 병원·예방 지출 합계
   const visitFrom = toDateKey(addDays(new Date(`${today}T00:00:00`), -90));
-  const visits = [
-    ...getExpenses(dog.id).filter((e) => e.categoryId === "medical" && e.date >= visitFrom && e.date <= today).map((e) => ({ date: e.date, text: e.title })),
-    ...Object.entries(getEventsByDog(dog.id)).flatMap(([date, list]) => (date >= visitFrom ? list.filter((e) => VISIT_WORDS.test(e.title)).map((e) => ({ date, text: `${e.title}${date > today ? " (예정)" : ""}` })) : [])),
-    // 통합 기록의 병원 진료·접종·질환 기록 — 이건 진료 내용까지 옮긴다
-    ...getRecords(dog.id)
-      .filter((r) => r.at.slice(0, 10) >= visitFrom && (r.type === "vet" || (r.type === "life" && ["예방접종", "질환·수술"].includes(r.data.kind))))
-      .map((r) => {
+  const byDay = visitsByDate(dog.id, visitFrom, today);
+  const visitLines = [];
+  for (const date of Object.keys(byDay).sort().reverse().slice(0, 8)) {
+    const { records, events, expenses, cost } = byDay[date];
+    const costText = cost ? ` (진료비 ${cost.toLocaleString("ko-KR")}원)` : "";
+    if (records.length) {
+      records.forEach((r, k) => {
         const d = r.data;
-        const text = r.type === "vet" ? [d.hospital, d.reason].filter(Boolean).join(" ") : `${d.kind}${d.title ? ` ${d.title}` : ""}`;
-        const sub = r.type === "vet" ? [d.explanation && `설명: ${d.explanation}`, d.tests && `검사: ${d.tests}`, d.prescription && `처방: ${d.prescription}`, d.nextDate && `다음 진료: ${mdKey(d.nextDate)}`].filter(Boolean) : [];
-        return { date: r.at.slice(0, 10), text, sub };
-      }),
-  ].sort((a, b) => b.date.localeCompare(a.date));
-  add("visits", "최근 병원 기록 (90일)", visits.slice(0, 8).flatMap((v) => [`${md(v.date)} ${v.text}`, ...(v.sub || []).map((x) => `  ${x}`)]));
+        const text = r.type === "vet" ? [d.hospital, d.reason].filter(Boolean).join(" · ") : `${d.kind}${d.title ? ` ${d.title}` : ""}`;
+        visitLines.push(`${md(date)} ${text}${k === 0 ? costText : ""}`);
+        if (r.type === "vet") for (const x of [d.explanation && `설명: ${d.explanation}`, d.tests && `검사: ${d.tests}`, d.prescription && `처방: ${d.prescription}`, d.nextDate && `다음 진료: ${mdKey(d.nextDate)}`].filter(Boolean)) visitLines.push(`  ${x}`);
+      });
+    } else {
+      const titles = [...new Set([...events.map((o) => eventTitle(o.event)), ...expenses.map((e) => e.title)])];
+      visitLines.push(`${md(date)} ${titles.join(", ")}${costText}`);
+    }
+  }
+  // 앞으로 잡힌 병원 예약(180일 안, 최대 2개)
+  const ahead = getOccurrences(dog.id, toDateKey(addDays(new Date(`${today}T00:00:00`), 1)), toDateKey(addDays(new Date(`${today}T00:00:00`), 180)))
+    .filter((o) => o.isStart && isVisitEvent(o.event))
+    .slice(0, 2);
+  if (ahead.length) visitLines.push(`다음 예약: ${ahead.map((o) => `${md(o.date)} ${eventTitle(o.event)}`).join(", ")}`);
+  add("visits", "최근 병원 기록 (90일)", visitLines);
 
   // 그 밖의 기록에 남긴 메모(최근 6개)
   add(
