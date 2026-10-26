@@ -222,3 +222,70 @@ section { padding: 52px 0; }
 .story-sign { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
 .story-sign p { font-size: 15.5px; }
 .story-name { margin-top: 6px; color: var(--soft); font-size: 14px !important; }
+
+/* ── 배경 로고: 크게·흐리게·고정(스크롤해도 제자리). iOS 사파리는 background-attachment:fixed가 불안정해 body::before로 */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: url("/icon-512.png?v=6") center / min(78vw, 620px) no-repeat;
+  opacity: 0.07; mix-blend-mode: multiply;
+}
+body { background: transparent; }
+html { background: var(--bg); }
+.top { background: color-mix(in srgb, var(--bg) 80%, transparent); }
+
+/* ── 누르면 움직이는 휴대폰 데모 */
+.demo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.demo-hint { font-size: 14px; font-weight: 700; color: var(--accent-strong); background: var(--accent-soft); padding: 6px 14px; border-radius: 999px; }
+html.js .demo-hint { animation: hint-bob 1.6s ease-in-out infinite; }
+@keyframes hint-bob { 50% { transform: translateY(4px); } }
+.demo-phone { width: min(300px, 76vw); }
+.strip { display: flex; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.strip img { flex: 0 0 100%; width: 100%; }
+/* 화면 아래 탭 줄 위에 투명 버튼(스크린샷 속 탭과 같은 자리) */
+.hots { position: absolute; left: 0; right: 0; bottom: 0; height: 10%; display: grid; grid-template-columns: repeat(5, 1fr); }
+.hot { border: none; background: transparent; cursor: pointer; border-radius: 12px; padding: 0; }
+.hot:hover { background: rgba(47, 111, 189, 0.08); }
+.hot[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--btn); }
+.hot:focus-visible { outline: 3px solid var(--btn); outline-offset: -3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (min-width: 1024px) { .demo-phone { width: 300px; } }
+
+/* ── 기능 설명 패널: 휴대폰에서 열리듯(clip-path) 커진다. JS가 없으면 휴대폰 아래에 차례로 보인다 */
+.svc-wrap { display: grid; gap: 20px; margin-top: 28px; }
+.svc-wrap { margin-top: 0; }
+.svc { display: none; }
+.hero.open .hero-in { display: none; }
+.svc.on { display: grid; }
+.svc { gap: 22px; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 28px; box-shadow: var(--phone-shadow); transition: clip-path 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.svc:focus { outline: none; }
+.svc-head { display: flex; align-items: flex-end; gap: 14px; }
+.svc-dog { width: 120px; height: auto; flex-shrink: 0; filter: drop-shadow(0 8px 12px rgba(43, 35, 32, 0.15)); }
+.svc-bubble { position: relative; flex: 1; background: var(--accent-soft); border-radius: 20px; padding: 14px 16px; margin-bottom: 18px; }
+.svc-bubble::before { content: ""; position: absolute; left: -8px; bottom: 18px; width: 16px; height: 16px; background: var(--accent-soft); transform: rotate(45deg); border-radius: 3px; }
+.svc-who { font-weight: 800; font-size: 14px; color: var(--accent-strong); }
+.svc-who span { font-weight: 600; color: var(--soft); }
+.svc-bubble h3 { font-size: clamp(22px, 4vw, 28px); font-weight: 800; margin: 2px 0 6px; }
+.svc-say { font-size: 16.5px; line-height: 1.6; }
+.svc-body { display: grid; gap: 16px; }
+.svc-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.svc-cards li { padding: 14px 16px; background: #fff; border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; gap: 4px; }
+.svc-cards b { font-size: 16px; }
+.svc-cards span { color: var(--soft); font-size: 15px; line-height: 1.55; }
+.svc-note { font-size: 14px; padding: 10px 12px; border-radius: 12px; background: var(--rose-bg); }
+.svc-shots { position: relative; display: flex; gap: 12px; justify-content: center; }
+.svc-shots .phone.mini { width: min(200px, 42vw); border-width: 4px; border-radius: 22px; }
+.svc-shots .tag { top: 8px; right: auto; left: 50%; transform: translateX(-50%); }
+.svc-back { justify-self: center; width: min(360px, 100%); }
+@media (min-width: 900px) {
+  .svc { grid-template-columns: 1fr 1fr; grid-template-areas: "head shots" "body shots" "back back"; align-items: start; padding: 36px; column-gap: 40px; }
+  .svc-head { grid-area: head; }
+  .svc-body { grid-area: body; }
+  .svc-shots { grid-area: shots; position: sticky; top: calc(var(--head) + 16px); }
+  .svc-shots .phone.mini { width: min(240px, 18vw); }
+  .svc-dog { width: 160px; }
+  .svc-back { grid-area: back; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .strip, .svc { transition: none; }
+  html.js .demo-hint { animation: none; }
+}

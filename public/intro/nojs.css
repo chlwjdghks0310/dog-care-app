@@ -1,0 +1,4 @@
+/* 자바스크립트가 꺼져 있으면: 기능 설명 패널을 휴대폰 아래에 차례로 모두 보여 준다 */
+.svc { display: grid !important; }
+.svc-wrap { margin-top: 28px; }
+.svc-back, .demo-hint { display: none !important; }
