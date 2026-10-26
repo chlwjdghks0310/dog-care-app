@@ -1,0 +1,45 @@
+/* 소개 페이지(public/intro) 전용 daisyUI — 앱(src/)에는 쓰지 않는다.
+   만들기: npm run build:intro-css → public/intro/daisy.css (만든 파일을 커밋해서 배포 빌드에는 Tailwind가 필요 없음)
+   Tailwind 기본 초기화(preflight)는 넣지 않는다 — 이미 있는 intro.css 모양이 바뀌지 않게. index.html에 실제로 쓴 클래스만 담긴다. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../public/intro/index.html";
+
+/* prefix "d-": daisyUI 클래스는 d-btn·d-card·d-collapse처럼 쓴다 — intro.css의 .btn·.hero·.steps와 이름이 겹치지 않게 */
+@plugin "daisyui" {
+  themes: false;
+  logs: false;
+  prefix: "d-";
+}
+
+/* 멍케어 색(앱·intro.css와 같은 값). 버튼 글씨 대비 4.5:1 이상인 #2f6fbd를 대표색으로, 항상 밝은 화면 */
+@plugin "daisyui/theme" {
+  name: "mungcare";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f0f6ff;
+  --color-base-300: #d6e4f5;
+  --color-base-content: #2b2320;
+  --color-primary: #2f6fbd;
+  --color-primary-content: #ffffff;
+  --color-secondary: #1d7673;
+  --color-secondary-content: #ffffff;
+  --color-accent: #5b4fb8;
+  --color-accent-content: #ffffff;
+  --color-neutral: #2b2320;
+  --color-neutral-content: #ffffff;
+  --color-info: #2f6fbd;
+  --color-info-content: #ffffff;
+  --color-success: #4c8c5b;
+  --color-success-content: #ffffff;
+  --color-warning: #c98a2e;
+  --color-warning-content: #2b2320;
+  --color-error: #c15b4a;
+  --color-error-content: #ffffff;
+  --radius-selector: 1rem;
+  --radius-field: 0.875rem;
+  --radius-box: 1.25rem;
+  --border: 1px;
+}

@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "server": "node server/index.js",
-    "test": "node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/weight-logic.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/medications.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/vet-summary.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/records.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/calendar.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/budget.test.mjs && node scripts/ai-answer.test.mjs && node scripts/icons.test.mjs && node scripts/vitalTile.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/chat-actions.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/sync.test.mjs"
+    "test": "node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/weight-logic.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/medications.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/vet-summary.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/records.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/calendar.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/budget.test.mjs && node scripts/ai-answer.test.mjs && node scripts/icons.test.mjs && node scripts/vitalTile.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/chat-actions.test.mjs && node --experimental-loader ./scripts/resolve-extensionless-loader.mjs scripts/sync.test.mjs",
+    "build:intro-css": "tailwindcss -i intro-src/daisy.css -o public/intro/daisy.css --minify"
   },
   "dependencies": {
     "@animateicons/react": "0.12.1",
@@ -28,11 +29,13 @@
     "ws": "8.21.3"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "daisyui": "^5.7.50",
     "oxlint": "^1.81.0",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.3.5"
   }
 }
