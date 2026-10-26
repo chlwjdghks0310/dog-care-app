@@ -996,3 +996,4 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .food-row { display: grid; grid-template-columns: 72px 1fr; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); font-size: 13.5px; line-height: 1.45; }
 .food-sources { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; font-size: 12.5px; }
 .food-sources a { color: var(--accent-strong); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.food-ref { display: block; margin-top: 4px; padding: 6px 8px; border-radius: 8px; background: var(--c-rose-bg); color: var(--text); font-size: 12.5px; line-height: 1.45; }

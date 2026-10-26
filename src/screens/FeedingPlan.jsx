@@ -190,7 +190,9 @@ function FoodCard({ dog, settings, onUse }) {
   }
 
   const info = result?.info;
-  const per100 = info?.kcal_per_kg > 0 ? Math.round(info.kcal_per_kg / 10) : 0;
+  // 일반 건사료 열량 범위를 크게 벗어나면(검색 실수 가능성) 계산 버튼을 주지 않는다 — ponytail: 범위는 넉넉히 2,500~5,500kcal/kg, 습식·동결건조는 따로 다루지 않음
+  const per100 = info?.kcal_per_kg >= 2500 && info.kcal_per_kg <= 5500 ? Math.round(info.kcal_per_kg / 10) : 0;
+  const official = info?.kcal_source === "제조사 한국 공식";
   const using = per100 && settings.kcalPer100g === per100;
   const rows = info?.found
     ? [["대상", [info.life_stage, info.dog_size].filter(Boolean).join(" · ")], ["주원료", info.main_ingredients], ["등록성분량", info.analysis], ["알아 둘 점", info.cautions]].filter(([, v]) => v)
@@ -216,7 +218,8 @@ function FoodCard({ dog, settings, onUse }) {
               <div className="food-kcal">
                 {per100 ? (
                   <>
-                    <b>{info.kcal_per_kg.toLocaleString("ko-KR")} kcal/kg</b> <span className="faint">(100g당 {per100}kcal · {info.kcal_source})</span>
+                    <b>{info.kcal_per_kg.toLocaleString("ko-KR")} kcal/kg</b> <span className="faint">(100g당 {per100}kcal · {info.kcal_source}{info.edition === "해외판" ? " · 해외판" : ""} · {result.at} 확인)</span>
+                    {!official && <span className="food-ref">참고 값 — 국내 공식 자료로 확인하지 못했어요. 봉투에 적힌 열량이 있으면 그걸 쓰세요.</span>}
                   </>
                 ) : (
                   <span className="faint">열량을 kcal/kg로 확인하지 못했어요{info.kcal_text ? ` (적힌 표기: ${info.kcal_text})` : ""}. 사료 봉투 뒷면의 "대사에너지"를 아래 칸에 적어 주세요.</span>
@@ -227,7 +230,7 @@ function FoodCard({ dog, settings, onUse }) {
               ))}
               {per100 > 0 && (
                 <button type="button" className={using ? "btn-ghost" : "btn-primary"} style={{ width: "100%", marginTop: 10 }} disabled={using} onClick={() => onUse({ kcalPer100g: per100 })}>
-                  {using ? "✓ 이 열량으로 계산하고 있어요" : "이 열량으로 계산"}
+                  {using ? "✓ 이 열량으로 계산하고 있어요" : official ? "이 열량으로 계산" : "참고 값으로 계산"}
                 </button>
               )}
               <p className="faint" style={{ margin: "8px 0 0" }}>AI가 웹에서 찾은 정보라 틀릴 수 있어요. 사료 봉투에 적힌 열량과 같은지 한 번 확인해 주세요.</p>
