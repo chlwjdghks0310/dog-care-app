@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
-import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme } from "../services/themeSettings";
+import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme, themeLabel } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
@@ -705,12 +705,19 @@ function NewRecordFab({ onClick }) {
   );
 }
 
-// 배경 테마: 색 조합 5개 + 같은 색 발바닥 5개(기본은 소프트블루). 누르면 바로 바뀌고 저장된다
+// 배경 테마: 색 조합 11개(기본 소프트 블루 포함) + 같은 색 발바닥. 눌러서 펼치고, 고르면 바로 바뀌고 저장된다.
+// 다크 모드일 때는 흐리게 잠가 둔다(다크 색이 우선이라 골라도 안 보이므로) — 다크 모드를 끄면 다시 열 수 있다
 function ThemeCard({ dark }) {
   const [cur, setCur] = useState(getColorTheme);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (dark) setOpen(false); // 다크 모드를 켜면 접는다 — 끄고 나서 다시 눌러 연다
+  }, [dark]);
   const pick = (id) => (setColorTheme(id), setCur(id));
+  const expanded = open && !dark;
+  const curColor = COLOR_THEMES.find((t) => t.id === (cur.split("-")[0] === "softblue" ? "" : cur.split("-")[0])) || COLOR_THEMES[0];
   const swatch = (t, paw) => {
-    const id = t.id && paw ? `${t.id}-paw` : t.id;
+    const id = paw ? `${t.id || "softblue"}-paw` : t.id;
     const on = cur === id;
     return (
       <button key={id || "base"} type="button" className={`theme-sw${on ? " on" : ""}`} aria-pressed={on} onClick={() => pick(id)} style={{ "--sw-bg": t.bg, "--sw-ac": t.accent }}>
@@ -720,13 +727,23 @@ function ThemeCard({ dark }) {
     );
   };
   return (
-    <div className="card" style={{ marginBottom: 14 }}>
-      <div className="h2" style={{ display: "flex", alignItems: "center", gap: 6 }}><Ico name="sparkles" size={18} /> 배경 테마</div>
-      {dark && <p className="faint" style={{ marginTop: -4 }}>다크 모드에서는 어두운 색으로 보여요. 다크 모드를 끄면 고른 테마가 적용돼요.</p>}
-      <div className="faint" style={{ margin: "0 0 6px" }}>색 조합</div>
-      <div className="theme-grid">{COLOR_THEMES.map((t) => swatch(t, false))}</div>
-      <div className="faint" style={{ margin: "12px 0 6px" }}>발바닥</div>
-      <div className="theme-grid">{COLOR_THEMES.filter((t) => t.id).map((t) => swatch(t, true))}</div>
+    <div className={`card theme-card${dark ? " locked" : ""}`} style={{ marginBottom: 14 }}>
+      <button type="button" className="theme-head" aria-expanded={expanded} aria-disabled={dark} onClick={() => !dark && setOpen((v) => !v)}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}><Ico name="sparkles" size={18} /> 배경 테마</span>
+          <span className="faint" style={{ display: "block", marginTop: 4 }}>{dark ? "다크 모드를 끄면 고를 수 있어요" : `지금: ${themeLabel(cur)}`}</span>
+        </span>
+        <span className="theme-dot" aria-hidden="true" style={{ "--sw-ac": curColor.accent }}>{cur.endsWith("-paw") ? <Ico name="paw" size={16} /> : null}</span>
+        {!dark && <span className="faint" aria-hidden="true">{expanded ? "▴" : "▾"}</span>}
+      </button>
+      {expanded && (
+        <div style={{ marginTop: 12 }}>
+          <div className="faint" style={{ margin: "0 0 6px" }}>색 조합</div>
+          <div className="theme-grid">{COLOR_THEMES.map((t) => swatch(t, false))}</div>
+          <div className="faint" style={{ margin: "12px 0 6px" }}>발바닥</div>
+          <div className="theme-grid">{COLOR_THEMES.map((t) => swatch(t, true))}</div>
+        </div>
+      )}
     </div>
   );
 }
