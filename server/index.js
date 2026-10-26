@@ -384,7 +384,11 @@ async function createWithContinuation(params, messages) {
 
 // 채팅으로 앱에 기록하기 — AI가 아래 도구를 부르면 서버는 저장하지 않고(기록은 폰에 있음) 그대로 앱에 돌려주고,
 // 앱이 확인 후 저장한다. 정보가 모자라면 도구를 부르지 말고 되묻게 한다.
-const KIND = { type: "string", enum: ["expense", "calendar_event", "weight", "alarm", "health_record"], description: "expense=가계부 지출, calendar_event=일정표 일정, weight=체중 기록, alarm=알람, health_record=건강 수치·증상·식사 등 [보호자 기록]/[건강 수치]의 기록" };
+const KIND = { type: "string", enum: ["expense", "fixed_expense", "calendar_event", "weight", "alarm", "health_record"], description: "expense=가계부 지출, fixed_expense=매달 나가는 돈(등록), calendar_event=일정표 일정, weight=체중 기록, alarm=알람, health_record=건강 수치·증상·식사 등 [보호자 기록]/[건강 수치]의 기록" };
+// 통합 기록(src/services/records.js)의 선택지와 같은 값
+const LEVEL = { type: "string", enum: ["평소보다 적음", "평소", "평소보다 많음"] };
+const VET_ITEM_ENUM = { type: "array", items: { type: "string", enum: ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약"] }, description: "병원비 항목(병원·예방 지출일 때만, 말한 것만)" };
+const CLAIM = { type: "string", enum: ["none", "todo", "sent", "paid"], description: "보험 청구: none=안 함, todo=청구 전, sent=청구함, paid=보험금 받음. 말하지 않았으면 생략" };
 const VITAL_METRIC = { type: "string", enum: ["dry", "wet", "treat", "water", "fluid", "resp", "heart", "temp", "walk"], description: "dry=건식 사료(g), wet=습식(g), treat=간식(개), water=음수량(ml), fluid=피하수액(ml), resp=호흡수(회/분), heart=심박수(회/분), temp=체온(℃), walk=산책(분)" };
 const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
 // 앱 일정표의 종류(src/services/calendarEvents.js EVENT_KINDS와 같은 id)
@@ -399,12 +403,28 @@ function appTools(categories) {
     input_schema: { type: "object", properties, required, additionalProperties: false },
   });
   return [
-    tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만. 분류가 애매하면 category를 \"모름\"으로 보내면 앱이 분류 버튼을 띄워 묻는다.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category, memo: { type: "string", description: "병원 이름 등 덧붙일 말(없으면 빈 문자열)" } }, ["title", "amount", "date", "category"]),
+    tool("add_expense", "가계부에 지출 1건을 기록한다. 무엇에 썼는지와 금액이 분명할 때만. 분류가 애매하면 category를 \"모름\"으로 보내면 앱이 분류 버튼을 띄워 묻는다.", { title: { type: "string" }, amount: { type: "integer", description: "원 단위 정수" }, date: DATE, category, memo: { type: "string", description: "병원 이름 등 덧붙일 말(없으면 빈 문자열)" }, items: VET_ITEM_ENUM, claim: CLAIM, claim_paid: { type: "integer", description: "받은 보험금(claim=paid일 때)" } }, ["title", "amount", "date", "category"]),
+    tool(
+      "add_fixed_expense",
+      "매달 정해진 날 나가는 돈(보험료·정기 배송 사료 등)을 '매달 나가는 돈'에 등록한다. 등록하면 그날마다 가계부에 저절로 기록된다. 이번 한 번 쓴 돈은 add_expense.",
+      { title: { type: "string" }, amount: { type: "integer", description: "한 달 금액(원)" }, day: { type: "integer", description: "매달 나가는 날 1~31" }, category, memo: { type: "string" } },
+      ["title", "amount", "day", "category"]
+    ),
+    tool("add_expense_category", "가계부에 새 분류를 만든다(보호자가 분류를 만들어 달라고 할 때만).", { name: { type: "string", description: "분류 이름(짧게)" } }, ["name"]),
     tool("set_allowance", "그 달 강아지 용돈(쓸 예산)을 정한다.", { month: { type: "string", description: "YYYY-MM" }, amount: { type: "integer" } }, ["month", "amount"]),
     tool(
       "add_calendar_event",
       "일정표에 그 날짜의 일정 1건을 추가한다. 내용에 맞는 종류(kind)를 고르고, 시각을 말했으면 time에 넣는다(제목에는 시각을 넣지 않는다).",
-      { date: DATE, title: { type: "string", description: "짧은 제목. 예: '미용 예약', '종합백신 2차'" }, kind: EVENT_KIND, time: { type: "string", description: "HH:MM(24시간). 시각을 말하지 않았으면 생략" } },
+      {
+        date: DATE,
+        title: { type: "string", description: "짧은 제목. 예: '미용 예약', '종합백신 2차'" },
+        kind: EVENT_KIND,
+        time: { type: "string", description: "HH:MM(24시간). 시각을 말하지 않았으면 생략" },
+        end_date: { ...DATE, description: "며칠 이어지는 일정(호텔링·입원 등)의 끝나는 날. 하루 일정이면 생략" },
+        repeat: { type: "string", enum: ["weekly", "monthly", "yearly"], description: "매주·매달·매년 반복을 말했을 때만" },
+        memo: { type: "string", description: "준비물·병원 이름 등 덧붙일 말(선택)" },
+        alarm: { type: "string", enum: ["morning", "before1h", "eve"], description: "알림을 원할 때만: morning=당일 아침 9시, before1h=1시간 전(시각 있을 때), eve=전날 저녁 8시" },
+      },
       ["date", "title", "kind"]
     ),
     tool("add_weight_record", "체중 관리에 체중 기록을 추가한다.", { weight_kg: { type: "number" }, date: DATE, time: { type: "string", description: "HH:MM, 모르면 생략" } }, ["weight_kg", "date"]),
@@ -427,6 +447,44 @@ function appTools(categories) {
       },
       ["metric", "value", "date"]
     ),
+    tool(
+      "add_health_record",
+      "건강·생활 기록 1건을 남긴다(증상, 식사, 배변·배뇨, 병원 진료, 컨디션, 일상, 성장·추억·예방접종). 숫자 수치는 add_health_value, 몸무게는 add_weight_record. 보호자가 말한 것만 넣고 나머지 칸은 생략한다.",
+      {
+        record_type: { type: "string", enum: ["symptom", "meal", "potty", "vet", "condition", "daily", "life"], description: "symptom=증상, meal=식사, potty=배변·배뇨, vet=병원 진료, condition=컨디션, daily=일상(산책·간식·미용·양치·놀이), life=성장·추억·예방접종·질환·수술" },
+        date: DATE,
+        time: { type: "string", description: "HH:MM(24시간). 말하지 않았으면 생략" },
+        memo: { type: "string", description: "덧붙일 말(선택)" },
+        symptoms: { type: "array", items: { type: "string", enum: ["구토", "설사", "기침", "식욕 없음", "기운 없음", "절뚝거림", "가려움·긁음", "눈 이상", "귀 이상", "피부 이상", "숨이 가쁨", "떨림", "물 많이 마심", "기타"] }, description: "symptom: 증상(여러 개 가능)" },
+        repeat: { type: "string", enum: ["처음", "가끔", "자주", "계속"], description: "symptom: 얼마나 자주" },
+        since: { ...DATE, description: "symptom: 처음 본 날(말했을 때만)" },
+        observed: { type: "string", description: "symptom: 보호자가 본 모습 그대로" },
+        appetite: { ...LEVEL, description: "meal: 식욕" },
+        water: { ...LEVEL, description: "meal: 물 마시는 양" },
+        food: { type: "string", description: "meal: 사료 이름" },
+        amount: { type: "string", description: "meal: 급여량(예: 40g, 반 컵)" },
+        treats: { type: "string", description: "meal: 간식" },
+        stool: { type: "string", enum: ["정상", "무름", "설사", "딱딱함", "피 섞임", "안 봄"], description: "potty: 대변" },
+        urine: { type: "string", enum: ["정상", "잦음", "적음", "색 이상", "실수", "안 봄"], description: "potty: 소변" },
+        hospital: { type: "string", description: "vet: 병원 이름" },
+        reason: { type: "string", description: "vet: 진료 사유(필수)" },
+        explanation: { type: "string", description: "vet: 수의사 설명(들은 그대로)" },
+        tests: { type: "string", description: "vet: 검사 결과" },
+        prescription: { type: "string", description: "vet: 처방(들은 그대로, 용량을 바꾸거나 지어내지 않음)" },
+        cost: { type: "integer", description: "vet: 진료비(원) — 적으면 가계부에도 같이 기록됨" },
+        next_date: { ...DATE, description: "vet: 다음 진료일 / life 예방접종: 다음 접종일 — 일정표에도 들어감" },
+        activity: { ...LEVEL, description: "condition: 활동량" },
+        sleep: { ...LEVEL, description: "condition: 수면" },
+        body: { type: "string", description: "condition: 피부·귀·눈" },
+        oral: { type: "string", description: "condition: 구강" },
+        daily_kind: { type: "string", enum: ["산책", "간식", "미용·목욕", "양치", "놀이", "기타"], description: "daily: 무엇을 했나" },
+        minutes: { type: "integer", description: "daily 산책·놀이: 시간(분)" },
+        life_kind: { type: "string", enum: ["예방접종", "질환·수술", "기념일", "특별한 일", "추억"], description: "life: 어떤 기록" },
+        title: { type: "string", description: "life: 제목(예: 종합백신 3차, 처음 바다 간 날)" },
+      },
+      ["record_type", "date"]
+    ),
+    tool("set_feeding_times", "사료 계산기의 급여 시각(밥 주는 시각)을 정한다. 말한 시각들로 바꾼다(체크리스트에 밥 주기 항목이 생김).", { times: { type: "array", items: { type: "string", description: "HH:MM(24시간)" }, description: "하루 급여 시각들" } }, ["times"]),
     tool(
       "mark_med_dose",
       "약 관리의 복용 건 1개를 기록한다. 보호자가 약을 먹였다/건너뛰었다/잘못 말했으니 취소해 달라고 할 때만. 앱 기록 [약 관리]의 [복용:...] 값 그대로 쓴다.",
@@ -452,6 +510,11 @@ function appTools(categories) {
         value: { type: "number", description: "health_record 건강 수치의 새 숫자" },
         time: { type: "string", description: "HH:MM" },
         event_kind: { ...EVENT_KIND, description: `calendar_event 일정의 새 종류(바꿀 때만). ${EVENT_KIND.description}` },
+        memo: { type: "string", description: "expense·calendar_event·health_record의 새 메모" },
+        claim: CLAIM,
+        claim_paid: { type: "integer", description: "expense: 받은 보험금" },
+        items: VET_ITEM_ENUM,
+        day: { type: "integer", description: "fixed_expense: 새 매달 나가는 날" },
       },
       ["kind", "id", "summary"]
     ),
@@ -474,7 +537,11 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 지난 답변 끝의 [앱 처리 결과]는 앱에서 실제로 일어난 일이다(기록 완료, 버튼을 눌러 고침·지움, 취소함). 이것과 지금 앱 기록을 기준으로 판단한다:
   이미 기록·처리된 일을 "안 했다"고 말하거나 다시 기록하지 않고, 보호자가 취소한 고치기·지우기를 다시 제안하지 않는다.
   도구는 이번 메시지에서 보호자가 새로 시킨 일에만 쓴다. 지난 대화의 요청을 다시 처리하지 않는다.
-- 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
+- 가계부: 이번에 쓴 돈 → add_expense(병원비면 items, 보험 청구를 말하면 claim). "매달 25일에 펫보험 3만 2천 원 나가" → add_fixed_expense(등록하면 그날마다 저절로 기록). "보험금 받았어/청구했어" → 그 지출을 update_record(claim). 분류를 새로 만들어 달라면 add_expense_category.
+- 건강·생활 기록: "아침에 토했어"(symptom), "밥 반만 먹었어"(meal), "설사했어"(potty), "병원 다녀왔어, 슬개골 검사, 진료비 8만 원"(vet — reason 필수, 처방은 들은 그대로), "오늘 기운 없어 보여"(condition), "양치했어/산책 40분"(daily — 산책 시간만 말하면 add_health_value walk도 됨, 하나만), "종합백신 3차 맞았어"(life 예방접종) → add_health_record.
+- 밥 시간: "밥은 8시랑 6시에 줘" → set_feeding_times.
+- 약을 새로 등록하거나 용량을 바꾸는 건 하지 않는다 — "약 관리에서 처방대로 등록해 줘"라고 안내한다.
+- 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). "매달 10일 심장사상충약" → repeat=monthly. "금~일 호텔링" → end_date. "전날 알려 줘" → alarm=eve. 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
 - 건강 수치: "건식 50g 먹었어", "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
   사료가 건식인지 습식인지(캔·파우치=습식), 단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
   수치를 보고 진단하지 않는다. [건강 수치]에 참고 범위 밖 값이 있으면 사실만 말하고(예: "잘 때 호흡수가 42회로 적혔어"), 계속되면 동물병원에 문의하라고 한다.
@@ -537,7 +604,7 @@ app.post("/api/ask", async (req, res) => {
     const actions = [];
     for (let i = 0; i < 3 && response.stop_reason === "tool_use"; i++) {
       const uses = response.content.filter((b) => b.type === "tool_use");
-      actions.push(...uses.map((u) => ({ type: u.name, ...u.input })));
+      actions.push(...uses.map((u) => ({ ...u.input, type: u.name }))); // 도구 이름이 항상 type(입력 칸 이름과 겹쳐도 덮이지 않게)
       convo = [
         ...convo,
         { role: "assistant", content: response.content },

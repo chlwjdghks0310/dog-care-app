@@ -509,7 +509,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
                 {m.records?.ask?.map((a, j) => (
                   <div key={`ask${j}`} className="ask-card">
                     <div style={{ fontWeight: 700, marginBottom: 2 }}><Ico name="wallet" size={15} /> 어느 분류로 적을까요?</div>
-                    <div style={{ marginBottom: 8 }}>{a.title} · {a.amount.toLocaleString("ko-KR")}원 · {a.date.slice(5).replace("-", "/")}</div>
+                    <div style={{ marginBottom: 8 }}>{a.title} · {a.amount.toLocaleString("ko-KR")}원 · {a.fixed ? `매달 ${a.day}일` : a.date.slice(5).replace("-", "/")}</div>
                     {a.status ? (
                       <div className="faint">{a.status}</div>
                     ) : (

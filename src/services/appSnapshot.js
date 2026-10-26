@@ -6,7 +6,7 @@ import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getFeedingSettings } from "./feedingSettings";
 import { getWeightRecords } from "./weightLog";
-import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY, resolveCategoryId } from "./expenses";
+import { getExpenses, getCategories, getAllowance, UNKNOWN_CATEGORY, resolveCategoryId, getFixedExpenses, CLAIMS } from "./expenses";
 import { toDateKey, todayKey } from "../utils/date";
 import { getRecords, filterTimeline, summarize, TYPES } from "./records";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
@@ -116,7 +116,7 @@ export function buildAppSnapshot(dog) {
   const sum = (list) => list.reduce((s, e) => s + e.amount, 0);
   const allowance = getAllowance(dog.id, thisMonth);
   const spent = sum(inMonth(thisMonth));
-  if (expenses.length || allowance) {
+  if (expenses.length || allowance || getFixedExpenses(dog.id).length) {
     lines.push("", "[가계부]");
     lines.push(`이번 달(${thisMonth}) 지출 ${won(spent)}${allowance ? `, 용돈 ${won(allowance)}, ${allowance - spent >= 0 ? `남은 돈 ${won(allowance - spent)}` : `${won(spent - allowance)} 초과`}` : ", 용돈 미설정"}`);
     lines.push(`지난달(${lastMonth}) 지출 ${won(sum(inMonth(lastMonth)))}`);
@@ -125,7 +125,9 @@ export function buildAppSnapshot(dog) {
     const catLine = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${won(v)}`).join(", ");
     if (catLine) lines.push(`이번 달 카테고리별: ${catLine}`);
     const latest = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
-    if (latest.length) lines.push(`최근 지출(최대 30건): ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)})${e.memo ? ` 메모:${e.memo}` : ""} [id:${e.id}]`).join("; ")}`);
+    const fixedList = getFixedExpenses(dog.id);
+    if (fixedList.length) lines.push(`매달 나가는 돈(등록, 그날마다 저절로 기록): ${fixedList.map((f) => `매달 ${f.day}일 ${f.title} ${won(f.amount)}(${catName(f.categoryId)}) [id:${f.id}]`).join("; ")}`);
+    if (latest.length) lines.push(`최근 지출(최대 30건): ${latest.map((e) => `${e.date} ${e.title} ${won(e.amount)}(${catName(e.categoryId)})${e.items?.length ? ` 항목:${e.items.join("·")}` : ""}${e.claim ? ` 보험:${Object.fromEntries(CLAIMS)[e.claim]}${e.claimPaid ? ` ${won(e.claimPaid)}` : ""}` : ""}${e.memo ? ` 메모:${e.memo}` : ""} [id:${e.id}]`).join("; ")}`);
   }
 
   return lines.join("\n");
