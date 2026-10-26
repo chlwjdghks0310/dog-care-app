@@ -7,6 +7,7 @@ import { quickStoolCheck } from "../services/aiClient";
 import { normalizeStoolResult } from "../services/photoCheck";
 import { VITALS, VITAL } from "../data/vitals";
 import Ico from "../components/Ico";
+import { linkVetExpense } from "../services/vetVisits";
 import {
   TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule,
@@ -104,7 +105,12 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
         saved = savedWeightId.current ? updateWeightRecord(dog.id, savedWeightId.current, input) : addWeightRecord(dog.id, input);
         savedWeightId.current = saved.id;
       } else {
-        saved = saveRecord(dog.id, { ...rec, links: initial?.links });
+        saved = saveRecord(dog.id, { ...rec, links: initial?.links, expenseId: initial?.expenseId });
+        // 진료비를 적으면 가계부(병원·치료)에도 같은 지출로 — 고치면 그 지출도 같이 고친다
+        if (type === "vet") {
+          const expenseId = linkVetExpense(dog.id, saved);
+          if (expenseId !== saved.expenseId) saved = saveRecord(dog.id, { ...saved, expenseId });
+        }
         const next = type === "vet" ? data.nextDate : type === "life" && data.kind === "예방접종" ? data.nextDate : "";
         if (next || initial?.links) {
           const title = type === "vet" ? `🏥 ${data.hospital ? `${data.hospital} ` : ""}진료 (${data.reason.trim()})` : `💉 예방접종${data.title ? ` (${data.title.trim()})` : ""}`;
@@ -187,6 +193,14 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
           <Field label="수의사 설명">{text("explanation", "들은 내용을 그대로 적어 두세요")}</Field>
           <Field label="검사 결과">{text("tests", "예: 혈액검사 정상, 엑스레이 이상 없음")}</Field>
           <Field label="처방">{text("prescription", "예: 위장약 5일분 (매일 먹일 약은 약 관리에도 등록하면 알림이 와요)")}</Field>
+          <Field label="진료비 (선택)">
+            <input
+              value={data.cost ? Number(data.cost).toLocaleString("ko-KR") : ""}
+              onChange={(e) => set("cost")(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric"
+              placeholder="예: 80,000 — 적으면 가계부에도 기록돼요"
+            />
+          </Field>
           <NextDate data={data} set={set} label="다음 진료일" />
         </>
       )}

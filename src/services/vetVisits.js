@@ -2,7 +2,7 @@
 // 병원용 기록·일정표가 같이 써서, 같은 방문이 일정·기록·지출로 세 번 나오지 않게 한다.
 import { getRecords } from "./records";
 import { getOccurrences } from "./calendarEvents";
-import { getExpenses, resolveCategoryId } from "./expenses";
+import { getExpenses, resolveCategoryId, addExpense, updateExpense } from "./expenses";
 
 const VISIT_WORDS = /병원|진료|검진|검사|접종|수술|처방|입원|재진/; // 종류가 없는 예전 일정만 제목으로 판단("약"은 약 일정과 헷갈려 뺌)
 export const isVisitEvent = (e) => (e.kind ? e.kind === "vet" || e.kind === "vaccine" : VISIT_WORDS.test(e.title || ""));
@@ -27,3 +27,18 @@ export function visitsByDate(dogId, from, to) {
 }
 
 export const eventTitle = (e) => e.title.replace(/^\p{Extended_Pictographic}️?\s*/u, "");
+
+// 병원 진료 기록의 진료비 → 가계부 지출(병원·치료). 이미 이어진 지출이 있으면 고치고, 없으면 새로. 반환: 이어진 지출 id
+// 진료비 칸을 비워도 이미 적힌 지출은 지우지 않는다(돈 쓴 기록은 가계부에서 직접 지우게)
+export function linkVetExpense(dogId, rec) {
+  const amount = Number(rec.data?.cost) || 0;
+  const linked = rec.expenseId && getExpenses(dogId).find((e) => e.id === rec.expenseId);
+  if (!amount) return linked ? rec.expenseId : undefined;
+  const d = rec.data;
+  const fields = { title: [d.hospital, d.reason].filter(Boolean).join(" ") || "병원 진료", amount, date: rec.at.slice(0, 10), recordId: rec.id };
+  if (linked) {
+    updateExpense(dogId, linked.id, fields);
+    return linked.id;
+  }
+  return addExpense(dogId, { ...fields, categoryId: "medical", items: ["진찰"] }).at(-1).id;
+}

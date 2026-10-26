@@ -22,7 +22,10 @@ const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((d) =
 walk("src");
 for (const m of fs.readFileSync("src/data/categoryIcons.js", "utf8").matchAll(/: "(\w+)",?$/gm)) used.set(m[1], "categoryIcons.js");
 for (const m of emojiMap.matchAll(/: "(\w+)"/g)) used.set(m[1], "Ico.jsx EMOJI");
-for (const m of fs.readFileSync("src/services/expenses.js", "utf8").matchAll(/\["(\w+)", "/g)) used.set(m[1], "expenses.js CATEGORY_CHOICES");
+const expSrc = fs.readFileSync("src/services/expenses.js", "utf8");
+const choices = expSrc.slice(expSrc.indexOf("CATEGORY_CHOICES = ["), expSrc.indexOf("];", expSrc.indexOf("CATEGORY_CHOICES = [")));
+for (const m of choices.matchAll(/\["(\w+)", "/g)) used.set(m[1], "expenses.js CATEGORY_CHOICES");
+for (const m of expSrc.matchAll(/ico: "(\w+)"/g)) used.set(m[1], "expenses.js 기본 분류");
 for (const m of fs.readFileSync("src/services/expenses.js", "utf8").matchAll(/"[^"\w]+": "(\w+)"/g)) used.set(m[1], "expenses.js EMOJI_ICO");
 
 const missing = [...used].filter(([n]) => !known.has(n));

@@ -13,6 +13,8 @@ import {
   resolveCategoryId,
   UNKNOWN_CATEGORY,
   CATEGORY_COLORS,
+  CLAIMS,
+  expensesToCsv,
   CATEGORY_CHOICES,
   categoryIco,
 } from "../services/expenses";
@@ -42,6 +44,7 @@ export default function Budget({ dog }) {
   const [analysisView, setAnalysisView] = useState("category"); // category | week
   const [sheet, setSheet] = useState(null); // 지출 추가·고치기 시트 { id?, title?, amount?, categoryId?, date, memo? }
   const [search, setSearch] = useState(null); // 검색 중이면 검색어(문자열)
+  const [claimView, setClaimView] = useState(false); // 보험 청구할 병원비만 보기
   const [editingCat, setEditingCat] = useState(null); // 분류 관리에서 고치는 분류 id
 
   const [newCatName, setNewCatName] = useState("");
@@ -109,12 +112,30 @@ export default function Budget({ dog }) {
   }
 
   const searching = search !== null;
-  const listed = searching
+  const claimOpen = expenses.filter((e) => e.claim === "todo" || e.claim === "sent"); // 청구 전·청구함(아직 못 받음)
+  const listed = claimView
+    ? [...claimOpen].sort((a, b) => b.date.localeCompare(a.date))
+    : searching
     ? searchExpenses(expenses, search, (id) => categoryById(id).name)
     : filterCategoryId
       ? monthExpenses.filter((e) => categoryById(e.categoryId).id === filterCategoryId).sort((a, b) => b.date.localeCompare(a.date))
       : expenses.filter((e) => e.date === selectedDateKey);
   const listedTotal = listed.reduce((t, e) => t + e.amount, 0);
+
+  // 전체 지출을 CSV 파일로: 공유 시트(파일 공유 되는 기기) → 안 되면 내려받기
+  const [exportMsg, setExportMsg] = useState("");
+  async function exportCsv() {
+    const name = `${dog.name}-가계부-${today}.csv`;
+    const file = new File([expensesToCsv(expenses, (id) => categoryById(id).name)], name, { type: "text/csv" });
+    try {
+      if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: name });
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: name });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (err) {
+      if (err.name !== "AbortError") setExportMsg("내보내지 못했어요. 다시 시도해 주세요.");
+    }
+  }
 
   // 분류 추가·고치기(기본 분류도 이름·아이콘을 고칠 수 있다)
   function handleAddCategory(e) {
@@ -160,6 +181,12 @@ export default function Budget({ dog }) {
         )}
         {projected != null && projected > monthTotal && (
           <p className="faint" style={{ margin: "2px 0 0" }}>이대로면 이번 달 약 {won(Math.round(projected / 1000) * 1000)} (지금까지 기록으로 본 예상)</p>
+        )}
+
+        {claimOpen.length > 0 && (
+          <button type="button" className="bud-claim" onClick={() => (setClaimView(true), setSearch(null), setFilterCategoryId(null))}>
+            <Ico name="umbrella" size={16} /> 보험 청구 기다리는 병원비 {claimOpen.length}건 · {won(claimOpen.reduce((t, e) => t + e.amount, 0))} ›
+          </button>
         )}
 
         <label className="bud-allow">
@@ -265,6 +292,7 @@ export default function Budget({ dog }) {
                 </button>
               );
             })}
+            <p className="faint bud-avg">참고: 농림축산식품부 2025 반려동물 양육현황 조사 기준, 개 1마리 양육비 월평균 약 13.5만 원(병원비 포함)</p>
             {top.length > 0 && (
               <div style={{ marginTop: 12 }}>
                 <div className="faint" style={{ marginBottom: 6 }}>이번 달 자주 산 것</div>
@@ -307,14 +335,18 @@ export default function Budget({ dog }) {
         <div className="card" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <div className="h2" style={{ margin: 0, minWidth: 0 }}>
-              {searching
+              {claimView
+                ? "보험 청구 기다리는 병원비"
+                : searching
                 ? "지출 찾기"
                 : filterCategoryId
                   ? <><Ico name={categoryIco(categoryById(filterCategoryId))} size={18} /> 이번 달 {categoryById(filterCategoryId).name}</>
                   : `${formatKoreanDate(selectedDateKey)} 지출`}
             </div>
             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              {searching ? (
+              {claimView ? (
+                <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setClaimView(false)}>닫기</button>
+              ) : searching ? (
                 <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setSearch(null)}>닫기</button>
               ) : filterCategoryId ? (
                 <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setFilterCategoryId(null)}>날짜별 보기</button>
@@ -335,9 +367,10 @@ export default function Budget({ dog }) {
               {search.trim() && <p className="faint" style={{ margin: "0 0 6px" }}>{listed.length}건 · {won(listedTotal)} (전체 기간)</p>}
             </>
           )}
-          {!searching && !filterCategoryId && dayTotals[selectedDateKey] > 0 && <p className="faint" style={{ margin: "-4px 0 6px" }}>이날 합계 {won(dayTotals[selectedDateKey])}</p>}
+          {claimView && <p className="faint" style={{ margin: "-4px 0 6px" }}>청구했거나 보험금을 받으면 지출을 눌러 "보험 청구"를 바꿔 주세요.</p>}
+          {!claimView && !searching && !filterCategoryId && dayTotals[selectedDateKey] > 0 && <p className="faint" style={{ margin: "-4px 0 6px" }}>이날 합계 {won(dayTotals[selectedDateKey])}</p>}
           {listed.length === 0 ? (
-            (!searching || search.trim()) && <p className="subtle" style={{ marginBottom: 10 }}>{searching ? "찾는 지출이 없어요." : "기록이 없어요."}</p>
+            (!searching || search.trim()) && <p className="subtle" style={{ marginBottom: 10 }}>{claimView ? "청구를 기다리는 병원비가 없어요." : searching ? "찾는 지출이 없어요." : "기록이 없어요."}</p>
           ) : (
             <div style={{ marginBottom: 10 }}>
               {listed.map((e) => {
@@ -348,8 +381,9 @@ export default function Budget({ dog }) {
                     <span className="bud-cat-icon" style={{ background: colorOf(cat.id) }}><Ico name={categoryIco(cat)} size={20} /></span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="bud-row-title">{e.title}</span>
-                      <span className="faint">{cat.name}{searching || filterCategoryId ? ` · ${formatKoreanDate(e.date)}` : ""}{big ? " · 평소보다 큰 지출" : ""}</span>
-                      {e.memo && <span className="faint bud-memo">{e.memo}</span>}
+                      <span className="faint">{cat.name}{searching || filterCategoryId || claimView ? ` · ${formatKoreanDate(e.date)}` : ""}{big ? " · 평소보다 큰 지출" : ""}</span>
+                      {(e.memo || e.items?.length) && <span className="faint bud-memo">{[e.items?.join("·"), e.memo].filter(Boolean).join(" · ")}</span>}
+                      {e.claim && <span className={`bud-claim-badge ${e.claim}`}>보험 {CLAIMS.find((c) => c[0] === e.claim)?.[1]}{e.claim === "paid" && e.claimPaid ? ` ${won(e.claimPaid)}` : ""}</span>}
                     </span>
                     <span className="bud-amt" style={big ? { color: "var(--danger)" } : undefined}>{won(e.amount)}</span>
                   </button>
@@ -358,7 +392,7 @@ export default function Budget({ dog }) {
             </div>
           )}
 
-          {!searching && !filterCategoryId && (
+          {!searching && !filterCategoryId && !claimView && (
             <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={() => openAdd()}>
               ＋ {formatKoreanDate(selectedDateKey > today ? today : selectedDateKey)} 지출 기록
             </button>
@@ -422,6 +456,13 @@ export default function Budget({ dog }) {
           </form>
         </div>
       )}
+      {expenses.length > 0 && !showCategoryManager && (
+        <div style={{ textAlign: "center", marginBottom: 14 }}>
+          <button type="button" className="link-btn" onClick={exportCsv}><Ico name="arrowDown" size={15} /> 전체 지출 내보내기 (엑셀용 CSV)</button>
+          {exportMsg && <p className="faint" style={{ margin: 0 }}>{exportMsg}</p>}
+        </div>
+      )}
+
       {sheet && <ExpenseSheet dog={dog} categories={categories} expenses={expenses} initial={sheet} onClose={() => setSheet(null)} onSaved={handleSheetSaved} />}
     </div>
   );

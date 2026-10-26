@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { addExpense, updateExpense, deleteExpense, quickItems, categoryIco } from "../services/expenses";
+import { addExpense, updateExpense, deleteExpense, quickItems, categoryIco, isMedical, VET_ITEMS, CLAIMS } from "../services/expenses";
 
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 const commas = (text) => {
@@ -19,6 +19,11 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
   const [catPicked, setCatPicked] = useState(Boolean(initial.categoryId)); // 직접 고르기 전엔 내용에 분류 이름이 있으면 그걸로("사료" → 사료)
   const [date, setDate] = useState(initial.date);
   const [memo, setMemo] = useState(initial.memo || "");
+  // 병원·예방 지출만: 세부 항목, 보험 청구 상태, 받은 보험금
+  const [items, setItems] = useState(initial.items || []);
+  const [claim, setClaim] = useState(initial.claim || "");
+  const [claimPaidText, setClaimPaidText] = useState(initial.claimPaid ? commas(initial.claimPaid) : "");
+  const medical = isMedical(categoryId);
   const [error, setError] = useState("");
   const quick = editing ? [] : quickItems(expenses);
 
@@ -43,7 +48,10 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
     if (!amount) return setError("금액을 적어 주세요.");
     if (!categoryId) return setError("분류를 골라 주세요.");
     if (!date) return setError("날짜를 골라 주세요.");
-    const fields = { title: title.trim(), amount, categoryId, date, memo: memo.trim() };
+    const fields = {
+      title: title.trim(), amount, categoryId, date, memo: memo.trim(),
+      items: medical ? items : [], claim: medical ? claim : "", claimPaid: medical && claim === "paid" ? Number(claimPaidText.replace(/\D/g, "")) || null : null,
+    };
     onSaved(editing ? updateExpense(dog.id, initial.id, fields) : addExpense(dog.id, fields), date);
   }
 
@@ -102,6 +110,31 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
           <input className="es-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="날짜" />
           <div className="xs-label">메모 (선택)</div>
           <input className="es-input" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 행복동물병원, 슬개골 검사" maxLength={100} aria-label="메모" />
+          {medical && (
+            <>
+              <div className="xs-label">병원비 항목 (선택)</div>
+              <div className="chip-wrap" style={{ marginBottom: 14 }}>
+                {VET_ITEMS.map((x) => (
+                  <button key={x} type="button" className={`seg${items.includes(x) ? " on" : ""}`} style={{ flex: "0 0 auto" }} aria-pressed={items.includes(x)} onClick={() => setItems((l) => (l.includes(x) ? l.filter((y) => y !== x) : [...l, x]))}>
+                    {x}
+                  </button>
+                ))}
+              </div>
+              <div className="xs-label">보험 청구</div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                {CLAIMS.map(([id, label]) => (
+                  <button key={id} type="button" className={`seg${claim === id ? " on" : ""}`} aria-pressed={claim === id} onClick={() => setClaim(id)}>{label}</button>
+                ))}
+              </div>
+              {claim === "paid" && (
+                <div className="xs-amount">
+                  <input className="es-input" value={claimPaidText} onChange={(e) => setClaimPaidText(commas(e.target.value))} inputMode="numeric" placeholder="받은 보험금" aria-label="받은 보험금" style={{ fontSize: 16 }} />
+                  <span>원</span>
+                </div>
+              )}
+              {claim && <p className="faint" style={{ marginTop: 0 }}>영수증·진료비 세부내역서는 보험사마다 필요한 서류가 달라요. 받아 두면 청구할 때 편해요.</p>}
+            </>
+          )}
           {error && <p className="error-text" role="alert">{error}</p>}
         </div>
 

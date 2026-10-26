@@ -111,14 +111,22 @@ export function deleteCategory(id) {
   return list;
 }
 
-// 지출은 강아지별. 구조: { [dogId]: [{ id, title, amount, date: "YYYY-MM-DD", categoryId }] }
+// 지출은 강아지별. 구조: { [dogId]: [{ id, title, amount, date: "YYYY-MM-DD", categoryId, memo?, items?, claim?, claimPaid?, recordId? }] }
+// items: 병원비 세부 항목 / claim: 보험 청구 "todo"(청구 전)·"sent"(청구함)·"paid"(받음), claimPaid: 받은 보험금 / recordId: 이어진 병원 진료 기록
+export const MEDICAL_IDS = ["medical", "prevent"];
+export const isMedical = (categoryId) => MEDICAL_IDS.includes(resolveCategoryId(categoryId));
+// 동물병원 진료비 게시 항목(수의사법 시행규칙)을 묶은 것 — ../자료용/자료/2026-10-23-반려동물-가계부-조사.md
+export const VET_ITEMS = ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약"];
+export const CLAIMS = [["", "안 함"], ["todo", "청구 전"], ["sent", "청구함"], ["paid", "받음"]];
+const OPTIONAL = ["memo", "items", "claim", "claimPaid", "recordId"];
+const pickOptional = (o) => Object.fromEntries(OPTIONAL.filter((k) => o[k] != null && o[k] !== "" && !(Array.isArray(o[k]) && !o[k].length)).map((k) => [k, o[k]]));
 export function getExpenses(dogId) {
   return readJSON(EXPENSES_KEY, {})[dogId] || [];
 }
 
-export function addExpense(dogId, { title, amount, date, categoryId, memo }) {
+export function addExpense(dogId, { title, amount, date, categoryId, ...rest }) {
   const all = readJSON(EXPENSES_KEY, {});
-  all[dogId] = [...(all[dogId] || []), { id: newId("exp"), title, amount, date, categoryId, ...(memo ? { memo } : {}) }];
+  all[dogId] = [...(all[dogId] || []), { id: newId("exp"), title, amount, date, categoryId, ...pickOptional(rest) }];
   writeJSON(EXPENSES_KEY, all);
   return all[dogId];
 }
@@ -171,7 +179,26 @@ export function searchExpenses(expenses, query, categoryName) {
 
 export function updateExpense(dogId, id, patch) {
   const all = readJSON(EXPENSES_KEY, {});
-  all[dogId] = (all[dogId] || []).map((e) => (e.id === id ? { ...e, ...patch } : e));
+  // 빈 값으로 고친 선택 항목(메모·세부 항목·청구)은 지운다
+  all[dogId] = (all[dogId] || []).map((e) => {
+    if (e.id !== id) return e;
+    const next = { ...e, ...patch };
+    for (const k of OPTIONAL) if (k in patch && (patch[k] == null || patch[k] === "" || (Array.isArray(patch[k]) && !patch[k].length))) delete next[k];
+    return next;
+  });
   writeJSON(EXPENSES_KEY, all);
   return all[dogId];
+}
+
+// CSV 내보내기(엑셀에서 한글이 깨지지 않게 BOM). 열: 날짜, 분류, 내용, 금액, 메모, 병원비 항목, 보험 청구, 받은 보험금
+export function expensesToCsv(expenses, categoryName) {
+  const cell = (v) => {
+    const t = String(v ?? "");
+    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const claimLabel = Object.fromEntries(CLAIMS);
+  const rows = [...expenses]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((e) => [e.date, categoryName(e.categoryId), e.title, e.amount, e.memo, e.items?.join("·"), e.claim ? claimLabel[e.claim] : "", e.claimPaid].map(cell).join(","));
+  return "\uFEFF" + ["날짜,분류,내용,금액,메모,병원비 항목,보험 청구,받은 보험금", ...rows].join("\n");
 }

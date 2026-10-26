@@ -71,4 +71,15 @@ assert.match(V.summaryToText(dog, s, today), new RegExp(`^\\[콩이 병원용 �
   assert.deepEqual(v, [`${dd(-2)} 치과 검진`, `${dd(-6)} 행복동물병원 · 슬개골 검사 (진료비 110,000원)`, "  처방: 소염제 5일"]);
 }
 
+// 진료 기록의 진료비 → 가계부 지출 하나(고치면 같이 고쳐지고, 두 번 저장해도 하나)
+{
+  const { linkVetExpense } = await import("../src/services/vetVisits.js");
+  const { getExpenses } = await import("../src/services/expenses.js");
+  const rec = { id: "r9", at: `${day(-1)}T09:00`, data: { hospital: "튼튼병원", reason: "피부", cost: "45000" } };
+  const id = linkVetExpense("d3", rec);
+  assert.equal(linkVetExpense("d3", { ...rec, expenseId: id, data: { ...rec.data, cost: "50000" } }), id);
+  assert.deepEqual(getExpenses("d3").map((e) => [e.title, e.amount, e.categoryId, e.recordId]), [["튼튼병원 피부", 50000, "medical", "r9"]]);
+  assert.equal(linkVetExpense("d3", { ...rec, expenseId: id, data: { ...rec.data, cost: "" } }), id, "진료비를 비워도 지출은 남김");
+}
+
 console.log("병원용 기록 확인 통과");

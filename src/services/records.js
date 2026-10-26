@@ -151,7 +151,7 @@ export function summarize(rec) {
       parts.push(d.stool && `대변 ${d.stool}`, d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
       break;
     case "vet":
-      parts.push(d.hospital, d.reason, d.nextDate && `다음 진료 ${md(d.nextDate)}`);
+      parts.push(d.hospital, d.reason, Number(d.cost) > 0 && `진료비 ${Number(d.cost).toLocaleString("ko-KR")}원`, d.nextDate && `다음 진료 ${md(d.nextDate)}`);
       break;
     case "condition":
       parts.push(d.activity && `활동 ${d.activity}`, d.sleep && `수면 ${d.sleep}`, d.body, d.oral);
