@@ -541,7 +541,7 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 건강·생활 기록: "아침에 토했어"(symptom), "밥 반만 먹었어"(meal), "설사했어"(potty), "병원 다녀왔어, 슬개골 검사, 진료비 8만 원"(vet — reason 필수, 처방은 들은 그대로), "오늘 기운 없어 보여"(condition), "양치했어/산책 40분"(daily — 산책 시간만 말하면 add_health_value walk도 됨, 하나만), "종합백신 3차 맞았어"(life 예방접종) → add_health_record.
 - 밥 시간: "밥은 8시랑 6시에 줘" → set_feeding_times.
 - 약을 새로 등록하거나 용량을 바꾸는 건 하지 않는다 — "약 관리에서 처방대로 등록해 줘"라고 안내한다.
-- 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). "매달 10일 심장사상충약" → repeat=monthly. "금~일 호텔링" → end_date. "전날 알려 줘" → alarm=eve. 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
+- 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). "매달 10일 심장사상충약" → kind=med, repeat=monthly(집에서 먹이거나 바르는 심장사상충·구충약은 접종이 아니라 약). 병원에서 맞는 주사만 vaccine. "금~일 호텔링" → end_date. "전날 알려 줘" → alarm=eve. 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
 - 건강 수치: "건식 50g 먹었어", "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
   사료가 건식인지 습식인지(캔·파우치=습식), 단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
   수치를 보고 진단하지 않는다. [건강 수치]에 참고 범위 밖 값이 있으면 사실만 말하고(예: "잘 때 호흡수가 42회로 적혔어"), 계속되면 동물병원에 문의하라고 한다.
