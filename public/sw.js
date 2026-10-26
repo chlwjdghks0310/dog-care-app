@@ -28,7 +28,7 @@ self.addEventListener("push", (event) => {
     // JSON이 아니면 기본 문구를 그대로 쓴다.
   }
   event.waitUntil(
-    self.registration.showNotification(data.title, { body: data.body, icon: "/icon-192.png", vibrate: [400, 150, 400, 150, 400], silent: false, data: { url: data.url } })
+    self.registration.showNotification(data.title, { body: data.body, icon: "/icon-192.png?v=6", vibrate: [400, 150, 400, 150, 400], silent: false, data: { url: data.url } })
   );
 });
 
