@@ -22,8 +22,6 @@ import Ico from "../components/Ico";
 import Help from "./Help";
 import Contact from "./Contact";
 import DogRegister from "./DogRegister";
-import Onboarding from "./Onboarding";
-import InstallGate from "./InstallGate";
 import { getSyncStatus } from "../services/sync";
 import { leavePet, myRole } from "../services/sync/family";
 
@@ -52,7 +50,6 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 설정 위에 겹쳐 여는 화면(도움말·문의하기·강아지 등록) — 닫으면 아래 설정이 그대로 보인다
   const [settingsSub, setSettingsSub] = useState(null); // null | "help" | "contact" | "add-dog"
-  const [preview, setPreview] = useState(null); // 테스트용 미리보기: null | "install" | "login" | "intro"
   const subSwipeClose = useSwipeClose(() => setSettingsSub(null));
   const swipeClose = useSwipeClose(() => setSettingsOpen(false));
   const [editForm, setEditForm] = useState(null);
@@ -412,40 +409,12 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
               </button>
             </div>
 
-            <div className="card" style={{ marginTop: 14 }}>
-              <div className="h2" style={{ marginBottom: 2 }}>테스트</div>
-              <p className="faint" style={{ margin: "0 0 10px" }}>처음 화면을 다시 볼 수 있어요. 미리보기라 강아지·기록은 저장되지 않아요.</p>
-              <button type="button" className="btn-ghost small" style={{ width: "100%", marginBottom: 8 }} onClick={() => setPreview("install")}>
-                홈 화면 설치 안내 보기
-              </button>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" className="btn-ghost small" style={{ flex: 1 }} onClick={() => setPreview("login")}>
-                  로그인 화면 보기
-                </button>
-                <button type="button" className="btn-ghost small" style={{ flex: 1 }} onClick={() => setPreview("intro")}>
-                  온보딩 다시 보기
-                </button>
-              </div>
-            </div>
             <button className="btn-ghost" style={{ width: "100%", marginTop: 14, color: "var(--danger)" }} onClick={handleDeleteCurrent}>
               이 강아지 삭제
             </button>
             <button className="btn-ghost" style={{ width: "100%", marginTop: 8, color: "var(--danger)" }} onClick={handleDeleteAll}>
               전체 삭제 (모든 강아지, 다시 등록하기)
             </button>
-          </div>,
-          document.body
-        )}
-      {preview &&
-        createPortal(
-          <div className="onb-preview" role="dialog" aria-label="온보딩 미리보기">
-            <div className="onb-preview-bar">
-              <span>미리보기 · 저장되지 않아요</span>
-              <button type="button" className="btn-ghost small" onClick={() => setPreview(null)}>
-                <Ico name="x" size={15} /> 닫기
-              </button>
-            </div>
-            {preview === "install" ? <InstallGate preview /> : <Onboarding key={preview} preview={preview} onRegistered={() => setPreview(null)} />}
           </div>,
           document.body
         )}

@@ -881,11 +881,6 @@ button {
 .switch:checked { background: var(--accent); }
 .switch:checked::after { transform: translateX(20px); }
 /* 설정 → 테스트: 온보딩·로그인 화면 미리보기(앱 위에 꽉 차게) */
-.onb-preview { position: fixed; inset: 0; z-index: 140; background-color: var(--bg); display: flex; flex-direction: column; }
-.onb-preview > .onb { flex: 1; min-height: 0; }
-.onb-preview-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(env(safe-area-inset-top) + 8px) 12px 8px 16px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; font-weight: 700; flex-shrink: 0; }
-.onb-preview-bar .btn-ghost { display: inline-flex; align-items: center; gap: 4px; }
-.onb-preview > .onb { padding-top: 12px; } /* 상태바 여백은 위 띠가 이미 차지 */
 
 /* 색을 꽉 채운 타일(체크리스트 빠른 메뉴): 타일 바탕 = 그 종류의 연한 색, 아이콘·글자 = 진한 색 */
 .quick-tile.filled { background: var(--tone-bg); border-color: transparent; box-shadow: none; }

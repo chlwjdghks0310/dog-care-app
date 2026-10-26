@@ -49,7 +49,7 @@ const ANDROID_STEPS = (samsung) =>
     ? [[<>아래쪽 <b>메뉴(≡)</b> 누르기</>], [<><b>현재 페이지 추가</b> → <b>홈 화면</b> 누르기</>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]]
     : [[<>오른쪽 위 <b>점 세 개</b> <DotsGlyph /> 누르기</>], [<><b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 누르기</>], [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>]];
 
-export default function InstallGate({ preview = false }) {
+export default function InstallGate() {
   const [os, setOs] = useState(isAndroid() ? "android" : "ios");
   const [canPrompt, setCanPrompt] = useState(Boolean(deferred));
   const [installed, setInstalled] = useState(false);
@@ -98,7 +98,7 @@ export default function InstallGate({ preview = false }) {
               홈 화면에 생긴 <b>멍케어 아이콘</b>을 눌러 열어 주세요. 이 창은 닫아도 돼요.
             </p>
           </div>
-        ) : app && !preview ? (
+        ) : app ? (
           <div className="onb-mock ig-card">
             <p style={{ margin: "0 0 10px", lineHeight: 1.6 }}>
               <b>{app}</b> 안에서는 설치할 수 없어요. {os === "ios" ? "사파리" : "크롬"}에서 열어 주세요.
@@ -127,7 +127,7 @@ export default function InstallGate({ preview = false }) {
               </button>
             ) : (
               <ol className="onb-mock ig-steps">
-                {os === "ios" && /CriOS|FxiOS|EdgiOS|NAVER|Whale/.test(ua()) && !preview && (
+                {os === "ios" && /CriOS|FxiOS|EdgiOS|NAVER|Whale/.test(ua()) && (
                   <li className="ig-note">사파리에서 여는 게 가장 확실해요. 주소를 복사해 사파리에 붙여 넣어 주세요.</li>
                 )}
                 {steps.map(([text], i) => (
