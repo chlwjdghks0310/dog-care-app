@@ -474,7 +474,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
               >
                 {m.chatMode && (
                   <div className="faint" style={{ marginBottom: 6 }}>
-                    <Ico name={findChatMode(m.chatMode).ico} size={13} className={`cat-ico tone-${findChatMode(m.chatMode).tone}`} /> {findChatMode(m.chatMode).name}{!m.intro && " · AI가 만든 답변이에요"}
+                    <Ico name={findChatMode(m.chatMode).ico} size={13} className={`cat-ico tone-${findChatMode(m.chatMode).tone}`} /> {findChatMode(m.chatMode).name}{!m.intro && " · AI가 만든 답변이라 틀릴 수 있어요"}
                   </div>
                 )}
                 {m.structured ? (
