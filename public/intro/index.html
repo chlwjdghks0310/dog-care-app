@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=5" />
+  <link rel="stylesheet" href="/intro/intro.css?v=6" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -45,7 +45,7 @@
         <span>멍케어</span>
       </a>
       <nav class="nav" id="nav" aria-label="주요 메뉴">
-        <a href="#demo">기능</a>
+        <a href="/intro/guide/">기능 설명서</a>
         <a href="#start">시작 방법</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
@@ -76,7 +76,7 @@
           <h1><span class="h1-sub">우리 아이</span><span class="h1-main"><mark>맞춤형</mark> <span class="ai">AI</span></span></h1>
           <p class="lead"><b>말로 기록</b>하면 알아서 정리하고, <b>오늘 챙길 일</b>과 <b>다음 일정</b>을 먼저 알려 주는 강아지 비서예요.</p>
           <ul class="hero-points">
-            <li><span class="pt pt-blue">말로 기록</span></li><li><span class="pt pt-amber">오늘 할 일</span></li><li><span class="pt pt-violet">병원용 기록</span></li>
+            <li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-message"/></svg>말로 기록</span></li><li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-checks"/></svg>오늘 할 일</span></li><li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-clipboard"/></svg>병원용 기록</span></li>
           </ul>
           <div class="cta-row">
             <a class="btn btn-lg" href="/">무료로 시작하기</a>
@@ -93,17 +93,20 @@
           <p class="demo-hint" aria-hidden="true"><span class="hand">👆</span> 아래 탭을 눌러 보세요</p>
           <div class="phone demo-phone">
             <div class="screens"><img class="scr on" src="/intro/img/assistant.jpg" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/checklist.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/profile.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/calendar.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/budget.jpg" alt="" width="300" height="649" loading="lazy" /></div>
-            <span class="tag">예시 화면</span>
+            <span class="tag">간략 미리보기</span>
             <div class="nav-glow" aria-hidden="true"><span>여기를 눌러 보세요</span></div>
             <div class="hots" role="tablist" aria-label="멍케어 기능 둘러보기"><button type="button" role="tab" id="tab-assistant" class="hot" aria-selected="true" aria-controls="panel-assistant" tabindex="0"><span class="sr">비서 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-checklist" class="hot" aria-selected="false" aria-controls="panel-checklist" tabindex="-1"><span class="sr">체크리스트 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-profile" class="hot" aria-selected="false" aria-controls="panel-profile" tabindex="-1"><span class="sr">프로필 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-calendar" class="hot" aria-selected="false" aria-controls="panel-calendar" tabindex="-1"><span class="sr">일정표 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-budget" class="hot" aria-selected="false" aria-controls="panel-budget" tabindex="-1"><span class="sr">가계부 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button></div>
           </div>
-          <div class="float f1" aria-hidden="true">✅ 산책 30분 기록했어요</div>
-          <div class="float f2" aria-hidden="true">🔔 내일 10:30 종합백신</div>
-          <div class="float f3" aria-hidden="true">📋 병원용 기록 준비됐어요</div>
+          <div class="floats" data-for="assistant" aria-hidden="true"><div class="float f1"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-message"/></svg>“산책 30분 했어” → 기록 완료</div><div class="float f2"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-wallet"/></svg>사료값은 가계부로 쏙</div><div class="float f3"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-camera"/></svg>사진·영상도 정리해요</div></div>
+          <div class="floats" data-for="checklist" aria-hidden="true"><div class="float f1"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-checks"/></svg>오늘 할 일 3개 남았어요</div><div class="float f2"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-bowl"/></svg>저녁 밥 18:00 알림</div><div class="float f3"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-bell"/></svg>원하는 시간에 알람</div></div>
+          <div class="floats" data-for="profile" aria-hidden="true"><div class="float f1"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-activity"/></svg>몸무게 그래프 한눈에</div><div class="float f2"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-clipboard"/></svg>병원용 기록 준비됐어요</div><div class="float f3"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-pill"/></svg>약 먹일 시간 알림</div></div>
+          <div class="floats" data-for="calendar" aria-hidden="true"><div class="float f1"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-calendar"/></svg>내일 10:30 종합백신</div><div class="float f2"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-repeat"/></svg>매달 심장사상충 약</div><div class="float f3"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-bell"/></svg>전날 저녁에 미리 알림</div></div>
+          <div class="floats" data-for="budget" aria-hidden="true"><div class="float f1"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-wallet"/></svg>이번 달 용돈 남은 돈</div><div class="float f2"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-repeat"/></svg>보험료는 저절로 기록</div><div class="float f3"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-search"/></svg>예전 지출도 바로 찾기</div></div>
+          <p class="demo-cap">실제 앱의 <b>간략 미리보기</b>예요. 탭을 누르면 기능 설명이 열려요. <a href="/intro/guide/">하나하나 자세히 보기 →</a></p>
         </div>
       </div>
       <div class="wrap svc-wrap" id="svcs">
-          <section class="svc tone-blue" id="panel-assistant" role="tabpanel" aria-labelledby="svc-title-assistant" tabindex="-1">
+          <section class="svc" id="panel-assistant" role="tabpanel" aria-labelledby="svc-title-assistant" tabindex="-1">
             <div class="svc-head">
               <img class="svc-dog" src="/intro/img/dog-yeoreum-sit.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
@@ -113,15 +116,17 @@
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 <b>건강 기록·가계부·일정표</b> 중 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>우리 아이 기록을 바탕으로 답하고, <b>지난번 나눈 이야기</b>도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 정리하고, 이어서 물어볼 질문까지 골라 줘요.</span></li><li><b>세 친구 중에 골라요</b><span>빠른 요약 <b>여름</b>, 수다 친구 <b>가을</b>, 꼼꼼한 <b>겨울</b> — 그날 기분에 맞게 골라요.</span></li></ul>
+              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 <b>건강 기록·가계부·일정표</b> 중 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>우리 아이 기록을 바탕으로 답하고, <b>지난번 나눈 이야기</b>도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 정리하고, 이어서 물어볼 질문까지 골라 줘요.</span></li></ul>
+              <div class="svc-dogs"><p class="svc-dogs-title">대답해 주는 세 친구 — 입력칸 위에서 언제든 바꿔요</p><div class="svc-dogcard"><img src="/intro/img/dog-yeoreum-sit.png" alt="포메라니안 여름" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">여름 <span>포메라니안</span></p><p class="svc-dogrole">빠른 요약</p><p>핵심만 짧고 빠르게 알려 줘요.</p></div></div><div class="svc-dogcard"><img src="/intro/img/dog-gaeul-sit.png" alt="리트리버 가을" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">가을 <span>리트리버</span></p><p class="svc-dogrole">수다 친구</p><p>이야기를 들어 주고 공감해 줘요.</p></div></div><div class="svc-dogcard"><img src="/intro/img/dog-gyeoul-sit.png" alt="보더콜리 겨울" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">겨울 <span>보더콜리</span></p><p class="svc-dogrole">꼼꼼 박사</p><p>자료를 찾아 자세히 설명해요.</p></div></div></div>
               <p class="svc-note">WSAVA·Merck 수의학 매뉴얼 같은 공개 수의학 자료와 우리 아이 기록을 바탕으로 AI가 정리해 드려요. 판단이 필요한 상황이면 병원에 가도록 먼저 알려 드려요.</p>
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/assistant.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
+              <a class="btn btn-lg btn-ghost" href="/intro/guide/#assistant"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
             </div>
           </section>
-          <section class="svc tone-amber" id="panel-checklist" role="tabpanel" aria-labelledby="svc-title-checklist" tabindex="-1">
+          <section class="svc" id="panel-checklist" role="tabpanel" aria-labelledby="svc-title-checklist" tabindex="-1">
             <div class="svc-head">
               <img class="svc-dog" src="/intro/img/dog-gaeul-sit.png" alt="리트리버 가을" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
@@ -136,10 +141,11 @@
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/checklist.jpg" alt="체크리스트 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
+              <a class="btn btn-lg btn-ghost" href="/intro/guide/#checklist"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
             </div>
           </section>
-          <section class="svc tone-violet" id="panel-profile" role="tabpanel" aria-labelledby="svc-title-profile" tabindex="-1">
+          <section class="svc" id="panel-profile" role="tabpanel" aria-labelledby="svc-title-profile" tabindex="-1">
             <div class="svc-head">
               <img class="svc-dog" src="/intro/img/dog-gyeoul-sit.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
@@ -154,10 +160,11 @@
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/profile.jpg" alt="프로필 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/vet.jpg" alt="프로필 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
+              <a class="btn btn-lg btn-ghost" href="/intro/guide/#profile"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
             </div>
           </section>
-          <section class="svc tone-blue" id="panel-calendar" role="tabpanel" aria-labelledby="svc-title-calendar" tabindex="-1">
+          <section class="svc" id="panel-calendar" role="tabpanel" aria-labelledby="svc-title-calendar" tabindex="-1">
             <div class="svc-head">
               <img class="svc-dog" src="/intro/img/dog-yeoreum-wave.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
@@ -172,10 +179,11 @@
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/calendar.jpg" alt="일정표 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
+              <a class="btn btn-lg btn-ghost" href="/intro/guide/#calendar"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
             </div>
           </section>
-          <section class="svc tone-violet" id="panel-budget" role="tabpanel" aria-labelledby="svc-title-budget" tabindex="-1">
+          <section class="svc" id="panel-budget" role="tabpanel" aria-labelledby="svc-title-budget" tabindex="-1">
             <div class="svc-head">
               <img class="svc-dog" src="/intro/img/dog-gyeoul-think.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
@@ -190,6 +198,7 @@
             </div>
             <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/budget.jpg" alt="가계부 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
+              <a class="btn btn-lg btn-ghost" href="/intro/guide/#budget"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
             </div>
           </section>
@@ -361,6 +370,6 @@
     <p class="wrap copy">© 2026 멍케어</p>
   </footer>
 
-  <script src="/intro/intro.js?v=4" defer></script>
+  <script src="/intro/intro.js?v=5" defer></script>
 </body>
 </html>

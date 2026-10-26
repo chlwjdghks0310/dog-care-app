@@ -45,6 +45,7 @@ document.documentElement.classList.add("js"); // JS가 있을 때만 패널을 �
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var current = 0;
   var timer = null;
+  demo.dataset.cur = "assistant";
 
   function select(i, focus) {
     current = (i + tabs.length) % tabs.length;
@@ -53,6 +54,7 @@ document.documentElement.classList.add("js"); // JS가 있을 때만 패널을 �
       t.tabIndex = k === current ? 0 : -1;
     });
     screens.forEach(function (img, k) { img.classList.toggle("on", k === current); });
+    demo.dataset.cur = tabs[current].id.slice(4); // 옆에 떠 있는 말풍선도 그 기능 것으로
     demo.classList.add("tried"); // 한 번 눌러 보면 "눌러 보세요" 표시는 사라진다
     if (focus) tabs[current].focus();
   }
