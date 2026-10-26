@@ -42,13 +42,13 @@ assert.equal(E.getFixedExpenses(dog.id)[0].day, 28);
 assert.ok(A.applyConfirmedAction(dog, { type: "delete_record", kind: "fixed_expense", id: fx.id, summary: "펫보험" }));
 assert.equal(E.getFixedExpenses(dog.id).length, 0);
 
-// 건강 기록: 증상·병원 진료(진료비 → 가계부, 다음 진료 → 일정표)·일상·예방접종
+// 건강 기록: 증상·병원 진료(진료비 → 가계부, 다음 진료 → 일정표)·일상·예방접종 — 어제 날짜(오늘 07:00은 새벽엔 미래라 막힘)
 r = run(
-  { type: "add_health_record", record_type: "symptom", date: today, time: "07:00", symptoms: ["구토", "없는 증상"], repeat: "처음", observed: "노란 거품" },
-  { type: "add_health_record", record_type: "vet", date: today, time: "08:00", hospital: "행복동물병원", reason: "구토", prescription: "위장약 3일", cost: 45000, next_date: day(7) },
-  { type: "add_health_record", record_type: "daily", date: today, time: "06:00", daily_kind: "양치" },
-  { type: "add_health_record", record_type: "life", date: today, time: "06:30", life_kind: "예방접종", title: "종합백신 3차", next_date: day(21) },
-  { type: "add_health_record", record_type: "vet", date: today, hospital: "사유 없음" }
+  { type: "add_health_record", record_type: "symptom", date: day(-1), time: "07:00", symptoms: ["구토", "없는 증상"], repeat: "처음", observed: "노란 거품" },
+  { type: "add_health_record", record_type: "vet", date: day(-1), time: "08:00", hospital: "행복동물병원", reason: "구토", prescription: "위장약 3일", cost: 45000, next_date: day(7) },
+  { type: "add_health_record", record_type: "daily", date: day(-1), time: "06:00", daily_kind: "양치" },
+  { type: "add_health_record", record_type: "life", date: day(-1), time: "06:30", life_kind: "예방접종", title: "종합백신 3차", next_date: day(21) },
+  { type: "add_health_record", record_type: "vet", date: day(-1), hospital: "사유 없음" }
 );
 assert.equal(r.done.length, 4, "사유 없는 진료 기록은 실패");
 assert.equal(r.failed, 1);
