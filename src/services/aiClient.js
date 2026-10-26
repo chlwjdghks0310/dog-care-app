@@ -103,6 +103,15 @@ export async function quickStoolCheck(dog, imageBase64, signal) {
   return data.result;
 }
 
+// 사료 이름 → 열량·성분(서버가 웹 검색). 반환: { info, sources }
+export async function findFoodInfo(name, signal) {
+  await ensureAIConsent();
+  const res = await fetch(`${API_BASE}/api/food-info`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }), signal });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "사료 정보를 찾지 못했어요. 다시 시도해 주세요.");
+  return data;
+}
+
 // 영상 분석은 Gemini(구글)로 처리한다 — 영상을 그대로 넘기면 Gemini가 1초에 약 1장씩 장면을 나눠 보고 소리도 듣는다.
 // 큰 영상도 받을 수 있도록 base64 JSON이 아니라 multipart 파일 업로드로 전송한다.
 // 사진 분석과 마찬가지로 mock 대체 없이 실패를 그대로 알린다.

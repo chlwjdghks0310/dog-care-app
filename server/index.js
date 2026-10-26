@@ -627,6 +627,70 @@ const STOOL_TOOL = {
 };
 const quickStoolHits = new Map(); // ip → [시각] — ponytail: 서버 메모리 속도 제한(재시작하면 초기화), 사용자가 늘면 계정 기준으로
 
+// 사료 계산기 "사료 정보 찾기" — 사료 이름으로 웹 검색해 열량·성분을 정해진 칸으로 돌려준다.
+// 열량이 틀리면 급여량이 틀려지므로: 공식 출처 우선, 못 찾은 값은 0/빈칸(지어내지 않음), 출처는 검색 도구가 실제로 가져온 주소만 남긴다. 앱은 보호자가 확인하고 눌러야 계산에 쓴다.
+const TEXT = { type: "string" };
+const FOOD_TOOL = {
+  name: "food_info",
+  description: "찾은 사료 정보를 기록한다. 확인 못 한 값은 지어내지 말고 0 또는 빈 문자열.",
+  input_schema: {
+    type: "object",
+    properties: {
+      found: { type: "boolean", description: "그 사료(같은 제품)를 찾았으면 true" },
+      product_name: { ...TEXT, description: "정확한 제품명(라인·대상 포함, 예: 로얄캐닌 미니 인도어 어덜트)" },
+      brand: TEXT,
+      kcal_per_kg: { type: "number", description: "급여 상태(as-fed) 대사에너지 kcal/kg. 컵당·건물기준(DM)만 있으면 0. 모르면 0" },
+      kcal_text: { ...TEXT, description: "출처에 적힌 열량 표기 그대로(예: 3,850 kcal/kg, 345 kcal/컵). 없으면 빈 문자열" },
+      kcal_source: { type: "string", enum: ["제조사 공식", "공식 판매처", "쇼핑몰·기타", "못 찾음"] },
+      life_stage: { ...TEXT, description: "대상 나이(퍼피·어덜트·시니어·전연령)" },
+      dog_size: { ...TEXT, description: "대상 크기(소형견 등), 없으면 빈 문자열" },
+      main_ingredients: { ...TEXT, description: "원료 앞쪽 3~5개, 없으면 빈 문자열" },
+      analysis: { ...TEXT, description: "등록성분량(조단백·조지방·조섬유·조회분·수분 등) 한 줄, 없으면 빈 문자열" },
+      cautions: { ...TEXT, description: "보호자가 알아야 할 점(국내판·해외판 열량 차이, 리뉴얼, 비슷한 이름 제품 등). 없으면 빈 문자열" },
+      candidates: { type: "array", items: TEXT, description: "이름이 애매해서 여러 제품이 해당되면 후보 제품명(최대 4개), 아니면 빈 배열" },
+    },
+    required: ["found", "product_name", "brand", "kcal_per_kg", "kcal_text", "kcal_source", "life_stage", "dog_size", "main_ingredients", "analysis", "cautions", "candidates"],
+    additionalProperties: false,
+  },
+};
+const foodHits = new Map(); // ip → [시각] — ponytail: 서버 메모리 속도 제한(재시작하면 초기화)
+
+app.post("/api/food-info", async (req, res) => {
+  const name = typeof req.body?.name === "string" ? req.body.name.trim().slice(0, 80) : "";
+  if (!name) return res.status(400).json({ error: "사료 이름을 적어 주세요." });
+  const now = Date.now();
+  const hits = (foodHits.get(req.ip) || []).filter((t) => now - t < 60 * 60 * 1000);
+  if (hits.length >= 20) return res.status(429).json({ error: "사료 정보를 너무 많이 찾았어요. 잠시 뒤에 다시 해 주세요." });
+  foodHits.set(req.ip, [...hits, now]);
+  try {
+    const response = await createWithContinuation(
+      {
+        ...CLAUDE_MODEL,
+        max_tokens: 8000,
+        output_config: { effort: "medium" },
+        system: [
+          "보호자가 강아지 사료 이름을 적었습니다. web_search로 그 사료의 열량과 정보를 찾은 뒤 반드시 food_info 도구를 한 번 호출하세요. 도구 밖에 다른 글은 쓰지 않습니다.",
+          "출처 우선순위: 제조사 공식 페이지(한국 공식몰 우선) > 공식 판매처 > 쇼핑몰 상세. 블로그·카페 글의 숫자는 쓰지 않습니다.",
+          "열량은 급여 상태 기준 대사에너지 kcal/kg로. kcal/100g이면 ×10. 컵당 열량만 있거나 건물기준(DM)이면 kcal_per_kg는 0으로 두고 kcal_text에 그대로 적습니다.",
+          "퍼피·어덜트·시니어, 소형견·대형견, 국내판·해외판은 열량이 다릅니다. 적힌 이름과 정확히 같은 제품의 값만 씁니다. 애매하면 found=false와 candidates에 후보를 넣습니다.",
+          "확인 못 한 값은 지어내지 말고 0 또는 빈 문자열로 둡니다.",
+        ].join("\n"),
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 4 }, FOOD_TOOL],
+      },
+      [{ role: "user", content: `사료 이름: ${name}` }]
+    );
+    const info = response.content.find((b) => b.type === "tool_use" && b.name === "food_info")?.input;
+    if (!info || response.stop_reason === "refusal") return res.json({ info: { found: false, candidates: [] }, sources: [] });
+    // 출처는 검색 도구가 실제로 가져온 페이지만(최대 4개, 같은 주소 한 번)
+    const seen = new Set();
+    const sources = citationRefs(response).filter((r) => r.url && !seen.has(r.url) && seen.add(r.url)).slice(0, 4);
+    res.json({ info, sources });
+  } catch (err) {
+    console.error("[server] food-info error:", err.message);
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+  }
+});
+
 // 음성 → 글자(비서 입력창 🎤). 브라우저 음성 인식이 안 되는 기기(아이폰 홈 화면 앱 등)에서만 쓴다.
 // 받아쓰기만 시키는 가벼운 일이라 가장 싼 Flash-Lite(음성 1분 ≈ 1,500토큰). 음성은 저장하지 않는다.
 app.post("/api/transcribe", async (req, res) => {

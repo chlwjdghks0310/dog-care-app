@@ -2,7 +2,7 @@ import { readJSON, writeJSON } from "./storage";
 
 const KEY = "dogcare-feeding-settings-v1";
 
-// 구조: { [dogId]: { times: ["08:00", ...], kcalPer100g?: number, stoolCondition?: 'normal'|'loose'|'constipated' } }
+// 구조: { [dogId]: { times: ["08:00", ...], kcalPer100g?: number, stoolCondition?: 'normal'|'loose'|'constipated', foodName?: string, foodInfo?: { info, sources, at } } }
 function getAll() {
   return readJSON(KEY, {});
 }

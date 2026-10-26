@@ -3,6 +3,8 @@ import { calculateAge, formatAge } from "../utils/age";
 import { getFeedingPlan, SOAK_WATER_TEMP, SOAK_DURATION } from "../data/feedingGuide";
 import { getFeedingSettings, saveFeedingSettings } from "../services/feedingSettings";
 import { josa } from "../utils/text";
+import { findFoodInfo } from "../services/aiClient";
+import Ico from "../components/Ico";
 
 const STOOL_OPTIONS = [
   { value: "normal", label: "정상" },
@@ -108,6 +110,8 @@ export default function FeedingPlan({ dog, onBack }) {
         </div>
       </div>
 
+      <FoodCard dog={dog} settings={settings} onUse={(patch) => saveNow(patch)} />
+
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="h2">사료 열량 (선택)</div>
         <p className="faint" style={{ marginBottom: 8 }}>
@@ -157,6 +161,99 @@ export default function FeedingPlan({ dog, onBack }) {
       <p className="faint" style={{ marginTop: 12 }}>
         출처: AAHA/WSAVA 대사에너지요구량(DER) 공식, 반려동물 영양학 자료 기반 참고용 계산이며 실제 수의사 개별 진료를 대신하지 않아요.
       </p>
+    </div>
+  );
+}
+
+// 사료 이름으로 열량·성분 찾기(서버가 웹 검색). 찾은 열량은 보호자가 [이 열량으로 계산]을 눌러야 쓴다 — 같은 이름도 퍼피·어덜트·국내판마다 달라서
+function FoodCard({ dog, settings, onUse }) {
+  const [name, setName] = useState(settings.foodName || dog.food || "");
+  const [result, setResult] = useState(settings.foodInfo && settings.foodInfo.name === (settings.foodName || dog.food) ? settings.foodInfo : null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function search(q = name) {
+    if (!q.trim() || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const { info, sources } = await findFoodInfo(q.trim());
+      const next = { name: q.trim(), info, sources, at: new Date().toISOString().slice(0, 10) };
+      setResult(next);
+      setName(q.trim());
+      onUse({ foodName: q.trim(), foodInfo: next }); // 찾은 정보는 저장(다시 찾지 않게). 열량은 아직 안 씀
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const info = result?.info;
+  const per100 = info?.kcal_per_kg > 0 ? Math.round(info.kcal_per_kg / 10) : 0;
+  const using = per100 && settings.kcalPer100g === per100;
+  const rows = info?.found
+    ? [["대상", [info.life_stage, info.dog_size].filter(Boolean).join(" · ")], ["주원료", info.main_ingredients], ["등록성분량", info.analysis], ["알아 둘 점", info.cautions]].filter(([, v]) => v)
+    : [];
+
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="h2">먹이는 사료</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder="예: 로얄캐닌 미니 인도어 어덜트" maxLength={80} aria-label="사료 이름" style={{ flex: 1, minWidth: 0, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 16 }} />
+        <button type="button" className="btn-primary" style={{ width: "auto", padding: "0 14px", whiteSpace: "nowrap" }} disabled={busy || !name.trim()} onClick={() => search()}>
+          {busy ? "찾는 중…" : "정보 찾기"}
+        </button>
+      </div>
+      {busy && <p className="faint" style={{ margin: "8px 0 0" }}>제조사·판매처 자료를 찾고 있어요. 20~40초쯤 걸려요.</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
+
+      {info && !busy && (
+        <div className="food-info">
+          {info.found ? (
+            <>
+              <div className="food-name">{info.product_name || result.name}{info.brand && <span className="faint"> · {info.brand}</span>}</div>
+              <div className="food-kcal">
+                {per100 ? (
+                  <>
+                    <b>{info.kcal_per_kg.toLocaleString("ko-KR")} kcal/kg</b> <span className="faint">(100g당 {per100}kcal · {info.kcal_source})</span>
+                  </>
+                ) : (
+                  <span className="faint">열량을 kcal/kg로 확인하지 못했어요{info.kcal_text ? ` (적힌 표기: ${info.kcal_text})` : ""}. 사료 봉투 뒷면의 "대사에너지"를 아래 칸에 적어 주세요.</span>
+                )}
+              </div>
+              {rows.map(([k, v]) => (
+                <div key={k} className="food-row"><span className="faint">{k}</span><span>{v}</span></div>
+              ))}
+              {per100 > 0 && (
+                <button type="button" className={using ? "btn-ghost" : "btn-primary"} style={{ width: "100%", marginTop: 10 }} disabled={using} onClick={() => onUse({ kcalPer100g: per100 })}>
+                  {using ? "✓ 이 열량으로 계산하고 있어요" : "이 열량으로 계산"}
+                </button>
+              )}
+              <p className="faint" style={{ margin: "8px 0 0" }}>AI가 웹에서 찾은 정보라 틀릴 수 있어요. 사료 봉투에 적힌 열량과 같은지 한 번 확인해 주세요.</p>
+            </>
+          ) : (
+            <>
+              <p className="subtle" style={{ margin: 0 }}>정확히 같은 제품을 찾지 못했어요. 이름을 더 자세히(나이·크기·라인) 적어 주세요.</p>
+              {info.candidates?.length > 0 && (
+                <div className="chip-wrap" style={{ marginTop: 8 }}>
+                  {info.candidates.map((c) => (
+                    <button key={c} type="button" className="chip" style={{ border: "none", cursor: "pointer" }} onClick={() => search(c)}>{c}</button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {result.sources?.length > 0 && (
+            <div className="food-sources">
+              <span className="faint">출처</span>
+              {result.sources.map((s) => (
+                <a key={s.url} href={s.url} target="_blank" rel="noreferrer"><Ico name="arrowRight" size={12} /> {s.title || s.url}</a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
