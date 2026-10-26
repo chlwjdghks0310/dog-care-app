@@ -2,6 +2,8 @@
 :root {
   --bg: #f0f6ff; --surface: #fff; --border: #d6e4f5; --text: #2b2320; --soft: #7a6f63;
   --accent: #4b90e2; --accent-soft: #dde9fa; --accent-strong: #2f6fbd;
+  /* 버튼: 흰 글씨 대비 4.5:1 이상(자료용 점검 — #4b90e2는 3.29:1이라 한 단계 진하게) */
+  --btn: #2f6fbd; --btn-hover: #2a64ad; --btn-text: #fff;
   --teal: #1d7673; --teal-bg: #d9f1ef; --violet: #5b4fb8; --violet-bg: #e8e5fa; --rose: #b0406c; --rose-bg: #fae0ea;
   --shadow: 0 4px 14px rgba(43, 35, 32, 0.07); --phone-shadow: 0 18px 40px rgba(43, 70, 120, 0.18);
   --radius: 20px; --gutter: 20px; --head: 56px;
@@ -11,6 +13,7 @@
   :root {
     --bg: #17171c; --surface: #222229; --border: #33333d; --text: #ececf0; --soft: #a9a9b3;
     --accent: #5b9ff0; --accent-soft: #1f2d42; --accent-strong: #8dbdf6;
+    --btn: #5b9ff0; --btn-hover: #7ab1f3; --btn-text: #17171c; /* 다크: 밝은 버튼 + 어두운 글씨(6.5:1) */
     --teal: #4fc3bf; --teal-bg: #1f3a3a; --violet: #a69bef; --violet-bg: #2f2b4a; --rose: #ee86ac; --rose-bg: #47283a;
     --shadow: 0 4px 16px rgba(0, 0, 0, 0.35); --phone-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
@@ -43,11 +46,10 @@ figure { margin: 0; }
 /* 버튼 */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px;
-  border-radius: 14px; background: var(--accent); color: #fff; font-weight: 800; text-decoration: none;
+  border-radius: 14px; background: var(--btn); color: var(--btn-text); font-weight: 800; text-decoration: none; border: none; font-family: inherit; cursor: pointer;
   box-shadow: 0 6px 16px rgba(75, 144, 226, 0.28); transition: transform 0.15s ease, background 0.15s ease;
 }
-.btn:hover { background: var(--accent-strong); }
-@media (prefers-color-scheme: dark) { .btn:hover { background: #4a8fe0; } }
+.btn:hover { background: var(--btn-hover); }
 .btn:active { transform: scale(0.98); }
 .btn-lg { min-height: 54px; padding: 0 26px; font-size: 17px; }
 .btn-sm { min-height: 40px; padding: 0 16px; font-size: 15px; box-shadow: none; }
@@ -160,7 +162,7 @@ section { padding: 52px 0; }
 .steps b { font-size: 18px; }
 .steps li > span:last-child { color: var(--soft); font-size: 15px; }
 .steps em { font-style: normal; font-weight: 700; color: var(--text); }
-.step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--btn); color: var(--btn-text); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; }
 
 /* 7. 믿을 수 있게 */
 .trust-grid { display: grid; gap: 12px; }
@@ -183,7 +185,7 @@ section { padding: 52px 0; }
 .final-in img { border-radius: 16px; }
 .final h2 { font-size: clamp(24px, 4.2vw, 34px); font-weight: 800; }
 .final .btn { width: min(320px, 100%); }
-.final .note { margin-top: -6px; }
+.final .note { margin-top: -6px; color: var(--text); }
 @media (max-width: 719px) { .final .wrap { border-radius: 0; } }
 
 /* 10. 푸터 */
@@ -198,3 +200,18 @@ section { padding: 52px 0; }
 .foot-links a { color: var(--text); text-decoration: none; font-weight: 600; padding: 6px 0; }
 .foot-links a:hover { text-decoration: underline; }
 .copy { font-size: 12.5px; margin-top: 12px; }
+
+/* 앱 안 브라우저 안내 띠 */
+.inapp { background: var(--rose-bg); border-bottom: 1px solid var(--border); font-size: 14px; }
+.inapp-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+.inapp-in span { flex: 1 1 100%; }
+@media (min-width: 720px) { .inapp-in span { flex: 1 1 auto; } }
+/* 설치 방법 펼치기 */
+.howto { margin-top: 6px; font-size: 14.5px; }
+.howto summary { cursor: pointer; color: var(--accent-strong); font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.howto-os { font-weight: 800; margin-top: 8px !important; color: var(--text); }
+.howto ol { margin: 4px 0 0; padding-left: 20px; color: var(--soft); }
+.howto em { font-style: normal; font-weight: 700; color: var(--text); }
+.pc-note { display: none; }
+@media (min-width: 1024px) { .pc-note { display: block; max-width: 30em; } }
+.steps .howto li { display: list-item; padding: 2px 0; background: none; border: none; border-radius: 0; box-shadow: none; gap: 0; font-size: 14px; color: var(--soft); }

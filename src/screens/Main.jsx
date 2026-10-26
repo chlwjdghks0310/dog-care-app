@@ -704,7 +704,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
       </form>
       <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
         <p className="faint" style={{ textAlign: "center", marginTop: 8, marginBottom: 0 }}>
-          진단·처방을 대신하지 않아요. 응급 상황이면 병원에 문의하세요.
+          진료가 아니라 돌봄을 돕는 비서예요. 응급 상황이면 병원에 문의하세요.
         </p>
       </div></div>
     </div>
