@@ -12,6 +12,7 @@ import { calculateAge } from "./utils/age";
 import { todayKey } from "./utils/date";
 import BottomNav, { TABS } from "./components/BottomNav";
 import Onboarding from "./screens/Onboarding";
+import InstallGate, { needsInstall } from "./screens/InstallGate";
 import DogRegister from "./screens/DogRegister";
 import Home from "./screens/Home";
 import ThisWeek from "./screens/ThisWeek";
@@ -302,6 +303,13 @@ export default function App() {
   if (loading) return null;
 
   if (route === "onboarding") {
+    // 휴대폰 브라우저로 처음 열었으면 먼저 홈 화면 설치(설치한 앱으로 열면 안 나옴)
+    if (needsInstall())
+      return (
+        <div className="app-shell">
+          <InstallGate />
+        </div>
+      );
     return (
       <div className="app-shell">
         <Onboarding

@@ -1106,3 +1106,14 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .theme-head > .faint:last-child { font-size: 16px; padding: 0 2px; }
 .food-photo { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 8px; cursor: pointer; }
 .food-photo.disabled { opacity: 0.5; pointer-events: none; }
+/* 홈 화면 설치 안내(InstallGate) — 온보딩과 같은 모양 */
+.ig-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 20px 12px; text-align: center; }
+.ig-card, .ig-steps, .ig-why { text-align: left; }
+.ig-tabs { display: flex; gap: 6px; width: 100%; max-width: 300px; }
+.ig-steps { list-style: none; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.ig-steps li { display: flex; align-items: center; gap: 10px; line-height: 1.45; font-size: 15px; }
+.ig-num { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.ig-note { display: block !important; padding: 8px 10px; border-radius: 10px; background: var(--warning-bg); font-size: 13.5px !important; }
+.ig-glyph { display: inline-block; vertical-align: -3px; color: var(--accent-strong); }
+.ig-install { width: 100%; max-width: 300px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ig-foot { text-align: center; margin: 8px 20px 0; font-size: 12.5px; }
