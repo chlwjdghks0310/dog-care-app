@@ -79,6 +79,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
   const [input, setInput] = useState("");
   const inputRef = useRef("");
   const inputElRef = useRef(null);
+  // 입력칸은 글이 길어지면 5줄까지 늘어난다(한 줄 칸이면 사진과 함께 쓰는 긴 질문이 안 보였음)
+  useEffect(() => {
+    const el = inputElRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight + el.offsetHeight - el.clientHeight, 132)}px`; // 테두리까지 더해 빈 칸이 44px
+  }, [input]);
   inputRef.current = input; // 🎤가 말하기 시작할 때의 입력 내용에 이어 붙이도록
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
@@ -362,7 +369,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           : "calc(56px + env(safe-area-inset-top, 0px)) 16px 20px",
       }}
     >
-      {!isChat && (
+      {!isChat && !attachments.length && ( /* 사진·영상을 붙이면 질문 칸 자리를 내주려고 숨김 */
         <div style={{ marginBottom: 16 }}>
           {getFirstSteps(dog.id).show ? (
             <SpeechBubble>
@@ -563,7 +570,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
       <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
-      {!isChat && (
+      {!isChat && !attachments.length && ( /* 사진·영상을 붙이면 질문 칸 자리를 내주려고 숨김 */
         <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="추천 질문">
           <button type="button" className="record-example" disabled={pending} onClick={() => (setInput(RECORD_EXAMPLE), inputElRef.current?.focus())}>
             <Ico name="pencil" size={14} /> {RECORD_EXAMPLE}
@@ -645,7 +652,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           )}
           {attachError && <div className="error-text" style={{ marginTop: 6 }}>{attachError}</div>}
           {attachments.length > 0 && !attachError && (
-            <div className="faint" style={{ marginTop: 4 }}>궁금한 걸 같이 적어도 되고, 그냥 보내도 분석해 줘요.</div>
+            <div style={{ marginTop: 6, fontSize: 13.5, fontWeight: 600, color: "var(--accent-strong)" }}>↓ 아래 칸에 궁금한 점을 적어 주세요. 안 적고 보내도 분석해 줘요.</div>
           )}
         </div>
       )}
@@ -655,7 +662,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           e.preventDefault();
           send(input);
         }}
-        style={{ display: "flex", gap: 8, marginTop: 8 }}
+        style={{ display: "flex", alignItems: "flex-end", gap: 8, marginTop: 8 }}
       >
         <button
           type="button"
@@ -680,20 +687,36 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           <Ico name="camera" size={20} />
         </button>
         <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handlePick} style={{ display: "none" }} />
-        <input
+        <textarea
           ref={inputElRef}
+          rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={attachments.length ? "궁금한 점(안 적어도 돼요)" : "물어보거나 기록해 줘"}
+          onKeyDown={(e) => {
+            // Enter는 보내기, Shift+Enter는 줄바꿈(한글 조합 중 Enter는 무시)
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              send(input);
+            }
+          }}
+          aria-label={attachments.length ? "사진·영상에 대해 궁금한 점" : "비서에게 보낼 말"}
+          placeholder={attachments.length ? "사진·영상에 대해 궁금한 점" : "물어보거나 기록해 줘"}
           style={{
             flex: 1,
             minWidth: 0, // 입력창은 기본 최소 너비가 있어 좁은 화면(확대 모드 320px)에서 전송 버튼을 밀어냄
             height: 44,
-            border: "1px solid var(--border)",
+            maxHeight: 132,
+            border: attachments.length ? "2px solid var(--accent)" : "1px solid var(--border)",
+            boxShadow: attachments.length ? "0 0 0 4px var(--accent-soft)" : "none",
             borderRadius: 22,
-            padding: "0 16px",
+            padding: attachments.length ? "10px 15px" : "11px 16px",
             fontSize: 16,
+            lineHeight: "20px",
             outline: "none",
+            resize: "none",
+            overflowY: "auto",
+            fontFamily: "inherit",
+            color: "var(--text)",
             background: "var(--surface)",
           }}
         />
