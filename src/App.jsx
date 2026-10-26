@@ -6,6 +6,7 @@ import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, checkMedA
 import { getFeedingSettings } from "./services/feedingSettings";
 import { getCustomSchedules } from "./services/customSchedules";
 import { syncEventAlarms } from "./services/calendarEvents";
+import { applyFixedExpenses } from "./services/expenses";
 import { getSoakGuidance } from "./data/feedingGuide";
 import { calculateAge } from "./utils/age";
 import { todayKey } from "./utils/date";
@@ -288,6 +289,7 @@ export default function App() {
     }, 30 * 1000);
     // 앱을 열 때와 백그라운드로 보낼 때마다 최신 알람 목록을 서버에 보내, 앱이 꺼져 있어도 서버가 푸시를 쏘게 한다.
     for (const d of getDogs()) syncEventAlarms(d.id); // 반복 일정 알림을 다음 회차로
+    for (const d of getDogs()) applyFixedExpenses(d.id, todayKey()); // 매달 나가는 돈(등록한 것) — 날이 된 회차를 가계부에 기록
     syncPushAlarms();
     const onVisibility = () => document.visibilityState === "hidden" && syncPushAlarms({ beacon: true });
     document.addEventListener("visibilitychange", onVisibility);

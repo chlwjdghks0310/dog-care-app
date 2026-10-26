@@ -202,3 +202,55 @@ export function expensesToCsv(expenses, categoryName) {
     .map((e) => [e.date, categoryName(e.categoryId), e.title, e.amount, e.memo, e.items?.join("·"), e.claim ? claimLabel[e.claim] : "", e.claimPaid].map(cell).join(","));
   return "\uFEFF" + ["날짜,분류,내용,금액,메모,병원비 항목,보험 청구,받은 보험금", ...rows].join("\n");
 }
+
+// 매달 나가는 돈(직접 등록): 보험료·정기 배송 사료처럼 매달 정해진 날 나가는 돈. 구조: { [dogId]: [{ id, title, amount, categoryId, day, memo?, from }] }
+// from = 등록한 날("YYYY-MM-DD") — 그날 이후의 회차만 기록. 날이 되면 가계부에 저절로 기록한다(applyFixedExpenses).
+// 기록 id를 "fix-<항목id>-<YYYY-MM>"로 정해서, 같은 달은 두 번 안 생기고 가족 폰 두 대가 같이 기록해도 하나로 합쳐진다.
+const FIXED_KEY = "dogcare-fixed-expenses-v1";
+export const getFixedExpenses = (dogId) => readJSON(FIXED_KEY, {})[dogId] || [];
+function writeFixed(dogId, list) {
+  const all = readJSON(FIXED_KEY, {});
+  all[dogId] = list;
+  writeJSON(FIXED_KEY, all);
+  return list;
+}
+export function saveFixedExpense(dogId, item, today) {
+  const list = getFixedExpenses(dogId);
+  if (item.id) return writeFixed(dogId, list.map((f) => (f.id === item.id ? { ...f, ...item } : f)));
+  return writeFixed(dogId, [...list, { ...item, id: newId("fix"), from: today }]);
+}
+export const deleteFixedExpense = (dogId, id) => writeFixed(dogId, getFixedExpenses(dogId).filter((f) => f.id !== id));
+// 그 달의 낼 날(31일로 정했는데 30일까지인 달은 말일)
+export function fixedDate(item, month) {
+  const [y, m] = month.split("-").map(Number);
+  const last = new Date(y, m, 0).getDate();
+  return `${month}-${String(Math.min(item.day, last)).padStart(2, "0")}`;
+}
+// 등록한 날부터 오늘까지 지난 회차 중 아직 없는 것을 기록. 반환: 새로 기록한 수
+export function applyFixedExpenses(dogId, today) {
+  const items = getFixedExpenses(dogId);
+  if (!items.length) return 0;
+  const all = readJSON(EXPENSES_KEY, {});
+  const list = all[dogId] || [];
+  const ids = new Set(list.map((e) => e.id));
+  const added = [];
+  for (const f of items) {
+    let [y, m] = f.from.slice(0, 7).split("-").map(Number);
+    for (let guard = 0; guard < 24; guard++) {
+      const month = `${y}-${String(m).padStart(2, "0")}`;
+      if (month > today.slice(0, 7)) break;
+      const date = fixedDate(f, month);
+      const id = `fix-${f.id}-${month}`;
+      if (date >= f.from && date <= today && !ids.has(id)) {
+        added.push({ id, title: f.title, amount: f.amount, date, categoryId: f.categoryId, fixedId: f.id, ...(f.memo ? { memo: f.memo } : {}) });
+        ids.add(id);
+      }
+      m === 12 ? ((y += 1), (m = 1)) : (m += 1);
+    }
+  }
+  if (added.length) {
+    all[dogId] = [...list, ...added];
+    writeJSON(EXPENSES_KEY, all);
+  }
+  return added.length;
+}

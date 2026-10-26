@@ -106,3 +106,15 @@ console.log("가계부 분석 확인 통과");
   assert.equal(E2.searchExpenses(xs, "사료", (id) => (id === "food" ? "사료" : "")).length, 2, "분류 이름으로도");
   console.log("가계부 분류·용돈·자주 쓰는 내역·검색 통과");
 }
+
+// 매달 나가는 돈(직접 등록): 등록일 이후 회차만, 말일 처리, 두 번 돌려도 하나
+{
+  const E3 = await import("../src/services/expenses.js?v3");
+  E3.saveFixedExpense("fx", { title: "펫보험", amount: 32000, categoryId: "insurance", day: 31 }, "2026-08-20");
+  E3.saveFixedExpense("fx", { title: "정기 사료", amount: 45000, categoryId: "food", day: 5 }, "2026-09-10");
+  assert.equal(E3.applyFixedExpenses("fx", "2026-10-26"), 3, "보험 8·9월(말일), 사료 10월");
+  assert.equal(E3.applyFixedExpenses("fx", "2026-10-26"), 0, "두 번 돌려도 그대로");
+  assert.deepEqual(E3.getExpenses("fx").map((e) => `${e.date} ${e.title}`).sort(), ["2026-08-31 펫보험", "2026-09-30 펫보험", "2026-10-05 정기 사료"]);
+  assert.equal(E3.applyFixedExpenses("fx", "2026-10-31"), 1, "10/31 보험");
+  console.log("매달 나가는 돈 등록 통과");
+}

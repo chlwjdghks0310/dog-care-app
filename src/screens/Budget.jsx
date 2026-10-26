@@ -15,12 +15,15 @@ import {
   CATEGORY_COLORS,
   CLAIMS,
   expensesToCsv,
+  getFixedExpenses,
+  applyFixedExpenses,
+  fixedDate,
   CATEGORY_CHOICES,
   categoryIco,
 } from "../services/expenses";
 import { compareSameTime, detectFixed, projectMonth, bigExpenseThreshold, weeklyTotals, topItems, categoryCompare } from "../services/budgetInsights";
 import Ico from "../components/Ico";
-import ExpenseSheet from "../components/ExpenseSheet";
+import ExpenseSheet, { FixedSheet } from "../components/ExpenseSheet";
 import { josa } from "../utils/text";
 import { HOLIDAYS } from "../data/holidays";
 
@@ -37,7 +40,10 @@ const shortWon = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1).replace(/\.0$/, "")}
 export default function Budget({ dog }) {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey());
-  const [expenses, setExpenses] = useState(() => getExpenses(dog.id));
+  // 매달 나가는 돈(직접 등록)은 날이 되면 저절로 기록 — 가계부를 열 때 먼저 채운다
+  const [expenses, setExpenses] = useState(() => (applyFixedExpenses(dog.id, todayKey()), getExpenses(dog.id)));
+  const [registered, setRegistered] = useState(() => getFixedExpenses(dog.id));
+  const [fixedSheet, setFixedSheet] = useState(null); // 매달 나가는 돈 등록·고치기 시트
   const [categories, setCategories] = useState(getCategories);
   const [filterCategoryId, setFilterCategoryId] = useState(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -91,9 +97,13 @@ export default function Budget({ dog }) {
   const today = todayKey();
   const isThisMonth = today.startsWith(monthPrefix);
   const same = isThisMonth ? compareSameTime(expenses, today) : null;
-  const fixed = useMemo(() => detectFixed(expenses, monthPrefix), [expenses, monthPrefix]);
+  // 매달 나가는 돈: 직접 등록한 것 + 기록에서 찾은 것(같은 이름이 등록돼 있으면 뺀다)
+  const regNames = new Set(registered.map((f) => f.title.replace(/\s+/g, "")));
+  const fixed = useMemo(() => detectFixed(expenses, monthPrefix), [expenses, monthPrefix]).filter((f) => !regNames.has(f.title.replace(/\s+/g, "")));
+  const regPaid = (f) => expenses.some((e) => e.fixedId === f.id && e.date.startsWith(monthPrefix));
+  const fixedForProjection = [...fixed, ...registered.map((f) => ({ title: f.title, avg: f.amount, paidThisMonth: regPaid(f) }))];
   const bigLine = useMemo(() => bigExpenseThreshold(expenses), [expenses]);
-  const projected = isThisMonth ? projectMonth(expenses, today, fixed, bigLine) : null;
+  const projected = isThisMonth ? projectMonth(expenses, today, fixedForProjection, bigLine) : null;
   const weeks = weeklyTotals(expenses, monthPrefix);
   const maxWeek = Math.max(1, ...weeks.map((w) => w.total));
   const top = topItems(monthExpenses);
@@ -307,28 +317,45 @@ export default function Budget({ dog }) {
         )}
       </div>
 
-      {fixed.length > 0 && (
-        <div className="card" style={{ marginBottom: 14 }}>
-          <div className="h2" style={{ marginBottom: 4 }}>매달 나가는 돈</div>
-          <p className="faint" style={{ marginTop: 0 }}>최근 3달 중 2달 이상 같은 이름으로 적은 지출이에요.</p>
-          {fixed.map((f) => (
-            <div key={f.title} className="bud-row">
-              <span className="bud-cat-icon" style={{ background: colorOf(categoryById(f.categoryId).id) }}><Ico name={categoryIco(categoryById(f.categoryId))} size={20} /></span>
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <div className="h2" style={{ margin: 0 }}>매달 나가는 돈</div>
+          <button type="button" className="chip" style={{ border: "none", cursor: "pointer", fontSize: 13, padding: "5px 11px" }} onClick={() => setFixedSheet({})}>＋ 등록</button>
+        </div>
+        {registered.length === 0 && fixed.length === 0 && <p className="faint" style={{ margin: "6px 0 0" }}>보험료·정기 배송 사료처럼 매달 나가는 돈을 등록하면 그날마다 저절로 기록돼요.</p>}
+        {registered.map((f) => {
+          const paid = regPaid(f);
+          const cat = categoryById(f.categoryId);
+          return (
+            <button key={f.id} type="button" className="bud-row bud-row-btn" onClick={() => setFixedSheet(f)} aria-label={`${f.title} 고치기`}>
+              <span className="bud-cat-icon" style={{ background: colorOf(cat.id) }}><Ico name={categoryIco(cat)} size={20} /></span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span className="bud-row-title">{f.title}</span>
-                <span className="faint">보통 {f.day}일쯤 · 평균 {won(f.avg)}</span>
+                <span className="faint">매달 {f.day}일 · {won(f.amount)} · 자동 기록</span>
               </span>
+              <span className={`bud-badge${paid ? " done" : ""}`}>{paid ? "기록됨" : `${Number(fixedDate(f, monthPrefix).slice(8))}일 예정`}</span>
+            </button>
+          );
+        })}
+        {fixed.length > 0 && <p className="faint" style={{ margin: "10px 0 2px" }}>기록에서 찾은 것 — 최근 3달 중 2달 이상 같은 이름으로 적은 지출이에요.</p>}
+        {fixed.map((f) => (
+          <div key={f.title} className="bud-row">
+            <span className="bud-cat-icon" style={{ background: colorOf(categoryById(f.categoryId).id) }}><Ico name={categoryIco(categoryById(f.categoryId))} size={20} /></span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="bud-row-title">{f.title}</span>
+              <span className="faint">보통 {f.day}일쯤 · 평균 {won(f.avg)}</span>
+            </span>
+            <span style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+              <button type="button" className="chip bud-record" onClick={() => setFixedSheet({ title: f.title, amount: f.lastAmount, categoryId: categoryById(f.categoryId).id, day: f.day, memo: f.memo })}>등록</button>
               {f.paidThisMonth ? (
                 <span className="bud-badge done">냈어요</span>
               ) : isThisMonth ? (
-                <button type="button" className="chip bud-record" onClick={() => openAdd({ title: f.title, amount: f.lastAmount, categoryId: categoryById(f.categoryId).id, memo: f.memo, date: today })}>
-                  기록
-                </button>
+                <button type="button" className="chip bud-record" onClick={() => openAdd({ title: f.title, amount: f.lastAmount, categoryId: categoryById(f.categoryId).id, memo: f.memo, date: today })}>기록</button>
               ) : null}
-            </div>
-          ))}
-        </div>
-      )}
+            </span>
+          </div>
+        ))}
+      </div>
 
       {/* 카테고리 관리를 열면 지출 칸 자리에 대신 보여 준다 */}
       {!showCategoryManager && (
@@ -463,6 +490,16 @@ export default function Budget({ dog }) {
         </div>
       )}
 
+      {fixedSheet && (
+        <FixedSheet
+          dog={dog}
+          categories={categories}
+          initial={fixedSheet}
+          today={today}
+          onClose={() => setFixedSheet(null)}
+          onSaved={() => (applyFixedExpenses(dog.id, today), setRegistered(getFixedExpenses(dog.id)), setExpenses(getExpenses(dog.id)), setFixedSheet(null))}
+        />
+      )}
       {sheet && <ExpenseSheet dog={dog} categories={categories} expenses={expenses} initial={sheet} onClose={() => setSheet(null)} onSaved={handleSheetSaved} />}
     </div>
   );
