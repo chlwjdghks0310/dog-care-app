@@ -14,6 +14,7 @@ import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
 import { getRoutine, checkinAlarmTime, checkedInToday } from "./routine";
 import { getFoodStock } from "./foodStock";
+import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -177,6 +178,8 @@ export function buildPushAlarms() {
       // 나가 있는 동안에도 원래 시각에 울린다(밖에서도 챙길 일을 떠올리게 — 사용자 결정 2026-10-27)
       for (const time of item.suggestedTimes || []) alarms.push({ time, ...checklistMessage(dog, item), skipDate });
     }
+    // 주간 리포트: 일요일 밤
+    alarms.push({ time: REPORT_TIME, title: `📊 ${dog.name}의 이번 주`, body: "지난 7일 기록을 모아 봤어요. 눌러서 확인해 보세요.", url: `/?report=1&dog=${encodeURIComponent(dog.id)}`, days: [REPORT_DAY] });
     // 사료 떨어짐 예고: 떨어지기 5일 전·1일 전 점심
     const stock = getFoodStock(dog);
     if (stock) {

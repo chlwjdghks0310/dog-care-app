@@ -28,6 +28,7 @@ import WeightTracker from "./screens/WeightTracker";
 import Budget from "./screens/Budget";
 import Medications from "./screens/Medications";
 import VetSummary from "./screens/VetSummary";
+import WeeklyReport from "./screens/WeeklyReport";
 import Records from "./screens/Records";
 import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
@@ -48,6 +49,7 @@ const PARENT_TAB = {
   weight: "profile",
   meds: "profile",
   vet: "profile",
+  report: "profile",
   records: "profile",
   vital: "profile",
   "records-new": "profile",
@@ -232,6 +234,13 @@ export default function App() {
       setCheckinSignal((n) => n + 1);
       return true;
     }
+    // 주간 리포트 알림(/?report=1&dog=..) → 그 강아지의 이번 주 리포트
+    if (params.get("report")) {
+      const d = getDogs().find((x) => x.id === params.get("dog"));
+      if (d) setActiveDog(d);
+      setTab("report");
+      return true;
+    }
     const target = getDogs().find((d) => d.id === params.get("dog"));
     if (!target || !params.get("dose")) return false;
     setActiveDog(target);
@@ -375,6 +384,7 @@ export default function App() {
       <Profile
         dog={dog}
         onOpenVet={() => setTab("vet")}
+        onOpenReport={() => setTab("report")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
         onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
         onNewRecord={(type) => (setRecordsOpts({ type }), setTab("records-new"))}
@@ -391,6 +401,7 @@ export default function App() {
     meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("profile"))} />,
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
+    report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => setTab("vet")} />,
     records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
     "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back ? "← 일정표로" : undefined} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("profile"))} onOpenMeds={() => setTab("meds")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,

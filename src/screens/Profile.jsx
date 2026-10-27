@@ -42,7 +42,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
-export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
+export default function Profile({ dog, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
@@ -248,7 +248,7 @@ export default function Profile({ dog, onOpenVet, onOpenVital, onOpenRecords, on
 
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
-      <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} />
+      <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} />
 
       <NewRecordFab onClick={() => onNewRecord()} />
 
@@ -620,7 +620,7 @@ const SERVICES = [
   { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
 const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
-function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet }) {
+function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet, onOpenReport }) {
   const [more, setMore] = useState(false);
   const recs = getRecords(dog.id);
   const meds = getMeds(dog.id).filter((m) => !isEnded(m));
@@ -662,6 +662,9 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
       </button>
       <button type="button" className="btn-ghost report-btn" onClick={onOpenVet}>
         <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록 — 수의사에게 보여 줄 정리본
+      </button>
+      <button type="button" className="btn-ghost report-btn" style={{ marginTop: 8 }} onClick={onOpenReport}>
+        <Ico name="chart" size={18} className="cat-ico tone-violet" /> 이번 주 리포트 — 지난 7일 기록 모아 보기
       </button>
     </div>
   );
