@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { outingState, leaveNow, backNow, durationLabel, backTip, checkedInToday, markCheckedIn, getRoutine, saveRoutine, DEFAULT_ROUTINE } from "../services/routine";
+import { outingState, leaveNow, backNow, durationLabel, backTip, checkedInToday, markCheckedIn, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
 import { saveRecord, newRecordId, localNow } from "../services/records";
 import { syncPushAlarms } from "../services/notifications";
 
 // 비서 첫 화면의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어] → [30초 체크인]. 밖에 오래 있는 보호자가 아침·저녁에 한 번씩만 누르면 되게.
-export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) {
+// 체크인을 마치면 비서 화면에선 사라지고(place="main") 체크리스트의 '오늘 해야 할 일' 위에 같은 모양으로 보인다(place="checklist")
+export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose, place = "main" }) {
   const [, setTick] = useState(0);
   const [sheet, setSheet] = useState(openCheckin ? "checkin" : null); // "checkin" | "routine" | null
   useEffect(() => {
@@ -22,6 +23,12 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) 
   const evening = new Date().getHours() >= 17;
   const refresh = () => setTick((n) => n + 1);
   const close = () => (setSheet(null), onCheckinClose?.());
+  // 처음 [다녀올게]: 평소 외출 시간을 한 번만 물어본다(저녁 체크인 알림·혼자 있는 시간 어림에 필요)
+  function leave() {
+    leaveNow();
+    refresh();
+    if (!getRoutine() && !routineAsked()) (markRoutineAsked(), setSheet("routine-ask"));
+  }
 
   let title, sub, action;
   if (s.state === "away") {
@@ -38,12 +45,15 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) 
   } else {
     title = evening ? `${dog.name} 오늘 어땠어요?` : "외출할 때 눌러 주세요";
     sub = evening ? "밥·배변·산책을 30초에 기록해요" : `${dog.name}가 혼자 있는 시간을 챙겨 줄게요`;
-    action = evening ? { label: "30초 체크인", run: () => setSheet("checkin") } : { label: "다녀올게", run: () => (leaveNow(), refresh()) };
+    action = evening ? { label: "30초 체크인", run: () => setSheet("checkin") } : { label: "다녀올게", run: leave };
   }
 
+  // 체크인을 마친 날: 비서 화면에선 숨기고(닫는 중인 창은 그대로) 체크리스트에서만 보인다
+  const show = place === "checklist" ? done : !done || sheet;
+  if (!show) return null;
   return (
     <>
-      <div className="outing-card">
+      <div className="outing-card" style={done && place === "main" ? { display: "none" } : undefined}>
         <span className="outing-ico">
           <Ico name={done ? "check" : s.state === "away" ? "timer" : "house"} size={20} />
         </span>
@@ -61,7 +71,7 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) 
         </button>
       </div>
       {sheet === "checkin" && <CheckinSheet dog={dog} onClose={close} onAsk={onAsk} onDone={() => (markCheckedIn(dog.id), refresh())} />}
-      {sheet === "routine" && <RoutineSheet onClose={() => setSheet(null)} />}
+      {(sheet === "routine" || sheet === "routine-ask") && <RoutineSheet ask={sheet === "routine-ask"} onClose={() => setSheet(null)} />}
     </>
   );
 }
@@ -137,7 +147,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
         {saved ? (
           <div className="es-scroll" style={{ padding: "8px 16px 20px", textAlign: "center" }}>
             <div style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>기록 {saved}개를 남겼어요</div>
-            <p className="subtle" style={{ margin: 0 }}>프로필 → 건강 기록에서 보거나 고칠 수 있어요.</p>
+            <p className="subtle" style={{ margin: 0 }}>프로필 → 건강 기록에서 보거나 고칠 수 있어요. 완료 표시는 체크리스트 위로 옮겨 둘게요.</p>
             {concern && onAsk && (
               <button type="button" className="btn-ghost" style={{ marginTop: 14 }} onClick={() => (onAsk(`오늘 저녁에 보니 ${[meal === "안 먹었어" && "밥을 거의 안 먹었고", stool === "설사" && "설사를 했고", ...odd.filter((o) => ["토했어", "기운 없어"].includes(o))].filter(Boolean).join(", ")} 어떻게 하면 좋을까?`), onClose())}>
                 비서에게 어떻게 할지 물어보기
@@ -166,8 +176,14 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 평소 나가고 들어오는 시각 — 버튼을 깜빡해도 이 시각으로 혼자 있는 시간을 어림하고, 들어오는 시각 30분 뒤에 체크인 알림
-function RoutineSheet({ onClose }) {
-  const [r, setR] = useState(() => getRoutine() || DEFAULT_ROUTINE);
+function RoutineSheet({ onClose, ask }) {
+  // 처음 물어볼 때는 방금 누른 시각(10분 단위)을 나가는 시각으로 채워 둔다
+  const [r, setR] = useState(() => {
+    if (getRoutine()) return getRoutine();
+    const d = new Date();
+    const m = Math.floor(d.getMinutes() / 10) * 10;
+    return ask ? { ...DEFAULT_ROUTINE, leave: `${String(d.getHours()).padStart(2, "0")}:${String(m).padStart(2, "0")}` } : DEFAULT_ROUTINE;
+  });
   const set = (patch) => setR((cur) => ({ ...cur, ...patch }));
   function save() {
     saveRoutine(r);
@@ -179,11 +195,13 @@ function RoutineSheet({ onClose }) {
       <div className="es-sheet" role="dialog" aria-label="외출 시간 설정">
         <div className="es-top">
           <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
-          <div className="es-title">평소 외출 시간</div>
+          <div className="es-title">{ask ? "다녀오세요!" : "평소 외출 시간"}</div>
           <span style={{ width: 36 }} />
         </div>
         <div className="es-scroll" style={{ padding: "4px 16px 16px" }}>
-          <p className="subtle" style={{ margin: 0 }}>[다녀올게]를 깜빡해도 이 시간으로 혼자 있는 시간을 어림해요.</p>
+          <p className="subtle" style={{ margin: 0 }}>
+            {ask ? "평소 외출 시간도 정해 둘까요? 들어오는 시각 30분 뒤에 저녁 체크인 알림을 보내 드리고, 버튼을 깜빡한 날도 혼자 있는 시간을 어림해요." : "[다녀올게]를 깜빡해도 이 시간으로 혼자 있는 시간을 어림해요."}
+          </p>
           <div style={{ display: "flex", gap: 10 }}>
             <label className="field" style={{ flex: 1, margin: 0 }}>
               <span className="xs-label">나가는 시각</span>
@@ -210,6 +228,7 @@ function RoutineSheet({ onClose }) {
             들어오는 시각 30분 뒤에 저녁 체크인 알림 받기
           </label>
           <button type="button" className="btn-primary" onClick={save}>저장</button>
+          {ask && <button type="button" className="btn-ghost" onClick={onClose}>다음에 할게요</button>}
         </div>
       </div>
     </div>,

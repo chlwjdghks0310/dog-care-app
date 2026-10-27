@@ -1147,3 +1147,6 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .wr-row .faint { flex-shrink: 0; min-width: 72px; }
 .wr-hint { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--accent-soft); color: var(--text); font-size: 14.5px; line-height: 1.55; }
 .wr-hint .ico, .wr-hint svg { color: var(--accent-strong); flex-shrink: 0; margin-top: 2px; }
+.outing-slot:empty { display: none; }
+/* 비서 답변: 접어 둔 소제목 펼치기 */
+.ai-more { display: block; width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--accent-strong); font-size: 14px; font-weight: 700; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

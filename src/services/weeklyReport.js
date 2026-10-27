@@ -3,6 +3,7 @@ import { getWeightRecords } from "./weightLog";
 import { getScheduleForDate } from "./scheduleRepository";
 import { getOccurrences } from "./calendarEvents";
 import { getFoodStock } from "./foodStock";
+import { aloneSummary } from "./routine";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
 // 주간 리포트: 지난 7일(오늘 포함) 기록을 모아 숫자로만 보여 준다 — 판단·점수 없이, 기록된 사실과 다음 주 일정만.
@@ -41,7 +42,7 @@ export function buildWeeklyReport(dog, today = todayKey()) {
 
   const next = getOccurrences(dog.id, key(today, 1), key(today, 7)).filter((o) => o.isStart).map((o) => ({ date: o.date, title: o.event.title, time: o.event.time }));
   const records = recs.length + ws.filter((w) => inWeek(w.measuredAt)).length;
-  return { from, to: today, records, walk, meal, looseDays, symptoms, weight, checklist: { done, total }, next, food: getFoodStock(dog, today) };
+  return { from, to: today, records, walk, meal, looseDays, symptoms, weight, checklist: { done, total }, next, food: getFoodStock(dog, today), alone: aloneSummary(from, key(today, -1)) }; // 혼자 있던 시간은 끝난 날(어제까지)만
 }
 
 // 일요일 밤 리포트 알림 시각(고정) — 바꾸려면 여기만

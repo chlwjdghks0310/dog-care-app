@@ -24,6 +24,13 @@ R.backNow(at("19:05"));
 assert.equal(R.getOuting("2026-10-27").backAt, "19:05");
 R.markCheckedIn("d1", "2026-10-27");
 assert.ok(R.checkedInToday("d1", "2026-10-27") && !R.checkedInToday("d2", "2026-10-27"));
+// 혼자 있던 시간 쌓기: 날마다 남고, [왔어]를 안 누른 날은 평소 들어오는 시각으로
+R.saveRoutine(routine);
+R.leaveNow(new Date("2026-10-26T08:00:00")); R.backNow(new Date("2026-10-26T18:00:00")); // 10시간
+R.leaveNow(new Date("2026-10-25T09:00:00")); // 안 들어옴 → 19:00까지 10시간
+assert.equal(R.getOuting("2026-10-27").leftAt, "08:40", "오늘 기록은 그대로");
+assert.deepEqual(R.aloneSummary("2026-10-21", "2026-10-26"), { days: 2, avg: 600 });
+assert.ok(!R.routineAsked()); R.markRoutineAsked(); assert.ok(R.routineAsked());
 console.log("routine ok");
 // 사료 남은 양: 2kg 봉투, 하루 50g → 40일. 10/1에 뜯었으면 11/10에 떨어짐
 const F = await import("../src/services/foodStock.js");

@@ -6,6 +6,12 @@ export const FOLLOWUP_MARK = "[[후속질문]]";
 
 // 소제목 이모지 → 블록 종류(화면 색·순서용). 📚는 AI가 적은 출처 이름이라 확인된 출처가 아니므로 블록으로 만들지 않고 뺀다.
 const SECTION_TYPES = {
+  "👉": "todo", // 지금 할 일 — 접지 않고 핵심 바로 아래에
+  "💬": "answer",
+  "📌": "basics",
+  "🐾": "records",
+  "⚠": "warning", // ⚠️(뒤에 FE0F)도 앞글자로 걸림
+  "🧭": "choice",
   "👀": "observation",
   "🔬": "observation",
   "📊": "analysis",

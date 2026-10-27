@@ -9,6 +9,7 @@ import { getFeedingSettings } from "../services/feedingSettings";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
 import { getFoodStock, stockLabel } from "../services/foodStock";
+import OutingCard from "../components/OutingCard";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
@@ -84,6 +85,11 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
           <span><b>{stockLabel(food)}</b> {food.daysLeft > 0 ? "· 지금 주문하면 넉넉해요" : "· 새 봉투를 뜯었으면 눌러서 알려 주세요"}</span>
         </button>
       )}
+
+      {/* 저녁 체크인을 마친 날: 비서 화면의 외출 카드가 여기로 옮겨 온다 */}
+      <div style={{ marginBottom: 12 }} className="outing-slot">
+        <OutingCard dog={dog} place="checklist" />
+      </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>

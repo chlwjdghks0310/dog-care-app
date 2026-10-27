@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import Ico from "../components/Ico";
 import { buildWeeklyReport } from "../services/weeklyReport";
 import { stockLabel } from "../services/foodStock";
+import { durationLabel } from "../services/routine";
 import { md } from "../services/records";
 import { josa } from "../utils/text";
 
@@ -14,6 +15,7 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
     { ico: "toilet", tone: "teal", label: "무른 변·설사", value: `${r.looseDays.length}일`, sub: r.looseDays.length ? r.looseDays.map(md).join(", ") : "기록된 날 없음" },
     { ico: "bandaid", tone: "blue", label: "증상 기록", value: `${r.symptoms.length}번`, sub: r.symptoms.length ? "아래에 날짜별로" : "기록된 증상 없음" },
     { ico: "scales", tone: "blue", label: "체중", value: r.weight ? `${r.weight.kg}kg` : "기록 없음", sub: r.weight?.diff != null ? `지난 기록보다 ${r.weight.diff > 0 ? "+" : ""}${r.weight.diff}kg` : "" },
+    { ico: "house", tone: "violet", label: "혼자 있던 시간", value: r.alone ? `하루 ${durationLabel(r.alone.avg)}` : "기록 없음", sub: r.alone ? `평균 · [다녀올게] 누른 ${r.alone.days}일` : "외출할 때 [다녀올게]를 눌러요" },
     { ico: "checklist", tone: "blue", label: "체크리스트", value: r.checklist.total ? `${r.checklist.done}/${r.checklist.total}` : "—", sub: r.checklist.total ? "한 일 / 할 일" : "앱을 연 날만 세요" },
   ];
   return (

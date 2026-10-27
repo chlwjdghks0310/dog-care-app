@@ -38,3 +38,9 @@ assert.deepEqual(sanitizeStructured({ summary: "요약", sections: [null, { cont
 assert.deepEqual(splitFollowUps("답만").followUps, []);
 
 console.log("AI 답변 구조 확인 통과");
+
+// 새 소제목(지금 할 일·보통은·우리 기록·신호·선택지)도 블록으로
+const h = structureAnswer("자주 싸는 건 흔할 수 있어!\n\n👉 지금 할 일\n• 오늘 횟수를 적어 줘\n\n📌 보통은 이래\n• 1~3시간마다\n\n⚠️ 이런 신호가 같이 보이면\n• 피가 섞이면\n\n🧭 이렇게 골라 봐\n• ① 지켜보기");
+assert.deepEqual(h.sections.map((x) => x.type), ["todo", "basics", "warning", "choice"]);
+console.log("ai-answer new sections ok");
+

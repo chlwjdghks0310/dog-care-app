@@ -30,4 +30,5 @@ assert.deepEqual(r.symptoms, [{ date: "2026-10-23", kinds: ["구토"] }]);
 assert.deepEqual(r.weight, { kg: 3.25, diff: 0.15 });
 assert.deepEqual(r.next, [{ date: "2026-10-30", title: "종합백신", time: "10:30" }], "7일 안 일정만");
 assert.equal(r.records, 8, "이번 주 기록 7개 + 체중 1개");
+assert.equal(r.alone, null, "외출 기록 없으면 없음");
 console.log("weekly-report ok");
