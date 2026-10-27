@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import Ico from "../components/Ico";
+import { browserTargets, openLabel } from "../utils/openBrowser";
 
 // 처음 시작 전 "홈 화면에 설치" 안내 — 휴대폰 브라우저로 열었으면 설치한 앱에서 시작하게 한다(건너뛰기 없음).
 // 설치 확인 = 홈 화면 아이콘으로 열면(standalone) 이 화면이 안 나온다. 안드로이드 크롬은 설치 버튼(beforeinstallprompt)을 바로 띄운다.
@@ -8,7 +9,7 @@ export const isStandalone = () => window.navigator.standalone === true || window
 const ua = () => navigator.userAgent;
 export const isIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = () => /Android/.test(ua());
-const inApp = () => (/KAKAOTALK/i.test(ua()) ? "카카오톡" : /NAVER\(inapp/i.test(ua()) ? "네이버" : /Instagram/i.test(ua()) ? "인스타그램" : /FBAN|FBAV/i.test(ua()) ? "페이스북" : /Line\//i.test(ua()) ? "라인" : "");
+const inApp = () => (/KAKAOTALK/i.test(ua()) ? "카카오톡" : /NAVER\(inapp/i.test(ua()) ? "네이버" : /Instagram/i.test(ua()) ? "인스타그램" : /FBAN|FBAV/i.test(ua()) ? "페이스북" : /Line\//i.test(ua()) ? "라인" : /DaumApps/i.test(ua()) ? "다음" : /GSA\//.test(ua()) ? "구글 앱" : "");
 const isSamsung = () => /SamsungBrowser/i.test(ua());
 // 휴대폰 브라우저로 열었고 아직 설치한 앱이 아니면 안내가 필요하다(컴퓨터는 안내 없이 바로)
 export const needsInstall = () => (isIOS() || isAndroid()) && !isStandalone();
@@ -80,8 +81,11 @@ export default function InstallGate() {
       window.prompt("이 주소를 복사해 주세요", location.origin);
     }
   }
-  // 카카오톡 안에서는 바깥 브라우저로 바로 열 수 있다
-  const openOutside = () => (location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(location.origin)}`);
+  // 앱 안 브라우저: 휴대폰에 맞는 브라우저 열기 버튼들(지금 앱은 빼고). 1.5초 뒤에도 그대로면 주소 복사 안내
+  const here = app === "네이버" ? "naver" : app === "구글 앱" ? "google" : "";
+  const targets = app ? browserTargets(location.origin, ua()).filter((t) => t.id !== here) : [];
+  const [openFailed, setOpenFailed] = useState(false);
+  const watchOpen = () => setTimeout(() => !document.hidden && setOpenFailed(true), 1500);
 
   const steps = os === "ios" ? IOS_STEPS : ANDROID_STEPS(isSamsung());
 
@@ -101,13 +105,15 @@ export default function InstallGate() {
         ) : app ? (
           <div className="onb-mock ig-card">
             <p style={{ margin: "0 0 10px", lineHeight: 1.6 }}>
-              <b>{app}</b> 안에서는 설치할 수 없어요. {os === "ios" ? "사파리" : "크롬"}에서 열어 주세요.
+              <b>{app}</b> 안에서는 설치할 수 없어요. 아래 브라우저로 열어 주세요. 설치는 {os === "ios" ? "사파리" : "크롬·삼성 인터넷"}에서 가장 확실해요.
+              {(app === "인스타그램" || app === "페이스북") && " 오른쪽 위 ⋯ → '외부 브라우저에서 열기'가 가장 확실해요."}
             </p>
-            {app === "카카오톡" && (
-              <button type="button" className="btn-primary" style={{ marginBottom: 8 }} onClick={openOutside}>
-                기본 브라우저로 열기
-              </button>
-            )}
+            {targets.map((t, i) => (
+              <a key={t.id} href={t.href} onClick={watchOpen} className={i ? "btn-ghost" : "btn-primary"} style={{ display: "block", textAlign: "center", marginBottom: 8, textDecoration: "none" }}>
+                {openLabel(t.label)}
+              </a>
+            ))}
+            {openFailed && <p className="subtle" style={{ margin: "0 0 8px" }}>안 열리면 아래 [주소 복사하기]를 누르고 {os === "ios" ? "사파리" : "크롬"} 주소창에 붙여 넣어 주세요.</p>}
             <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={copyLink}>
               {copied ? "주소를 복사했어요 ✓ 브라우저에 붙여 넣어 주세요" : "주소 복사하기"}
             </button>

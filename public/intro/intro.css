@@ -414,3 +414,8 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 .band-go .ic { width: 16px; height: 16px; }
 @media (prefers-reduced-motion: reduce) { .band-in { transition: none; } }
 .pad-link { display: inline-block; padding: 12px 8px; }
+/* 앱 안 브라우저 띠: 브라우저별 열기 버튼 */
+.inapp-opens { display: flex; flex-wrap: wrap; gap: 6px; }
+.inapp-opens .btn { min-height: 40px; }
+.inapp-in small { display: block; color: var(--soft); margin-top: 2px; }
+.inapp-fail { flex: 1 1 100%; margin: 2px 0 0; font-size: 13.5px; font-weight: 700; color: var(--text); }
