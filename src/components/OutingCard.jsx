@@ -166,7 +166,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 평소 나가고 들어오는 시각 — 버튼을 깜빡해도 이 시각으로 혼자 있는 시간을 어림하고, 들어오는 시각 30분 뒤에 체크인 알림
-function RoutineSheet({ onClose }) {
+export function RoutineSheet({ onClose }) {
   const [r, setR] = useState(() => getRoutine() || DEFAULT_ROUTINE);
   const set = (patch) => setR((cur) => ({ ...cur, ...patch }));
   function save() {

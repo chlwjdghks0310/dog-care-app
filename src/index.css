@@ -1133,3 +1133,6 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 }
 @media (max-height: 600px) { .outing-card { display: none; } } /* 1세대 SE처럼 아주 작은 화면은 입력칸을 우선 */
 .summary-role { display: block; font-size: 13px; font-weight: 800; color: var(--accent-strong); margin-bottom: 2px; }
+/* 체크리스트 위 사료 떨어짐 예고 */
+.food-alert { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-size: 14.5px; }
+.food-alert b { color: var(--text); }

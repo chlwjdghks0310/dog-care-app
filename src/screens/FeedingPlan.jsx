@@ -6,6 +6,8 @@ import { josa } from "../utils/text";
 import { findFoodInfo, readFoodLabel } from "../services/aiClient";
 import { resizeImageFile } from "../utils/image";
 import Ico from "../components/Ico";
+import { openNewBag, stockFromBag, stockLabel } from "../services/foodStock";
+import { syncPushAlarms } from "../services/notifications";
 
 const STOOL_OPTIONS = [
   { value: "normal", label: "정상" },
@@ -55,6 +57,17 @@ export default function FeedingPlan({ dog, onBack }) {
   function saveNow(patch) {
     setSettings((s) => ({ ...s, ...patch }));
     saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), ...patch });
+  }
+
+  // 사료 남은 양: 봉투 무게 + 뜯은 날 → 하루 급여량으로 며칠 남았는지 어림(떨어지기 5일 전 점심에 알림)
+  const [bagKg, setBagKg] = useState(() => (settings.bag?.grams ? settings.bag.grams / 1000 : ""));
+  const stock = stockFromBag(settings.bag, plan.dailyGrams);
+  function handleOpenBag() {
+    const grams = Math.round(Number(bagKg) * 1000);
+    if (!(grams >= 100 && grams <= 50000)) return;
+    openNewBag(dog.id, grams);
+    setSettings(getFeedingSettings(dog.id));
+    syncPushAlarms();
   }
 
   const soakLabel = plan.soak.needed === true ? "필요" : plan.soak.needed === "optional" ? "선택" : "불필요";
@@ -144,6 +157,27 @@ export default function FeedingPlan({ dog, onBack }) {
         <p className="faint">
           숟가락 환산은 사료 알갱이 크기·밀도에 따라 달라질 수 있어요 (1큰술 ≈ 7g 기준 추정치).
         </p>
+      </div>
+
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div className="h2"><Ico name="bowl" size={18} /> 사료 남은 양</div>
+        {stock ? (
+          <p style={{ margin: "4px 0 6px", fontSize: 16 }}>
+            <b>{stockLabel(stock)}</b> <span className="subtle">({Number(stock.runOut.slice(5, 7))}/{Number(stock.runOut.slice(8, 10))}쯤 · 하루 {stock.dailyGrams}g 기준)</span>
+          </p>
+        ) : (
+          <p className="subtle">새 봉투를 뜯을 때 무게를 알려 주면, 떨어지기 5일 전 점심에 알려 드려요.</p>
+        )}
+        <div className="chip-wrap" style={{ margin: "6px 0 8px" }}>
+          {[1, 2, 3, 6].map((kg) => (
+            <button key={kg} type="button" className={`seg${Number(bagKg) === kg ? " on" : ""}`} onClick={() => setBagKg(kg)}>{kg}kg</button>
+          ))}
+          <input type="number" inputMode="decimal" min="0.1" max="50" step="0.1" value={bagKg} onChange={(e) => setBagKg(e.target.value)} placeholder="직접(kg)" aria-label="봉투 무게(kg)" style={{ width: 96, border: "1px solid var(--border)", borderRadius: 10, padding: "8px 10px", fontSize: 16 }} />
+        </div>
+        <button type="button" className="btn-primary" style={{ width: "100%" }} disabled={!(Number(bagKg) >= 0.1 && Number(bagKg) <= 50)} onClick={handleOpenBag}>
+          오늘 새 봉투 뜯었어요
+        </button>
+        <p className="faint" style={{ marginTop: 6 }}>간식·흘린 양은 빼고 계산한 어림이에요. 급여량을 바꾸면 남은 날도 다시 계산돼요.</p>
       </div>
 
       <div className="card">

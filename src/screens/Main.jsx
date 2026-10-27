@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { askAI, analyzeBehavior } from "../services/aiClient";
 import OutingCard from "../components/OutingCard";
+import { getFoodStock, stockLabel } from "../services/foodStock";
 import { imageForAI } from "../utils/image";
 import { josa, splitHeadline } from "../utils/text";
 import { getChatMemory, rememberChat, noteChatResult } from "../services/chatMemory";
@@ -749,6 +750,8 @@ function TodaySummary({ dog, mode }) {
   else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
   else if (t.nextDose) lines.push(["pill", "teal", `${t.nextDose.time} ${t.nextDose.name} ${t.nextDose.dose} 먹을 차례야`]);
+  const food = getFoodStock(dog);
+  if (food && food.daysLeft <= 5) lines.push(["bowl", "rose", stockLabel(food)]);
   if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
   return (
     <span className="summary">

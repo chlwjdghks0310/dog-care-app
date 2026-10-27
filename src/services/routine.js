@@ -58,3 +58,12 @@ export function checkinAlarmTime(routine) {
   const m = (mins(routine.back) + 30) % (24 * 60);
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
+
+// 체크리스트를 생활 패턴에 맞추기: 나가는 날이면 할 일을 "아침(나가기 전) / 저녁(들어와서)"으로 나눈다.
+// 나가 있는 동안의 시각·시각 없는 할 일은 저녁으로(집에 없을 때 할 수 없으니). 나가는 날이 아니면 null(평소처럼 종류별)
+export const isWorkday = (routine, date = new Date()) => Boolean(routine?.days?.includes(date.getDay()));
+export const isAwayTime = (time, routine) => Boolean(routine) && mins(time) >= mins(routine.leave) && mins(time) < mins(routine.back);
+export function daySlot(item, routine) {
+  const times = item.suggestedTimes || [];
+  return times.some((t) => mins(t) < mins(routine.leave)) ? "morning" : "evening";
+}

@@ -2,7 +2,7 @@
 // 웹 푸시(VAPID) 구독/테스트 함수도 들어있다. 1단계: 실제 기기에서 뜨는지부터 확인하는
 // 용도라, 서버는 구독을 메모리에만 들고 있고 "지금 당장 테스트 알림 보내기"만 지원한다.
 // 일정 시간에 맞춰 서버가 알아서 쏴주는 건 2단계(서버 스케줄러 + DB)에서 붙인다.
-import { minutesBefore, nowLabel as getNowLabel, todayKey } from "../utils/date";
+import { minutesBefore, nowLabel as getNowLabel, todayKey, addDays, toDateKey } from "../utils/date";
 import { API_BASE } from "./aiClient";
 import { getDogs } from "./dogRepository";
 import { getTodayChecklist } from "./careEngine";
@@ -12,7 +12,8 @@ import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
-import { getRoutine, checkinAlarmTime, checkedInToday } from "./routine";
+import { getRoutine, checkinAlarmTime, checkedInToday, isAwayTime } from "./routine";
+import { getFoodStock } from "./foodStock";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -167,12 +168,28 @@ async function postSubscription(subscription, alarms, { beacon = false } = {}) {
 // ponytail: 완료 체크 여부는 무시하고 매일 보낸다 — 서버는 체크 상태를 모른다.
 export function buildPushAlarms() {
   const all = [];
+  const routine = getRoutine();
+  const offDays = routine ? [0, 1, 2, 3, 4, 5, 6].filter((d) => !routine.days.includes(d)) : [];
   for (const dog of getDogs()) {
     const alarms = [];
     for (const item of getTodayChecklist(dog)) {
       // 오늘 이미 체크한 일은 오늘만 건너뛴다(서버는 매일 같은 알람을 보내므로 내일은 다시 울려야 함)
       const skipDate = item.completed ? todayKey() : undefined;
-      for (const time of item.suggestedTimes || []) alarms.push({ time, ...checklistMessage(dog, item), skipDate });
+      for (const time of item.suggestedTimes || []) {
+        // 나가 있는 시각의 추천 할 일은 나가는 날엔 들어오는 시각에(밥 시간은 보호자가 정한 그대로)
+        if (routine && !item.ruleId?.startsWith("meal-") && isAwayTime(time, routine)) {
+          if (offDays.length) alarms.push({ time, ...checklistMessage(dog, item), skipDate, days: offDays });
+          alarms.push({ time: routine.back, ...checklistMessage(dog, item), skipDate, days: routine.days });
+        } else alarms.push({ time, ...checklistMessage(dog, item), skipDate });
+      }
+    }
+    // 사료 떨어짐 예고: 떨어지기 5일 전·1일 전 점심
+    const stock = getFoodStock(dog);
+    if (stock) {
+      for (const before of [5, 1]) {
+        const date = toDateKey(addDays(new Date(`${stock.runOut}T00:00:00`), -before));
+        if (date >= todayKey()) alarms.push({ time: "12:30", title: `🍚 ${dog.name} 사료`, body: before === 1 ? "사료가 내일쯤 떨어져요. 남은 양을 확인해 주세요." : `사료가 ${before}일쯤 남았어요. 점심시간에 주문해 둘까요?`, onlyDate: date });
+      }
     }
     const soakNeeded = getSoakGuidance(calculateAge(dog.birthDate).ageInWeeks).needed === true;
     for (const time of getFeedingSettings(dog.id).times) alarms.push({ time: minutesBefore(time, 30), ...soakMessage(dog, soakNeeded) });
@@ -200,7 +217,6 @@ export function buildPushAlarms() {
     all.push(...alarms.map((a) => ({ ...a, petId: dog.id })));
   }
   // 저녁 체크인(평소 들어오는 시각 30분 뒤, 나가는 요일만). 사람 기준 알람이라 petId 없이 — 가족 기기로 퍼지지 않게
-  const routine = getRoutine();
   const dogs = getDogs();
   if (routine?.remind && routine.days?.length && dogs.length) {
     const who = dogs.length > 1 ? "우리 아이들" : dogs[0].name;
