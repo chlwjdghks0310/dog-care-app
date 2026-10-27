@@ -1132,3 +1132,4 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
   .outing-btn { padding: 7px 12px; font-size: 13.5px; }
 }
 @media (max-height: 600px) { .outing-card { display: none; } } /* 1세대 SE처럼 아주 작은 화면은 입력칸을 우선 */
+.summary-role { display: block; font-size: 13px; font-weight: 800; color: var(--accent-strong); margin-bottom: 2px; }

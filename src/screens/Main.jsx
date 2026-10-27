@@ -17,10 +17,10 @@ import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 
 const CHAT_MODES = [
-  // desc: 말투 버튼 아래 설명 / open: 첫 화면 말풍선(오늘 요약)의 첫마디 — {nameI}는 이름 + 받침이면 "이"(여름이·여르)
-  { key: "pomeranian", ico: "zap", tone: "blue", call: "여름", name: "포메라니안", desc: "빠른 요약 · 핵심만 빠르고 읽기 쉽게", open: "{nameI}의 오늘 할 일을 정리해 봤어 ⚡", pending: "음… 생각 중이야…" },
-  { key: "retriever", ico: "chatHeart", tone: "rose", call: "가을", name: "리트리버", desc: "수다 친구 · 이야기 들어주고 같이 놀아줘요", open: "{nameI}의 이야기 들어줄게 🐾", pending: "꼬리 흔들면서 생각 중…" },
-  { key: "bordercollie", ico: "book", tone: "violet", call: "겨울", name: "보더콜리", desc: "꼼꼼 박사 · 자료 찾아서 자세히 (조금 오래 걸려요)", open: "{nameI}의 관리는 내가 책임져! 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
+  // role·open: 첫 화면 말풍선(오늘 요약) 맨 위에 크게 — 고른 강아지가 어떻게 답하는지(말투 버튼 아래 흐린 설명 대신)
+  { key: "pomeranian", ico: "zap", tone: "blue", call: "여름", name: "포메라니안", role: "빠른 요약", open: "핵심만 빠르고 읽기 쉽게 설명해 줄게 ⚡", pending: "음… 생각 중이야…" },
+  { key: "retriever", ico: "chatHeart", tone: "rose", call: "가을", name: "리트리버", role: "수다 친구", open: "이야기 들어주고 같이 놀아 줄게 🐾", pending: "꼬리 흔들면서 생각 중…" },
+  { key: "bordercollie", ico: "book", tone: "violet", call: "겨울", name: "보더콜리", role: "꼼꼼 박사 (조금 오래 걸려요)", open: "자료 찾아서 자세히 알려 줄게 📖", pending: "자료 찾아보는 중이야… 조금만 기다려 줘!" },
 ];
 // call: 비서 강아지 이름(여름=포메라니안, 가을=리트리버, 겨울=보더콜리). 버튼 순서: 여름 · 가을 · 겨울. 앱을 새로 켜면 항상 여름(포메라니안)으로 시작. 쓰는 동안(탭 이동 등)에만 고른 모드를 기억한다.
 const CHAT_MODE_KEY = "dogcare-chat-mode-v1";
@@ -385,7 +385,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           ) : (
             <button type="button" className="summary-bubble" onClick={onOpenProfile} aria-label="오늘 요약 — 눌러서 프로필 보기">
               <SpeechBubble>
-                <TodaySummary dog={dog} open={findChatMode(chatMode).open} />
+                <TodaySummary dog={dog} mode={findChatMode(chatMode)} />
               </SpeechBubble>
             </button>
           )}
@@ -630,7 +630,6 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           );
         })}
       </div>
-      <p className="faint" style={{ textAlign: "center", margin: "6px 0 0" }}>{findChatMode(chatMode).desc}</p>
       </div></div>
 
       {(attachments.length > 0 || attachError) && (
@@ -738,17 +737,12 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
           <Ico name="paw" size={22} />
         </button>
       </form>
-      <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
-        <p className="faint" style={{ textAlign: "center", marginTop: 8, marginBottom: 0 }}>
-          진료가 아니라 돌봄을 돕는 비서예요. 응급 상황이면 병원에 문의하세요.
-        </p>
-      </div></div>
     </div>
   );
 }
 
 // 첫 화면 말풍선: 고른 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
-function TodaySummary({ dog, open }) {
+function TodaySummary({ dog, mode }) {
   const t = getTodaySummary(dog);
   const lines = [];
   if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
@@ -758,7 +752,10 @@ function TodaySummary({ dog, open }) {
   if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
   return (
     <span className="summary">
-      <span className="summary-open">{open.replace("{nameI}", josa(dog.name, "이", ""))}</span>
+      <span className="summary-open">
+        <span className="summary-role">{mode.call} · {mode.role}</span>
+        {mode.open}
+      </span>
       {lines.length ? (
         lines.map(([ico, tone, text]) => (
           <span key={ico} className="summary-line">
