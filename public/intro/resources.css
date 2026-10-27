@@ -17,9 +17,11 @@
 .r-card p { font-size: 16px; line-height: 1.7; color: #3d3430; }
 .r-book { display: grid; gap: 18px; }
 @media (min-width: 720px) { .r-book { grid-template-columns: 170px 1fr; align-items: start; } }
-.r-cover { aspect-ratio: 3 / 4; max-width: 170px; border-radius: 14px; background: linear-gradient(160deg, #eaf2fd, #fff 70%); border: 1px solid var(--border); box-shadow: 0 10px 24px rgba(43, 70, 120, 0.14); display: flex; flex-direction: column; justify-content: space-between; padding: 16px; color: var(--btn); }
-.r-cover .ic { width: 30px; height: 30px; }
-.r-cover b { font-size: 18px; line-height: 1.35; color: var(--text); }
+.r-cover { display: block; width: 150px; justify-self: center; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 12px 26px rgba(43, 70, 120, 0.18); transition: transform 0.2s ease; }
+@media (min-width: 720px) { .r-cover { width: 170px; } }
+.r-cover:hover { transform: translateY(-3px) rotate(-1deg); }
+.r-cover img { display: block; width: 100%; height: auto; }
+@media (prefers-reduced-motion: reduce) { .r-cover { transition: none; } }
 .r-meta { font-size: 14px !important; font-weight: 700; color: var(--soft) !important; margin-top: 6px; }
 .r-btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
 .r-btns .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; }
