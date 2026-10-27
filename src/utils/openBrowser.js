@@ -1,5 +1,5 @@
 // 앱 안 브라우저(카카오톡·네이버·인스타 등)에서 다른 브라우저로 열기 — 휴대폰·앱에 맞는 버튼 목록을 만든다.
-// 소개 홈페이지(public/intro/intro.js)에도 같은 목록이 있다(빌드 없이 도는 정적 파일이라 복사본). 바꾸면 둘 다 바꾸기.
+// 앱 설치 안내 화면(InstallGate)에서만 쓴다.
 // install: 그 브라우저에서 홈 화면 설치가 되는지(true/false/null=확인 못 함) — 설명 문구에만 쓴다.
 export function browserTargets(url, ua) {
   const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && /Mobile/.test(ua));

@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=9" />
+  <link rel="stylesheet" href="/intro/intro.css?v=10" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -56,16 +56,6 @@
       </button>
     </div>
   </header>
-
-  <!-- 카카오톡·인스타 등 앱 안 브라우저면 보이는 안내(intro.js). 앱 안에서는 홈 화면 설치가 안 돼서 -->
-  <div class="inapp" id="inapp" hidden>
-    <div class="wrap inapp-in">
-      <span><b id="inapp-name">앱</b> 안에서는 설치가 안 돼요. 아래 브라우저로 열어 주세요. <small id="inapp-tip"></small></span>
-      <div class="inapp-opens" id="inapp-opens"></div>
-      <button type="button" class="btn btn-sm btn-ghost" id="inapp-copy">주소 복사</button>
-      <p class="inapp-fail" id="inapp-fail" hidden>안 열리면 [주소 복사]를 누르고 사파리·크롬 주소창에 붙여 넣어 주세요.</p>
-    </div>
-  </div>
 
   <main id="main">
     <!-- 2. 히어로: 슬로건 + 누르면 바뀌는 휴대폰(실제 앱 화면). 아래 탭을 누르면 화면이 바뀌고, 비서 강아지가 그 기능을 설명하는 창이 떠오른다(intro.js).
@@ -392,6 +382,6 @@
     <p class="wrap copy">© 2026 멍케어</p>
   </footer>
 
-  <script src="/intro/intro.js?v=6" defer></script>
+  <script src="/intro/intro.js?v=7" defer></script>
 </body>
 </html>

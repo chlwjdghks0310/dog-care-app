@@ -193,10 +193,6 @@ section { padding: 40px 0; } /* 휴대폰: 구역 사이 빈칸 줄임(점검 20
 .copy { font-size: 12.5px; margin-top: 12px; }
 
 /* 앱 안 브라우저 안내 띠 */
-.inapp { background: var(--rose-bg); border-bottom: 1px solid var(--border); font-size: 14px; }
-.inapp-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
-.inapp-in span { flex: 1 1 100%; }
-@media (min-width: 720px) { .inapp-in span { flex: 1 1 auto; } }
 /* 설치 방법 펼치기 */
 .howto { margin-top: 6px; font-size: 14.5px; }
 .howto summary { cursor: pointer; color: var(--accent-strong); font-weight: 700; min-height: 44px; display: flex; align-items: center; }
@@ -414,8 +410,3 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 .band-go .ic { width: 16px; height: 16px; }
 @media (prefers-reduced-motion: reduce) { .band-in { transition: none; } }
 .pad-link { display: inline-block; padding: 12px 8px; }
-/* 앱 안 브라우저 띠: 브라우저별 열기 버튼 */
-.inapp-opens { display: flex; flex-wrap: wrap; gap: 6px; }
-.inapp-opens .btn { min-height: 40px; }
-.inapp-in small { display: block; color: var(--soft); margin-top: 2px; }
-.inapp-fail { flex: 1 1 100%; margin: 2px 0 0; font-size: 13.5px; font-weight: 700; color: var(--text); }

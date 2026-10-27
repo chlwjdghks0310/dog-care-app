@@ -1,4 +1,4 @@
-// 소개 페이지 동작: 모바일 메뉴 펼치기, 앱 안 브라우저(카카오톡 등) 안내. CSP 때문에 인라인 대신 파일로.
+// 소개 페이지 동작: 모바일 메뉴 펼치기, 누르면 바뀌는 휴대폰. CSP 때문에 인라인 대신 파일로.
 document.documentElement.classList.add("js"); // JS가 있을 때만 패널을 숨겨 두고 휴대폰에서 연다(없으면 차례로 보임)
 
 (function () {
@@ -12,46 +12,7 @@ document.documentElement.classList.add("js"); // JS가 있을 때만 패널을 �
   btn.addEventListener("click", function () { set(!nav.classList.contains("open")); });
   nav.addEventListener("click", function (e) { if (e.target.tagName === "A") set(false); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
-
-  // 앱 안 브라우저면 안내 띠 + 브라우저별 열기 버튼(앱의 src/utils/openBrowser.js와 같은 목록 — 바꾸면 둘 다)
-  var ua = navigator.userAgent;
-  var name = /KAKAOTALK/i.test(ua) ? "카카오톡" : /NAVER\(inapp/i.test(ua) ? "네이버" : /Instagram/i.test(ua) ? "인스타그램" : /FBAN|FBAV/i.test(ua) ? "페이스북" : /Line\//i.test(ua) ? "라인" : /DaumApps/i.test(ua) ? "다음" : /GSA\//.test(ua) ? "구글 앱" : "";
-  if (!name) return;
-  var bar = document.getElementById("inapp");
-  document.getElementById("inapp-name").textContent = name;
-  bar.hidden = false;
-  var url = location.origin + "/intro/";
-  var ios = /iPhone|iPad|iPod/.test(ua);
-  var rest = url.replace(/^https?:\/\//, "");
-  var enc = encodeURIComponent(url);
-  var intent = function (pkg) { return "intent://" + rest + "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + enc + ";end"; };
-  var list = [];
-  if (name === "카카오톡") list.push(["default", "기본 브라우저", "kakaotalk://web/openExternal?url=" + enc]);
-  if (name === "라인") list.push(["default", "기본 브라우저", url + "?openExternalBrowser=1"]);
-  if (ios) list.push(["safari", "사파리", "x-safari-https://" + rest], ["chrome", "크롬", "googlechromes://" + rest], ["naver", "네이버", "naversearchapp://inappbrowser?url=" + enc + "&target=new&version=6"], ["google", "구글", "googleapp://open-url?url=" + enc]);
-  else if (/Android/.test(ua)) list.push(["chrome", "크롬", intent("com.android.chrome")], ["samsung", "삼성 인터넷", intent("com.sec.android.app.sbrowser")], ["naver", "네이버", intent("com.nhn.android.search")], ["google", "구글", intent("com.google.android.googlequicksearchbox")]);
-  var here = name === "네이버" ? "naver" : name === "구글 앱" ? "google" : "";
-  var box = document.getElementById("inapp-opens");
-  list.filter(function (t) { return t[0] !== here; }).forEach(function (t, i) {
-    var a = document.createElement("a");
-    a.className = "btn btn-sm" + (i ? " btn-ghost" : "");
-    a.href = t[2];
-    var jong = (t[1].charCodeAt(t[1].length - 1) - 0xac00) % 28; // 받침: 없거나 ㄹ이면 "로", 있으면 "으로"(크롬으로·사파리로)
-    a.textContent = t[1] + (jong === 0 || jong === 8 ? "로" : "으로") + " 열기";
-    // 1.5초 뒤에도 이 화면이 그대로면(그 앱이 없거나 막힘) 주소 복사 안내를 보인다
-    a.addEventListener("click", function () { setTimeout(function () { if (!document.hidden) document.getElementById("inapp-fail").hidden = false; }, 1500); });
-    box.appendChild(a);
-  });
-  // 인스타·페이스북은 바깥으로 여는 주소가 없어 앱 메뉴 안내가 가장 확실하다(자료용 조사 2026-10-27)
-  var menuTip = name === "인스타그램" || name === "페이스북" ? "오른쪽 위 ⋯ → '외부 브라우저에서 열기'가 가장 확실해요. " : "";
-  document.getElementById("inapp-tip").textContent = menuTip + (ios ? "설치는 사파리에서 가장 확실해요." : "설치는 크롬·삼성 인터넷에서 돼요.");
-  document.getElementById("inapp-copy").addEventListener("click", function (e) {
-    var b = e.currentTarget;
-    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(
-      function () { b.textContent = "복사했어요 ✓"; },
-      function () { window.prompt("이 주소를 복사해 주세요", url); }
-    );
-  });
+  // 앱 안 브라우저(카카오톡 등) 안내 띠는 뺐다(2026-10-27 사용자 결정) — 설치 안내는 앱을 열면 나오는 설치 화면(InstallGate)이 맡는다
 })();
 
 // 누르면 바뀌는 휴대폰: 탭을 누르면 휴대폰 화면이 그 기능으로 부드럽게 바뀌고, 휴대폰이 살짝 커졌다가 설명 창이 떠오른다(비서 강아지가 말풍선으로 설명).
