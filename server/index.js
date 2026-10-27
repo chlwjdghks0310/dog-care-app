@@ -1206,10 +1206,12 @@ function checkPushAlarms() {
 }
 pushReady.then(() => setInterval(checkPushAlarms, 20 * 1000));
 // Supabase가 1분마다 부른다(supabase/push.sql의 cron) — 무료 서버가 잠들지 않게 하고, 막 깬 서버도 바로 확인
+let lastCron = null; // Supabase cron(pg_net)이 마지막으로 부른 시각 — 1분마다 깨우기가 도는지 확인용
 app.get("/api/push/tick", async (req, res) => {
+  if (/pg_net/i.test(req.get("user-agent") || "")) lastCron = new Date().toISOString();
   await pushReady;
   checkPushAlarms();
-  res.json({ ok: true, devices: pushDevices.size, db: Boolean(pushDb) });
+  res.json({ ok: true, devices: pushDevices.size, db: Boolean(pushDb), cron: lastCron });
 });
 
 app.use((err, req, res, next) => {

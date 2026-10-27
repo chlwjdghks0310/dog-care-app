@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { askAI, analyzeBehavior } from "../services/aiClient";
+import OutingCard from "../components/OutingCard";
 import { imageForAI } from "../utils/image";
 import { josa, splitHeadline } from "../utils/text";
 import { getChatMemory, rememberChat, noteChatResult } from "../services/chatMemory";
@@ -71,7 +72,7 @@ const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 
 // AI 답변 속 **강조** 표시를 굵고 진한 색 글자로 바꿔서, 중요한 부분만 폰트가 달라 보이게 한다.
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile, onOpenFeeding, onOpenWeight }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile, onOpenFeeding, onOpenWeight, checkinSignal, onCheckinHandled }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -568,6 +569,12 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
       )}
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
+
+      {!isChat && !attachments.length && (
+        <div style={{ marginTop: 10 }}>
+          <OutingCard dog={dog} openCheckin={checkinSignal} onCheckinClose={onCheckinHandled} onAsk={(t) => (setInput(t), inputElRef.current?.focus())} />
+        </div>
+      )}
 
       <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
       {!isChat && !attachments.length && ( /* 사진·영상을 붙이면 질문 칸 자리를 내주려고 숨김 */

@@ -1112,3 +1112,23 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ig-glyph { display: inline-block; vertical-align: -3px; color: var(--accent-strong); }
 .ig-install { width: 100%; max-width: 300px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .ig-foot { text-align: center; margin: 8px 20px 0; font-size: 12.5px; }
+
+/* 비서 첫 화면 외출 카드(OutingCard): 다녀올게 → 혼자 n시간째·왔어 → 30초 체크인 */
+.outing-card { display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.outing-ico { width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent-strong); display: inline-flex; align-items: center; justify-content: center; }
+.outing-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.outing-text b { font-size: 14.5px; color: var(--text); }
+.outing-text span { font-size: 12.5px; color: var(--text-soft); line-height: 1.35; }
+.outing-btn { flex-shrink: 0; border: none; border-radius: 999px; padding: 9px 14px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.outing-gear { flex-shrink: 0; width: 34px; height: 34px; border: none; background: none; color: var(--text-soft); display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+.ci-q { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.ci-q .seg { flex: 0 0 auto; padding: 9px 14px; }
+/* 키 작은 폰(아이폰 SE 등): 외출 카드를 한 줄로 — 아래 입력칸이 탭 바에 가리지 않게 */
+@media (max-height: 720px) {
+  .outing-card { padding: 6px 4px 6px 8px; border-radius: 14px; }
+  .outing-ico { width: 30px; height: 30px; border-radius: 10px; }
+  .outing-text span { display: none; }
+  .outing-text b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .outing-btn { padding: 7px 12px; font-size: 13.5px; }
+}
+@media (max-height: 600px) { .outing-card { display: none; } } /* 1세대 SE처럼 아주 작은 화면은 입력칸을 우선 */

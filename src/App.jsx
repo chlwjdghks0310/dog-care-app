@@ -71,6 +71,7 @@ export default function App() {
   const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
+  const [checkinSignal, setCheckinSignal] = useState(0); // 저녁 체크인 알림으로 열리면 올려서 체크인 창을 띄운다
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
   const [vitalMetric, setVitalMetric] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
@@ -225,6 +226,12 @@ export default function App() {
   // 복용 알림 주소(/?dog=..&dose=..)로 열리면 그 강아지의 약 관리 화면, 해당 복용 건으로
   function openFromUrl(url) {
     const params = new URL(url, location.origin).searchParams;
+    // 저녁 체크인 알림(/?checkin=1) → 비서 첫 화면에서 체크인 창
+    if (params.get("checkin")) {
+      setTab("main");
+      setCheckinSignal((n) => n + 1);
+      return true;
+    }
     const target = getDogs().find((d) => d.id === params.get("dog"));
     if (!target || !params.get("dose")) return false;
     setActiveDog(target);
@@ -402,7 +409,7 @@ export default function App() {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
     main: (
       <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-        <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
+        <Main dog={dog} resetSignal={mainResetSignal} checkinSignal={checkinSignal} onCheckinHandled={() => setCheckinSignal(0)} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
       </Suspense>
     ),
     // 강아지를 바꾸면(dog.id) 화면을 새로 그려 앞 강아지의 상태(숨긴 할 일·수치 칸 등)가 남지 않게

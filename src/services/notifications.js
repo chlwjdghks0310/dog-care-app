@@ -12,6 +12,7 @@ import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
+import { getRoutine, checkinAlarmTime, checkedInToday } from "./routine";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -197,6 +198,20 @@ export function buildPushAlarms() {
       }
     }
     all.push(...alarms.map((a) => ({ ...a, petId: dog.id })));
+  }
+  // 저녁 체크인(평소 들어오는 시각 30분 뒤, 나가는 요일만). 사람 기준 알람이라 petId 없이 — 가족 기기로 퍼지지 않게
+  const routine = getRoutine();
+  const dogs = getDogs();
+  if (routine?.remind && routine.days?.length && dogs.length) {
+    const who = dogs.length > 1 ? "우리 아이들" : dogs[0].name;
+    all.push({
+      time: checkinAlarmTime(routine),
+      title: `🐾 ${who} 오늘 어땠어요?`,
+      body: "30초면 돼요. 밥·배변·산책만 눌러 주세요.",
+      url: "/?checkin=1",
+      days: routine.days,
+      skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,
+    });
   }
   return all;
 }
