@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=6" />
+  <link rel="stylesheet" href="/intro/intro.css?v=7" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -46,6 +46,7 @@
       </a>
       <nav class="nav" id="nav" aria-label="주요 메뉴">
         <a href="/intro/guide/">기능 설명서</a>
+        <a href="/intro/resources/">자료실</a>
         <a href="#start">시작 방법</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
@@ -304,6 +305,17 @@
     </section>
 
     <!-- 8. 자주 묻는 질문 -->
+    <!-- 가이드북 띠: 자료실 입구 -->
+    <section class="book-band" aria-labelledby="band-title">
+      <div class="wrap">
+        <a class="band-in" href="/intro/resources/">
+          <svg class="ic band-ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>
+          <span class="band-text"><b id="band-title">멍케어 우리 강아지 가이드북</b><span>입양부터 건강·훈련·비용까지 95쪽 · 무료 PDF</span></span>
+          <span class="band-go">자료실 <svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-chev"/></svg></span>
+        </a>
+      </div>
+    </section>
+
     <section class="faq" id="faq" aria-labelledby="faq-title">
       <div class="wrap faq-in">
         <h2 id="faq-title" class="sec-title">자주 묻는 <em class="a">질문</em></h2>
@@ -363,6 +375,7 @@
       </div>
       <nav class="foot-links" aria-label="정책·문의">
         <a href="/">앱 열기</a>
+        <a href="/intro/resources/">자료실</a>
         <a href="/?support">문의하기</a>
         <a href="/?privacy">개인정보 처리방침</a>
       </nav>

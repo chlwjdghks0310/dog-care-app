@@ -1,0 +1,39 @@
+/* 멍케어 자료실(/intro/resources/) — intro.css 위에. 색은 대표 파랑 하나 + 회색 */
+.ic { width: 18px; height: 18px; flex-shrink: 0; vertical-align: -3px; }
+.brand small { font-size: 13px; font-weight: 700; color: var(--soft); margin-left: 4px; }
+.r-top { gap: 8px; }
+.r-top .brand { margin-right: 0; }
+.r-top .btn { margin-left: 0; }
+.r-top .r-back { margin-left: auto; }
+.r-main { padding-top: 28px; padding-bottom: 40px; max-width: 860px; }
+.r-main .eyebrow { display: inline-flex; align-items: center; gap: 6px; }
+.r-title { font-size: clamp(34px, 7vw, 52px); font-weight: 900; letter-spacing: -0.04em; display: block; }
+.r-title mark { color: var(--btn); background: linear-gradient(transparent 64%, #ffe1c2 64%, #ffe9a8 92%, transparent 92%); }
+.r-lead { margin: 10px 0 22px; font-size: 18px; color: var(--soft); }
+.r-card { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 22px 20px; margin-bottom: 16px; }
+@media (min-width: 720px) { .r-card { padding: 28px; } }
+.r-card h2 { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.r-card h2 .ic { width: 22px; height: 22px; color: var(--btn); }
+.r-card p { font-size: 16px; line-height: 1.7; color: #3d3430; }
+.r-book { display: grid; gap: 18px; }
+@media (min-width: 720px) { .r-book { grid-template-columns: 170px 1fr; align-items: start; } }
+.r-cover { aspect-ratio: 3 / 4; max-width: 170px; border-radius: 14px; background: linear-gradient(160deg, #eaf2fd, #fff 70%); border: 1px solid var(--border); box-shadow: 0 10px 24px rgba(43, 70, 120, 0.14); display: flex; flex-direction: column; justify-content: space-between; padding: 16px; color: var(--btn); }
+.r-cover .ic { width: 30px; height: 30px; }
+.r-cover b { font-size: 18px; line-height: 1.35; color: var(--text); }
+.r-meta { font-size: 14px !important; font-weight: 700; color: var(--soft) !important; margin-top: 6px; }
+.r-btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+.r-btns .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; }
+.r-new { font-size: 13px; font-weight: 600; opacity: 0.85; }
+.r-note { font-size: 14px !important; color: var(--soft) !important; margin-top: 6px; }
+.r-table { margin: 10px 0 4px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.r-table div { display: grid; grid-template-columns: minmax(110px, 36%) 1fr; }
+.r-table div + div { border-top: 1px solid var(--border); }
+.r-table dt { padding: 12px 14px; background: #f7f9fc; font-weight: 800; font-size: 15px; }
+.r-table dd { margin: 0; padding: 12px 14px; font-size: 15px; line-height: 1.6; }
+.r-channels { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.r-ch { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border-radius: 16px; background: #f7f9fc; color: var(--text); text-decoration: none; }
+.r-ch .ic { width: 24px; height: 24px; color: var(--btn); }
+.r-ch > span { flex: 1; display: flex; flex-direction: column; }
+.r-ch small { font-size: 13px; color: var(--soft); }
+.r-ch em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--soft); background: #fff; border: 1px solid var(--border); padding: 3px 10px; border-radius: 999px; }
+a.r-ch:hover { background: var(--accent-soft); }

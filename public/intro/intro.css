@@ -400,3 +400,15 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 .svc.on .svc-dogcard:nth-child(2) { animation-delay: 0.7s; } .svc.on .svc-dogcard:nth-child(3) { animation-delay: 0.8s; } .svc.on .svc-dogcard:nth-child(4) { animation-delay: 0.9s; }
 @media (min-width: 720px) { .svc-dogs { grid-template-columns: repeat(3, 1fr); } .svc-dogs-title { grid-column: 1 / -1; } .svc-dogcard { flex-direction: column; text-align: center; } .svc-dogcard img { width: 96px; } }
 @media (prefers-reduced-motion: reduce) { .svc.on .svc-dogcard { animation: none; } .floats .float { transition: none; } }
+
+/* 가이드북 띠(자료실 입구) — FAQ 위 */
+.book-band { padding: 8px 0 28px; }
+.band-in { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 22px; border: 1px solid var(--border); background: #fff; box-shadow: var(--shadow); color: var(--text); text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.band-in:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(43, 70, 120, 0.12); }
+.band-ic { width: 34px; height: 34px; flex-shrink: 0; color: var(--btn); }
+.band-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.band-text b { font-size: 17px; }
+.band-text span { font-size: 14px; color: var(--soft); }
+.band-go { display: inline-flex; align-items: center; gap: 2px; font-weight: 800; color: var(--btn); white-space: nowrap; }
+.band-go .ic { width: 16px; height: 16px; }
+@media (prefers-reduced-motion: reduce) { .band-in { transition: none; } }
