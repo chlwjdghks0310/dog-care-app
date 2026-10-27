@@ -26,9 +26,8 @@ if (!process.env.GEMINI_API_KEY) {
   console.warn("[server] GEMINI_API_KEY가 설정되지 않았어요. 영상 분석 기능(활동 상태 확인)은 동작하지 않아요.");
 }
 
-// 웹 푸시(VAPID) — 1단계: 구독을 메모리에만 들고 있다가 "테스트 알림 보내기"로 실제로
-// 뜨는지부터 확인한다. 서버 재시작하면 날아가고, 여러 서버 인스턴스 간에도 공유되지 않는다 —
-// 진짜 일정 기반 알림을 붙이려면 이건 DB로 바꿔야 한다(지금은 동작 검증 단계).
+// 웹 푸시(VAPID) — 구독·알람은 메모리에서 돌리고, Supabase(push_devices·push_pet_alarms, supabase/push.sql)에도 저장해
+// 서버가 다시 켜지면(배포·잠들었다 깸) 불러온다. SUPABASE_SERVICE_ROLE_KEY가 없으면 예전처럼 메모리만(앱을 열면 다시 등록).
 // endpoint → { subscription, alarms: [{ time: "HH:MM", title, body, petId, skipDate? }], pets: Set|null(확인된 가족 강아지), timeZone, sentDate, sent: Set }
 const pushDevices = new Map();
 // 가족 공유: 강아지 id → 그 강아지 알람 목록(가족 중 마지막으로 보낸 기기 기준). 같은 강아지의 가족 기기 모두가 이 목록으로 울린다
@@ -36,6 +35,43 @@ const petAlarms = new Map();
 // 가족 확인용 Supabase(공개 주소·공개 키). 없으면 가족 공유 알람은 꺼지고 기기별 알람만 동작한다
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+// 서버 전용 키(Render 환경 변수에만, 출력·전송 금지) — 푸시 표는 RLS로 막혀 있어 이 키로만 읽고 쓴다
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const pushDb = SUPABASE_URL && SUPABASE_SERVICE_KEY;
+async function db(path, { method = "GET", body, prefer } = {}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, "Content-Type": "application/json", ...(prefer && { Prefer: prefer }) },
+    body: body && JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!r.ok) throw new Error(`db ${method} ${path.split("?")[0]} ${r.status}`);
+  return method === "GET" ? r.json() : null;
+}
+// 저장 실패는 알람을 막지 않는다(메모리로 계속 동작) — 로그만
+const dbSave = (path, opts) => pushDb && db(path, opts).catch((e) => console.error("[server] push db:", e.message));
+const saveDevice = (d) =>
+  dbSave("push_devices", {
+    method: "POST",
+    prefer: "resolution=merge-duplicates",
+    body: { endpoint: d.subscription.endpoint, subscription: d.subscription, alarms: d.alarms, pets: d.pets ? [...d.pets] : null, time_zone: d.timeZone, sent_date: d.sentDate ?? null, sent: [...d.sent], updated_at: new Date().toISOString() },
+  });
+const savePetAlarms = (petId, alarms) =>
+  dbSave("push_pet_alarms", { method: "POST", prefer: "resolution=merge-duplicates", body: { pet_id: petId, alarms, updated_at: new Date().toISOString() } });
+const forgetDevice = (endpoint) => dbSave(`push_devices?endpoint=eq.${encodeURIComponent(endpoint)}`, { method: "DELETE" });
+// 서버가 켜질 때 한 번: 저장해 둔 기기·가족 알람을 메모리로
+const pushReady = (async () => {
+  if (!pushDb) return;
+  try {
+    for (const r of await db("push_devices?select=*")) {
+      pushDevices.set(r.endpoint, { subscription: r.subscription, alarms: r.alarms || [], pets: r.pets ? new Set(r.pets) : null, timeZone: r.time_zone, sentDate: r.sent_date, sent: new Set(r.sent || []) });
+    }
+    for (const r of await db("push_pet_alarms?select=*")) petAlarms.set(r.pet_id, r.alarms || []);
+    console.log(`[server] push db: 기기 ${pushDevices.size}대 불러옴`);
+  } catch (e) {
+    console.error("[server] push db load:", e.message);
+  }
+})();
 const vapidConfigured = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
 if (vapidConfigured) {
   webpush.setVapidDetails(
@@ -1038,9 +1074,7 @@ app.get("/api/push/public-key", (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
-// 기기가 앱을 열거나 닫을 때마다 구독 정보 + 매일 울릴 알람 목록을 통째로 보내온다.
-// ponytail: 메모리에만 저장 — 서버 재시작(배포 등) 후엔 사용자가 앱을 한 번 열어야 다시 등록된다.
-// 여러 사용자/확실한 보존이 필요해지면 DB(Postgres 등)로 옮길 것.
+// 기기가 앱을 열거나 닫을 때마다 구독 정보 + 매일 울릴 알람 목록을 통째로 보내온다(메모리 + Supabase 저장).
 // 로그인 토큰으로 "이 사람이 가족인 강아지 id들"을 Supabase에 물어본다(RLS가 본인 강아지만 돌려준다). 확인 못 하면 null
 async function verifiedPets(accessToken) {
   if (!accessToken || !SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
@@ -1076,6 +1110,7 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
   if (!subscription?.endpoint) {
     return res.status(400).json({ error: "subscription is required" });
   }
+  await pushReady; // 막 켜진 서버면 저장된 목록을 먼저 불러온 뒤 합친다
   const prev = pushDevices.get(subscription.endpoint);
   const list = Array.isArray(alarms) ? alarms : prev?.alarms || [];
   // ponytail: 가족 확인은 기기가 알람을 보낼 때(앱 열기·닫기)만 — 내보낸 가족 기기는 그 기기가 다시 보낼 때까지 알람을 받을 수 있다. 정확히 하려면 구독을 DB로 옮겨 서버가 직접 확인
@@ -1084,7 +1119,11 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
   // 이 기기에 있는 강아지(petIds)는 알람이 0개여도 그대로 반영해 지운 알람이 남지 않게 한다
   if (pets && Array.isArray(alarms)) {
     const here = new Set([...(Array.isArray(petIds) ? petIds : []), ...alarms.map((a) => a.petId)]);
-    for (const pet of pets) if (here.has(pet)) petAlarms.set(pet, alarms.filter((a) => a.petId === pet));
+    for (const pet of pets) {
+      if (!here.has(pet)) continue;
+      petAlarms.set(pet, alarms.filter((a) => a.petId === pet));
+      savePetAlarms(pet, petAlarms.get(pet));
+    }
   }
   pushDevices.set(subscription.endpoint, {
     subscription,
@@ -1095,6 +1134,7 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
     sent: prev?.sent || new Set(),
   });
   const device = pushDevices.get(subscription.endpoint);
+  saveDevice(device);
   res.json({ ok: true, alarms: alarmsForDevice(device).length, familyPets: pets?.size || 0, familyCheck: Boolean(SUPABASE_URL && SUPABASE_ANON_KEY) }); // familyCheck: 서버에 가족 확인용 설정이 있는지(값은 알려 주지 않음)
 });
 
@@ -1104,7 +1144,10 @@ async function sendPush(device, title, body, url) {
     return true;
   } catch (err) {
     // 만료되었거나 더 이상 유효하지 않은 구독(410/404)은 목록에서 정리한다.
-    if ([404, 410].includes(err.statusCode)) pushDevices.delete(device.subscription.endpoint);
+    if ([404, 410].includes(err.statusCode)) {
+      pushDevices.delete(device.subscription.endpoint);
+      forgetDevice(device.subscription.endpoint);
+    }
     else console.error("[server] push error:", err.statusCode, err.message);
     return false;
   }
@@ -1130,10 +1173,11 @@ function localNow(timeZone) {
 }
 
 // 20초마다 각 기기의 현재 시각과 알람 시각을 비교해 푸시를 보낸다. 같은 날 같은 알람은 한 번만.
-// ponytail: Render 무료 서버는 15분간 요청이 없으면 잠들어 이 타이머도 멈춘다 — 외부 핑(UptimeRobot 등)으로 깨워둬야 한다.
+// Render 무료 서버는 15분간 요청이 없으면 잠들어 이 타이머도 멈춘다 — Supabase cron이 1분마다 /api/push/tick을 불러 깨워 둔다.
 function checkPushAlarms() {
   if (!vapidConfigured) return;
   for (const device of pushDevices.values()) {
+    let changed = false;
     let now;
     try {
       now = localNow(device.timeZone);
@@ -1143,6 +1187,7 @@ function checkPushAlarms() {
     if (device.sentDate !== now.date) {
       device.sentDate = now.date;
       device.sent = new Set();
+      changed = true;
     }
     for (const alarm of alarmsForDevice(device)) {
       if (alarm.skipDate === now.date) continue; // 오늘 이미 끝낸 체크리스트 항목
@@ -1152,12 +1197,20 @@ function checkPushAlarms() {
       const key = `${alarm.time}|${alarm.title}|${alarm.body}`;
       if (alarm.time === now.time && !device.sent.has(key)) {
         device.sent.add(key);
+        changed = true;
         sendPush(device, alarm.title, alarm.body, alarm.url?.replace("%7Bdate%7D", now.date));
       }
     }
+    if (changed) saveDevice(device);
   }
 }
-setInterval(checkPushAlarms, 20 * 1000);
+pushReady.then(() => setInterval(checkPushAlarms, 20 * 1000));
+// Supabase가 1분마다 부른다(supabase/push.sql의 cron) — 무료 서버가 잠들지 않게 하고, 막 깬 서버도 바로 확인
+app.get("/api/push/tick", async (req, res) => {
+  await pushReady;
+  checkPushAlarms();
+  res.json({ ok: true, devices: pushDevices.size, db: Boolean(pushDb) });
+});
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
