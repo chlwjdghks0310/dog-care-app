@@ -119,12 +119,15 @@ const SAFETY_RULES = `당신은 반려견 보호자를 돕는 전문 케어 어�
 - 한국어로 답합니다.`;
 
 function buildSystemPrompt(dogContext) {
+  return [SAFETY_RULES, "", dogInfo(dogContext)].join("\n");
+}
+
+// 강아지 정보·앱 기록 — 사람마다, 기록할 때마다 바뀌는 부분(프롬프트 캐싱에선 늘 맨 뒤에 둔다)
+function dogInfo(dogContext) {
   const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory, appData } = dogContext || {};
   const genderLabel = gender === "male" ? "수컷" : gender === "female" ? "암컷" : gender;
   const appearance = getBreedAppearance(breed);
   const lines = [
-    SAFETY_RULES,
-    "",
     "현재 상담 중인 강아지 정보(보호자가 앱 프로필에 적은 내용 — 답할 때 항상 이 정보에 맞춰 판단하고, 관련 있으면 자연스럽게 언급한다. 예: 알레르기 있는 재료는 권하지 않기, 체중 변화가 있으면 짚어 주기):",
     `이름: ${name || "알 수 없음"}`,
     `견종: ${breed || "알 수 없음"}`,
@@ -243,12 +246,17 @@ function getChatMode(mode) {
 
 const SEARCH_HINT = `- 정보 질문이면 web_search 도구로 수의학 자료, 동물병원·사료회사·전문가 자료를 찾아 교차 확인한다. 마지막 줄에 "📚 참고: " 뒤에 참고한 출처 이름만 짧게 적는다. 잡담에는 검색하지 않는다.`;
 
-function buildChatSystemPrompt(dogContext, mode) {
+function chatRules(mode) {
   const chatMode = getChatMode(mode);
-  return [PERSONA_INSTRUCTIONS, "", chatMode.style, chatMode.webSearch ? SEARCH_HINT : null, "", buildSystemPrompt(dogContext)]
-    .filter((line) => line !== null)
-    .join("\n");
+  return [PERSONA_INSTRUCTIONS, "", chatMode.style, chatMode.webSearch ? SEARCH_HINT : null].filter((line) => line !== null).join("\n");
 }
+
+// 프롬프트 캐싱: 늘 같은 앞부분(규칙)에 표시를 붙여 AI 쪽에 5분 저장해 다시 쓰고(그 부분 입력 비용 0.05배),
+// 바뀌는 강아지 정보·기록은 표시 뒤에 둔다. 답 내용은 캐싱과 상관없이 같다. 절약량은 createWithContinuation이 로그로 남긴다.
+const cachedSystem = (fixed, dogContext) => [
+  { type: "text", text: `${fixed}\n\n${SAFETY_RULES}`, cache_control: { type: "ephemeral" } },
+  { type: "text", text: dogInfo(dogContext) },
+];
 
 const FECAL_CHART = `퓨리나 대변 점수표(Purina Fecal Scoring Chart, 1~7점, 임상 통용 평가 도구):
 1점: 매우 단단하고 건조한 알갱이 형태, 배출이 어려울 수 있음
@@ -335,7 +343,7 @@ function buildVetVideoSystemPrompt(dogContext) {
 const EMPHASIS_RULE =
   "- 가장 중요한 한 가지(병원에 가야 하는 경고가 있으면 그 경고, 없으면 가장 핵심적인 내용)는 문장 하나만 **별표 두 개로 감싸서** 강조합니다. 두 군데 이상 강조하지 않습니다.";
 
-function buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode) {
+function photoRules(mode) {
   return [
     PERSONA_INSTRUCTIONS,
     "",
@@ -358,8 +366,6 @@ function buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode) {
     "- 부가 설명은 맨 앞에 '👀 사진에서 본 나' 소제목을 추가해 보이는 것을 하나하나 적고, 해당하는 신호 분류([1]~[7] 또는 대변 점수·색 기준)도 짚어주되, 보호자에게는 \"[4]\" 같은 대괄호 번호 없이 이름(예: 파행 등급, 진정 신호)으로만 말합니다. 그 다음 위 형식의 소제목(확인법, 가능성, 집에서 해줄 것, 병원 기준)으로 이어갑니다. 레드플래그·열사병·4~5등급 파행·응급성 눈 이상에 해당하면 즉시 병원 방문을 맨 먼저 명확히 말합니다.",
     EMPHASIS_RULE,
     "- 강아지 사진이 아니거나 무엇을 보여주려는 건지 판별하기 어려우면, 억지로 추정하지 말고 다시 찍어달라고 안내합니다.",
-    "",
-    buildSystemPrompt(dogContext),
   ].join("\n");
 }
 
@@ -426,10 +432,18 @@ function claudeText(response) {
 // 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
 async function createWithContinuation(params, messages) {
   let response = await client.beta.messages.create({ ...params, messages });
+  logCache(response);
   for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
     response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
+    logCache(response);
   }
   return response;
+}
+
+// 프롬프트 캐싱이 실제로 아끼는지 Render 로그로 확인: read(저장분 다시 씀, 0.05배) / write(새로 저장, 1.25배) / in(캐싱 안 된 입력)
+function logCache(response) {
+  const u = response?.usage;
+  if (u) console.log(`[cache] read=${u.cache_read_input_tokens || 0} write=${u.cache_creation_input_tokens || 0} in=${u.input_tokens || 0} out=${u.output_tokens || 0}`);
 }
 
 // 채팅으로 앱에 기록하기 — AI가 아래 도구를 부르면 서버는 저장하지 않고(기록은 폰에 있음) 그대로 앱에 돌려주고,
@@ -646,7 +660,7 @@ app.post("/api/ask", async (req, res) => {
       ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: chatMode.effort },
-      system: `${analyzing ? buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode) : buildChatSystemPrompt(dogContext, mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`,
+      system: cachedSystem(`${analyzing ? photoRules(mode) : chatRules(mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`, dogContext),
       tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] : []), ...appTools(categories)],
     };
     let convo = messages;
@@ -670,7 +684,9 @@ app.post("/api/ask", async (req, res) => {
     }
 
     const reply = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
-    res.json({ ...structuredReply(reply, citationRefs(response)), actions });
+    const u = response.usage || {};
+    // cache: 프롬프트 캐싱 확인용 숫자(토큰 수만, 화면엔 안 씀)
+    res.json({ ...structuredReply(reply, citationRefs(response)), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
@@ -958,7 +974,7 @@ app.post("/api/analyze-general-photo", async (req, res) => {
       ...CLAUDE_MODEL,
       max_tokens: 16000,
       output_config: { effort: getChatMode(mode).effort },
-      system: buildGeneralPhotoAnalysisSystemPrompt(dogContext, mode),
+      system: cachedSystem(photoRules(mode), dogContext),
       messages: [
         {
           role: "user",
