@@ -12,7 +12,7 @@ import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
-import { getRoutine, checkinAlarmTime, checkedInToday, isAwayTime } from "./routine";
+import { getRoutine, checkinAlarmTime, checkedInToday } from "./routine";
 import { getFoodStock } from "./foodStock";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
@@ -169,19 +169,13 @@ async function postSubscription(subscription, alarms, { beacon = false } = {}) {
 export function buildPushAlarms() {
   const all = [];
   const routine = getRoutine();
-  const offDays = routine ? [0, 1, 2, 3, 4, 5, 6].filter((d) => !routine.days.includes(d)) : [];
   for (const dog of getDogs()) {
     const alarms = [];
     for (const item of getTodayChecklist(dog)) {
       // 오늘 이미 체크한 일은 오늘만 건너뛴다(서버는 매일 같은 알람을 보내므로 내일은 다시 울려야 함)
       const skipDate = item.completed ? todayKey() : undefined;
-      for (const time of item.suggestedTimes || []) {
-        // 나가 있는 시각의 추천 할 일은 나가는 날엔 들어오는 시각에(밥 시간은 보호자가 정한 그대로)
-        if (routine && !item.ruleId?.startsWith("meal-") && isAwayTime(time, routine)) {
-          if (offDays.length) alarms.push({ time, ...checklistMessage(dog, item), skipDate, days: offDays });
-          alarms.push({ time: routine.back, ...checklistMessage(dog, item), skipDate, days: routine.days });
-        } else alarms.push({ time, ...checklistMessage(dog, item), skipDate });
-      }
+      // 나가 있는 동안에도 원래 시각에 울린다(밖에서도 챙길 일을 떠올리게 — 사용자 결정 2026-10-27)
+      for (const time of item.suggestedTimes || []) alarms.push({ time, ...checklistMessage(dog, item), skipDate });
     }
     // 사료 떨어짐 예고: 떨어지기 5일 전·1일 전 점심
     const stock = getFoodStock(dog);
