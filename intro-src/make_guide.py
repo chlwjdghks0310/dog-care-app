@@ -75,7 +75,7 @@ html = f'''<!doctype html>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="/intro/intro.css?v=6" />
-  <link rel="stylesheet" href="/intro/guide.css?v=2" />
+  <link rel="stylesheet" href="/intro/guide.css?v=3" />
 </head>
 <body class="guide">
   <a class="skip" href="#g-main">본문으로 건너뛰기</a>

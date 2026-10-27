@@ -2,7 +2,7 @@
 @view-transition { navigation: auto; } /* 소개 ↔ 설명서 넘어갈 때 부드럽게(지원 브라우저만) */
 .ic { width: 18px; height: 18px; flex-shrink: 0; vertical-align: -3px; }
 body.guide { --g-line: #e6ecf5; }
-.brand small { font-size: 13px; font-weight: 700; color: var(--soft); margin-left: 4px; }
+.brand small { font-size: 13px; font-weight: 700; color: #62584e; margin-left: 4px; }
 .top-in .g-back { margin-left: auto; }
 .top-in .brand { margin-right: 0; }
 .top-in .btn { margin-left: 0; }
@@ -85,7 +85,7 @@ html { scroll-padding-top: calc(var(--head) + 64px); }
 .g-steps li::before { content: counter(s); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--btn); color: #fff; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .g-ex { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
 .g-ex-label { width: 100%; font-size: 13px !important; font-weight: 800; color: var(--soft) !important; margin: 0 !important; }
-.g-ex span { font-size: 15px; padding: 8px 12px; background: var(--accent-soft); color: var(--btn); border-radius: 14px 14px 14px 4px; font-weight: 600; }
+.g-ex span { font-size: 15px; padding: 8px 12px; background: var(--accent-soft); color: #1f4f8c; /* 대비 4.5:1 이상 */ border-radius: 14px 14px 14px 4px; font-weight: 600; }
 .g-tip, .g-note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; font-size: 15px !important; line-height: 1.65 !important; }
 .g-tip { background: #f3f6fb; }
 .g-tip .ic { color: var(--btn); margin-top: 3px; }

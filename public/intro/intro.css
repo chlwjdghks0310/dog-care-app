@@ -97,7 +97,8 @@ h1 { font-size: clamp(32px, 7.4vw, 54px); font-weight: 800; }
 }
 
 /* 섹션 공통 */
-section { padding: 52px 0; }
+section { padding: 40px 0; } /* 휴대폰: 구역 사이 빈칸 줄임(점검 2026-10-27) */
+@media (min-width: 720px) { section { padding: 52px 0; } }
 @media (min-width: 1024px) { section { padding: 80px 0; } }
 .sec-title { font-size: clamp(25px, 4.4vw, 36px); font-weight: 800; text-align: center; margin-bottom: 28px; }
 .sec-title-sm { font-size: clamp(21px, 3.4vw, 26px); }
@@ -187,7 +188,7 @@ section { padding: 52px 0; }
 .foot-brand img { border-radius: 6px; }
 .disclaimer { font-size: 13px; max-width: 36em; }
 .foot-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.foot-links a { color: var(--text); text-decoration: none; font-weight: 600; padding: 6px 0; }
+.foot-links a { color: var(--text); text-decoration: none; font-weight: 600; padding: 12px 0; min-height: 44px; display: inline-flex; align-items: center; } /* 누르기 쉬운 크기 44px */
 .foot-links a:hover { text-decoration: underline; }
 .copy { font-size: 12.5px; margin-top: 12px; }
 
@@ -326,7 +327,7 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 @keyframes bubble { from { opacity: 0; transform: scale(0.85); transform-origin: left bottom; } }
 .svc-who { font-weight: 800; font-size: 14px; color: var(--tc); }
 .svc-who span { font-weight: 600; color: var(--soft); }
-.svc-bubble h3 { font-size: clamp(26px, 4.6vw, 34px); font-weight: 900; margin: 2px 0 8px; color: var(--text); }
+.svc-bubble h2 { font-size: clamp(26px, 4.6vw, 34px); font-weight: 900; margin: 2px 0 8px; color: var(--text); }
 .svc-say { font-size: 17px; line-height: 1.65; }
 .svc-say em { font-style: normal; font-weight: 800; color: var(--tc); }
 .svc-body { display: grid; gap: 16px; }
@@ -376,7 +377,7 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
   .svc-head { gap: 6px; }
   .svc-dog { width: 92px; }
   .svc-bubble { padding: 12px 14px; margin-bottom: 14px; }
-  .svc-bubble h3 { font-size: 24px; }
+  .svc-bubble h2 { font-size: 24px; }
   .svc-say { font-size: 16px; }
   .spot { align-items: flex-start; }
   .spot .phone.mini { width: 104px; }
@@ -386,7 +387,7 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 /* 휴대폰 아래 안내: 간략 미리보기 + 설명서로 */
 .demo-cap { font-size: 14px; color: var(--soft); text-align: center; max-width: 300px; line-height: 1.6; }
 .demo-cap b { color: var(--text); }
-.demo-cap a { display: inline-block; margin-top: 2px; font-weight: 800; color: var(--btn); text-decoration: none; }
+.demo-cap a { display: inline-block; margin-top: 2px; padding: 11px 4px; font-weight: 800; color: var(--btn); text-decoration: none; }
 /* 비서 창: 세 친구 */
 .svc-dogs { display: grid; gap: 10px; }
 .svc-dogs-title { font-size: 15px; font-weight: 800; }
@@ -412,3 +413,4 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 .band-go { display: inline-flex; align-items: center; gap: 2px; font-weight: 800; color: var(--btn); white-space: nowrap; }
 .band-go .ic { width: 16px; height: 16px; }
 @media (prefers-reduced-motion: reduce) { .band-in { transition: none; } }
+.pad-link { display: inline-block; padding: 12px 8px; }

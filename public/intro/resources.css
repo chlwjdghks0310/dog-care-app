@@ -1,6 +1,6 @@
 /* 멍케어 자료실(/intro/resources/) — intro.css 위에. 색은 대표 파랑 하나 + 회색 */
 .ic { width: 18px; height: 18px; flex-shrink: 0; vertical-align: -3px; }
-.brand small { font-size: 13px; font-weight: 700; color: var(--soft); margin-left: 4px; }
+.brand small { font-size: 13px; font-weight: 700; color: #62584e; margin-left: 4px; }
 .r-top { gap: 8px; }
 .r-top .brand { margin-right: 0; }
 .r-top .btn { margin-left: 0; }

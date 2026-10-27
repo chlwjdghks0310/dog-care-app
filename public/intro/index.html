@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=7" />
+  <link rel="stylesheet" href="/intro/intro.css?v=8" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -93,7 +93,7 @@
         <div class="demo" id="demo">
           <p class="demo-hint" aria-hidden="true"><span class="hand">👆</span> 아래 탭을 눌러 보세요</p>
           <div class="phone demo-phone">
-            <div class="screens"><img class="scr on" src="/intro/img/assistant.jpg" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/checklist.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/profile.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/calendar.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/budget.jpg" alt="" width="300" height="649" loading="lazy" /></div>
+            <div class="screens"><img class="scr on" src="/intro/img/assistant.jpg?v=2" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/checklist.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/profile.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/calendar.jpg" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/budget.jpg" alt="" width="300" height="649" loading="lazy" /></div>
             <span class="tag">간략 미리보기</span>
             <div class="nav-glow" aria-hidden="true"><span>여기를 눌러 보세요</span></div>
             <div class="hots" role="tablist" aria-label="멍케어 기능 둘러보기"><button type="button" role="tab" id="tab-assistant" class="hot" aria-selected="true" aria-controls="panel-assistant" tabindex="0"><span class="sr">비서 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-checklist" class="hot" aria-selected="false" aria-controls="panel-checklist" tabindex="-1"><span class="sr">체크리스트 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-profile" class="hot" aria-selected="false" aria-controls="panel-profile" tabindex="-1"><span class="sr">프로필 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-calendar" class="hot" aria-selected="false" aria-controls="panel-calendar" tabindex="-1"><span class="sr">일정표 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-budget" class="hot" aria-selected="false" aria-controls="panel-budget" tabindex="-1"><span class="sr">가계부 기능 설명 보기</span><i class="ping" aria-hidden="true"></i></button></div>
@@ -112,16 +112,16 @@
               <img class="svc-dog" src="/intro/img/dog-yeoreum-sit.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">여름 <span>· 포메라니안</span></p>
-                <h3 id="svc-title-assistant">비서</h3>
+                <h2 id="svc-title-assistant">비서</h2>
                 <p class="svc-say">안녕! 나는 <em>여름</em>이야. 밥·산책·병원 이야기를 <em>말로 해 주면</em> 내가 알아서 기록해 둘게!</p>
               </div>
             </div>
             <div class="svc-body">
-              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 <b>건강 기록·가계부·일정표</b> 중 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>우리 아이 기록을 바탕으로 답하고, <b>지난번 나눈 이야기</b>도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 정리하고, 이어서 물어볼 질문까지 골라 줘요.</span></li></ul>
+              <ul class="svc-cards"><li><b>말로 기록</b><span>“산책 30분 했어”, “사료 3만 원 샀어”처럼 말하면 <b>건강 기록·가계부·일정표</b> 중 알맞은 곳에 저장해요.</span></li><li><b>바로 물어보기</b><span>우리 아이 기록을 바탕으로 답하고, <b>지난번 나눈 이야기</b>도 기억해요.</span></li><li><b>사진·영상 정리</b><span>찍어 보내면 보이는 모습을 정리하고, 이어서 물어볼 질문까지 골라 줘요.</span></li><li><b>밖에 있어도 챙겨요</b><span>[다녀올게]를 누르면 <b>혼자 있는 시간</b>을 세고, 들어와선 <b>30초 체크인</b>, 일요일엔 <b>주간 리포트</b>가 와요.</span></li></ul>
               <div class="svc-dogs"><p class="svc-dogs-title">대답해 주는 세 친구 — 입력칸 위에서 언제든 바꿔요</p><div class="svc-dogcard"><img src="/intro/img/dog-yeoreum-sit.png" alt="포메라니안 여름" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">여름 <span>포메라니안</span></p><p class="svc-dogrole">빠른 요약</p><p>핵심만 짧고 빠르게 알려 줘요.</p></div></div><div class="svc-dogcard"><img src="/intro/img/dog-gaeul-sit.png" alt="리트리버 가을" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">가을 <span>리트리버</span></p><p class="svc-dogrole">수다 친구</p><p>이야기를 들어 주고 공감해 줘요.</p></div></div><div class="svc-dogcard"><img src="/intro/img/dog-gyeoul-sit.png" alt="보더콜리 겨울" width="120" height="120" loading="lazy" /><div><p class="svc-dogname">겨울 <span>보더콜리</span></p><p class="svc-dogrole">꼼꼼 박사</p><p>자료를 찾아 자세히 설명해요.</p></div></div></div>
               <p class="svc-note">WSAVA·Merck 수의학 매뉴얼 같은 공개 수의학 자료와 우리 아이 기록을 바탕으로 AI가 정리해 드려요. 판단이 필요한 상황이면 병원에 가도록 먼저 알려 드려요.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/assistant.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/assistant.jpg?v=2" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#assistant"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-book"/></svg>자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -132,7 +132,7 @@
               <img class="svc-dog" src="/intro/img/dog-gaeul-sit.png" alt="리트리버 가을" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">가을 <span>· 리트리버</span></p>
-                <h3 id="svc-title-checklist">체크리스트</h3>
+                <h2 id="svc-title-checklist">체크리스트</h2>
                 <p class="svc-say">나는 <em>가을</em>이야! 오늘 뭘 챙겨야 할지 헷갈리면 내가 <em>하나씩</em> 알려 줄게.</p>
               </div>
             </div>
@@ -151,7 +151,7 @@
               <img class="svc-dog" src="/intro/img/dog-gyeoul-sit.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">겨울 <span>· 보더콜리</span></p>
-                <h3 id="svc-title-profile">프로필</h3>
+                <h2 id="svc-title-profile">프로필</h2>
                 <p class="svc-say">나는 꼼꼼한 <em>겨울</em>이야. 몸무게부터 병원 기록까지 <em>한곳에</em> 정리해서, 진료실에서 바로 보여 줄 수 있게 할게.</p>
               </div>
             </div>
@@ -170,7 +170,7 @@
               <img class="svc-dog" src="/intro/img/dog-yeoreum-wave.png" alt="포메라니안 여름" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">여름 <span>· 포메라니안</span></p>
-                <h3 id="svc-title-calendar">일정표</h3>
+                <h2 id="svc-title-calendar">일정표</h2>
                 <p class="svc-say">또 나야, <em>여름</em>! 접종이랑 미용 날짜, 내가 <em>대신 기억</em>해 둘게.</p>
               </div>
             </div>
@@ -189,7 +189,7 @@
               <img class="svc-dog" src="/intro/img/dog-gyeoul-think.png" alt="보더콜리 겨울" width="180" height="180" loading="lazy" />
               <div class="svc-bubble">
                 <p class="svc-who">겨울 <span>· 보더콜리</span></p>
-                <h3 id="svc-title-budget">가계부</h3>
+                <h2 id="svc-title-budget">가계부</h2>
                 <p class="svc-say">음… <em>겨울</em>이가 정리해 볼게. 우리 아이한테 쓴 돈, <em>분류별로 한눈에</em> 보여 줄게.</p>
               </div>
             </div>
@@ -269,7 +269,7 @@
             <p>AI 기능을 처음 쓸 때 질문·사진을 AI 회사로 보내도 되는지 먼저 동의를 받아요. 동의하지 않으면 보내지 않아요.</p>
           </div>
         </div>
-        <p class="center small"><a href="/?privacy">개인정보 처리방침 보기</a></p>
+        <p class="center small"><a class="pad-link" href="/?privacy">개인정보 처리방침 보기</a></p>
       </div>
     </section>
 
@@ -322,6 +322,14 @@
         <details>
           <summary>정말 무료인가요?</summary>
           <p>지금은 베타 기간이라 모든 기능을 무료로 쓸 수 있어요. 결제나 구독 기능이 없어서 카드 등록도 필요 없고, 광고도 없어요.</p>
+        </details>
+        <details>
+          <summary>ChatGPT 같은 AI에 물어보는 것과 뭐가 달라요?</summary>
+          <p>일반 AI는 우리 아이를 몰라요. 멍케어 비서는 <b>우리 아이의 나이·견종·몸무게와 적어 둔 기록</b>을 알고 답해요. 몸 상태를 물으면 "이 나이엔 보통 이래요 → 이럴 수 있어요 → 이런 신호면 주의 → 지금 할 일"처럼 정리하고, 지켜볼지·병원에 갈지 <b>고를 수 있게</b> 알려 줘요. 말한 내용은 기록·일정표·가계부에 <b>바로 저장</b>되고, 알림과 병원용 기록으로 이어져요.</p>
+        </details>
+        <details>
+          <summary>낮에는 일하느라 집에 없는데 쓸모가 있나요?</summary>
+          <p>네, 그런 분을 위한 기능이 있어요. 나갈 때 <b>[다녀올게]</b>를 누르면 혼자 있는 시간을 챙겨 주고, 들어와서는 <b>30초 체크인</b>으로 밥·배변·산책을 버튼 몇 번에 기록해요. 일요일 저녁엔 한 주를 모은 <b>주간 리포트</b>가 오고, 사료가 떨어지기 5일 전 점심에 미리 알려 줘요.</p>
         </details>
         <details>
           <summary>앱스토어에 없나요?</summary>
