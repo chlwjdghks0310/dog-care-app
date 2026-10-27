@@ -22,15 +22,11 @@ R.leaveNow(at("08:40"));
 assert.equal(R.getOuting("2026-10-27").leftAt, "08:40");
 R.backNow(at("19:05"));
 assert.equal(R.getOuting("2026-10-27").backAt, "19:05");
-R.markCheckedIn("d1", "2026-10-27");
+R.markCheckedIn("d1", { ids: ["r1"], picks: { meal: "남겼어" } }, "2026-10-27");
+assert.deepEqual(R.getTodayCheckin("d1", "2026-10-27").picks, { meal: "남겼어" }, "다시 열면 고른 것 채움");
+assert.equal(R.getTodayCheckin("d1", "2026-10-28"), null);
 assert.ok(R.checkedInToday("d1", "2026-10-27") && !R.checkedInToday("d2", "2026-10-27"));
 console.log("routine ok");
-// 체크리스트 아침/저녁 나누기
-assert.equal(R.daySlot({ suggestedTimes: ["07:30"] }, routine), "morning");
-assert.equal(R.daySlot({ suggestedTimes: ["13:00"] }, routine), "evening", "나가 있는 시각은 저녁으로");
-assert.equal(R.daySlot({ suggestedTimes: [] }, routine), "evening", "시각 없는 할 일은 저녁");
-assert.ok(R.isAwayTime("12:00", routine) && !R.isAwayTime("19:00", routine) && !R.isAwayTime("08:00", routine));
-assert.ok(R.isWorkday(routine, at("10:00")) && !R.isWorkday(routine, new Date("2026-10-25T10:00:00")));
 // 사료 남은 양: 2kg 봉투, 하루 50g → 40일. 10/1에 뜯었으면 11/10에 떨어짐
 const F = await import("../src/services/foodStock.js");
 assert.deepEqual(F.stockFromBag({ grams: 2000, openedAt: "2026-10-01" }, 50, "2026-11-05"), { daysLeft: 5, runOut: "2026-11-10", dailyGrams: 50, bagDays: 40 });

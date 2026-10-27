@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { outingState, leaveNow, backNow, durationLabel, backTip, checkedInToday, markCheckedIn, getRoutine, saveRoutine, DEFAULT_ROUTINE } from "../services/routine";
-import { saveRecord, newRecordId, localNow } from "../services/records";
+import { outingState, leaveNow, backNow, durationLabel, backTip, checkedInToday, getTodayCheckin, markCheckedIn, getRoutine, saveRoutine, DEFAULT_ROUTINE } from "../services/routine";
+import { saveRecord, deleteRecord, getRecords, newRecordId, localNow } from "../services/records";
 import { syncPushAlarms } from "../services/notifications";
 
 // 비서 첫 화면의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어] → [30초 체크인]. 밖에 오래 있는 보호자가 아침·저녁에 한 번씩만 누르면 되게.
@@ -32,9 +32,14 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) 
     title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
     sub = backTip(s.minutes);
     action = { label: "30초 체크인", run: () => setSheet("checkin") };
-  } else if (s.state === "back" || done) {
-    title = done ? "오늘 체크인 완료" : `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
-    sub = s.state === "back" ? `혼자 ${durationLabel(s.minutes)} · 내일 아침 나갈 때 또 눌러 주세요` : "기록은 프로필 건강 기록에 있어요";
+  } else if (done) {
+    // 잘못 눌렀을 수 있으니 오늘 안에는 다시 열어 고칠 수 있다(고른 게 채워져 있고, 저장하면 오늘 체크인 기록을 바꾼다)
+    title = "오늘 체크인 완료";
+    sub = s.state === "back" ? `혼자 ${durationLabel(s.minutes)} · 고칠 게 있으면 다시 하기` : "고칠 게 있으면 다시 하기";
+    action = { label: "다시 하기", run: () => setSheet("checkin") };
+  } else if (s.state === "back") {
+    title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
+    sub = "내일 아침 나갈 때 또 눌러 주세요";
   } else {
     title = evening ? `${dog.name} 오늘 어땠어요?` : "외출할 때 눌러 주세요";
     sub = evening ? "밥·배변·산책을 30초에 기록해요" : `${dog.name}가 혼자 있는 시간을 챙겨 줄게요`;
@@ -60,7 +65,7 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose }) 
           <Ico name="settings" size={17} />
         </button>
       </div>
-      {sheet === "checkin" && <CheckinSheet dog={dog} onClose={close} onAsk={onAsk} onDone={() => (markCheckedIn(dog.id), refresh())} />}
+      {sheet === "checkin" && <CheckinSheet dog={dog} onClose={close} onAsk={onAsk} onDone={(result) => (markCheckedIn(dog.id, result), refresh())} />}
       {sheet === "routine" && <RoutineSheet onClose={() => setSheet(null)} />}
     </>
   );
@@ -74,11 +79,13 @@ const WALK = ["못 했어", "10분", "20분", "30분", "1시간"];
 
 // 저녁 체크인: 버튼만 눌러 기록 여러 개를 한 번에. 고른 것만 기록하고, 프로필에서 직접 적은 기록과 같은 모양으로 저장한다.
 function CheckinSheet({ dog, onClose, onDone, onAsk }) {
-  const [meal, setMeal] = useState("");
-  const [stool, setStool] = useState("");
-  const [urine, setUrine] = useState("");
-  const [odd, setOdd] = useState([]);
-  const [walk, setWalk] = useState("");
+  const [prev] = useState(() => getTodayCheckin(dog.id)); // 오늘 이미 했으면 고른 걸 채우고, 저장할 때 그때 만든 기록을 바꾼다
+  const p = prev?.picks || {};
+  const [meal, setMeal] = useState(p.meal || "");
+  const [stool, setStool] = useState(p.stool || "");
+  const [urine, setUrine] = useState(p.urine || "");
+  const [odd, setOdd] = useState(p.odd || []);
+  const [walk, setWalk] = useState(p.walk || "");
   const [saved, setSaved] = useState(null); // 저장한 기록 수
   const [error, setError] = useState("");
 
@@ -101,11 +108,14 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
     if (walkMin) list.push(rec("vital", { metric: "walk", value: walkMin }));
     if (!list.length) return setError("하나 이상 골라 주세요.");
     try {
+      // 다시 하기: 지난번 체크인 기록(아직 남아 있는 것만)을 지우고 새로 저장 — 같은 날 기록이 두 번 쌓이지 않게
+      const alive = new Set(getRecords(dog.id).map((r) => r.id));
+      (prev?.ids || []).filter((id) => alive.has(id)).forEach((id) => deleteRecord(dog.id, id));
       list.forEach((r) => saveRecord(dog.id, r));
     } catch (e) {
       return setError(e.message);
     }
-    onDone();
+    onDone({ ids: list.map((r) => r.id), picks: { meal, stool, urine, odd, walk } });
     syncPushAlarms(); // 산책을 기록했으면 오늘 산책 알람은 건너뛰게
     setSaved(list.length);
   }
@@ -136,7 +146,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
         </div>
         {saved ? (
           <div className="es-scroll" style={{ padding: "8px 16px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>기록 {saved}개를 남겼어요</div>
+            <div style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>{prev ? `기록 ${saved}개로 고쳤어요` : `기록 ${saved}개를 남겼어요`}</div>
             <p className="subtle" style={{ margin: 0 }}>프로필 → 건강 기록에서 보거나 고칠 수 있어요.</p>
             {concern && onAsk && (
               <button type="button" className="btn-ghost" style={{ marginTop: 14 }} onClick={() => (onAsk(`오늘 저녁에 보니 ${[meal === "안 먹었어" && "밥을 거의 안 먹었고", stool === "설사" && "설사를 했고", ...odd.filter((o) => ["토했어", "기운 없어"].includes(o))].filter(Boolean).join(", ")} 어떻게 하면 좋을까?`), onClose())}>
@@ -147,7 +157,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
           </div>
         ) : (
           <div className="es-scroll" style={{ padding: "4px 16px 16px" }}>
-            <p className="subtle" style={{ margin: "0 0 4px" }}>본 것만 누르세요. 안 누른 건 기록하지 않아요.</p>
+            <p className="subtle" style={{ margin: "0 0 4px" }}>{prev ? "오늘 고른 게 채워져 있어요. 고치고 다시 기록하면 바뀌어요." : "본 것만 누르세요. 안 누른 건 기록하지 않아요."}</p>
             <Pick label="밥" options={Object.keys(MEAL)} value={meal} onPick={setMeal} />
             <Pick label="대변 (패드·바닥)" options={STOOL_PICK} value={stool} onPick={setStool} />
             <Pick label="소변" options={URINE_PICK} value={urine} onPick={setUrine} />
@@ -166,7 +176,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 평소 나가고 들어오는 시각 — 버튼을 깜빡해도 이 시각으로 혼자 있는 시간을 어림하고, 들어오는 시각 30분 뒤에 체크인 알림
-export function RoutineSheet({ onClose }) {
+function RoutineSheet({ onClose }) {
   const [r, setR] = useState(() => getRoutine() || DEFAULT_ROUTINE);
   const set = (patch) => setR((cur) => ({ ...cur, ...patch }));
   function save() {

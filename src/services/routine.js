@@ -5,7 +5,7 @@ import { todayKey } from "../utils/date";
 // routine: 평소 나가고 들어오는 시각·요일(버튼을 안 눌러도 이 시각으로 '혼자 있는 시간'을 어림) / outing: 오늘 실제로 누른 시각
 const ROUTINE_KEY = "dogcare-routine-v1"; // { leave: "08:30", back: "19:00", days: [1..5](0=일), remind: true }
 const OUTING_KEY = "dogcare-outing-v1"; // { date, leftAt: "HH:MM", backAt: "HH:MM" | null }
-const CHECKIN_KEY = "dogcare-checkin-v1"; // { [dogId]: "YYYY-MM-DD"(마지막 체크인 날) }
+const CHECKIN_KEY = "dogcare-checkin-v1"; // { [dogId]: { date, ids, picks } }
 
 export const DEFAULT_ROUTINE = { leave: "08:30", back: "19:00", days: [1, 2, 3, 4, 5], remind: true };
 export const getRoutine = () => readJSON(ROUTINE_KEY, null);
@@ -23,8 +23,15 @@ export function backNow(now = new Date()) {
   const o = getOuting(todayKey(now));
   if (o) writeJSON(OUTING_KEY, { ...o, backAt: hhmm(now) });
 }
-export const checkedInToday = (dogId, today = todayKey()) => readJSON(CHECKIN_KEY, {})[dogId] === today;
-export const markCheckedIn = (dogId, today = todayKey()) => writeJSON(CHECKIN_KEY, { ...readJSON(CHECKIN_KEY, {}), [dogId]: today });
+// 값: { date, ids: 오늘 체크인으로 만든 기록 id, picks: 고른 것 } — 다시 하면 고른 걸 채워 보여 주고 그 기록을 바꾼다(예전 값 "YYYY-MM-DD"도 읽음)
+const checkinOf = (dogId) => {
+  const v = readJSON(CHECKIN_KEY, {})[dogId];
+  return typeof v === "string" ? { date: v, ids: [], picks: null } : v || null;
+};
+export const getTodayCheckin = (dogId, today = todayKey()) => (checkinOf(dogId)?.date === today ? checkinOf(dogId) : null);
+export const checkedInToday = (dogId, today = todayKey()) => Boolean(getTodayCheckin(dogId, today));
+export const markCheckedIn = (dogId, { ids = [], picks = null } = {}, today = todayKey()) =>
+  writeJSON(CHECKIN_KEY, { ...readJSON(CHECKIN_KEY, {}), [dogId]: { date: today, ids, picks } });
 
 // 오늘 상태: home(아직 안 나감) / away(나가 있음, minutes=지금까지) / back(들어옴, minutes=오늘 혼자 있던 시간)
 // estimated=true: 버튼을 안 눌러 평소 시각(routine)으로 어림한 것
@@ -59,11 +66,3 @@ export function checkinAlarmTime(routine) {
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
-// 체크리스트를 생활 패턴에 맞추기: 나가는 날이면 할 일을 "아침(나가기 전) / 저녁(들어와서)"으로 나눈다.
-// 나가 있는 동안의 시각·시각 없는 할 일은 저녁으로(집에 없을 때 할 수 없으니). 나가는 날이 아니면 null(평소처럼 종류별)
-export const isWorkday = (routine, date = new Date()) => Boolean(routine?.days?.includes(date.getDay()));
-export const isAwayTime = (time, routine) => Boolean(routine) && mins(time) >= mins(routine.leave) && mins(time) < mins(routine.back);
-export function daySlot(item, routine) {
-  const times = item.suggestedTimes || [];
-  return times.some((t) => mins(t) < mins(routine.leave)) ? "morning" : "evening";
-}

@@ -8,9 +8,7 @@ import ProgressRing from "../components/ProgressRing";
 import { getFeedingSettings } from "../services/feedingSettings";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
-import { getRoutine, isWorkday, daySlot } from "../services/routine";
 import { getFoodStock, stockLabel } from "../services/foodStock";
-import { RoutineSheet } from "../components/OutingCard";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
@@ -43,26 +41,15 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
   const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
   const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 나가는 날(평소 외출 시간 설정)이면 종류별 대신 "아침 · 나가기 전 / 저녁 · 들어와서"로 — 낮에 할 수 없는 일은 저녁에
-  const [routine, setRoutine] = useState(getRoutine);
-  const [routineOpen, setRoutineOpen] = useState(false);
-  const bySlot = isWorkday(routine);
   const food = useMemo(() => getFoodStock(dog), [dog]);
   const groupedChecklist = useMemo(() => {
-    if (bySlot) {
-      const groups = [
-        ["아침 · 나가기 전", "sun", checklist.filter((it) => daySlot(it, routine) === "morning")],
-        ["저녁 · 들어와서", "moon", checklist.filter((it) => daySlot(it, routine) === "evening")],
-      ];
-      return groups.filter(([, , items]) => items.length).map(([label, ico, items]) => [label, items, ico]);
-    }
     const map = new Map();
     for (const item of checklist) {
       if (!map.has(item.category)) map.set(item.category, []);
       map.get(item.category).push(item);
     }
     return [...map.entries()];
-  }, [checklist, bySlot, routine]);
+  }, [checklist]);
 
   function handleToggle(itemId) {
     toggleScheduleItem(dog.id, dateKey, itemId);
@@ -116,10 +103,10 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
                 <div className="faint">{checklist.length}개 중 {doneCount}개 완료</div>
               </div>
             </div>
-            {groupedChecklist.map(([category, items, slotIco]) => (
+            {groupedChecklist.map(([category, items]) => (
               <div key={category} className="category-group">
                 <div className="category-label">
-                  <Ico name={slotIco || getCategoryIco(category)} size={16} className={`cat-ico tone-${slotIco ? "violet" : getCategoryTone(category)}`} />
+                  <Ico name={getCategoryIco(category)} size={16} className={`cat-ico tone-${getCategoryTone(category)}`} />
                   <span>{category}</span>
                 </div>
                 {items.map((item) => (
@@ -152,10 +139,6 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
               ))}
           </div>
         )}
-        <button type="button" className="link-btn" style={{ marginTop: 8 }} onClick={() => setRoutineOpen(true)}>
-          {bySlot ? `평소 외출 시간(${routine.leave}~${routine.back}) 기준으로 나눴어요 · 바꾸기` : routine ? "평소 외출 시간 바꾸기" : "출근·외출이 잦나요? 아침·저녁으로 나눠 보기"}
-        </button>
-        {routineOpen && <RoutineSheet onClose={() => (setRoutineOpen(false), setRoutine(getRoutine()))} />}
         {noMealTimes && (
           <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
             <Ico name="bowl" size={16} /> 밥 시간 정하고 알림 받기
