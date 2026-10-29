@@ -372,6 +372,7 @@ export default function Profile({ dog, onOpenVet, onOpenReport, onOpenVital, onO
             <ThemeCard dark={dark} />
             <AccountCard />
             <AIConsentCard />
+            <LinksCard />
 
             <div className="card" style={{ marginTop: 14 }}>
               <button
@@ -736,6 +737,33 @@ function ThemeCard({ dark }) {
           <div className="theme-grid">{COLOR_THEMES.map((t) => swatch(t, true))}</div>
         </div>
       )}
+    </div>
+  );
+}
+
+// 멍케어 소식·자료 — 앱 바깥 채널(새 창). 우리 사이트 링크엔 from=app을 붙여 앱에서 넘어온 수를 본다
+const LINKS = [
+  ["book", "무료 가이드북", "강아지 돌봄 95쪽 PDF", "/intro/resources/?from=app"],
+  ["house", "멍케어 홈페이지", "기능 소개·사용 설명서", "/intro/?from=app"],
+  ["pencil", "네이버 블로그", "여름이와 멍케어 · 강아지 돌봄 노트", "https://blog.naver.com/meongcare_blog"],
+  ["camera", "인스타그램", "@meongcare.app", "https://www.instagram.com/meongcare.app/"],
+  ["users", "스레드", "@meongcare.app", "https://www.threads.com/@meongcare.app"],
+];
+
+function LinksCard() {
+  return (
+    <div className="card" style={{ marginTop: 14 }}>
+      <div className="h2">멍케어 소식·자료</div>
+      {LINKS.map(([ico, label, sub, href], i) => (
+        <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: i ? "1px solid var(--border)" : "none" }}>
+          <Ico name={ico} size={20} style={{ color: "var(--accent-strong)", flex: "none" }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontWeight: 600 }}>{label}</span>
+            <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{sub}</span>
+          </span>
+          <span className="subtle">›</span>
+        </a>
+      ))}
     </div>
   );
 }

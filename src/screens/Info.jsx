@@ -84,6 +84,10 @@ export default function Info({ dog, onBack }) {
           {showOther && categories.other.map(renderCategory)}
         </>
       )}
+      <a href="/intro/resources/?from=app" target="_blank" rel="noopener" className="card" style={{ display: "block", color: "inherit", textDecoration: "none", marginTop: 4 }}>
+        <span style={{ fontWeight: 600 }}>더 자세한 내용은 무료 가이드북에서 ›</span>
+        <span className="faint" style={{ display: "block", fontSize: 12.5, marginTop: 2 }}>강아지 돌봄 95쪽 PDF · 무료</span>
+      </a>
     </div>
   );
 }
