@@ -58,6 +58,13 @@ assert.match(R.summarize(tl.find((r) => r.type === "med")), /위장약 1알 먹�
 assert.deepEqual(R.filterTimeline(tl, { types: ["meal"], days: 7 }).map((r) => r.id), ["rec-a3"]);
 assert.deepEqual(R.filterTimeline(tl, { types: ["meal", "symptom"], days: 7, q: "구토" }).map((r) => r.id), [id]);
 assert.equal(R.filterTimeline(tl, { types: ["weight"], days: 7 }).length, 1);
+// 프로필 건강 수치 칸에서 적은 건식·산책은 식사·산책 기록으로도 잡힌다(컴플레인: 건식 적었는데 식사·배변이 비어 보여 또 적음)
+{
+  const v = [{ id: "v1", type: "vital", at: at(0, "08:00"), data: { metric: "dry", value: 40 } }, { id: "v2", type: "vital", at: at(0, "09:00"), data: { metric: "walk", value: 30 } }, { id: "v3", type: "vital", at: at(0, "10:00"), data: { metric: "resp", value: 20 } }];
+  assert.deepEqual(R.filterTimeline(v, { types: ["meal", "potty"] }).map((r) => r.id), ["v1"]);
+  assert.deepEqual(R.filterTimeline(v, { types: ["daily"] }).map((r) => r.id), ["v2"]);
+  assert.equal(R.filterTimeline(v, { types: ["vital"] }).length, 3);
+}
 assert.equal(R.filterTimeline(tl, { q: "없는말" }).length, 0);
 const newest = R.filterTimeline(tl);
 assert.ok(newest[0].at >= newest.at(-1).at);

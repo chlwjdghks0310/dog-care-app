@@ -631,7 +631,7 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
     if (svc.key === "meds")
       return meds.length === 0 ? "먹는 약이 없어요" : doses.length ? `오늘 ${doses.filter((d) => d.status === "done").length}/${doses.length} 먹였어요${check ? ` · 확인 필요 ${check}` : ""}` : `약 ${new Set(meds.map((m) => m.seriesId)).size}개 · 오늘은 없음`;
     if (svc.key === "report") return "수의사에게 보여 줄 정리본";
-    const last = filterTimeline(recs.filter((r) => svc.types.includes(r.type)))[0];
+    const last = filterTimeline(recs, { types: svc.types })[0];
     return last ? `${md(last.at.slice(0, 10))} · ${summarize(last)}` : "아직 기록이 없어요";
   };
   return (

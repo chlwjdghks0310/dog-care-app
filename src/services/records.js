@@ -202,12 +202,16 @@ export function getTimeline(dogId) {
 const searchText = (r) => `${TYPES[r.type].label} ${summarize(r)} ${Object.values(r.data || {}).flat().join(" ")}`.toLowerCase();
 
 // 필터: types(빈 배열=전체), days(0=전체), q(키워드), order("new"|"old") — 조건은 모두 AND로 묶는다.
+// 프로필 건강 수치 칸에서 적은 먹은 양·산책은 종류가 "vital"이지만, 식사·산책 기록으로도 보이게 묶는다(같은 걸 두 번 적지 않게)
+const VITAL_GROUP = { dry: "meal", wet: "meal", treat: "meal", water: "meal", walk: "daily" };
+export const ofTypes = (r, types) => types.includes(r.type) || (r.type === "vital" && types.includes(VITAL_GROUP[r.data?.metric]));
+
 export function filterTimeline(items, { types = [], days = 0, q = "", order = "new" } = {}, today = todayKey()) {
   const from = days ? toDateKey(addDays(new Date(`${today}T00:00:00`), -(days - 1))) : "";
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = items.filter(
     (r) =>
-      (!types.length || types.includes(r.type)) &&
+      (!types.length || ofTypes(r, types)) &&
       (!from || r.at.slice(0, 10) >= from) &&
       words.every((w) => searchText(r).includes(w))
   );
