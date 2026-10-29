@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dog-care-app-1.onrender.com/sitemap.xml
+Sitemap: https://meongcare.kr/sitemap.xml

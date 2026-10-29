@@ -1,6 +1,6 @@
 services:
   # 실제 배포명은 Render 대시보드에서 수동으로 두 서비스를 만들 때 정해졌다(Blueprint 미사용):
-  # 백엔드 = https://dog-care-app.onrender.com, 프론트엔드 = https://dog-care-app-1.onrender.com
+  # 백엔드 = https://dog-care-app.onrender.com, 프론트엔드 = https://dog-care-app-1.onrender.com (공개 주소 https://meongcare.kr — Render Custom Domain)
   - type: web
     name: dogcare-api
     runtime: node

@@ -66,10 +66,10 @@ html = f'''<!doctype html>
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#ffffff" />
   <meta name="color-scheme" content="light only" />
-  <link rel="canonical" href="https://dog-care-app-1.onrender.com/intro/guide/" />
+  <link rel="canonical" href="https://meongcare.kr/intro/guide/" />
   <meta property="og:title" content="멍케어 사용 설명서" />
   <meta property="og:description" content="처음 쓰는 분도 쉽게 — 설치부터 비서·체크리스트·프로필·일정표·가계부까지." />
-  <meta property="og:image" content="https://dog-care-app-1.onrender.com/intro/img/og-2x1.png?v=2" />
+  <meta property="og:image" content="https://meongcare.kr/intro/img/og-2x1.png?v=2" />
   <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
   <link rel="apple-touch-icon" href="/icon-180.png?v=6" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
