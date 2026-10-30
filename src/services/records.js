@@ -166,6 +166,11 @@ export function summarize(rec) {
       parts.push(`사진 ${rec.photos?.length || 0}장`);
       break;
     case "vital":
+      if (d.parts) {
+        if (d.group === "meal") parts.push("먹은 양");
+        for (const p of d.parts) parts.push(`${VITAL[p.metric]?.label} ${fmtValue(p.metric, p.value)}${VITAL[p.metric]?.unit}${p.count > 1 ? `(${p.count}번)` : ""}`);
+        break;
+      }
       parts.push(`${VITAL[d.metric]?.label} ${fmtValue(d.metric, d.value)}${VITAL[d.metric]?.unit}`);
       break;
   }
@@ -205,6 +210,38 @@ const searchText = (r) => `${TYPES[r.type].label} ${summarize(r)} ${Object.value
 // 프로필 건강 수치 칸에서 적은 먹은 양·산책은 종류가 "vital"이지만, 식사·산책 기록으로도 보이게 묶는다(같은 걸 두 번 적지 않게)
 const VITAL_GROUP = { dry: "meal", wet: "meal", treat: "meal", water: "meal", walk: "daily" };
 export const ofTypes = (r, types) => types.includes(r.type) || (r.type === "vital" && types.includes(VITAL_GROUP[r.data?.metric]));
+
+// 식사·산책 목록에서는 그 수치 기록을 날짜별 한 줄(하루 합계)로 묶는다 — 끼니마다 줄이 늘어 중복처럼 보이지 않게(컴플레인 10/30).
+// 끼니별 상세·고치기는 건강 수치 화면에서. "건강 수치" 필터를 고르면 묶지 않고 하나씩 보여 준다.
+export function groupVitalDays(list, types = []) {
+  if (!types.length || types.includes("vital")) return list;
+  const days = new Map();
+  const out = [];
+  for (const r of list) {
+    const g = r.type === "vital" && VITAL_GROUP[r.data?.metric];
+    if (!g || !types.includes(g)) {
+      out.push(r);
+      continue;
+    }
+    const key = `${r.at.slice(0, 10)}-${g}`;
+    let d = days.get(key);
+    if (!d) {
+      d = { id: `vday-${key}`, source: "vday", type: "vital", at: r.at, data: { group: g, parts: [], entries: [] }, memo: "", photos: [] };
+      days.set(key, d);
+      out.push(d);
+    }
+    d.data.entries.push({ at: r.at, metric: r.data.metric, value: Number(r.data.value) });
+    const p = d.data.parts.find((x) => x.metric === r.data.metric);
+    if (p) (p.value += Number(r.data.value)), p.count++;
+    else d.data.parts.push({ metric: r.data.metric, value: Number(r.data.value), count: 1 });
+  }
+  const order = Object.keys(VITAL);
+  for (const d of days.values()) {
+    d.data.parts.sort((a, b) => order.indexOf(a.metric) - order.indexOf(b.metric));
+    d.data.entries.sort((a, b) => a.at.localeCompare(b.at));
+  }
+  return out;
+}
 
 export function filterTimeline(items, { types = [], days = 0, q = "", order = "new" } = {}, today = todayKey()) {
   const from = days ? toDateKey(addDays(new Date(`${today}T00:00:00`), -(days - 1))) : "";

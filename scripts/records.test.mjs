@@ -64,6 +64,15 @@ assert.equal(R.filterTimeline(tl, { types: ["weight"], days: 7 }).length, 1);
   assert.deepEqual(R.filterTimeline(v, { types: ["meal", "potty"] }).map((r) => r.id), ["v1"]);
   assert.deepEqual(R.filterTimeline(v, { types: ["daily"] }).map((r) => r.id), ["v2"]);
   assert.equal(R.filterTimeline(v, { types: ["vital"] }).length, 3);
+  // 식사·산책 목록에서는 하루 합계 한 줄로 묶는다(컴플레인 10/30: 끼니마다 줄이 늘어 중복처럼 보임)
+  const v2 = [...v, { id: "v4", type: "vital", at: at(0, "18:00"), data: { metric: "dry", value: 40 } }, { id: "v5", type: "vital", at: at(0, "12:00"), data: { metric: "wet", value: 30 } }, { id: "m1", type: "meal", at: at(0, "08:05"), data: { appetite: "평소" } }];
+  const meal = R.groupVitalDays(R.filterTimeline(v2, { types: ["meal", "potty"] }), ["meal", "potty"]);
+  assert.equal(meal.length, 2, "먹은 양 한 줄 + 식사 기록 한 줄");
+  const day = meal.find((r) => r.source === "vday");
+  assert.equal(R.summarize(day), "먹은 양 · 건식 사료 80g(2번) · 습식 30g");
+  assert.equal(day.data.entries.length, 3);
+  assert.equal(R.groupVitalDays(R.filterTimeline(v2, { types: ["vital"] }), ["vital"]).length, 5, "건강 수치 필터는 묶지 않음");
+  assert.equal(R.groupVitalDays(v2, []).length, 6, "필터 없으면 묶지 않음");
 }
 assert.equal(R.filterTimeline(tl, { q: "없는말" }).length, 0);
 const newest = R.filterTimeline(tl);

@@ -402,7 +402,7 @@ export default function App() {
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => setTab("vet")} />,
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} />,
     "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back ? "← 일정표로" : undefined} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("profile"))} onOpenMeds={() => setTab("meds")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };

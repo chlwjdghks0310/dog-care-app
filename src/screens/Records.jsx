@@ -5,9 +5,9 @@ import { syncPushAlarms } from "../services/notifications";
 import WeightChart from "../components/WeightChart";
 import RecordForm from "./RecordForm";
 import DogReaction from "../components/DogReaction";
-import { VITAL } from "../data/vitals";
+import { VITAL, fmtValue } from "../data/vitals";
 import Ico from "../components/Ico";
-import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, deleteRecord, levelSeries } from "../services/records";
+import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, groupVitalDays, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
 const FIELD_LABEL = {
@@ -21,7 +21,7 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 프로필로", onOpenMeds }) {
+export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 프로필로", onOpenMeds, onOpenVital }) {
   const [view, setView] = useState("list");
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
@@ -59,7 +59,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
     }
   }
 
-  const shown = filterTimeline(items, { types, days, q, order });
+  const shown = groupVitalDays(filterTimeline(items, { types, days, q, order }), types);
   const filtered = types.length || days || q.trim();
 
   return (
@@ -127,7 +127,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
                     rec={r}
                     open={openId === r.id}
                     onToggle={() => setOpenId(openId === r.id ? null : r.id)}
-                    onEdit={() => (r.source === "med" ? onOpenMeds() : (setNotice(""), setReaction(null), setForm({ initial: r })))}
+                    onEdit={() => (r.source === "med" ? onOpenMeds() : r.source === "vday" ? onOpenVital?.(r.data.parts[0].metric) : (setNotice(""), setReaction(null), setForm({ initial: r })))}
                     onDelete={() => handleDelete(r)}
                   />
                 </div>
@@ -143,6 +143,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
 }
 
 function RecordItem({ rec, open, onToggle, onEdit, onDelete }) {
+  if (rec.source === "vday") return <VitalDayItem rec={rec} open={open} onToggle={onToggle} onEdit={onEdit} />;
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
@@ -165,6 +166,33 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete }) {
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
             <button type="button" className="btn-ghost small" onClick={onEdit}>{rec.source === "med" ? "약 관리에서 고치기" : "고치기"}</button>
             {rec.source !== "med" && <button type="button" className="btn-ghost small" style={{ color: "var(--danger)" }} onClick={onDelete}>삭제</button>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 식사·산책 목록의 하루 합계 한 줄(건강 수치 칸에서 적은 먹은 양·산책) — 펼치면 끼니별 시각·양, 고치기는 건강 수치 화면에서
+function VitalDayItem({ rec, open, onToggle, onEdit }) {
+  const meal = rec.data.group === "meal";
+  return (
+    <div className="card rec-item">
+      <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
+        <span className={`rec-icon tone-${meal ? "rose" : "violet"}`} aria-hidden="true"><Ico name={meal ? "bowl" : "walk"} size={19} /></span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="rec-item-title">{meal ? "먹은 양" : "산책"} <span className="faint">하루 합계</span></span>
+          <span className="rec-item-text">{summarize(rec).replace(/^먹은 양 · /, "")}</span>
+        </span>
+      </button>
+      {open && (
+        <div className="rec-detail">
+          {rec.data.entries.map((e, i) => (
+            <div key={i} className="vet-line"><span className="faint">{e.at.slice(11, 16)}</span> {VITAL[e.metric]?.label} {fmtValue(e.metric, e.value)}{VITAL[e.metric]?.unit}</div>
+          ))}
+          <div className="faint" style={{ marginTop: 6 }}>건강 수치 칸에서 적은 기록이에요.</div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button type="button" className="btn-ghost small" onClick={onEdit}>건강 수치에서 고치기</button>
           </div>
         </div>
       )}
