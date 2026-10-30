@@ -35,6 +35,8 @@
     <meta name="theme-color" content="#eef5ff" />
     <!-- Pretendard(SIL OFL) — 쓰는 글자만 받아 오는 dynamic subset. 못 받아도 아이폰 기본 글꼴로 보인다 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+    <!-- 검색엔진에는 앱 대신 소개 홈페이지를 보여 준다(자바스크립트를 안 돌리는 검색 로봇용) -->
+    <link rel="canonical" href="https://meongcare.kr/intro/" />
     <title>멍케어</title>
     <style>
       /* 앱을 켜는 순간(CSS·스크립트가 오기 전)부터 바탕을 연한 파랑으로 — 흰 화면이 번쩍이지 않게 */
@@ -57,6 +59,14 @@
       html[data-theme="dark"] #splash small { color: #8dbdf6; }
     </style>
     <script>
+      // 처음 온 사람(검색·주소 입력)에게는 소개 홈페이지를 먼저 보여 준다.
+      // 홈 화면 앱, 기록이 있는 사람, 주소에 ?·#가 붙은 경우(?app, ?privacy, 로그인 돌아옴, 알림)는 그대로 앱
+      try {
+        var standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+        var hasData = false;
+        for (var i = 0; i < localStorage.length; i++) if (localStorage.key(i).indexOf("dogcare-") === 0) { hasData = true; break; }
+        if (!standalone && !hasData && !location.search && !location.hash && location.pathname === "/") location.replace("/intro/");
+      } catch (e) {}
       // 다크 모드면 그리기 전에 먼저 입힌다(밝은 화면이 번쩍이지 않게) — 같은 키를 src/services/themeSettings.js가 쓴다
       try {
         if (localStorage.getItem("dogcare-theme-v1") === "dark") {

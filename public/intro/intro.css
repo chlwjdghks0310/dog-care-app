@@ -410,3 +410,7 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 .band-go .ic { width: 16px; height: 16px; }
 @media (prefers-reduced-motion: reduce) { .band-in { transition: none; } }
 .pad-link { display: inline-block; padding: 12px 8px; }
+
+/* 맨 위 안내 띠(소개 페이지 ↔ 앱 구분) */
+.appbar { margin: 0; padding: 9px var(--gutter); background: var(--accent-soft); color: var(--text); font-size: 14px; line-height: 1.5; text-align: center; }
+.appbar a { font-weight: 800; white-space: nowrap; }

@@ -39,7 +39,7 @@ for n, s in enumerate(SECTIONS):
     hero_img = f'<figure class="g-sec-shot"><img src="/intro/img/{s["img"][0]}" alt="{s["img"][1]}" width="300" height="649" loading="lazy" /><figcaption>예시 화면</figcaption></figure>' if s.get("img") else ""
     nxt = SECTIONS[n + 1] if n + 1 < len(SECTIONS) else None
     nav = (f'<a class="g-next" href="#{nxt["id"]}"><span>다음</span><b>{nxt["title"]}</b>{icon("chev")}</a>' if nxt
-           else '<a class="g-next" href="/"><span>다 읽었어요!</span><b>멍케어 시작하기</b>' + icon("chev") + '</a>')
+           else '<a class="g-next" href="/?app"><span>다 읽었어요!</span><b>멍케어 시작하기</b>' + icon("chev") + '</a>')
     secs += f'''
       <section class="g-sec" id="{s["id"]}" aria-labelledby="{s["id"]}-t">
         <header class="g-sec-head">
@@ -86,7 +86,7 @@ html = f'''<!doctype html>
         <span>멍케어 <small>사용 설명서</small></span>
       </a>
       <a class="btn btn-sm btn-ghost g-back" href="/intro/">소개로</a>
-      <a class="btn btn-sm" href="/">시작하기</a>
+      <a class="btn btn-sm" href="/?app">시작하기</a>
     </div>
     <nav class="g-chips" aria-label="설명서 차례">{chips}</nav>
   </header>
@@ -118,7 +118,7 @@ html = f'''<!doctype html>
         <p>운영: 멍케어(대표 최정환)<br />문의: <a href="mailto:meongcare.app@gmail.com">meongcare.app@gmail.com</a></p>
         <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 비서 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
       </div>
-      <nav class="foot-links" aria-label="정책·문의"><a href="/intro/">소개</a><a href="/">앱 열기</a><a href="/?support">문의하기</a><a href="/?privacy">개인정보 처리방침</a></nav>
+      <nav class="foot-links" aria-label="정책·문의"><a href="/intro/">소개</a><a href="/?app">앱 열기</a><a href="/?support">문의하기</a><a href="/?privacy">개인정보 처리방침</a></nav>
     </div>
   </footer>
   <script src="/intro/guide.js?v=1" defer></script>

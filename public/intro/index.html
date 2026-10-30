@@ -37,11 +37,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- daisyUI(멍케어 테마, d- 접두사) → 그 위에 intro.css. 원본: intro-src/daisy.css, 만들기: npm run build:intro-css -->
   <link rel="stylesheet" href="/intro/daisy.css?v=1" />
-  <link rel="stylesheet" href="/intro/intro.css?v=10" />
+  <link rel="stylesheet" href="/intro/intro.css?v=11" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
+
+  <!-- 0. 안내 띠: 검색으로 온 사람에게 "여기는 소개 페이지, 앱은 버튼으로 열고 홈 화면에 추가" -->
+  <p class="appbar"><span>여기는 멍케어 <b>소개 페이지</b>예요. 앱은 앱스토어 없이 <b>홈 화면에 추가</b>해서 써요.</span> <a href="/?app">앱 열고 설치하기 →</a></p>
 
   <!-- 1. 헤더: 로고 / 앵커 3개 / 시작하기(항상 보임). 모바일은 메뉴 버튼으로 앵커를 펼친다 -->
   <header class="top">
@@ -56,7 +59,7 @@
         <a href="#start">시작 방법</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
-      <a class="btn btn-sm" href="/">시작하기</a>
+      <a class="btn btn-sm" href="/?app">시작하기</a>
       <button class="menu-btn" type="button" aria-controls="nav" aria-expanded="false" aria-label="메뉴 열기">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
       </button>
@@ -77,7 +80,7 @@
             <li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-message"/></svg>말로 기록</span></li><li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-checks"/></svg>오늘 할 일</span></li><li><span class="pt"><svg class="ic" aria-hidden="true"><use href="/intro/sprite.svg#i-clipboard"/></svg>병원용 기록</span></li>
           </ul>
           <div class="cta-row">
-            <a class="btn btn-lg" href="/">무료로 시작하기</a>
+            <a class="btn btn-lg" href="/?app">무료로 시작하기</a>
             <a class="btn btn-lg btn-ghost" href="#demo">휴대폰으로 둘러보기</a>
           </div>
           <p class="note">지금은 베타라 모든 기능이 무료예요 · 앱스토어 없이 홈 화면에 설치해 써요</p>
@@ -240,7 +243,7 @@
             <span>“밥 반만 먹었어”, “내일 3시 미용 예약”처럼 말하면 끝. 궁금한 건 언제든 물어보세요.</span>
           </li>
         </ol>
-        <div class="center"><a class="btn btn-lg" href="/">무료로 시작하기</a></div>
+        <div class="center"><a class="btn btn-lg" href="/?app">무료로 시작하기</a></div>
       </div>
     </section>
 
@@ -364,7 +367,7 @@
       <div class="wrap final-in">
         <img src="/icon-192.png?v=6" alt="" width="64" height="64" loading="lazy" />
         <h2 id="final-title">기억할 건 <em>멍케어</em>에게 맡기고,<br />오늘은 우리 아이와 더 놀아요</h2>
-        <a class="btn btn-lg" href="/">무료로 시작하기</a>
+        <a class="btn btn-lg" href="/?app">무료로 시작하기</a>
         <p class="note">로그인 없이도 시작할 수 있어요</p>
       </div>
     </section>
@@ -379,7 +382,7 @@
         <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 비서 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
       </div>
       <nav class="foot-links" aria-label="정책·문의">
-        <a href="/">앱 열기</a>
+        <a href="/?app">앱 열기</a>
         <a href="/intro/resources/">자료실</a>
         <a href="/?support">문의하기</a>
         <a href="/?privacy">개인정보 처리방침</a>
