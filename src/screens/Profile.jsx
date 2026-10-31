@@ -15,6 +15,8 @@ import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, groupVi
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange, tileState } from "../data/vitals";
 import AccountCard from "../components/AccountCard";
+import PrivacyPolicy from "../components/PrivacyPolicy";
+import Terms from "../components/Terms";
 import { AIConsentCard } from "../components/AIConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
@@ -751,6 +753,7 @@ const LINKS = [
 ];
 
 function LinksCard() {
+  const [doc, setDoc] = useState(null); // null | "terms" | "privacy"
   return (
     <div className="card" style={{ marginTop: 14 }}>
       <div className="h2">멍케어 소식·자료</div>
@@ -764,6 +767,13 @@ function LinksCard() {
           <span className="subtle">›</span>
         </a>
       ))}
+      <p className="faint" style={{ margin: "10px 0 0", fontSize: 12.5, textAlign: "center" }}>
+        <button type="button" className="link-btn" onClick={() => setDoc("terms")}>이용약관</button>
+        {" · "}
+        <button type="button" className="link-btn" onClick={() => setDoc("privacy")}>개인정보 처리방침</button>
+      </p>
+      {doc === "terms" && <Terms onClose={() => setDoc(null)} />}
+      {doc === "privacy" && <PrivacyPolicy onClose={() => setDoc(null)} />}
     </div>
   );
 }

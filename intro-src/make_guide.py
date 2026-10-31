@@ -118,7 +118,7 @@ html = f'''<!doctype html>
         <p>운영: 멍케어(대표 최정환)<br />문의: <a href="mailto:meongcare.app@gmail.com">meongcare.app@gmail.com</a></p>
         <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 비서 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
       </div>
-      <nav class="foot-links" aria-label="정책·문의"><a href="/intro/">소개</a><a href="/?app">앱 열기</a><a href="/?support">문의하기</a><a href="/?privacy">개인정보 처리방침</a></nav>
+      <nav class="foot-links" aria-label="정책·문의"><a href="/intro/">소개</a><a href="/?app">앱 열기</a><a href="/?support">문의하기</a><a href="/?terms">이용약관</a><a href="/?privacy">개인정보 처리방침</a></nav>
     </div>
   </footer>
   <script src="/intro/guide.js?v=1" defer></script>

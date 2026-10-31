@@ -4,13 +4,14 @@ import './index.css'
 import App from './App.jsx'
 import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contact from './screens/Contact.jsx'
+import Terms from './components/Terms.jsx'
 
 const page = new URLSearchParams(location.search)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?support(문의) — 설치 안 한 사람도 브라우저로 본다 */}
-    {page.has('privacy') ? <PrivacyPolicy /> : page.has('support') ? <Contact /> : <App />}
+    {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?terms(이용약관), ?support(문의) — 설치 안 한 사람도 브라우저로 본다 */}
+    {page.has('privacy') ? <PrivacyPolicy /> : page.has('terms') ? <Terms /> : page.has('support') ? <Contact /> : <App />}
   </StrictMode>,
 )
 

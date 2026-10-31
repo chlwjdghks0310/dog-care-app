@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { supabase } from "../services/supabase";
 import { deleteAccount, getSyncStatus, onSyncStatus, signOut, syncNow } from "../services/sync";
 import PrivacyPolicy from "./PrivacyPolicy";
+import Terms from "./Terms";
 import Ico from "./Ico";
 
 // 설정의 "백업·로그인" 카드. Supabase가 설정돼 있을 때만 보인다(src/services/supabase.js).
@@ -334,19 +335,24 @@ export function EmailLogin({ onBack }) {
   );
 }
 
-// 하단 한 줄: 계속하면 처리방침에 동의 + 누르면 처리방침
+// 하단 한 줄: 계속하면 이용약관·처리방침에 동의 + 누르면 그 문서
 export function PolicyLine({ verb = "계속하면" }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(null); // null | "terms" | "privacy"
   return (
     <>
       <p className="faint login-policy">
         {verb}{" "}
-        <button type="button" className="link-btn" onClick={() => setOpen(true)}>
+        <button type="button" className="link-btn" onClick={() => setOpen("terms")}>
+          이용약관
+        </button>
+        과{" "}
+        <button type="button" className="link-btn" onClick={() => setOpen("privacy")}>
           개인정보 처리방침
         </button>
         에 동의한 것으로 봐요
       </p>
-      {open && <PrivacyPolicy onClose={() => setOpen(false)} />}
+      {open === "terms" && <Terms onClose={() => setOpen(null)} />}
+      {open === "privacy" && <PrivacyPolicy onClose={() => setOpen(null)} />}
     </>
   );
 }
