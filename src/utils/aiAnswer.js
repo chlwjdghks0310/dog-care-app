@@ -96,6 +96,10 @@ export function structureAnswer(rawText, references = []) {
       current.content += (current.content ? "\n" : "") + line;
     }
   }
+  // 맺음말처럼 보였지만 뒤에 소제목이 또 나오면 그 앞 소제목의 문단으로 되돌린다(맺음말은 맨 끝 것만)
+  for (let i = sections.length - 2; i >= 0; i--) {
+    if (sections[i].type === "closing" && i > 0) sections[i - 1].content = sections[i - 1].content.trimEnd() + "\n\n" + sections.splice(i, 1)[0].content;
+  }
   return sanitizeStructured({
     text: text.split("\n").filter((l) => !DROP_LINE.test(l.trim())).join("\n").trim(),
     summary,

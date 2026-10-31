@@ -54,4 +54,9 @@ console.log("ai-answer new sections ok");
   assert.equal(last.content, "오늘 토한 거 적어 둘까?\n예방접종은 몇 차야?");
   assert.equal(a.sections.find((s) => s.type === "choice")?.content, "① 집에서\n② 병원");
 }
+{
+  const b = structureAnswer("핵심\n\n🏠 해 줄 것\n• 하나\n\n문단 하나 더\n\n⚠️ 이런 신호가 같이 보이면\n• 둘");
+  assert.deepEqual(b.sections.map((s) => s.type), ["homecare", "warning"]);
+  assert.equal(b.sections[0].content, "• 하나\n\n문단 하나 더");
+}
 console.log("ai-answer closing ok");
