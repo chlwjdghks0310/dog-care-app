@@ -9,7 +9,7 @@ const TONE = {
   observation: { background: "var(--accent-soft)" },
   todo: { background: "var(--accent-soft)", borderLeft: "3px solid var(--accent)" },
 };
-const ALWAYS_OPEN = new Set(["todo", "caution"]);
+const ALWAYS_OPEN = new Set(["todo", "caution", "closing"]); // closing = 답 끝의 되묻기(기록해 둘까?)
 
 export default function AiAnswer({ structured, onFollowUp, followUpDisabled }) {
   const { summary, sections, references, followUps } = structured;

@@ -44,7 +44,7 @@ function cleanQuestions(list) {
   const seen = new Set();
   const out = [];
   for (const q of Array.isArray(list) ? list : []) {
-    const s = typeof q === "string" ? q.replace(/^[\s\-•*\d.)]+/, "").replace(/\*\*/g, "").trim() : "";
+    const s = typeof q === "string" ? q.replace(/^\s*(?:[-•*]|\d+[.)])?\s*/, "").replace(/\*\*/g, "").trim() : "";
     if (s.length < 2 || s.length > 40 || seen.has(s)) continue;
     seen.add(s);
     out.push(s);
@@ -74,11 +74,18 @@ export function structureAnswer(rawText, references = []) {
   const summary = (blocks[0] || "").trim();
   const sections = [];
   let current = null;
+  let gap = false;
   for (const line of blocks.slice(1).join("\n\n").split("\n")) {
     const t = line.trim();
     if (DROP_LINE.test(t)) continue;
     const type = t && !t.startsWith("•") ? headerType(t) : null;
-    if (type) {
+    // 마지막 소제목 뒤에 빈 줄을 두고 붙은 맺음말("기록해 둘까?" 같은 되묻기)은 접힌 소제목에 묻히지 않게 따로 둔다
+    const closing = !type && gap && current?.title && current.type !== "closing" && t && !/^[•①-⑳\d]/.test(t);
+    gap = !t;
+    if (closing) {
+      current = { type: "closing", title: "", content: line };
+      sections.push(current);
+    } else if (type) {
       current = { type, title: t, content: "" };
       sections.push(current);
     } else if (t || current) {

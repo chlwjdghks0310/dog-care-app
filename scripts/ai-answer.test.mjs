@@ -36,6 +36,7 @@ assert.equal(sanitizeStructured(null), null);
 assert.equal(sanitizeStructured({ summary: "", sections: "x" }), null);
 assert.deepEqual(sanitizeStructured({ summary: "요약", sections: [null, { content: 3 }], references: "x", followUps: [1, "  다음은?  "] }).followUps, ["다음은?"]);
 assert.deepEqual(splitFollowUps("답만").followUps, []);
+assert.deepEqual(splitFollowUps("답\n[[후속질문]] 4개월 하루 사료량은? | 1. 2kg면 몇 끼?").followUps, ["4개월 하루 사료량은?", "2kg면 몇 끼?"]);
 
 console.log("AI 답변 구조 확인 통과");
 
@@ -44,3 +45,13 @@ const h = structureAnswer("자주 싸는 건 흔할 수 있어!\n\n👉 지금 �
 assert.deepEqual(h.sections.map((x) => x.type), ["todo", "basics", "warning", "choice"]);
 console.log("ai-answer new sections ok");
 
+
+// 마지막 소제목 뒤 빈 줄 + 되묻기는 접히지 않는 맺음말(closing)로 따로
+{
+  const a = structureAnswer("핵심\n\n👉 지금 할 일\n• 지켜보기\n\n🧭 이렇게 골라 봐\n① 집에서\n② 병원\n\n오늘 토한 거 적어 둘까?\n예방접종은 몇 차야?\n[[후속질문]] 기록해줘");
+  const last = a.sections.at(-1);
+  assert.equal(last.type, "closing");
+  assert.equal(last.content, "오늘 토한 거 적어 둘까?\n예방접종은 몇 차야?");
+  assert.equal(a.sections.find((s) => s.type === "choice")?.content, "① 집에서\n② 병원");
+}
+console.log("ai-answer closing ok");
