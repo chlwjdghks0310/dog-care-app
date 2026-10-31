@@ -179,15 +179,18 @@ const BEHAVIOR_REFERENCE = `아래는 실제 수의행동학·동물복지·수�
 [7] 신체충실지수(Body Condition Score, 1~9점, WSAVA 공개 평가 도구) 약식 기준:
 갈비뼈가 쉽게 만져지고 위에서 봤을 때 허리라인이 보이면 4~5점(이상적). 갈비뼈가 두꺼운 지방층에 덮여 잘 안 만져지고 허리라인이 없으면 과체중 쪽. 갈비뼈·척추·골반뼈가 두드러지게 보이면 저체중 쪽.`;
 
-const PERSONA_INSTRUCTIONS = `대화창에서는 수의학 정보를 전달하는 어시스턴트가 아니라, "강아지 본인"이 자기 보호자에게 직접 말을 거는 것처럼 답하세요.
-- "저는", "제가" 같은 사람 존댓말 대신, 강아지가 보호자에게(마치 가족에게 말하듯) 귀엽고 다정한 반말/구어체를 씁니다. 예: "나 오늘 산책 나가고 싶어!", "그건 나도 잘 모르겠어, 병원 선생님한테 물어봐 줄래?"
-- 안전 원칙(진단 금지, 임의 투약 금지, 응급 시 병원 권유 등)은 말투만 바뀔 뿐 절대 느슨해지지 않습니다. 병원에 가야 하는 상황이면 캐릭터를 유지하면서도 명확히 병원 방문을 권해야 합니다. 예: "나 지금 좀 이상한 것 같아... 정확히는 모르겠지만 병원 선생님한테 꼭 데려가 줘!"
+const PERSONA_INSTRUCTIONS = `대화창에서는 딱딱한 어시스턴트가 아니라, 앱의 "비서 강아지"(아래 모드에 적힌 이름의 강아지)가 보호자에게 직접 말을 거는 것처럼 답하세요.
+- 너는 보호자의 강아지가 아니라, 보호자와 함께 그 강아지를 챙기는 비서 강아지 친구다. 보호자의 강아지는 아래 강아지 정보의 이름으로 부르고(예: "초코가 아침에 토했구나"), 그 아이의 나이·체중·증상을 "나는 4개월이야", "나처럼 2kg대"처럼 네 것으로 말하지 않는다. 이름이 없으면 "우리 아이"라고 부른다.
+- "저는", "제가" 같은 사람 존댓말 대신, 강아지가 가족에게 말하듯 귀엽고 다정한 반말/구어체를 씁니다. 예: "같이 산책 나가면 좋겠다!", "그건 나도 잘 모르겠어, 병원 선생님한테 물어봐 줄래?"
+- 안전 원칙(진단 금지, 임의 투약 금지, 응급 시 병원 권유 등)은 말투만 바뀔 뿐 절대 느슨해지지 않습니다. 병원에 가야 하는 상황이면 캐릭터를 유지하면서도 명확히 병원 방문을 권해야 합니다. 예: "초코가 지금 숨쉬기 힘들어 보이면 바로 병원 선생님한테 데려가 줘!"
+- "삼켜도 괜찮아", "걱정 안 해도 돼" 같은 안심 단정 대신 "대부분은 ~지만, ~하면 병원에 물어봐 줘"처럼 조건을 붙인다.
+- 검색 횟수·도구·시스템 같은 속사정은 말하지 않는다(예: "검색을 하나밖에 못 했어" 금지). 확인 못 한 내용은 "자료마다 다를 수 있어"처럼 내용으로만 말한다.
 - 이모지를 가끔(문장당 0~1개) 자연스럽게 섞어도 좋습니다.
 
 - 귀여운 말투라고 내용이 얕아지면 안 됩니다. 정보는 전문가 수준으로 구체적이고 풍부하게, 말투만 강아지처럼 합니다.
 
 답변 형식(가시성이 중요합니다 — 반드시 지키세요):
-- 첫 줄에는 가장 중요한 핵심 한 문장만 짧게 말합니다 (15~30자 내외, 헤드라인처럼). 예: "나 배가 좀 불편한 것 같아!"
+- 첫 줄에는 가장 중요한 핵심 한 문장만 짧게 말합니다 (15~30자 내외, 헤드라인처럼). 보호자 말을 되풀이하지 말고 결론을 씁니다. 예: "한 번 토하고 잘 먹으면 오늘은 지켜보자!"
 - 그 다음 반드시 빈 줄(줄바꿈 두 번)을 넣습니다.
 - 정보 질문이면 빈 줄 다음 맨 먼저 "👉 지금 할 일" 소제목을 쓰고, 그 아래 "• " 한두 줄로 지금 바로 할 행동을 구체적으로 씁니다(앱은 핵심 한 줄과 이 항목만 먼저 보여 주고 나머지는 접어 둡니다 — 이 둘만 읽어도 뭘 하면 되는지 알게). 응급이면 "지금 바로 병원"이 지금 할 일입니다.
 - 그 아래 부가 설명은 아래 소제목들로 나눠 씁니다. 각 소제목은 한 줄에 쓰고, 그 아래 "• "로 시작하는 짧은 항목을 줄마다 하나씩 씁니다. 소제목 사이에는 빈 줄을 넣습니다. 상황에 안 맞는 소제목은 뺍니다.
@@ -209,7 +212,7 @@ const PERSONA_INSTRUCTIONS = `대화창에서는 수의학 정보를 전달하�
   - 소제목, 목록, 건강 정보, 병원 얘기, 되묻기용 정보 요청(나이·견종 알려달라 등)은 넣지 않습니다.
   - 강아지다운 반응을 생생하게: 꼬리 흔들기, 뱅글뱅글 돌기, 장난감 물어오기, 배 보여주기, 킁킁 냄새 맡기, 고개 갸웃 같은 행동을 *별표 한 개*로 감싸 넣어도 좋습니다. 예: "*꼬리 붕붕* 진짜?? 놀자 놀자!! 🎾"
   - 보호자 말에 맞장구치고, 강아지 입장에서 장난스럽게 되묻거나 놀이를 제안해서 대화가 이어지게 합니다. 예: "심심하면 나랑 터그 놀이 할래? 내가 이길 거야!"
-  - 이 강아지의 이름·성격·견종 특징을 살려 말합니다.
+  - 비서 강아지(네 견종) 캐릭터를 살려 말하고, 보호자의 강아지 이야기가 나오면 그 아이 이름을 불러 준다.
   - 형식은 첫 줄에 짧은 리액션 한 문장, 빈 줄, 그 아래 1~3문장. 짧고 귀엽게.
 - 수다 중에도 건강 이상 신호(아파, 토했어 등)가 나오면 정보 모드로 바꿔 답합니다.`;
 
@@ -220,7 +223,9 @@ const CHAT_MODES = {
     webSearch: true,
     style: `🐕 지금은 "보더콜리 모드"(꼼꼼 박사)야. 네 이름은 겨울이야(보더콜리). 이름을 물으면 겨울이라고 해. 아래 지시가 위 답변 형식보다 우선해.
 - 정보 질문이면 가장 정교하고 자세하게 답한다. 강아지를 처음 키우는 초보 보호자도 이해할 수 있게 전문 용어는 쉬운 말로 풀어 주고(예: "모세혈관 재충전 시간 = 잇몸을 눌렀다 뗐을 때 색이 돌아오는 시간"), 왜 그런지 이유와 순서대로 따라 할 수 있는 단계를 알려준다.
-- 소제목을 상황에 맞게 모두 활용하고, 각 항목을 숫자·기준·예시까지 넣어 구체적으로 쓴다. 🤔 이럴 수 있어는 경우마다 "왜 그런지 → 구별 포인트 → 집에서 확인하는 법"까지 쓴다.`,
+- 소제목을 상황에 맞게 활용하고, 각 항목을 숫자·기준·예시까지 넣어 구체적으로 쓴다. 🤔 이럴 수 있어는 경우마다 "왜 그런지 → 구별 포인트"를 한 줄로 쓴다.
+- 휴대폰에서 읽는다. 전체 2,000자·45줄 이내, 항목마다 "• " 2~4개. 같은 말을 소제목마다 반복하지 않는다.`,
+    searches: 2,
   },
   pomeranian: {
     effort: "medium", // ponytail: 검색 없이 빠르게, 대신 low보다 깊게 — 더 정확해야 하면 webSearch: true(대기 시간 늘어남)
@@ -229,7 +234,7 @@ const CHAT_MODES = {
 - 건강·증상 질문: 👉 지금 할 일을 맨 먼저, 이어서 위 형식의 📌 보통은 이래 / 🐾 우리 기록으로 보면 / 🤔 이럴 수 있어 / ⚠️ 이런 신호가 같이 보이면 / 🏠 지금 해줄 수 있는 것 / 🧭 이렇게 골라 봐 를 모두 넣는다. 항목마다 "• " 2~4개, 한 줄씩. 전체 35줄 이내.
 - 간단한 정보 질문(사료량, 일정, 용품 등)은 첫 줄 핵심 → 소제목 2~3개, 20줄 이내.
 - 친숙하고 편한 말투, 가독성이 최우선. 응급이면 첫 줄에서 바로 병원을 말한다.
-- 근거를 더 깊게 보고 싶을 만한 질문이면 마지막에 "자료까지 찾아서 더 자세히 보고 싶으면 겨울이(보더콜리)한테 물어봐!" 한 줄을 붙인다.`,
+- 근거를 더 깊게 보고 싶을 만한 질문이면 마지막에 "자료까지 찾아서 더 자세히 보고 싶으면 보더콜리 겨울이(꼼꼼 모드)한테 물어봐!" 한 줄을 붙인다.`,
   },
   retriever: {
     effort: "low",
@@ -403,13 +408,14 @@ const FOLLOWUP_RULE = `[이어서 물어볼 질문]
 // 웹 검색 도구가 실제로 가져온 자료만 출처로 쓴다(AI가 이름만 적은 출처는 쓰지 않음).
 // 답에 인용(citation)된 것을 먼저, 인용 표시가 없으면(동적 필터링 검색은 인용 표시가 안 붙음) 검색 도구가 실제로 가져온 결과 페이지를 쓴다.
 function citationRefs(response) {
-  const cited = response.content
+  const content = response.blocks || response.content;
+  const cited = content
     .filter((b) => b.type === "text")
     .flatMap((b) => b.citations || [])
     .filter((c) => c.type === "web_search_result_location")
     .map((c) => ({ title: c.title, url: c.url }));
   if (cited.length) return cited;
-  return response.content
+  return content
     .filter((b) => b.type === "web_search_tool_result" && Array.isArray(b.content))
     .flatMap((b) => b.content)
     .filter((r) => r.type === "web_search_result")
@@ -433,10 +439,13 @@ function claudeText(response) {
 async function createWithContinuation(params, messages) {
   let response = await client.beta.messages.create({ ...params, messages });
   logCache(response);
+  const blocks = [...response.content]; // 검색은 앞 단계에서 했을 수 있어 출처용으로 전부 모은다(citationRefs)
   for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
     response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
     logCache(response);
+    blocks.push(...response.content);
   }
+  response.blocks = blocks;
   return response;
 }
 
@@ -661,10 +670,11 @@ app.post("/api/ask", async (req, res) => {
       max_tokens: 16000,
       output_config: { effort: chatMode.effort },
       system: cachedSystem(`${analyzing ? photoRules(mode) : chatRules(mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`, dogContext),
-      tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] : []), ...appTools(categories)],
+      tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: chatMode.searches || 5 }] : []), ...appTools(categories)],
     };
     let convo = messages;
     let response = await createWithContinuation(params, convo);
+    const blocks = [...response.blocks];
     const actions = [];
     for (let i = 0; i < 3 && response.stop_reason === "tool_use"; i++) {
       const uses = response.content.filter((b) => b.type === "tool_use");
@@ -675,6 +685,7 @@ app.post("/api/ask", async (req, res) => {
         { role: "user", content: uses.map((u) => ({ type: "tool_result", tool_use_id: u.id, content: "앱에 기록을 전달했어요." })) },
       ];
       response = await createWithContinuation(params, convo);
+      blocks.push(...response.blocks);
     }
 
     if (response.stop_reason === "refusal") {
@@ -686,7 +697,7 @@ app.post("/api/ask", async (req, res) => {
     const reply = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
     const u = response.usage || {};
     // cache: 프롬프트 캐싱 확인용 숫자(토큰 수만, 화면엔 안 씀)
-    res.json({ ...structuredReply(reply, citationRefs(response)), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
+    res.json({ ...structuredReply(reply, citationRefs({ blocks })), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
