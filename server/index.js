@@ -86,6 +86,7 @@ if (vapidConfigured) {
 const client = new Anthropic();
 // 안전 필터가 건강 질문을 잘못 거절하면, 서버가 Anthropic 권장 모델로 자동 재시도한다(fallbacks: "default").
 const CLAUDE_MODEL = { model: "claude-opus-5-5", betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
+const FAST_MODEL = { ...CLAUDE_MODEL, model: "claude-sonnet-5-5" }; // 채팅 빠른·수다 모드 — 답이 빨리 나오게
 const gemini = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const app = express();
 app.set("trust proxy", 1); // Render 프록시 뒤 — 속도 제한이 실제 접속 IP 기준이 되게
@@ -192,8 +193,10 @@ const PERSONA_INSTRUCTIONS = `대화창에서는 딱딱한 어시스턴트가 �
 답변 형식(가시성이 중요합니다 — 반드시 지키세요):
 - 첫 줄에는 가장 중요한 핵심 한 문장만 짧게 말합니다 (15~30자 내외, 헤드라인처럼). 보호자 말을 되풀이하지 말고 결론을 씁니다. 예: "한 번 토하고 잘 먹으면 오늘은 지켜보자!"
 - 그 다음 반드시 빈 줄(줄바꿈 두 번)을 넣습니다.
-- 정보 질문이면 빈 줄 다음 맨 먼저 "👉 지금 할 일" 소제목을 쓰고, 그 아래 "• " 한두 줄로 지금 바로 할 행동을 구체적으로 씁니다(앱은 핵심 한 줄과 이 항목만 먼저 보여 주고 나머지는 접어 둡니다 — 이 둘만 읽어도 뭘 하면 되는지 알게). 응급이면 "지금 바로 병원"이 지금 할 일입니다.
-- 그 아래 부가 설명은 아래 소제목들로 나눠 씁니다. 각 소제목은 한 줄에 쓰고, 그 아래 "• "로 시작하는 짧은 항목을 줄마다 하나씩 씁니다. 소제목 사이에는 빈 줄을 넣습니다. 상황에 안 맞는 소제목은 뺍니다.
+- 정보 질문이면 빈 줄 다음, 소제목 없이 2~3문장으로 보호자가 물은 것에 바로 답합니다(왜 그런지, 얼마나, 해도 되는지). 친구가 대답하듯 자연스럽게, 결론을 먼저.
+- 그다음 할 행동이 있으면 "👉 지금 할 일" 소제목 아래 "• " 한두 줄로 씁니다. 앱은 핵심 한 줄·바로 답·지금 할 일만 먼저 보여 주고 나머지 소제목은 접어 둡니다 — 이 셋만 읽어도 충분하게. 응급이면 첫 줄과 지금 할 일이 "지금 바로 병원"입니다.
+- 질문이 간단하면(사료량, 한 번 있었던 일, 용품 등) 여기서 끝내거나 소제목 1~2개만 덧붙입니다. 질문과 상관없는 소제목을 채우려고 늘리지 않습니다.
+- 더 설명이 필요할 때만 아래 소제목들로 나눠 씁니다. 각 소제목은 한 줄에 쓰고, 그 아래 "• "로 시작하는 짧은 항목을 줄마다 하나씩 씁니다. 소제목 사이에는 빈 줄을 넣습니다. 상황에 안 맞는 소제목은 뺍니다.
   📌 보통은 이래 — 이 나이(개월 수)·견종 강아지의 일반적인 모습과 범위를 비교 기준으로(이 아이가 정상이라는 판정 아님)
   🐾 우리 기록으로 보면 — 앱 기록·프로필에서 이 질문과 관련 있는 사실만(나이, 최근 체중·증상·식사·배변 기록 등). 관련 기록이 없으면 "아직 관련 기록이 없어"라고 하고, 무엇을 기록해 두면 좋은지 한 줄
   🔍 이렇게 확인해줘 — 집에서 상태 체크하는 방법
@@ -202,7 +205,7 @@ const PERSONA_INSTRUCTIONS = `대화창에서는 딱딱한 어시스턴트가 �
   🏠 지금 해줄 수 있는 것 — 관리법·대안
   🧭 이렇게 골라 봐 — ① 집에서 지켜보기(무엇을 몇 시간·며칠 기록할지) ② 기록 들고 며칠 안에 병원 상담 ③ 바로 병원 — 각각 어떤 경우에 맞는지. 고르는 건 보호자
   🏥 지금 바로 병원 — 응급 신호가 있을 때만, 이 항목을 맨 위로
-- 건강·증상 질문이면 📌·🤔·⚠️·🏠·🧭는 빼지 않습니다. 첫 줄은 응급이 아닐 때 "병원 가"가 아니라 상황을 정리하는 한 문장으로 씁니다.
+- 건강·증상 질문이면 ⚠️(병원에 가야 하는 신호)와 🧭(고르는 기준)는 꼭 넣고, 나머지 소제목은 이 질문에 도움이 될 때만 씁니다. 첫 줄은 응급이 아닐 때 "병원 가"가 아니라 상황을 정리하는 한 문장으로 씁니다.
 - 일반 AI·검색과 달라야 합니다: 이 강아지의 나이·견종·체중·기록에 맞춘 숫자와 예시를 쓰고(예: "3개월이면 보통 2~4시간마다"), 이 견종에서 흔히 신경 쓰는 점을 짚고, 기록할 만한 사실이면 앱에 기록해 줍니다.
 - 마크다운 제목(#)이나 표는 쓰지 않습니다. 강조는 **별표 두 개**만 씁니다.
 
@@ -228,15 +231,17 @@ const CHAT_MODES = {
     searches: 2,
   },
   pomeranian: {
+    model: FAST_MODEL,
     effort: "medium", // ponytail: 검색 없이 빠르게, 대신 low보다 깊게 — 더 정확해야 하면 webSearch: true(대기 시간 늘어남)
     style: `🐶 지금은 "포메라니안 모드"(빠른 요약)야. 네 이름은 여름이야(포메라니안). 이름을 물으면 여름이라고 해. 아래 지시가 위 답변 형식보다 우선해.
 - 기본 용어 풀이는 생략하고, 문장을 짧게 끊어 빠르게 읽히게 한다. 짧게 하라는 건 문장이지 내용이 아니다.
-- 건강·증상 질문: 👉 지금 할 일을 맨 먼저, 이어서 위 형식의 📌 보통은 이래 / 🐾 우리 기록으로 보면 / 🤔 이럴 수 있어 / ⚠️ 이런 신호가 같이 보이면 / 🏠 지금 해줄 수 있는 것 / 🧭 이렇게 골라 봐 를 모두 넣는다. 항목마다 "• " 2~4개, 한 줄씩. 전체 35줄 이내.
-- 간단한 정보 질문(사료량, 일정, 용품 등)은 첫 줄 핵심 → 소제목 2~3개, 20줄 이내.
+- 건강·증상 질문: 바로 답 → 👉 지금 할 일 → ⚠️ 이런 신호가 같이 보이면 → 🧭 이렇게 골라 봐, 필요하면 🤔·🏠 하나 더. 항목마다 "• " 2~3개, 한 줄씩. 전체 25줄 이내.
+- 간단한 정보 질문(사료량, 일정, 용품 등)은 첫 줄 핵심 → 바로 답 → 필요하면 소제목 1~2개, 12줄 이내.
 - 친숙하고 편한 말투, 가독성이 최우선. 응급이면 첫 줄에서 바로 병원을 말한다.
 - 근거를 더 깊게 보고 싶을 만한 질문이면 마지막에 "자료까지 찾아서 더 자세히 보고 싶으면 보더콜리 겨울이(꼼꼼 모드)한테 물어봐!" 한 줄을 붙인다.`,
   },
   retriever: {
+    model: FAST_MODEL,
     effort: "low",
     style: `🦮 지금은 "리트리버 모드"(수다 친구)야. 네 이름은 가을이야(리트리버). 이름을 물으면 가을이라고 해. 아래 지시가 위 답변 형식보다 우선해.
 - 기본은 수다 모드. 보호자 얘기를 잘 들어주고, 공감하고, 맞장구치고, 같이 놀자고 하고, 되물어서 대화를 이어간다. 보호자 기분(피곤함, 심심함, 속상함, 기쁨)에 먼저 반응한다.
@@ -436,12 +441,20 @@ function claudeText(response) {
 }
 
 // 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
-async function createWithContinuation(params, messages) {
-  let response = await client.beta.messages.create({ ...params, messages });
+// onText가 있으면 스트리밍으로 받아 글자가 만들어지는 대로 넘긴다(채팅 화면에 바로 보이게)
+async function callClaude(params, messages, onText) {
+  if (!onText) return client.beta.messages.create({ ...params, messages });
+  const stream = client.beta.messages.stream({ ...params, messages });
+  for await (const ev of stream) if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") onText(ev.delta.text);
+  return stream.finalMessage();
+}
+
+async function createWithContinuation(params, messages, onText) {
+  let response = await callClaude(params, messages, onText);
   logCache(response);
   const blocks = [...response.content]; // 검색은 앞 단계에서 했을 수 있어 출처용으로 전부 모은다(citationRefs)
   for (let i = 0; i < 2 && response.stop_reason === "pause_turn"; i++) {
-    response = await client.beta.messages.create({ ...params, messages: [...messages, { role: "assistant", content: response.content }] });
+    response = await callClaude(params, [...messages, { role: "assistant", content: response.content }], onText);
     logCache(response);
     blocks.push(...response.content);
   }
@@ -628,7 +641,7 @@ const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_CHAT_IMAGES = 4;
 
 app.post("/api/ask", async (req, res) => {
-  const { dogContext, question, history, mode, categories, images, imagesAreContext } = req.body || {};
+  const { dogContext, question, history, mode, categories, images, imagesAreContext, stream } = req.body || {};
   const chatMode = getChatMode(mode);
   // 사진: 최대 4장, 앱에서 줄여 보낸 base64. imagesAreContext=true면 앞서 보낸 사진을 후속 질문에 다시 붙인 것(새로 분석하라는 뜻 아님)
   const photos = (Array.isArray(images) ? images : [])
@@ -642,6 +655,11 @@ app.post("/api/ask", async (req, res) => {
     return res.status(400).json({ error: "question is required" });
   }
   const analyzing = photos.length > 0 && !imagesAreContext;
+  // stream: true면 SSE로 글자 조각({t})을 먼저 보내고, 끝나면 평소 JSON과 같은 내용({done})을 보낸다
+  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+  const reply = (payload) => (stream ? (send({ done: payload }), res.end()) : res.json(payload));
+  if (stream) res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" });
+  const onText = stream ? (t) => send({ t }) : undefined;
 
   try {
     const userText = analyzing
@@ -666,14 +684,14 @@ app.post("/api/ask", async (req, res) => {
     ];
 
     const params = {
-      ...CLAUDE_MODEL,
+      ...(analyzing ? CLAUDE_MODEL : chatMode.model || CLAUDE_MODEL), // 사진 분석은 늘 Opus
       max_tokens: 16000,
       output_config: { effort: chatMode.effort },
       system: cachedSystem(`${analyzing ? photoRules(mode) : chatRules(mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`, dogContext),
       tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: chatMode.searches || 5 }] : []), ...appTools(categories)],
     };
     let convo = messages;
-    let response = await createWithContinuation(params, convo);
+    let response = await createWithContinuation(params, convo, onText);
     const blocks = [...response.blocks];
     const actions = [];
     for (let i = 0; i < 3 && response.stop_reason === "tool_use"; i++) {
@@ -684,22 +702,24 @@ app.post("/api/ask", async (req, res) => {
         { role: "assistant", content: response.content },
         { role: "user", content: uses.map((u) => ({ type: "tool_result", tool_use_id: u.id, content: "앱에 기록을 전달했어요." })) },
       ];
-      response = await createWithContinuation(params, convo);
+      onText?.("\n\n");
+      response = await createWithContinuation(params, convo, onText);
       blocks.push(...response.blocks);
     }
 
     if (response.stop_reason === "refusal") {
-      return res.json({
+      return reply({
         answer: "이 질문에는 답변드리기 어려워요. 다르게 표현해서 다시 물어봐 주세요.",
       });
     }
 
-    const reply = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
+    const answerText = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
     const u = response.usage || {};
     // cache: 프롬프트 캐싱 확인용 숫자(토큰 수만, 화면엔 안 씀)
-    res.json({ ...structuredReply(reply, citationRefs({ blocks })), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
+    reply({ ...structuredReply(answerText, citationRefs({ blocks })), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
+    if (stream) return send({ error: "AI 서버 호출에 실패했어요." }), res.end();
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
   }
 });

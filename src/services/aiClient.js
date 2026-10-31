@@ -48,7 +48,8 @@ function withStructure(data) {
 // Claude API 프록시(server/)에 묻는다. 서버가 꺼져 있거나 오류가 나면 그대로 던진다 —
 // 예전엔 규칙 기반 대체 답을 보여 줬지만 질문과 맞지 않는 답이 나와서, 이제는 "다시 시도"를 띄운다(Main.jsx).
 // imagesAreContext: 앞서 보낸 사진을 후속 질문에 다시 붙인 것 — 서버가 새로 분석하지 않고 참고만 한다.
-export async function askAI(dog, question, history, mode, { images, imagesAreContext, signal } = {}) {
+// onDelta가 있으면 스트리밍으로 받는다: 답이 만들어지는 동안 지금까지의 글 전체를 onDelta(text)로 계속 넘긴다.
+export async function askAI(dog, question, history, mode, { images, imagesAreContext, signal, onDelta } = {}) {
   const hasImages = Array.isArray(images) && images.length > 0;
   await ensureAIConsent(); // 처음 한 번: 외부 AI로 보내도 되는지 묻는다(거절하면 아무것도 안 보냄)
   const res = await fetch(`${API_BASE}/api/ask`, {
@@ -61,6 +62,7 @@ export async function askAI(dog, question, history, mode, { images, imagesAreCon
       mode,
       categories: getCategories().map((c) => c.name),
       ...(hasImages && { images, imagesAreContext: Boolean(imagesAreContext) }),
+      ...(onDelta && { stream: true }),
     }),
     signal,
   });
@@ -68,8 +70,31 @@ export async function askAI(dog, question, history, mode, { images, imagesAreCon
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "AI 서버 호출에 실패했어요.");
   }
-  const data = await res.json();
+  const data = onDelta && res.headers.get("content-type")?.includes("text/event-stream") ? await readStream(res, onDelta) : await res.json();
   return { ...withStructure(data), actions: Array.isArray(data.actions) ? data.actions : [] };
+}
+
+// 서버의 SSE("data: {...}" 줄)를 읽는다: {t} 글자 조각, {done} 최종 답(평소 JSON과 같은 모양), {error}
+export async function readStream(res, onDelta) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let text = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const events = buf.split("\n\n");
+    buf = events.pop();
+    for (const ev of events) {
+      if (!ev.startsWith("data: ")) continue;
+      const msg = JSON.parse(ev.slice(6));
+      if (msg.error) throw new Error(msg.error);
+      if (msg.done) return msg.done;
+      if (msg.t) onDelta((text += msg.t));
+    }
+  }
+  throw new Error("답을 받다가 연결이 끊겼어요. 다시 시도해 주세요.");
 }
 
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).

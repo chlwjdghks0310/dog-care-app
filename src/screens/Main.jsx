@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { askAI, analyzeBehavior } from "../services/aiClient";
+import { FOLLOWUP_MARK } from "../utils/aiAnswer";
 import OutingCard from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { imageForAI } from "../utils/image";
@@ -91,6 +92,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
   inputRef.current = input; // 🎤가 말하기 시작할 때의 입력 내용에 이어 붙이도록
   const [pending, setPending] = useState(false);
   const [pendingKind, setPendingKind] = useState(null); // 'text' | 'media' | null — 취소 버튼은 media일 때만 보여준다
+  const [liveText, setLiveText] = useState(""); // 스트리밍으로 받는 중인 답(다 받으면 비우고 완성된 답으로 바꾼다)
+  const streaming = Boolean(liveText);
   const [attachments, setAttachments] = useState([]); // 보내기 전 첨부 [{ id, kind: 'image'|'video', file, url }]
   const [attachError, setAttachError] = useState("");
   const [progress, setProgress] = useState(null); // 영상: { phase: 'upload', pct } → { phase: 'analyze' }
@@ -162,10 +165,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
     if (!list) return;
     scrollState.current.quietUntil = Date.now() + 800; // 앱이 움직인 스크롤은 숨기기·보이기 판단에 쓰지 않는다
     const last = list.lastElementChild;
-    const answer = !pending && messages[messages.length - 1]?.role === "ai" && last;
+    const answer = (streaming || (!pending && messages[messages.length - 1]?.role === "ai")) && last; // 스트리밍 답도 첫 줄을 맨 위에 두고 그 자리에서 자라게
     const top = answer ? list.scrollTop + last.getBoundingClientRect().top - list.getBoundingClientRect().top - 8 : list.scrollHeight;
     list.scrollTo({ top, behavior: "smooth" });
-  }, [messages, pending, mode]);
+  }, [messages, pending, mode, streaming]);
 
   // 보호자가 직접 스크롤: 아래로 읽어 내려가면 숨기고, 위로 올리면(또는 맨 위면) 다시 보인다
   function handleChatScroll(e) {
@@ -273,7 +276,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
         memoryQuestion = `(사진 ${prepared.length}장을 보내서 분석을 부탁함)${question ? ` ${question}` : ""}`;
       } else {
         const ctx = contextImagesRef.current;
-        result = await askAI(dog, question, history, chatMode, ctx.length ? { images: ctx, imagesAreContext: true, signal: controller.signal } : { signal: controller.signal });
+        const onDelta = (t) => session === chatSessionRef.current && setLiveText(t);
+        result = await askAI(dog, question, history, chatMode, ctx.length ? { images: ctx, imagesAreContext: true, signal: controller.signal, onDelta } : { signal: controller.signal, onDelta });
       }
       const { answer, structured, actions } = result;
       // AI가 "기록해 줘"를 알아들었으면 앱(가계부·일정표·체중·체크리스트·알람)에 실제로 저장
@@ -307,6 +311,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
         setPending(false);
         setPendingKind(null);
         setProgress(null);
+        setLiveText("");
       }
     }
   }
@@ -547,7 +552,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
               </div>
             );
           })}
-          {pending && (
+          {pending && liveText && <LiveAnswer text={liveText} chatMode={chatMode} />}
+          {pending && !liveText && (
             <div className="faint" style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 10 }}>
               {progress?.phase === "upload"
                 ? `영상 올리는 중… ${Math.round(progress.pct * 100)}%`
@@ -795,5 +801,20 @@ function FirstSteps({ dog, onMeal, onWeight, onChat, onLater }) {
       ))}
       <button type="button" className="link-btn summary-more" onClick={onLater}>다음에 할게</button>
     </span>
+  );
+}
+
+// 스트리밍으로 받는 중인 답: 첫 줄은 크게, 나머지는 글 그대로(다 받으면 AiAnswer로 바뀐다). 버튼으로 바뀔 후속 질문 줄은 숨긴다
+function LiveAnswer({ text, chatMode }) {
+  const { headline, detail } = splitHeadline(text.split(FOLLOWUP_MARK)[0].replace(/\*\*/g, ""));
+  const mode = findChatMode(chatMode);
+  return (
+    <div style={{ alignSelf: "flex-start", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: "14px 16px", maxWidth: "92%", boxShadow: "var(--shadow)" }}>
+      <div className="faint" style={{ marginBottom: 6 }}>
+        <Ico name={mode.ico} size={13} className={`cat-ico tone-${mode.tone}`} /> {mode.call} · 답하는 중…
+      </div>
+      <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.35, marginBottom: detail ? 6 : 0 }}>{headline}</div>
+      {detail && <div style={{ fontSize: 14.5, color: "var(--text-soft)", lineHeight: 1.55, whiteSpace: "pre-line" }}>{detail}</div>}
+    </div>
   );
 }
