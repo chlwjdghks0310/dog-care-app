@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSwipeClose } from "./SwipeBack";
 import { supabase } from "../services/supabase";
+import { LoginForm } from "./AccountCard";
 
 // 운영자용 이용 통계(설정 → 이용 통계). 숫자는 Supabase analytics_dashboard()가 준다 —
 // analytics_admins 표에 든 계정만 볼 수 있다(supabase/analytics.sql ④). 이름·이메일 같은 개인정보는 없다.
@@ -114,10 +115,10 @@ export default function StatsDashboard({ onClose }) {
   const fmax = Math.max(1, ...funnel.map(([, v]) => v));
 
   return createPortal(
-    <div className="settings-sheet" role="dialog" aria-label="이용 통계" style={{ zIndex: 130 }} {...swipeClose}>
+    <div className="settings-sheet" role="dialog" aria-label="이용 통계" style={{ zIndex: 130 }} {...(onClose && swipeClose)}>
       <div className="settings-head">
         <div className="h1" style={{ margin: 0 }}>이용 통계</div>
-        <button type="button" className="btn-ghost" onClick={onClose}>닫기</button>
+        {onClose && <button type="button" className="btn-ghost" onClick={onClose}>닫기</button>}
       </div>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -210,5 +211,26 @@ export default function StatsDashboard({ onClose }) {
       )}
     </div>,
     document.body
+  );
+}
+
+// 통계 전용 주소 meongcare.kr/?stats (main.jsx) — 컴퓨터 브라우저에서 즐겨찾기해 두고 본다.
+// 로그인 안 했으면 로그인부터(이메일 코드 로그인은 이 화면 안에서 끝남). 운영자가 아니면 숫자 대신 안내가 나온다.
+export function StatsPage() {
+  const [session, setSession] = useState(undefined);
+  useEffect(() => {
+    if (!supabase) return setSession(null);
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  if (session === undefined) return null;
+  if (session) return <StatsDashboard />;
+  return (
+    <div style={{ maxWidth: 420, margin: "0 auto", padding: "48px 16px" }}>
+      <div className="h1">이용 통계</div>
+      <p className="subtle">운영자 계정으로 로그인해 주세요. 컴퓨터에서는 이메일 로그인이 편해요.</p>
+      <LoginForm />
+    </div>
   );
 }

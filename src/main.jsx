@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -7,14 +7,16 @@ import Contact from './screens/Contact.jsx'
 import Terms from './components/Terms.jsx'
 import { trackAppStart } from './services/analytics'
 
+const StatsPage = lazy(() => import('./components/StatsDashboard.jsx').then((m) => ({ default: m.StatsPage })))
+
 const page = new URLSearchParams(location.search)
 // 이용 통계(첫 실행·오늘 사용) — 처리방침·약관·문의만 보러 온 경우는 세지 않는다. 앱이 기록을 쓰기 전에 불러야 첫 실행을 알아본다
-if (!page.has('privacy') && !page.has('terms') && !page.has('support')) trackAppStart()
+if (!['privacy', 'terms', 'support', 'stats'].some((k) => page.has(k))) trackAppStart()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?terms(이용약관), ?support(문의) — 설치 안 한 사람도 브라우저로 본다 */}
-    {page.has('privacy') ? <PrivacyPolicy /> : page.has('terms') ? <Terms /> : page.has('support') ? <Contact /> : <App />}
+    {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?terms(이용약관), ?support(문의) — 설치 안 한 사람도 브라우저로 본다. ?stats는 운영자 이용 통계(로그인 필요) */}
+    {page.has('stats') ? <Suspense fallback={null}><StatsPage /></Suspense> : page.has('privacy') ? <PrivacyPolicy /> : page.has('terms') ? <Terms /> : page.has('support') ? <Contact /> : <App />}
   </StrictMode>,
 )
 
