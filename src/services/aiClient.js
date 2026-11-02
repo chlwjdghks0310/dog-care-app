@@ -4,6 +4,7 @@ import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { sanitizeStructured, structureAnswer } from "../utils/aiAnswer";
 import { ensureAIConsent } from "./aiConsent";
+import { trackHeaders } from "./analytics";
 
 // env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
 export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
@@ -54,7 +55,7 @@ export async function askAI(dog, question, history, mode, { images, imagesAreCon
   await ensureAIConsent(); // 처음 한 번: 외부 AI로 보내도 되는지 묻는다(거절하면 아무것도 안 보냄)
   const res = await fetch(`${API_BASE}/api/ask`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...trackHeaders() },
     body: JSON.stringify({
       dogContext: toDogContext(dog),
       question,
@@ -103,7 +104,7 @@ export async function analyzePhoto(dog, file, question) {
   const imageBase64 = await fileToBase64(file);
   const res = await fetch(`${API_BASE}/api/analyze-photo`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...trackHeaders() },
     body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: file.type, question }),
   });
   if (!res.ok) {
@@ -119,7 +120,7 @@ export async function quickStoolCheck(dog, imageBase64, signal) {
   await ensureAIConsent();
   const res = await fetch(`${API_BASE}/api/quick-stool`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...trackHeaders() },
     body: JSON.stringify({ dogContext: toDogContext(dog), imageBase64, mediaType: "image/jpeg" }),
     signal,
   });
@@ -131,7 +132,7 @@ export async function quickStoolCheck(dog, imageBase64, signal) {
 // 사료 이름 → 열량·성분(서버가 웹 검색). 반환: { info, sources }
 export async function findFoodInfo(name, signal) {
   await ensureAIConsent();
-  const res = await fetch(`${API_BASE}/api/food-info`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }), signal });
+  const res = await fetch(`${API_BASE}/api/food-info`, { method: "POST", headers: { "Content-Type": "application/json", ...trackHeaders() }, body: JSON.stringify({ name }), signal });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "사료 정보를 찾지 못했어요. 다시 시도해 주세요.");
   return data;
@@ -140,7 +141,7 @@ export async function findFoodInfo(name, signal) {
 // 사료 봉투 사진 → 적힌 열량·성분(검색 없이 읽기만). 반환: label
 export async function readFoodLabel(imageBase64, signal) {
   await ensureAIConsent();
-  const res = await fetch(`${API_BASE}/api/food-label`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageBase64, mediaType: "image/jpeg" }), signal });
+  const res = await fetch(`${API_BASE}/api/food-label`, { method: "POST", headers: { "Content-Type": "application/json", ...trackHeaders() }, body: JSON.stringify({ imageBase64, mediaType: "image/jpeg" }), signal });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "사진을 읽지 못했어요. 다시 시도해 주세요.");
   return data.label;
@@ -161,6 +162,7 @@ export async function analyzeBehavior(dog, file, signal, mode, { question, onPro
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/api/analyze-behavior`);
+    Object.entries(trackHeaders()).forEach(([k, v]) => xhr.setRequestHeader(k, v));
     xhr.responseType = "json";
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(e.loaded / e.total);
     xhr.upload.onload = () => onProgress?.(1);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { API_BASE } from "../services/aiClient";
 import { ensureAIConsent } from "../services/aiConsent";
+import { trackHeaders } from "../services/analytics";
 import Ico from "./Ico";
 import { readJSON, writeJSON } from "../services/storage";
 
@@ -278,7 +279,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
       fr.onerror = reject;
       fr.readAsDataURL(blob);
     });
-    const res = await fetch(`${API_BASE}/api/transcribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ audio, mimeType: blob.type, hints }) });
+    const res = await fetch(`${API_BASE}/api/transcribe`, { method: "POST", headers: { "Content-Type": "application/json", ...trackHeaders() }, body: JSON.stringify({ audio, mimeType: blob.type, hints }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "음성을 글자로 바꾸지 못했어요.");
     return data.text || "";

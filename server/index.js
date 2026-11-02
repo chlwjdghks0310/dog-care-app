@@ -1,6 +1,7 @@
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { createHash } from "crypto";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import express from "express";
@@ -92,6 +93,55 @@ const app = express();
 app.set("trust proxy", 1); // Render 프록시 뒤 — 속도 제한이 실제 접속 IP 기준이 되게
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
+
+// 이용 통계(supabase/analytics.sql): 날짜별 횟수와 "몇 명"만 센다. 이름·이메일·IP는 저장하지 않는다.
+// 앱·홈페이지가 만든 무작위 기기 번호(v)는 해시해서 사람 수를 셀 때만 쓴다. 통계가 실패해도 앱 기능은 그대로(로그만).
+const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const clean = (s, n = 40) => (typeof s === "string" ? s.toLowerCase().replace(/[^a-z0-9_.-]/g, "").slice(0, n) : "");
+const visitorHash = (v) => (clean(v, 64).length >= 8 ? createHash("sha256").update(`meongcare:${clean(v, 64)}`).digest("hex").slice(0, 24) : null);
+const isBot = (req) => /bot|crawl|spider|slurp|preview|headless|lighthouse/i.test(req.get("user-agent") || "");
+function track(metric, source, visitor, kinds) {
+  if (!pushDb) return;
+  db("rpc/analytics_track", { method: "POST", body: { p_day: kstDay(), p_metric: metric, p_source: source || "", p_visitor: visitor, p_kinds: visitor && kinds?.length ? kinds : null } }).catch(
+    (e) => console.error("[server] analytics:", e.message)
+  );
+}
+// ponytail: IP당 분당 60개까지만 받는 메모리 제한 — 서버가 여러 대가 되면 DB·게이트웨이 쪽 제한으로
+const hits = new Map();
+setInterval(() => hits.clear(), 60_000).unref();
+const tooMany = (req) => (hits.set(req.ip, (hits.get(req.ip) || 0) + 1), hits.get(req.ip) > 60);
+
+// 앱·홈페이지가 sendBeacon(text/plain)으로 보낸다: { e: 사건, s: 어디서 왔나, v: 기기 번호, p: 페이지, l: 로그인, i: 홈 화면 앱, d: 강아지 등록 }
+app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
+  res.status(204).end();
+  if (isBot(req) || tooMany(req)) return;
+  let b;
+  try {
+    b = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+  } catch {
+    return;
+  }
+  const v = visitorHash(b.v);
+  const s = clean(b.s);
+  if (b.e === "page") track(`page:${["guide", "resources"].includes(b.p) ? b.p : "intro"}`, s, v, ["web"]);
+  else if (b.e === "cta") track("cta_app", s, v, ["web"]);
+  else if (b.e === "download") track("guide_download", s, v, ["web"]);
+  else if (b.e === "first_open") track(b.i ? "app_first_open_installed" : "app_first_open", s, null, null);
+  else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : [])]);
+});
+
+// AI 사용 횟수: 앱이 X-MC-V(기기 번호)·X-MC-L(로그인 1/0)을 붙여 보낸다. 채팅은 비서별(source=mode), 나머지는 기능별
+const AI_ROUTES = { "/api/ask": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video" };
+app.use(Object.keys(AI_ROUTES), (req, res, next) => {
+  if (req.method === "POST" && !isBot(req)) {
+    const kind = AI_ROUTES[req.baseUrl];
+    const login = req.get("x-mc-l") === "1";
+    const v = visitorHash(req.get("x-mc-v"));
+    track(kind === "chat" ? `ai_chat:${login ? "login" : "anon"}` : `ai_other:${login ? "login" : "anon"}`, kind === "chat" ? clean(req.body?.mode) : kind, v, ["ai", login ? "ai_login" : "ai_anon"]);
+    res.on("finish", () => res.statusCode >= 500 && track("ai_error", kind, null, null));
+  }
+  next();
+});
 
 // 영상은 Gemini Files API로 먼저 업로드하고 참조(URI)로만 넘기므로, JSON 인라인 방식의
 // 100MB 안팎 제약 없이 훨씬 큰 파일(최대 500MB)을 받을 수 있다.
@@ -721,7 +771,7 @@ app.post("/api/ask", async (req, res) => {
     reply({ ...structuredReply(answerText, citationRefs({ blocks })), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
   } catch (err) {
     console.error("[server] Claude API error:", err.message);
-    if (stream) return send({ error: "AI 서버 호출에 실패했어요." }), res.end();
+    if (stream) return track("ai_error", "chat", null, null), send({ error: "AI 서버 호출에 실패했어요." }), res.end();
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
   }
 });

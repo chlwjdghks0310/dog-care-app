@@ -62,7 +62,7 @@ html = f'''<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>멍케어 사용 설명서</title>
   <meta name="description" content="멍케어를 처음 쓰는 분을 위한 쉬운 사용 설명서. 설치, 비서, 체크리스트, 프로필, 일정표, 가계부를 하나씩 알려 드려요." />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://dog-care-app.onrender.com; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#ffffff" />
   <meta name="color-scheme" content="light only" />
@@ -122,6 +122,7 @@ html = f'''<!doctype html>
     </div>
   </footer>
   <script src="/intro/guide.js?v=1" defer></script>
+  <script src="/intro/t.js?v=1" defer></script>
 </body>
 </html>
 '''

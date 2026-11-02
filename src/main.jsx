@@ -5,8 +5,11 @@ import App from './App.jsx'
 import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contact from './screens/Contact.jsx'
 import Terms from './components/Terms.jsx'
+import { trackAppStart } from './services/analytics'
 
 const page = new URLSearchParams(location.search)
+// 이용 통계(첫 실행·오늘 사용) — 처리방침·약관·문의만 보러 온 경우는 세지 않는다. 앱이 기록을 쓰기 전에 불러야 첫 실행을 알아본다
+if (!page.has('privacy') && !page.has('terms') && !page.has('support')) trackAppStart()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

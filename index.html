@@ -65,7 +65,10 @@
         var standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
         var hasData = false;
         for (var i = 0; i < localStorage.length; i++) if (localStorage.key(i).indexOf("dogcare-") === 0) { hasData = true; break; }
-        if (!standalone && !hasData && !location.search && !location.hash && location.pathname === "/") location.replace("/intro/");
+        if (!standalone && !hasData && !location.search && !location.hash && location.pathname === "/") {
+          if (document.referrer) sessionStorage.setItem("mc-ref", document.referrer); // 넘어가면 어디서 왔는지가 사라져서 홈페이지 통계(intro/t.js)에 넘겨 준다
+          location.replace("/intro/");
+        }
       } catch (e) {}
       // 다크 모드면 그리기 전에 먼저 입힌다(밝은 화면이 번쩍이지 않게) — 같은 키를 src/services/themeSettings.js가 쓴다
       try {
