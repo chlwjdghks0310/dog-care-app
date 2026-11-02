@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
@@ -24,7 +24,9 @@ import Ico from "../components/Ico";
 import Help from "./Help";
 import Contact from "./Contact";
 import DogRegister from "./DogRegister";
-import { getSyncStatus } from "../services/sync";
+import { getSyncStatus, onSyncStatus } from "../services/sync";
+import { supabase } from "../services/supabase";
+const StatsDashboard = lazy(() => import("../components/StatsDashboard"));
 import { leavePet, myRole } from "../services/sync/family";
 
 const GENDER_LABEL = { male: "남자 ♂", female: "여자 ♀" }; // 등록 화면과 같은 말·순서
@@ -753,7 +755,14 @@ const LINKS = [
 ];
 
 function LinksCard() {
-  const [doc, setDoc] = useState(null); // null | "terms" | "privacy"
+  const [doc, setDoc] = useState(null); // null | "terms" | "privacy" | "stats"
+  // 운영자 계정(supabase analytics_admins)으로 로그인했을 때만 "이용 통계"가 보인다
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    const check = (st) => (st.user && supabase ? supabase.rpc("is_analytics_admin").then(({ data }) => setAdmin(data === true)) : setAdmin(false));
+    check(getSyncStatus());
+    return onSyncStatus(check);
+  }, []);
   return (
     <div className="card" style={{ marginTop: 14 }}>
       <div className="h2">멍케어 소식·자료</div>
@@ -772,6 +781,16 @@ function LinksCard() {
         {" · "}
         <button type="button" className="link-btn" onClick={() => setDoc("privacy")}>개인정보 처리방침</button>
       </p>
+      {admin && (
+        <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 10 }} onClick={() => setDoc("stats")}>
+          이용 통계 보기 (운영자)
+        </button>
+      )}
+      {doc === "stats" && (
+        <Suspense fallback={null}>
+          <StatsDashboard onClose={() => setDoc(null)} />
+        </Suspense>
+      )}
       {doc === "terms" && <Terms onClose={() => setDoc(null)} />}
       {doc === "privacy" && <PrivacyPolicy onClose={() => setDoc(null)} />}
     </div>

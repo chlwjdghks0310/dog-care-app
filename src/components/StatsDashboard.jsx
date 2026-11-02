@@ -1,0 +1,214 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useSwipeClose } from "./SwipeBack";
+import { supabase } from "../services/supabase";
+
+// 운영자용 이용 통계(설정 → 이용 통계). 숫자는 Supabase analytics_dashboard()가 준다 —
+// analytics_admins 표에 든 계정만 볼 수 있다(supabase/analytics.sql ④). 이름·이메일 같은 개인정보는 없다.
+const n = (v) => Number(v) || 0;
+const sum = (rows, k) => rows.reduce((a, r) => a + n(r[k]), 0);
+const SOURCE_NAME = { "": "바로 들어옴", "바로 들어옴": "바로 들어옴", blog: "블로그", naver: "네이버", threads: "스레드", instagram: "인스타그램", insta: "인스타그램", qr: "QR", google: "구글", kakao: "카카오", daum: "다음", littly: "프로필 링크(litt.ly)" };
+const md = (d) => String(d).slice(5, 10).replace("-", "/");
+
+function toCSV(rows) {
+  if (!rows.length) return "";
+  const cols = Object.keys(rows[0]);
+  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  return "﻿" + [cols.map(esc).join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
+}
+
+function download(rows) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([toCSV(rows)], { type: "text/csv;charset=utf-8" }));
+  a.download = `멍케어-이용통계-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function Tile({ label, value, sub }) {
+  return (
+    <div style={{ background: "var(--accent-soft)", borderRadius: 12, padding: "10px 12px" }}>
+      <div className="faint" style={{ fontSize: 12 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.25 }}>{value.toLocaleString()}</div>
+      {sub && <div className="faint" style={{ fontSize: 11.5 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function Bars({ rows, k, label }) {
+  const max = Math.max(1, ...rows.map((r) => n(r[k])));
+  return (
+    <div className="card" style={{ marginTop: 12 }}>
+      <div className="h2">{label}</div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 110, marginTop: 6 }} role="img" aria-label={`${label} 날짜별 막대`}>
+        {[...rows].reverse().map((r) => (
+          <div key={r["날짜"]} title={`${md(r["날짜"])} ${n(r[k])}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", height: "100%" }}>
+            <span style={{ fontSize: 9.5, color: "var(--text-faint)" }}>{n(r[k]) || ""}</span>
+            <div style={{ width: "100%", height: `${(n(r[k]) / max) * 85}%`, minHeight: n(r[k]) ? 3 : 0, background: "var(--accent)", borderRadius: 3 }} />
+          </div>
+        ))}
+      </div>
+      <div className="faint" style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginTop: 4 }}>
+        <span>{rows.length ? md(rows[rows.length - 1]["날짜"]) : ""}</span>
+        <span>{rows.length ? md(rows[0]["날짜"]) : ""}</span>
+      </div>
+    </div>
+  );
+}
+
+function Table({ cols, rows }) {
+  return (
+    <div style={{ overflowX: "auto", marginTop: 6 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, whiteSpace: "nowrap" }}>
+        <thead>
+          <tr>{cols.map(([label], i) => <th key={label} style={{ textAlign: i ? "right" : "left", padding: "6px 6px", borderBottom: "1px solid var(--border)", fontWeight: 600 }}>{label}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((r, j) => (
+            <tr key={j}>{cols.map(([label, get], i) => <td key={label} style={{ textAlign: i ? "right" : "left", padding: "6px 6px", borderBottom: "1px solid var(--border)" }}>{get(r)}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default function StatsDashboard({ onClose }) {
+  const swipeClose = useSwipeClose(onClose);
+  const [days, setDays] = useState(7);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    setError("");
+    supabase
+      .rpc("analytics_dashboard", { p_days: 30 })
+      .then(({ data, error }) => alive && (error ? setError(error.code === "42501" ? "운영자 계정으로 로그인해야 볼 수 있어요." : "통계를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.") : setData(data)));
+    return () => {
+      alive = false;
+    };
+  }, [reload]);
+
+  const all = data?.report || [];
+  const rows = all.slice(0, days);
+  const today = rows[0] || {};
+  const since = rows.length ? rows[rows.length - 1]["날짜"] : "";
+  const srcRows = (data?.sources || []).filter((s) => s["날짜"] >= since);
+  const bySource = {};
+  for (const s of srcRows) {
+    const name = SOURCE_NAME[s["어디서"]] || s["어디서"];
+    const row = (bySource[name] ||= { name, web: 0, open: 0 });
+    if (s["무엇"] === "홈페이지 방문") row.web += n(s["횟수"]);
+    if (String(s["무엇"]).includes("앱 처음 열기")) row.open += n(s["횟수"]);
+  }
+  const sources = Object.values(bySource).sort((a, b) => b.web + b.open - (a.web + a.open));
+  const funnel = [
+    ["홈페이지 방문자", sum(rows, "홈페이지 방문자(명)")],
+    ["앱 버튼 누름", sum(rows, "앱 버튼 누름(회)")],
+    ["앱 처음 열기", sum(rows, "앱 처음 연 횟수")],
+    ["그중 홈 화면 앱", sum(rows, "그중 홈 화면 앱")],
+    ["새 가입", sum(rows, "새 가입(명)")],
+  ];
+  const fmax = Math.max(1, ...funnel.map(([, v]) => v));
+
+  return createPortal(
+    <div className="settings-sheet" role="dialog" aria-label="이용 통계" style={{ zIndex: 130 }} {...swipeClose}>
+      <div className="settings-head">
+        <div className="h1" style={{ margin: 0 }}>이용 통계</div>
+        <button type="button" className="btn-ghost" onClick={onClose}>닫기</button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        {[7, 30].map((d) => (
+          <button key={d} type="button" className={days === d ? "btn-primary" : "btn-ghost"} style={{ width: "auto", flex: "none", minHeight: 36, padding: "0 14px", margin: 0 }} onClick={() => setDays(d)} aria-pressed={days === d}>
+            최근 {d}일
+          </button>
+        ))}
+        <button type="button" className="btn-ghost" style={{ minHeight: 36, padding: "0 12px", marginLeft: "auto" }} onClick={() => setReload((x) => x + 1)}>새로고침</button>
+      </div>
+
+      {error && <div className="card" style={{ marginTop: 12 }}>{error}</div>}
+      {!data && !error && <div className="card subtle" style={{ marginTop: 12 }}>불러오는 중…</div>}
+
+      {data && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+            <Tile label="오늘 앱 사용자" value={n(today["앱 사용자(명)"])} sub={`로그인 ${n(today["로그인 사용자(명)"])} · 안 함 ${n(today["로그인 안 한 사용자(명)"])}`} />
+            <Tile label="오늘 홈페이지 방문자" value={n(today["홈페이지 방문자(명)"])} sub={`방문 ${n(today["홈페이지 방문(회)"])}회`} />
+            <Tile label={`${days}일 앱 처음 연 횟수`} value={sum(rows, "앱 처음 연 횟수")} sub={`홈 화면 앱 ${sum(rows, "그중 홈 화면 앱")}`} />
+            <Tile label={`${days}일 AI 채팅`} value={sum(rows, "AI 채팅(회)")} sub={`로그인 안 함 ${sum(rows, "그중 로그인 안 함(회)")}회`} />
+            <Tile label="누적 가입" value={n(today["누적 가입(명)"])} sub={`${days}일 새 가입 ${sum(rows, "새 가입(명)")}`} />
+            <Tile label={`${days}일 AI 오류`} value={sum(rows, "AI 오류(회)")} sub="0이 정상" />
+          </div>
+
+          <Bars rows={rows} k="앱 사용자(명)" label="날짜별 앱 사용자(명)" />
+          <Bars rows={rows} k="홈페이지 방문자(명)" label="날짜별 홈페이지 방문자(명)" />
+
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="h2">들어와서 가입까지 ({days}일 합계)</div>
+            {funnel.map(([label, v]) => (
+              <div key={label} style={{ display: "grid", gridTemplateColumns: "104px 1fr 40px", alignItems: "center", gap: 8, margin: "6px 0", fontSize: 13 }}>
+                <span>{label}</span>
+                <div style={{ height: 12, borderRadius: 4, background: "var(--accent)", width: `${(v / fmax) * 100}%`, minWidth: v ? 4 : 0 }} />
+                <span style={{ textAlign: "right", fontWeight: 700 }}>{v}</span>
+              </div>
+            ))}
+            <p className="faint" style={{ margin: "6px 0 0", fontSize: 11.5 }}>날짜별 사람 수를 더한 값이라 같은 사람이 여러 날 오면 여러 번 들어가요.</p>
+          </div>
+
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="h2">어디서 왔나 ({days}일)</div>
+            {sources.length ? (
+              <Table cols={[["경로", (r) => r.name], ["홈페이지 방문", (r) => r.web], ["앱 처음 열기", (r) => r.open]]} rows={sources} />
+            ) : (
+              <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요.</p>
+            )}
+          </div>
+
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="h2">날짜별</div>
+            <Table
+              cols={[
+                ["날짜", (r) => md(r["날짜"])],
+                ["홈페이지", (r) => n(r["홈페이지 방문자(명)"])],
+                ["처음 열기", (r) => n(r["앱 처음 연 횟수"])],
+                ["앱 사용자", (r) => n(r["앱 사용자(명)"])],
+                ["로그인", (r) => n(r["로그인 사용자(명)"])],
+                ["비로그인", (r) => n(r["로그인 안 한 사용자(명)"])],
+                ["AI 채팅", (r) => n(r["AI 채팅(회)"])],
+                ["가입", (r) => n(r["새 가입(명)"])],
+              ]}
+              rows={rows}
+            />
+          </div>
+
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="h2">다시 왔나</div>
+            {data.retention?.length ? (
+              <Table
+                cols={[
+                  ["처음 쓴 날", (r) => md(r["처음 쓴 날"])],
+                  ["사용자", (r) => n(r["사용자(명)"])],
+                  ["다음 날", (r) => n(r["다음 날 다시(명)"])],
+                  ["2~7일", (r) => n(r["2~7일 안에 다시(명)"])],
+                  ["8~30일", (r) => n(r["8~30일 안에 다시(명)"])],
+                ]}
+                rows={data.retention.filter((r) => r["처음 쓴 날"] >= since)}
+              />
+            ) : (
+              <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요.</p>
+            )}
+          </div>
+
+          <button type="button" className="btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={() => download(all)}>
+            최근 30일 표 파일로 받기 (CSV · 엑셀)
+          </button>
+          <p className="faint" style={{ fontSize: 11.5, textAlign: "center" }}>통계를 넣은 날(11/2)부터 쌓여요. 가입 수는 그 전 기록도 들어가요.</p>
+        </>
+      )}
+    </div>,
+    document.body
+  );
+}

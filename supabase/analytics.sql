@@ -133,3 +133,29 @@ from f group by f.d0
 order by f.d0 desc;
 
 revoke all on public.analytics_report, public.analytics_sources, public.analytics_retention from anon, authenticated;
+
+-- ④ 운영자 화면(앱 설정 → 이용 통계): 이 표에 들어 있는 계정만 숫자를 볼 수 있다
+-- 운영자 추가: insert into public.analytics_admins (user_id) values ('Authentication → Users에서 복사한 내 계정 UID');
+create table if not exists public.analytics_admins (user_id uuid primary key references auth.users on delete cascade);
+alter table public.analytics_admins enable row level security;
+revoke all on public.analytics_admins from anon, authenticated;
+
+create or replace function public.is_analytics_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from analytics_admins where user_id = auth.uid())
+$$;
+
+create or replace function public.analytics_dashboard(p_days int default 30) returns json
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_analytics_admin() then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
+  return json_build_object(
+    'report', (select coalesce(json_agg(r), '[]') from (select * from analytics_report limit p_days) r),
+    'sources', (select coalesce(json_agg(s), '[]') from (select * from analytics_sources where "날짜" > (now() at time zone 'Asia/Seoul')::date - p_days) s),
+    'retention', (select coalesce(json_agg(t), '[]') from (select * from analytics_retention limit p_days) t)
+  );
+end $$;
+revoke execute on function public.is_analytics_admin(), public.analytics_dashboard(int) from public, anon;
+grant execute on function public.is_analytics_admin(), public.analytics_dashboard(int) to authenticated;
