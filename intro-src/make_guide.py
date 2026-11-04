@@ -11,7 +11,7 @@ def block(b):
     kind = b[0]
     if kind == "p": return f'<p>{b[1]}</p>'
     if kind == "steps": return '<ol class="g-steps">' + "".join(f'<li>{x}</li>' for x in b[1]) + '</ol>'
-    if kind == "ex": return '<div class="g-ex"><p class="g-ex-label">이렇게 물어보세요</p>' + "".join(f'<span>“{x}”</span>' for x in b[1]) + '</div>'
+    if kind == "ex": return '<div class="g-ex"><p class="g-ex-label">이렇게 적어 보세요</p>' + "".join(f'<span>“{x}”</span>' for x in b[1]) + '</div>'
     if kind == "tip": return f'<p class="g-tip">{icon("sparkles")}<span><b>알아 두면 좋아요</b> {b[1]}</span></p>'
     if kind == "note": return f'<p class="g-note">{icon("lock")}<span>{b[1]}</span></p>'
     if kind == "table": return '<dl class="g-table">' + "".join(f'<div><dt>{a}</dt><dd>{c}</dd></div>' for a, c in b[1]) + '</dl>'
@@ -61,14 +61,14 @@ html = f'''<!doctype html>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>멍케어 사용 설명서</title>
-  <meta name="description" content="멍케어를 처음 쓰는 분을 위한 쉬운 사용 설명서. 설치, 비서, 체크리스트, 프로필, 일정표, 가계부를 하나씩 알려 드려요." />
+  <meta name="description" content="멍케어를 처음 쓰는 분을 위한 쉬운 사용 설명서. 설치, 홈(말로 기록), 체크리스트, 프로필, 일정표, 가계부를 하나씩 알려 드려요." />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://dog-care-app.onrender.com; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#ffffff" />
   <meta name="color-scheme" content="light only" />
   <link rel="canonical" href="https://meongcare.kr/intro/guide/" />
   <meta property="og:title" content="멍케어 사용 설명서" />
-  <meta property="og:description" content="처음 쓰는 분도 쉽게 — 설치부터 비서·체크리스트·프로필·일정표·가계부까지." />
+  <meta property="og:description" content="처음 쓰는 분도 쉽게 — 설치부터 홈(말로 기록)·체크리스트·프로필·일정표·가계부까지." />
   <meta property="og:image" content="https://meongcare.kr/intro/img/og-2x1.png?v=2" />
   <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
   <link rel="apple-touch-icon" href="/icon-180.png?v=6" />
@@ -116,7 +116,7 @@ html = f'''<!doctype html>
       <div>
         <p class="brand foot-brand"><img src="/icon-192.png?v=6" alt="" width="24" height="24" loading="lazy" /> 멍케어</p>
         <p>운영: 멍케어(대표 최정환)<br />문의: <a href="mailto:meongcare.app@gmail.com">meongcare.app@gmail.com</a></p>
-        <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 비서 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
+        <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 기록 도우미 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
       </div>
       <nav class="foot-links" aria-label="정책·문의"><a href="/intro/">소개</a><a href="/?app">앱 열기</a><a href="/?support">문의하기</a><a href="/?terms">이용약관</a><a href="/?privacy">개인정보 처리방침</a></nav>
     </div>
