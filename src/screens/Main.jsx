@@ -143,7 +143,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
   }
 
   // 질문으로 보이면: 응급 단어 → 응급 카드, 아니면 우리 자료(정보 카드·가이드북)에서 찾기. AI는 부르지 않는다.
-  const infoMessage = (said) => ({ role: "ai", kind: "info", emergency: isEmergency(said) ? EMERGENCY : null, results: findInfo(said) });
+  const infoMessage = (said) => {
+    const hit = isEmergency(said);
+    return { role: "ai", kind: "info", emergency: hit ? EMERGENCY : null, situation: hit ? EMERGENCY.situations.find((x) => x.keywords.includes(hit))?.line : null, results: findInfo(said) };
+  };
 
   // 보내기: 🎤 음성 인식이 끝나도 바로 이리로(듣는 동안 화면이 바뀌어도 최신 send를 쓰도록 ref로)
   const sendRef = useRef(null);
@@ -417,12 +420,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
 
 // 질문에 대한 안내: 응급이면 응급 카드가 먼저, 그다음 우리 정보 카드·가이드북. 진단·판단 없이 일반 참고 + 병원 안내만.
 function InfoAnswer({ msg }) {
-  const { emergency, results } = msg;
+  const { emergency, situation, results } = msg;
   return (
     <div className="rec-card">
       {emergency && (
         <div className="info-emergency" role="alert">
           <div className="info-emergency-title"><Ico name="alert" size={18} /> {emergency.title}</div>
+          {situation && <div style={{ fontWeight: 700, marginBottom: 6 }}>{situation}</div>}
           <div style={{ whiteSpace: "pre-line" }}>{emergency.message}</div>
           <div className="info-actions">
             {emergency.actions.map((a) => (
