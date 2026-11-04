@@ -4,6 +4,7 @@ import { STOOL } from "./records";
 // 피가 보인다고 했으면 대변 상태를 "피 섞임"으로. 반환값은 보호자가 확인·수정한 뒤 저장한다.
 const LOOK = ["안 보임", "보임", "판단 어려움"];
 const SHAPES = ["정상", "무름", "설사", "딱딱함"];
+const COLOR_WORDS = [["검은색", ["검", "까만", "타르"]], ["붉은색", ["붉", "빨"]], ["회색·흰색", ["회색", "흰", "하얀"]], ["초록색", ["초록", "녹색"]], ["노란색", ["노란", "노랑", "황색"]], ["갈색", ["갈색"]]];
 const text = (v, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 export function normalizeStoolResult(r) {
@@ -22,11 +23,17 @@ export function normalizeStoolResult(r) {
     summary: text(r.summary, 300),
   };
   const stool = obs.blood === "보임" ? "피 섞임" : SHAPES.includes(obs.shape) ? obs.shape : "";
+  // 새 변 체크 칸으로도 옮긴다: 색은 정해진 칩에 맞는 말이 있을 때만. 마음 쓰이는 색을 먼저 본다("붉은 갈색" → 붉은색). 보호자가 확인 후 저장.
+  const color = COLOR_WORDS.find(([, words]) => words.some((w) => obs.color.includes(w)))?.[0];
+  const signs = [obs.blood === "보임" && "피", obs.mucus === "보임" && "점액", obs.foreign === "보임" && "이물질·기생충 의심"].filter(Boolean);
   return {
     ok: true,
     obs,
     fill: {
       ...(STOOL.includes(stool) ? { stool } : {}),
+      ...(score ? { stoolScore: score } : {}),
+      ...(color ? { stoolColor: color } : {}),
+      stoolSigns: signs,
       photoNote: [
         obs.score && `대변 점수 ${obs.score}/7`,
         `색 ${obs.color}`,

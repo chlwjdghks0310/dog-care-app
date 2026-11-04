@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { todayKey } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { addWeightRecord, updateWeightRecord } from "../services/weightLog";
@@ -8,9 +8,11 @@ import { normalizeStoolResult } from "../services/photoCheck";
 import { VITALS, VITAL } from "../data/vitals";
 import Ico from "../components/Ico";
 import { linkVetExpense } from "../services/vetVisits";
+import { stoolFlags, conditionFlags } from "../services/healthRules";
+import { StoolCheck, ConditionCheck } from "../components/HealthChecks";
 import {
   TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
-  localNow, newRecordId, validateRecord, saveRecord, syncSchedule,
+  localNow, newRecordId, validateRecord, saveRecord, syncSchedule, getRecords,
 } from "../services/records";
 
 const MAX_PHOTOS = 4;
@@ -77,6 +79,10 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
   const savedWeightId = useRef(initial?.source === "weight" ? initial.id : null);
   const set = (k) => (v) => setData((d) => ({ ...d, [k]: v?.target ? v.target.value : v }));
   const input = (k, props = {}) => <input value={data[k] ?? ""} onChange={set(k)} {...props} />;
+  const patch = (p) => setData((d) => ({ ...d, ...p }));
+  // 규칙 기반 병원 안내(배변·컨디션) — 같은 강아지의 다른 기록과 날짜로 "이틀 이어짐"을 본다
+  const others = useMemo(() => (type === "potty" || type === "condition" ? getRecords(dog.id).filter((r) => r.type === type && r.id !== id) : []), [dog.id, type, id]);
+  const flags = type === "potty" ? stoolFlags(data, others, at.slice(0, 10)) : type === "condition" ? conditionFlags(data.check, others, at.slice(0, 10)) : null;
   const text = (k, placeholder, rows = 2) => <textarea rows={rows} value={data[k] ?? ""} onChange={set(k)} placeholder={placeholder} maxLength={500} />;
 
   async function addPhotos(e) {
@@ -93,7 +99,8 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
   function save() {
     if (saving) return;
     setError("");
-    const rec = { id, type, at, data: type === "vital" ? { ...clean(data), value: Number(data.value) } : clean(data), memo: memo.trim(), photos };
+    const base = flags ? { ...data, flags } : data;
+    const rec = { id, type, at, data: type === "vital" ? { ...clean(base), value: Number(base.value) } : clean(base), memo: memo.trim(), photos };
     const problem = validateRecord(rec);
     if (problem) return setError(problem);
     setSaving(true);
@@ -174,13 +181,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
 
       {type === "potty" && (
         <>
-          <PhotoCheck
-            dog={dog}
-            onFilled={(fill, photo) => {
-              setData((d) => ({ ...d, ...fill }));
-              setPhotos((p) => [photo, ...p.filter((x) => x !== photo)].slice(0, MAX_PHOTOS));
-            }}
-          />
+          <StoolCheck data={data} onChange={patch} flags={flags} />
           <Field label="대변"><Pick options={STOOL} value={data.stool} onChange={set("stool")} /></Field>
           <Field label="소변"><Pick options={URINE} value={data.urine} onChange={set("urine")} /></Field>
         </>
@@ -209,6 +210,12 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
         <>
           <Field label="활동량"><Pick options={LEVELS} value={data.activity} onChange={set("activity")} /></Field>
           <Field label="수면"><Pick options={LEVELS} value={data.sleep} onChange={set("sleep")} /></Field>
+          <div className="h2" style={{ fontSize: 15 }}>컨디션 체크 (평소와 비교)</div>
+          <ConditionCheck check={data.check} onChange={set("check")} flags={flags} />
+          <label className="rec-check">
+            <input type="checkbox" checked={Boolean(data.videoTaken)} onChange={(e) => set("videoTaken")(e.target.checked)} />
+            영상 찍어 둠 (휴대폰 앨범에)
+          </label>
           <Field label="피부·귀·눈">{input("body", { placeholder: "예: 귀에서 냄새, 눈곱 많음" })}</Field>
           <Field label="구강">{input("oral", { placeholder: "예: 잇몸이 빨개요, 입 냄새" })}</Field>
         </>
@@ -257,6 +264,14 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
         </Field>
       )}
 
+      {type === "potty" && (
+        <AiStoolCheck
+          dog={dog}
+          photo={photos[0]}
+          onFilled={(fill) => setData((d) => ({ ...d, ...fill, stoolSigns: [...new Set([...(d.stoolSigns || []), ...fill.stoolSigns])] }))}
+        />
+      )}
+
       {error && <p className="error-text" role="alert">{error}</p>}
       <button type="button" className="btn-primary" onClick={save} disabled={saving}>
         {saving ? "저장 중…" : "저장"}
@@ -265,100 +280,65 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
   );
 }
 
-// 사진으로 채우기: 동그라미 안에 사진, 둘레에 보이는 것. 결과는 아래 칸에 채우고 보호자가 확인 후 저장한다.
-function PhotoCheck({ dog, onFilled }) {
+// 선택: 첫 번째 첨부 사진을 AI가 보고 위 칸을 미리 채운다(하루 2번, 참고). 보호자가 확인·고친 뒤 저장한다.
+function AiStoolCheck({ dog, photo, onFilled }) {
   const [state, setState] = useState({ step: "idle" });
   const abortRef = useRef(null);
 
-  async function run(photo) {
+  async function run() {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    setState({ step: "busy", photo });
+    setState({ step: "busy" });
     try {
       const raw = await quickStoolCheck(dog, photo.split(",")[1], ctrl.signal);
       const r = normalizeStoolResult(raw);
-      if (!r.ok) return setState({ step: "retake", photo, msg: r.retake });
-      onFilled({ ...r.fill, photoSummary: r.obs.summary }, photo);
-      setState({ step: "done", photo, obs: r.obs });
+      if (!r.ok) return setState({ step: "retake", msg: r.retake });
+      onFilled({ ...r.fill, photoSummary: r.obs.summary });
+      setState({ step: "done", obs: r.obs });
     } catch (err) {
       if (err.name === "AbortError") return setState({ step: "idle" });
-      setState({ step: "error", photo, msg: err instanceof TypeError ? "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요." : err.message });
+      // 서버의 하루 횟수 제한(429) 문구도 그대로 보여 준다
+      setState({ step: "error", msg: err instanceof TypeError ? "AI 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요." : err.message });
     }
   }
 
-  async function pick(e) {
-    const f = e.target.files?.[0];
-    e.target.value = "";
-    if (!f) return;
-    try {
-      run(await resizeImageFile(f, 720, 0.8));
-    } catch {
-      setState({ step: "error", msg: "사진을 불러오지 못했어요. 다른 사진으로 해 주세요." });
-    }
-  }
-
-  const picker = (label) => (
-    <label className="btn-ghost small pc-pick">
-      {label}
-      <input type="file" accept="image/*" onChange={pick} hidden />
-    </label>
-  );
-  const { step, photo, obs, msg } = state;
-
-  if (step === "idle")
-    return (
-      <label className="pc-start">
-        <span className="pc-start-icon" aria-hidden="true"><Ico name="camera" size={28} /></span>
-        <span>
-          <b>사진으로 채우기</b>
-          <span className="faint" style={{ display: "block" }}>변 사진을 찍거나 앨범에서 고르면 보이는 모양·색을 정리해서 아래 칸을 채워 줘요. 진단은 아니에요.</span>
-        </span>
-        <input type="file" accept="image/*" onChange={pick} hidden />
-      </label>
-    );
-
-  const flagged = obs?.flags.length > 0;
+  const { step, obs, msg } = state;
   return (
     <div className="pc" aria-live="polite">
-      {photo && (
-        <div className={`pc-circle${step === "busy" ? " busy" : ""}${flagged ? " flagged" : ""}`}>
-          <img src={photo} alt="분석한 변 사진" />
-        </div>
-      )}
-      {step === "busy" && (
+      <b>AI로 사진 확인 (선택 · 참고)</b>
+      {!photo ? (
+        <p className="faint" style={{ margin: "6px 0 0" }}>위 사진 칸에 변 사진을 넣으면 AI가 보이는 모양·색을 정리해 칸을 미리 채워 줄 수 있어요.</p>
+      ) : step === "busy" ? (
         <>
-          <p className="subtle" style={{ margin: "10px 0" }}>사진을 살펴보는 중… 보통 5~10초 걸려요.</p>
+          <p className="subtle" style={{ margin: "10px 0" }}>첫 번째 사진을 살펴보는 중… 보통 5~10초 걸려요.</p>
           <button type="button" className="btn-ghost small" onClick={() => abortRef.current?.abort()}>취소</button>
         </>
-      )}
-      {step === "done" && (
+      ) : (
         <>
-          <div className="pc-chips">
-            {[["모양", obs.shape], ["색", obs.color], ["피", obs.blood], ["점액", obs.mucus], ["이물질", obs.foreign]].map(([k, v]) => (
-              <span key={k} className={`pc-chip${(k === "피" || k === "점액" || k === "이물질") && v === "보임" ? " warn" : ""}`}>
-                <span className="faint">{k}</span> {v}
-              </span>
-            ))}
-          </div>
-          {flagged && (
-            <div className="pc-flags" role="alert">
-              <b>병원에 연락해 보면 좋은 신호</b>
-              {obs.flags.map((f, i) => <div key={i}>• {f}</div>)}
-            </div>
+          {step === "done" && (
+            <>
+              <div className="pc-chips">
+                {[["모양", obs.shape], ["색", obs.color], ["피", obs.blood], ["점액", obs.mucus], ["이물질", obs.foreign]].map(([k, v]) => (
+                  <span key={k} className={`pc-chip${(k === "피" || k === "점액" || k === "이물질") && v === "보임" ? " warn" : ""}`}>
+                    <span className="faint">{k}</span> {v}
+                  </span>
+                ))}
+              </div>
+              {obs.flags.length > 0 && (
+                <div className="pc-flags">
+                  <b>AI가 본 마음 쓰이는 점 (참고)</b>
+                  {obs.flags.map((f, i) => <div key={i}>• {f}</div>)}
+                </div>
+              )}
+              {obs.summary && <p className="subtle" style={{ margin: "8px 0 0" }}>{obs.summary}</p>}
+              <p className="faint" style={{ margin: "8px 0" }}>위 칸에 채워 뒀어요. 실제와 다르면 고친 뒤 저장해 주세요. 사진만으로는 정확하지 않을 수 있어요.</p>
+            </>
           )}
-          {obs.summary && <p className="subtle" style={{ margin: "8px 0 0" }}>{obs.summary}</p>}
-          <p className="faint" style={{ margin: "8px 0" }}>아래 칸에 채워 뒀어요. 실제와 다르면 고친 뒤 저장해 주세요. 사진만으로는 정확하지 않을 수 있어요.</p>
-          {picker("다른 사진으로")}
-        </>
-      )}
-      {(step === "retake" || step === "error") && (
-        <>
-          <p className={step === "error" ? "error-text" : "subtle"} style={{ margin: "10px 0" }}>{msg}</p>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-            {step === "error" && photo && <button type="button" className="btn-ghost small" onClick={() => run(photo)}>다시 시도</button>}
-            {picker("다시 찍기")}
-          </div>
+          {(step === "retake" || step === "error") && <p className={step === "error" ? "error-text" : "subtle"} style={{ margin: "10px 0" }}>{msg}</p>}
+          <button type="button" className="btn-ghost small" style={{ marginTop: 8 }} onClick={run}>
+            {step === "idle" ? "AI로 사진 확인 (하루 2번)" : "다시 확인 (하루 2번)"}
+          </button>
         </>
       )}
     </div>
@@ -393,6 +373,6 @@ function clean(data) {
   return Object.fromEntries(
     Object.entries(data)
       .map(([k, v]) => [k, typeof v === "string" ? v.trim() : v])
-      .filter(([, v]) => (Array.isArray(v) ? v.length : v !== "" && v != null && v !== false))
+      .filter(([, v]) => (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : v !== "" && v != null && v !== false))
   );
 }
