@@ -25,17 +25,17 @@ function ConsentSheet({ onDone }) {
         </div>
         <div className="es-scroll" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}>
           <p className="subtle" style={{ margin: 0 }}>
-            AI가 답하려면 아래 정보가 외부 AI 회사로 전송돼요.
+            말로 기록하기와 AI 사진·영상 확인(선택)을 쓰려면 아래 정보가 외부 AI 회사로 전송돼요.
           </p>
           <ul className="subtle" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
             <li>
-              <b>보내는 것:</b> 내가 쓴 질문·대화, 첨부한 사진·영상, 말로 입력한 음성, 그리고 답에 필요한 강아지 정보(프로필과 최근 기록 요약)
+              <b>보내는 것:</b> 기록하려고 적거나 말한 문장, AI 확인을 누른 사진·영상, 말로 입력한 음성, 그리고 기록에 필요한 강아지 정보(프로필과 최근 기록 요약)
             </li>
             <li>
-              <b>받는 곳:</b> Anthropic(질문·사진 분석), Google(영상 분석·음성 받아쓰기)
+              <b>받는 곳:</b> Anthropic(말로 기록하기·사진 확인), Google(영상 확인·음성 받아쓰기)
             </li>
             <li>
-              <b>쓰는 곳:</b> 답변을 만드는 데만 쓰고, 음성은 글자로 바꾼 뒤 저장하지 않아요. 멍케어는 이 정보를 광고에 쓰지 않아요.
+              <b>쓰는 곳:</b> 기록 정리와 확인 결과를 만드는 데만 쓰고, 음성은 글자로 바꾼 뒤 저장하지 않아요. 멍케어는 이 정보를 광고에 쓰지 않아요.
             </li>
           </ul>
           <p className="faint" style={{ margin: 0 }}>동의하지 않아도 기록·일정·알림 등 다른 기능은 그대로 쓸 수 있어요. 설정에서 언제든 철회할 수 있어요.</p>
@@ -55,7 +55,7 @@ function ConsentSheet({ onDone }) {
 export function AIConsentCard() {
   const [agreed, setAgreed] = useState(hasAIConsent);
   const toggle = () => {
-    if (agreed && !window.confirm("동의를 철회할까요? AI 질문·사진·영상·음성 입력을 쓰려면 다시 동의해야 해요.")) return;
+    if (agreed && !window.confirm("동의를 철회할까요? 말로 기록하기·AI 사진·영상 확인·음성 입력을 쓰려면 다시 동의해야 해요.")) return;
     setAIConsent(!agreed);
     setAgreed(!agreed);
   };

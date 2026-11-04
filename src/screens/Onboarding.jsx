@@ -22,14 +22,13 @@ import Ico from "../components/Ico";
 // 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
 // 6장(신뢰·손동작 포함), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
 const SLIDES = [
-  { title: "우리 강아지와 대화해요", text: "궁금한 걸 물으면 우리 아이에 맞춰 답해요.\n비서 강아지 여름·가을·겨울 중에 골라요." },
-  { title: "사진·영상도 봐 줘요", text: "찍어 보내면 보이는 걸 정리하고\n이어서 물어볼 질문도 골라 줘요." },
   { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n건강 기록·가계부·일정·체중까지 알아서 적어요." },
+  { title: "변·컨디션도 쉽게 기록", text: "보고 고르기만 하면 기록이 쌓여요.\n원할 때만 AI가 사진·영상을 참고로 봐 줘요." },
   { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에, 일정·가계부도 한곳에\n밥·약·일정 시간엔 알림이 와요." },
   { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n참고 수치에는 출처를 밝혀요." },
   { title: "손끝으로 빠르게", text: "아래 프로필 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
 ];
-const SLIDE_VISUALS = [ModesMock, PhotoMock, ChatMock, CareMock, TrustMock, GestureMock];
+const SLIDE_VISUALS = [ChatMock, PhotoMock, CareMock, TrustMock, GestureMock];
 
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -62,7 +61,7 @@ function Login({ onGuest }) {
         <SpeechBubble>안녕! 나랑 같이 시작해 볼래? 🐾</SpeechBubble>
         <DogAvatarVideo state="idle" height={210} breed="pomeranian" />
         <div className="onb-title" style={{ marginBottom: 6 }}>멍케어</div>
-        <p className="onb-text" style={{ margin: "0 auto" }}>우리 아이 기록·알림·AI 비서를 한곳에</p>
+        <p className="onb-text" style={{ margin: "0 auto" }}>우리 아이 기록·알림·일정을 한곳에</p>
       </div>
       <div className="login-bottom">
         <LoginForm onEmail={() => setSheet("email")} />
@@ -139,40 +138,18 @@ function Intro({ onDone }) {
 
 const Example = () => <div className="onb-example">예시 화면</div>;
 
-function ModesMock() {
-  return (
-    <div style={{ width: "100%", maxWidth: 300 }}>
-      <DogAvatarVideo state="idle" height={110} breed="pomeranian" />
-      <div className="onb-mock" style={{ marginTop: 6, padding: "6px 14px" }}>
-        {[
-          ["zap", "여름", "포메라니안 · 핵심만 빠르게", "blue"],
-          ["chatHeart", "가을", "리트리버 · 수다 친구처럼", "rose"],
-          ["book", "겨울", "보더콜리 · 자료 찾아 꼼꼼하게", "violet"],
-        ].map(([icon, name, desc, tone]) => (
-          <div key={name} className="onb-mock-row">
-            <span className={`sv-icon tone-${tone}`} style={{ width: 32, height: 32, borderRadius: 10 }}><Ico name={icon} size={17} /></span>
-            <b style={{ minWidth: 40 }}>{name}</b>
-            <span className="subtle" style={{ fontSize: 14 }}>{desc}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function PhotoMock() {
   return (
     <div className="onb-mock" style={{ textAlign: "left" }}>
       <Example />
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
         <div className="onb-photo sv-icon tone-rose"><Ico name="camera" size={22} /></div>
-        <div style={{ fontWeight: 800, lineHeight: 1.4 }}>사진에서 본 걸 정리했어!</div>
+        <div style={{ fontWeight: 800, lineHeight: 1.4 }}>변 체크 · 컨디션 체크</div>
       </div>
-      <div className="onb-section"><Ico name="eye" size={13} /> 사진에서 본 것</div>
-      <div className="onb-section caution"><Ico name="stethoscope" size={13} /> 이럴 땐 병원에</div>
+      <div className="onb-section"><Ico name="check" size={13} /> 모양·색을 보고 고르기</div>
+      <div className="onb-section caution"><Ico name="stethoscope" size={13} /> 이럴 땐 병원에 연락</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-        <span className="onb-followup">집에서 확인할 것은?</span>
-        <span className="onb-followup">병원 가야 할 때는?</span>
+        <span className="onb-followup">AI로 사진 확인 (선택)</span>
       </div>
     </div>
   );

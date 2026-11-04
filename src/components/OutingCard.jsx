@@ -150,7 +150,7 @@ function CheckinSheet({ dog, onClose, onDone, onAsk }) {
             <p className="subtle" style={{ margin: 0 }}>프로필 → 건강 기록에서 보거나 고칠 수 있어요. 완료 표시는 체크리스트 위로 옮겨 둘게요.</p>
             {concern && onAsk && (
               <button type="button" className="btn-ghost" style={{ marginTop: 14 }} onClick={() => (onAsk(`오늘 저녁에 보니 ${[meal === "안 먹었어" && "밥을 거의 안 먹었고", stool === "설사" && "설사를 했고", ...odd.filter((o) => ["토했어", "기운 없어"].includes(o))].filter(Boolean).join(", ")} 어떻게 하면 좋을까?`), onClose())}>
-                비서에게 어떻게 할지 물어보기
+                관련 정보 찾아보기
               </button>
             )}
             <button type="button" className="btn-primary" style={{ marginTop: 10 }} onClick={onClose}>닫기</button>

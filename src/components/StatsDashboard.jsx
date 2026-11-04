@@ -139,7 +139,7 @@ export default function StatsDashboard({ onClose }) {
             <Tile label="오늘 앱 사용자" value={n(today["앱 사용자(명)"])} sub={`로그인 ${n(today["로그인 사용자(명)"])} · 안 함 ${n(today["로그인 안 한 사용자(명)"])}`} />
             <Tile label="오늘 홈페이지 방문자" value={n(today["홈페이지 방문자(명)"])} sub={`방문 ${n(today["홈페이지 방문(회)"])}회`} />
             <Tile label={`${days}일 앱 처음 연 횟수`} value={sum(rows, "앱 처음 연 횟수")} sub={`홈 화면 앱 ${sum(rows, "그중 홈 화면 앱")}`} />
-            <Tile label={`${days}일 AI 채팅`} value={sum(rows, "AI 채팅(회)")} sub={`로그인 안 함 ${sum(rows, "그중 로그인 안 함(회)")}회`} />
+            <Tile label={`${days}일 말로 기록`} value={sum(rows, "AI 채팅(회)")} sub={`로그인 안 함 ${sum(rows, "그중 로그인 안 함(회)")}회`} />
             <Tile label="누적 가입" value={n(today["누적 가입(명)"])} sub={`${days}일 새 가입 ${sum(rows, "새 가입(명)")}`} />
             <Tile label={`${days}일 AI 오류`} value={sum(rows, "AI 오류(회)")} sub="0이 정상" />
           </div>
@@ -178,7 +178,7 @@ export default function StatsDashboard({ onClose }) {
                 ["앱 사용자", (r) => n(r["앱 사용자(명)"])],
                 ["로그인", (r) => n(r["로그인 사용자(명)"])],
                 ["비로그인", (r) => n(r["로그인 안 한 사용자(명)"])],
-                ["AI 채팅", (r) => n(r["AI 채팅(회)"])],
+                ["말로 기록", (r) => n(r["AI 채팅(회)"])],
                 ["가입", (r) => n(r["새 가입(명)"])],
               ]}
               rows={rows}

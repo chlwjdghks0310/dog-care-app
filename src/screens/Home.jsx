@@ -187,7 +187,7 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
       </button>
 
       <button type="button" className="link-btn" style={{ display: "block", margin: "14px auto 0" }} onClick={onOpenMain}>
-        궁금한 점은 비서 탭의 강아지한테 물어보세요 ›
+        홈 화면에서 말로 기록하기 ›
       </button>
     </div>
   );

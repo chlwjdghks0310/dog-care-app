@@ -131,7 +131,8 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
 });
 
 // AI 사용 횟수: 앱이 X-MC-V(기기 번호)·X-MC-L(로그인 1/0)을 붙여 보낸다. 채팅은 비서별(source=mode), 나머지는 기능별
-const AI_ROUTES = { "/api/ask": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video" };
+// chat = 말로 기록하기(예전 AI 채팅 자리 — 통계 표의 "AI 채팅" 칸에 그대로 쌓인다)
+const AI_ROUTES = { "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video" };
 app.use(Object.keys(AI_ROUTES), (req, res, next) => {
   if (req.method === "POST" && !isBot(req)) {
     const kind = AI_ROUTES[req.baseUrl];
@@ -140,6 +141,34 @@ app.use(Object.keys(AI_ROUTES), (req, res, next) => {
     track(kind === "chat" ? `ai_chat:${login ? "login" : "anon"}` : `ai_other:${login ? "login" : "anon"}`, kind === "chat" ? clean(req.body?.mode) : kind, v, ["ai", login ? "ai_login" : "ai_anon"]);
     res.on("finish", () => res.statusCode >= 500 && track("ai_error", kind, null, null));
   }
+  next();
+});
+
+// 기기별 하루 사용 한도(무료로 쓰는 AI 비용의 상한). 기기 번호(X-MC-V) 해시로 세고, 없으면 IP로 센다.
+// check = 변 사진·영상 AI 상태 확인(합쳐서), record = 말로 기록하기, voice = 서버 받아쓰기, food = 사료 정보·라벨 읽기
+// ponytail: 서버 메모리에 세서 재시작(배포·잠듦)하면 초기화 — 정확한 한도가 필요해지면 Supabase에 하루 카운트 저장
+const DAILY_LIMITS = { check: 2, record: 60, voice: 20, food: 5 };
+const LIMIT_MESSAGES = {
+  check: "AI 상태 확인은 하루 2번까지예요. 내일 다시 써 주세요. 직접 고르는 기록은 언제든 할 수 있어요.",
+  record: "오늘은 말로 기록하기를 많이 썼어요. 내일 다시 써 주세요. 기록하기 화면에서 직접 적을 수 있어요.",
+  voice: "오늘은 음성 받아쓰기를 많이 썼어요. 글자로 적어 주세요.",
+  food: "사료 정보 찾기는 하루 5번까지예요. 내일 다시 해 주세요.",
+};
+const dailyUse = new Map();
+setInterval(() => {
+  const today = kstDay();
+  for (const k of dailyUse.keys()) if (!k.startsWith(today)) dailyUse.delete(k);
+}, 3600_000).unref();
+function overDailyLimit(req, bucket, who = visitorHash(req.get("x-mc-v")) || req.ip) {
+  const key = `${kstDay()}:${bucket}:${who}`;
+  const n = (dailyUse.get(key) || 0) + 1;
+  if (n > DAILY_LIMITS[bucket]) return true;
+  dailyUse.set(key, n);
+  return false;
+}
+const LIMITED = { "/api/analyze-photo": "check", "/api/quick-stool": "check", "/api/analyze-behavior": "check", "/api/record": "record", "/api/transcribe": "voice", "/api/food-info": "food", "/api/food-label": "food" };
+app.use(Object.keys(LIMITED), (req, res, next) => {
+  if (req.method === "POST" && overDailyLimit(req, LIMITED[req.baseUrl])) return res.status(429).json({ error: LIMIT_MESSAGES[LIMITED[req.baseUrl]] });
   next();
 });
 
@@ -305,19 +334,8 @@ function getChatMode(mode) {
   return CHAT_MODES[mode] || CHAT_MODES.bordercollie;
 }
 
-const SEARCH_HINT = `- 정보 질문이면 web_search 도구로 수의학 자료, 동물병원·사료회사·전문가 자료를 찾아 교차 확인한다. 마지막 줄에 "📚 참고: " 뒤에 참고한 출처 이름만 짧게 적는다. 잡담에는 검색하지 않는다.`;
 
-function chatRules(mode) {
-  const chatMode = getChatMode(mode);
-  return [PERSONA_INSTRUCTIONS, "", chatMode.style, chatMode.webSearch ? SEARCH_HINT : null].filter((line) => line !== null).join("\n");
-}
 
-// 프롬프트 캐싱: 늘 같은 앞부분(규칙)에 표시를 붙여 AI 쪽에 5분 저장해 다시 쓰고(그 부분 입력 비용 0.05배),
-// 바뀌는 강아지 정보·기록은 표시 뒤에 둔다. 답 내용은 캐싱과 상관없이 같다. 절약량은 createWithContinuation이 로그로 남긴다.
-const cachedSystem = (fixed, dogContext) => [
-  { type: "text", text: `${fixed}\n\n${SAFETY_RULES}`, cache_control: { type: "ephemeral" } },
-  { type: "text", text: dogInfo(dogContext) },
-];
 
 const FECAL_CHART = `퓨리나 대변 점수표(Purina Fecal Scoring Chart, 1~7점, 임상 통용 평가 도구):
 1점: 매우 단단하고 건조한 알갱이 형태, 배출이 어려울 수 있음
@@ -405,31 +423,6 @@ function buildVetVideoSystemPrompt(dogContext) {
 const EMPHASIS_RULE =
   "- 가장 중요한 한 가지(병원에 가야 하는 경고가 있으면 그 경고, 없으면 가장 핵심적인 내용)는 문장 하나만 **별표 두 개로 감싸서** 강조합니다. 두 군데 이상 강조하지 않습니다.";
 
-function photoRules(mode) {
-  return [
-    PERSONA_INSTRUCTIONS,
-    "",
-    getChatMode(mode).style,
-    "",
-    "단, 지금은 사용자가 보낸 사진을 분석하는 상황입니다. 사진에 실제로 보이는 것(자세, 표정, 눈/귀/피부, 걸음걸이를 유추할 수 있는 자세, 또는 대변 등 무엇이든)을 아래 공개된 평가 기준으로 설명하세요. 사진 내용을 미리 변이나 특정 상태로 단정하지 않고, 보이는 그대로 관찰합니다.",
-    "",
-    BEHAVIOR_REFERENCE,
-    "",
-    FECAL_CHART,
-    "",
-    FECAL_COLOR_GUIDE,
-    "",
-    RED_FLAGS,
-    "",
-    "반드시 지킬 원칙:",
-    "- 질병이나 행동 문제를 확정 진단하지 않습니다. 이 분석은 참고 정보이며 수의사·훈련사의 판단을 대신하지 않습니다.",
-    "- 사진에서 실제로 보이는 것만 근거로 설명하고, 보이지 않는 것은 추측하지 않습니다. 아무리 사소해 보이는 신호(하품, 시선 피하기, 살짝 핥는 입술 등)도 보이면 놓치지 말고 짚어줍니다.",
-    "- 임의의 약물이나 치료법을 제시하지 않습니다.",
-    "- 부가 설명은 맨 앞에 '👀 사진에서 본 나' 소제목을 추가해 보이는 것을 하나하나 적고, 해당하는 신호 분류([1]~[7] 또는 대변 점수·색 기준)도 짚어주되, 보호자에게는 \"[4]\" 같은 대괄호 번호 없이 이름(예: 파행 등급, 진정 신호)으로만 말합니다. 그 다음 위 형식의 소제목(확인법, 가능성, 집에서 해줄 것, 병원 기준)으로 이어갑니다. 레드플래그·열사병·4~5등급 파행·응급성 눈 이상에 해당하면 즉시 병원 방문을 맨 먼저 명확히 말합니다.",
-    EMPHASIS_RULE,
-    "- 강아지 사진이 아니거나 무엇을 보여주려는 건지 판별하기 어려우면, 억지로 추정하지 말고 다시 찍어달라고 안내합니다.",
-  ].join("\n");
-}
 
 function buildBehaviorAnalysisSystemPrompt(dogContext, mode) {
   return [
@@ -689,90 +682,42 @@ const APP_TOOL_RULES = `[앱에 기록하기]
   같은 약이 여러 번이라 어느 건지 애매하거나 [약 관리]에 없는 약이면 기록하지 말고 되묻는다. 먹이지 않은 약을 먹였다고 기록하지 않는다.
   놓친 약을 더 먹이거나 두 배로 먹이라고 하지 않는다. 구토·설사·처짐·발진·호흡 이상 등 이상 반응이 의심되면 약을 임의로 더 주거나 끊지 말고 바로 수의사에게 문의하라고 한다.`;
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_CHAT_IMAGES = 4;
 
-app.post("/api/ask", async (req, res) => {
-  const { dogContext, question, history, mode, categories, images, imagesAreContext, stream } = req.body || {};
-  const chatMode = getChatMode(mode);
-  // 사진: 최대 4장, 앱에서 줄여 보낸 base64. imagesAreContext=true면 앞서 보낸 사진을 후속 질문에 다시 붙인 것(새로 분석하라는 뜻 아님)
-  const photos = (Array.isArray(images) ? images : [])
-    .filter((im) => typeof im?.data === "string" && im.data.length > 0 && im.data.length < 6_000_000)
-    .slice(0, MAX_CHAT_IMAGES);
-  if (Array.isArray(images) && images.length && !photos.length) {
-    return res.status(400).json({ error: "사진을 읽지 못했어요. 다른 사진으로 다시 시도해 주세요." });
-  }
-  const text = typeof question === "string" ? question.trim() : "";
-  if (!text && !photos.length) {
-    return res.status(400).json({ error: "question is required" });
-  }
-  const analyzing = photos.length > 0 && !imagesAreContext;
-  // stream: true면 SSE로 글자 조각({t})을 먼저 보내고, 끝나면 평소 JSON과 같은 내용({done})을 보낸다
-  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
-  const reply = (payload) => (stream ? (send({ done: payload }), res.end()) : res.json(payload));
-  if (stream) res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" });
-  const onText = stream ? (t) => send({ t }) : undefined;
+// 질문 답변(AI 채팅)은 2026-11 종료 — 비용과 건강 답변 책임 때문에 "기록 중심"으로 바꿨다. 예전 앱이 부르면 안내만 한다.
+app.post("/api/ask", (req, res) => res.status(410).json({ error: "질문 답변 기능은 끝났어요. 앱을 완전히 껐다 켜면 새 화면이 나와요. 기록은 첫 화면에서 말로 적어 주세요." }));
 
+// 말로 기록하기: 보호자가 한 말을 앱 기록(도구 호출)으로만 바꾼다 — 가장 가벼운 모델, 생각 없이, 질문에는 답하지 않음.
+// 서버는 저장하지 않고 동작(actions)을 앱에 돌려주며, 앱이 형식을 확인한 뒤 저장한다(src/services/appActions.js).
+const RECORD_MODEL = "claude-haiku-5-5";
+const RECORD_RULES = `너는 강아지 돌봄 앱 "멍케어"의 기록 도우미다. 보호자가 한 말을 앱 기록으로 바꾸는 일만 한다.
+- 기록할 일이 분명하면 알맞은 도구를 부른다. 여러 가지를 말하면 도구를 여러 번 부른다.
+- 필요한 정보가 빠졌으면 도구를 부르지 말고, 무엇을 더 알려 주면 되는지 한 문장으로만 답한다(예: "얼마 썼는지 알려 주면 바로 적어 둘게!").
+- 기록이 아니라 질문·고민·잡담이면 도구를 부르지 말고 QUESTION 한 단어만 답한다. 건강 질문에 답하거나 조언·진단하지 않는다.`;
+app.post("/api/record", async (req, res) => {
+  const { dogContext, text, categories } = req.body || {};
+  const said = typeof text === "string" ? text.trim().slice(0, 500) : "";
+  if (!said) return res.status(400).json({ error: "기록할 내용을 적어 주세요." });
   try {
-    const userText = analyzing
-      ? `${photos.length > 1 ? `사진 ${photos.length}장을` : "이 사진을"} 보고 위 기준에 따라 참고 분석을 알려주세요.${text ? `\n보호자 질문: ${text}` : ""}`
-      : photos.length
-        ? `(앞서 보낸 사진을 다시 붙였어요 — 질문에 필요할 때만 참고해 주세요)\n${text}`
-        : text;
-    const messages = [
-      ...(Array.isArray(history) ? history : []).map((m) => ({
-        role: m.role === "ai" ? "assistant" : "user",
-        content: m.text,
-      })),
-      {
-        role: "user",
-        content: photos.length
-          ? [
-              ...photos.map((im) => ({ type: "image", source: { type: "base64", media_type: IMAGE_TYPES.includes(im.mediaType) ? im.mediaType : "image/jpeg", data: im.data } })),
-              { type: "text", text: userText },
-            ]
-          : userText,
-      },
-    ];
-
-    const params = {
-      ...(analyzing ? CLAUDE_MODEL : chatMode.model || CLAUDE_MODEL), // 사진 분석은 늘 Opus
-      max_tokens: 16000,
-      output_config: { effort: chatMode.effort },
-      system: cachedSystem(`${analyzing ? photoRules(mode) : chatRules(mode)}\n\n${APP_TOOL_RULES}\n\n${FOLLOWUP_RULE}`, dogContext),
-      tools: [...(chatMode.webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: chatMode.searches || 5 }] : []), ...appTools(categories)],
-    };
-    let convo = messages;
-    let response = await createWithContinuation(params, convo, onText);
-    const blocks = [...response.blocks];
-    const actions = [];
-    for (let i = 0; i < 3 && response.stop_reason === "tool_use"; i++) {
-      const uses = response.content.filter((b) => b.type === "tool_use");
-      actions.push(...uses.map((u) => ({ ...u.input, type: u.name }))); // 도구 이름이 항상 type(입력 칸 이름과 겹쳐도 덮이지 않게)
-      convo = [
-        ...convo,
-        { role: "assistant", content: response.content },
-        { role: "user", content: uses.map((u) => ({ type: "tool_result", tool_use_id: u.id, content: "앱에 기록을 전달했어요." })) },
-      ];
-      onText?.("\n\n");
-      response = await createWithContinuation(params, convo, onText);
-      blocks.push(...response.blocks);
-    }
-
-    if (response.stop_reason === "refusal") {
-      return reply({
-        answer: "이 질문에는 답변드리기 어려워요. 다르게 표현해서 다시 물어봐 주세요.",
-      });
-    }
-
-    const answerText = claudeText(response) || (actions.length ? "기록했어!" : "답변을 생성하지 못했어요.");
-    const u = response.usage || {};
-    // cache: 프롬프트 캐싱 확인용 숫자(토큰 수만, 화면엔 안 씀)
-    reply({ ...structuredReply(answerText, citationRefs({ blocks })), actions, cache: { read: u.cache_read_input_tokens || 0, write: u.cache_creation_input_tokens || 0, input: u.input_tokens || 0 } });
+    const response = await client.beta.messages.create({
+      model: RECORD_MODEL,
+      max_tokens: 2000,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      system: [
+        { type: "text", text: `${RECORD_RULES}\n\n${APP_TOOL_RULES}`, cache_control: { type: "ephemeral" } },
+        { type: "text", text: dogInfo(dogContext) },
+      ],
+      tools: appTools(categories),
+      messages: [{ role: "user", content: said }],
+    });
+    logCache(response);
+    const actions = response.content.filter((b) => b.type === "tool_use").map((u) => ({ ...u.input, type: u.name }));
+    const reply = claudeText(response);
+    const question = !actions.length && (!reply || /^QUESTION\b/i.test(reply));
+    res.json({ actions, question, reply: question ? "" : reply.replace(/^QUESTION\s*/i, "") });
   } catch (err) {
-    console.error("[server] Claude API error:", err.message);
-    if (stream) return track("ai_error", "chat", null, null), send({ error: "AI 서버 호출에 실패했어요." }), res.end();
-    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+    console.error("[server] record error:", err.message);
+    res.status(502).json({ error: "기록을 정리하지 못했어요. 잠시 뒤 다시 시도해 주세요." });
   }
 });
 
@@ -786,14 +731,13 @@ app.post("/api/analyze-photo", async (req, res) => {
   const type = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
 
   try {
-    // ponytail: 검색 2회·effort high·분량 제한으로 정확도와 대기시간(1분 안쪽)을 맞춤 — 더 느려도 되면 max_uses를 올릴 것
+    // AI 상태 확인(선택, 하루 2번): 대변 점수표·색 기준이 프롬프트에 있어서 검색 없이 중간 모델로(비용 약 1/5)
     const response = await createWithContinuation(
       {
-        ...CLAUDE_MODEL,
-        max_tokens: 16000,
-        output_config: { effort: "high" },
+        ...FAST_MODEL,
+        max_tokens: 8000,
+        output_config: { effort: "medium" },
         system: buildPhotoAnalysisSystemPrompt(dogContext),
-        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 2 }],
       },
       [
         {
@@ -883,7 +827,7 @@ app.post("/api/food-info", async (req, res) => {
   try {
     const response = await createWithContinuation(
       {
-        ...CLAUDE_MODEL,
+        ...FAST_MODEL,
         max_tokens: 8000,
         output_config: { effort: "medium" },
         system: [
@@ -944,7 +888,7 @@ app.post("/api/food-label", async (req, res) => {
   const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
   try {
     const response = await client.beta.messages.create({
-      ...CLAUDE_MODEL,
+      ...FAST_MODEL,
       max_tokens: 2000,
       output_config: { effort: "low" },
       system: [
@@ -1007,8 +951,9 @@ app.post("/api/quick-stool", async (req, res) => {
 
   try {
     const response = await client.beta.messages.create({
-      ...CLAUDE_MODEL,
+      ...FAST_MODEL,
       max_tokens: 1500,
+      output_config: { effort: "low" },
       system: [
         "보호자가 기록용으로 강아지 변 사진을 올렸습니다. 반드시 stool_observation 도구를 한 번 호출해서 사진에 보이는 것만 기록하세요. 도구 밖에 다른 글은 쓰지 않습니다.",
         "진단·병명·약 이름은 쓰지 않습니다. 확실하지 않으면 '판단 어려움'으로 둡니다. 레드플래그는 실제로 보일 때만 flags에 넣습니다.",
@@ -1044,41 +989,7 @@ app.post("/api/quick-stool", async (req, res) => {
 });
 
 // 메인 채팅(아바타)에서 보내는 사진용 — 변 사진 전용 프롬프트와 분리해, 무엇이든 사진에 보이는 대로 분석한다.
-app.post("/api/analyze-general-photo", async (req, res) => {
-  const { dogContext, imageBase64, mediaType, mode } = req.body || {};
-  if (!imageBase64 || typeof imageBase64 !== "string") {
-    return res.status(400).json({ error: "imageBase64 is required" });
-  }
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  const type = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
-
-  try {
-    const response = await client.beta.messages.create({
-      ...CLAUDE_MODEL,
-      max_tokens: 16000,
-      output_config: { effort: getChatMode(mode).effort },
-      system: cachedSystem(photoRules(mode), dogContext),
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: type, data: imageBase64 } },
-            { type: "text", text: "이 사진을 보고 위 기준에 따라 참고 분석을 알려주세요." },
-          ],
-        },
-      ],
-    });
-
-    if (response.stop_reason === "refusal") {
-      return res.json({ answer: "이 사진은 분석하기 어려워요. 더 잘 보이는 사진으로 다시 찍어주세요." });
-    }
-
-    res.json({ answer: claudeText(response) || "분석 결과를 생성하지 못했어요." });
-  } catch (err) {
-    console.error("[server] Claude vision API error:", err.message);
-    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
-  }
-});
+app.post("/api/analyze-general-photo", (req, res) => res.status(410).json({ error: "이 기능은 끝났어요." }));
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"];
 
@@ -1337,6 +1248,7 @@ wss.on("connection", async (client, req) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
   if (!gemini) return send({ error: "음성 인식이 아직 설정되지 않았어요." }), client.close();
   if ((liveByIp.get(ip) || 0) >= 2) return send({ error: "잠시 후 다시 시도해 주세요." }), client.close();
+  if (overDailyLimit(req, "voice", ip)) return send({ error: LIMIT_MESSAGES.voice }), client.close();
   liveByIp.set(ip, (liveByIp.get(ip) || 0) + 1);
   const limit = setTimeout(() => client.close(), 70_000);
   let session = null;

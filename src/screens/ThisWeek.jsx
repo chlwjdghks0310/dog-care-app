@@ -49,7 +49,7 @@ export default function ThisWeek({ dog, onBack, onOpenMain }) {
         style={{ textAlign: "center", marginTop: 14, marginBottom: 0, cursor: "pointer" }}
         onClick={onOpenMain}
       >
-        궁금한 점은 비서 탭의 강아지한테 물어보세요!
+        기록은 홈 화면에서 말로도 할 수 있어요!
       </p>
     </div>
   );

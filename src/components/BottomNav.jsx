@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { CalendarDaysIcon, DogIcon, ListChecksIcon, PawPrintIcon, WalletIcon } from "@animateicons/react/lucide";
 
 export const TABS = [
-  { key: "main", label: "비서", Icon: DogIcon },
+  { key: "main", label: "홈", Icon: DogIcon },
   { key: "home", label: "체크리스트", Icon: ListChecksIcon },
   { key: "profile", label: "프로필", Icon: PawPrintIcon },
   { key: "calendar", label: "일정표", Icon: CalendarDaysIcon },

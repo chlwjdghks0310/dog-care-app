@@ -37,7 +37,7 @@ await t({ e: "first_open", s: "blog", i: true, v: "abcdefgh-1234" });
 await t({ e: "open", l: false, i: true, d: true, v: "abcdefgh-1234" });
 await t({ e: "page", v: "abcdefgh-1234" }, "Googlebot/2.1"); // 봇은 안 셈
 await t({ e: "hack", v: "abcdefgh-1234" }); // 모르는 사건은 안 셈
-await fetch(`http://localhost:${PORT}/api/ask`, { method: "POST", headers: { "Content-Type": "application/json", "X-MC-V": "abcdefgh-1234", "X-MC-L": "0" }, body: JSON.stringify({ mode: "pomeranian" }) }); // 질문이 없어 400이어도 요청은 센다
+await fetch(`http://localhost:${PORT}/api/record`, { method: "POST", headers: { "Content-Type": "application/json", "X-MC-V": "abcdefgh-1234", "X-MC-L": "0" }, body: JSON.stringify({}) }); // 내용이 없어 400이어도 요청은 센다
 await new Promise((r) => setTimeout(r, 300));
 srv.kill();
 fake.close();
@@ -48,7 +48,7 @@ assert.deepEqual([page.p_metric, page.p_source, page.p_kinds], ["page:guide", "t
 assert.match(page.p_visitor, /^[0-9a-f]{24}$/, "기기 번호는 해시로만");
 assert.deepEqual([first.p_metric, first.p_source, first.p_visitor], ["app_first_open_installed", "blog", null]);
 assert.deepEqual([open.p_metric, open.p_kinds], ["app_open", ["app", "app_anon", "app_installed", "app_dog"]]);
-assert.deepEqual([ai.p_metric, ai.p_source, ai.p_kinds], ["ai_chat:anon", "pomeranian", ["ai", "ai_anon"]]);
+assert.deepEqual([ai.p_metric, ai.p_source, ai.p_kinds], ["ai_chat:anon", "", ["ai", "ai_anon"]]);
 assert.equal(page.p_visitor, open.p_visitor, "같은 기기는 같은 사람");
 assert.match(page.p_day, /^\d{4}-\d{2}-\d{2}$/);
 console.log("analytics ok");
