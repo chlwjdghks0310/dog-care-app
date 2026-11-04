@@ -6,7 +6,7 @@ import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getOccurrences } from "./calendarEvents";
 import { visitsByDate, isVisitEvent, eventTitle } from "./vetVisits";
 import { getChatMemory } from "./chatMemory";
-import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily } from "./records";
+import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily, stoolCheckText, checkText } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
 
 // 병원용 기록 — 앱에 쌓인 기록 + 보호자가 이번 진료를 위해 적은 메모를 수의사가 한눈에 읽게 정리한다.
@@ -84,6 +84,9 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     const keys = options ? options.filter((o) => counts[o]) : Object.keys(counts);
     observeLines.push(`${label}: ${keys.map((k) => `${k} ${counts[k].length}번${k !== "평소" && k !== "정상" ? `(${counts[k].slice(-4).join(", ")})` : ""}`).join(", ")}`);
   }
+  // 보호자가 고른 변 체크·컨디션 체크(그날 그대로)
+  for (const r of recs.filter((r) => r.type === "potty" && stoolCheckText(r.data))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 변 체크: ${stoolCheckText(r.data)}`);
+  for (const r of recs.filter((r) => r.type === "condition" && (checkText(r.data.check) || r.data.videoTaken))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 컨디션 체크: ${[checkText(r.data.check), r.data.videoTaken && "영상 찍어 둠(보호자 휴대폰)"].filter(Boolean).join(" · ")}`);
   for (const r of recs.filter((r) => r.type === "potty" && r.data.photoNote)) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 변 사진(참고): ${r.data.photoNote}${r.data.photoFlags?.length ? ` / ⚠ ${r.data.photoFlags.join(", ")}` : ""}`);
   for (const r of recs.filter((r) => r.type === "condition" && (r.data.body || r.data.oral))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} ${[r.data.body, r.data.oral].filter(Boolean).join(" / ")}`);
   add("observe", `식사·배변·컨디션 (보호자 관찰, 최근 ${note.period}일)`, observeLines);

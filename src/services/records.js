@@ -36,6 +36,32 @@ export const SYMPTOM_KINDS = ["구토", "설사", "기침", "식욕 없음", "�
 export const REPEAT = ["처음", "가끔", "자주", "계속"];
 export const STOOL = ["정상", "무름", "설사", "딱딱함", "피 섞임", "안 봄"];
 export const URINE = ["정상", "잦음", "적음", "색 이상", "실수", "안 봄"];
+// 변 체크(보호자가 직접 고름): 모양 점수 1~7(1 아주 딱딱 … 7 물 같음), 색, 보이는 것
+export const STOOL_COLORS = ["갈색", "노란색", "초록색", "검은색", "붉은색", "회색·흰색"];
+export const STOOL_SIGNS = ["피", "점액", "이물질·기생충 의심"];
+// 점수 → 대변 칸 기본값(보호자가 바꿀 수 있음)
+export const stoolFromScore = (n) => (n === 1 ? "딱딱함" : n <= 3 ? "정상" : n <= 5 ? "무름" : "설사");
+// 컨디션 체크: 여섯 가지를 평소와 비교
+export const CHECK_ITEMS = [
+  { key: "energy", label: "기운" },
+  { key: "appetite", label: "식욕" },
+  { key: "gait", label: "걸음걸이" },
+  { key: "breathing", label: "숨쉬기" },
+  { key: "vomitCough", label: "구토·기침" },
+  { key: "behavior", label: "평소와 다른 행동" },
+];
+export const CHECK_LEVELS = ["평소 같음", "조금 다름", "많이 다름"];
+
+// 변 체크 한 줄: "점수 5/7 · 노란색 · 점액"
+export const stoolCheckText = (d) => [d.stoolScore && `점수 ${d.stoolScore}/7`, d.stoolColor, ...(d.stoolSigns || [])].filter(Boolean).join(" · ");
+// 컨디션 체크 한 줄: 다른 항목만("숨쉬기 많이 다름"), 다 같으면 "체크 6가지 평소 같음"
+export function checkText(check) {
+  const done = CHECK_ITEMS.filter((i) => check?.[i.key]);
+  if (!done.length) return "";
+  const diff = done.filter((i) => check[i.key] !== "평소 같음").map((i) => `${i.label} ${check[i.key]}`);
+  return diff.length ? diff.join(" · ") : `체크 ${done.length}가지 평소 같음`;
+}
+
 export const DAILY_KINDS = ["산책", "간식", "미용·목욕", "양치", "놀이", "기타"];
 export const LIFE_KINDS = ["예방접종", "질환·수술", "기념일", "특별한 일", "추억"];
 
@@ -76,7 +102,14 @@ export function validateRecord(r, now = localNow()) {
   if (r.type === "life" && !d.kind) return "어떤 기록인지 골라 주세요.";
   if (r.type === "media" && !r.photos?.length) return "사진을 한 장 이상 넣어 주세요.";
   if (r.type === "daily" && !d.kind && !r.memo?.trim()) return "무엇을 했는지 고르거나 메모를 적어 주세요.";
-  const hasAny = Object.values(d).some((v) => (Array.isArray(v) ? v.length : v)) || r.memo?.trim() || r.photos?.length;
+  if (d.stoolScore != null && !(Number.isInteger(d.stoolScore) && d.stoolScore >= 1 && d.stoolScore <= 7)) return "변 모양 점수를 다시 골라 주세요.";
+  if (d.stoolColor && !STOOL_COLORS.includes(d.stoolColor)) return "변 색을 다시 골라 주세요.";
+  if (d.check && Object.entries(d.check).some(([k, v]) => !CHECK_ITEMS.some((i) => i.key === k) || !CHECK_LEVELS.includes(v))) return "컨디션 체크를 다시 골라 주세요.";
+  // flags(앱 안내 문구)·videoTaken만 있는 건 적은 내용으로 치지 않는다
+  const hasAny =
+    Object.entries(d).some(([k, v]) => k !== "flags" && k !== "videoTaken" && (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : v)) ||
+    r.memo?.trim() ||
+    r.photos?.length;
   if (!hasAny) return "적은 내용이 없어요.";
   return null;
 }
@@ -148,13 +181,13 @@ export function summarize(rec) {
       parts.push(d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount);
       break;
     case "potty":
-      parts.push(d.stool && `대변 ${d.stool}`, d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
+      parts.push(d.stool && `대변 ${d.stool}`, stoolCheckText(d), d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
       break;
     case "vet":
       parts.push(d.hospital, d.reason, Number(d.cost) > 0 && `진료비 ${Number(d.cost).toLocaleString("ko-KR")}원`, d.nextDate && `다음 진료 ${md(d.nextDate)}`);
       break;
     case "condition":
-      parts.push(d.activity && `활동 ${d.activity}`, d.sleep && `수면 ${d.sleep}`, d.body, d.oral);
+      parts.push(d.activity && `활동 ${d.activity}`, d.sleep && `수면 ${d.sleep}`, checkText(d.check), d.videoTaken && "영상 찍어 둠", d.body, d.oral);
       break;
     case "daily":
       parts.push(d.kind, d.minutes && `${d.minutes}분`, d.activity && `활동 ${d.activity}`);

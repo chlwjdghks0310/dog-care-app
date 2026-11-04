@@ -1150,3 +1150,17 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .outing-slot:empty { display: none; }
 /* 비서 답변: 접어 둔 소제목 펼치기 */
 .ai-more { display: block; width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--accent-strong); font-size: 14px; font-weight: 700; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 변 체크(모양 1~7)·컨디션 체크(평소와 비교) */
+.sc-list { display: flex; flex-direction: column; gap: 6px; }
+.sc-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px; text-align: left; border: 1px solid var(--border); border-radius: var(--radius-md); background: transparent; color: var(--text); }
+.sc-row.on { background: var(--accent-soft); border-color: var(--accent-strong); }
+.sc-art { width: 40px; height: 24px; flex-shrink: 0; color: var(--text-soft); }
+.sc-row.on .sc-art { color: var(--accent-strong); }
+.sc-num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; background: var(--accent-soft); color: var(--accent-strong); }
+.sc-text { display: flex; flex-direction: column; min-width: 0; font-size: 14.5px; line-height: 1.35; }
+.sc-text span { font-size: 12.5px; color: var(--text-soft); }
+.ck-row { display: flex; gap: 6px; }
+.ck-seg { min-height: 44px; padding: 8px 2px; font-size: 13.5px; }
+.ck-seg.on.lv1 { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+.ck-seg.on.lv2 { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
