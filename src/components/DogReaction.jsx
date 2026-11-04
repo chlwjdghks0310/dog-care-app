@@ -1,14 +1,16 @@
 import { useMemo } from "react";
-import { reactionFor } from "../data/recordReactions";
+import { reactionFor, reactionContext } from "../data/recordReactions";
+import { getTimeline } from "../services/records";
 
 import Ico from "./Ico";
 export default function DogReaction({ dog, rec, onClose }) {
-  const r = reactionFor(rec);
+  // 다시 그려도 문구가 바뀌지 않게 기록마다 한 번만 고른다
+  const r = useMemo(() => reactionFor(rec, { ...reactionContext(rec, getTimeline(dog.id)), dogName: dog.name }), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
   // 축하 조각 위치는 한 번만 정한다
   const pieces = useMemo(() => Array.from({ length: 14 }, (_, i) => ({ left: `${(i * 37) % 100}%`, delay: `${(i % 7) * 0.06}s`, hue: i % 4 })), []);
   return (
     <div className={`card dog-react${r.concern ? " concern" : ""}`} role="status">
-      {!r.concern && (
+      {!r.concern && !r.quiet && (
         <div className="confetti" aria-hidden="true">
           {pieces.map((p, i) => (
             <span key={i} className={`c${p.hue}`} style={{ left: p.left, animationDelay: p.delay }} />
