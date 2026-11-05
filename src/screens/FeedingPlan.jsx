@@ -50,7 +50,10 @@ export default function FeedingPlan({ dog, onBack }) {
   const storedTimes = getFeedingSettings(dog.id).times || [];
   const nothingToSave = settings.times.length === 0 && storedTimes.length === 0;
   function handleSave() {
-    saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), times: settings.times });
+    // 아이폰 시각 칸의 지우기로 빈 값이 생기거나 같은 시각을 두 번 넣으면 알림이 꼬이니, 빈 값·중복을 빼고 시간순으로
+    const times = [...new Set(settings.times.filter(Boolean))].sort();
+    saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), times });
+    setSettings((s) => ({ ...s, times }));
     setSaved(true);
   }
   // 배변 상태·사료 열량은 고르는 즉시 저장(멀리 위의 저장 버튼을 안 눌러도 남게)
