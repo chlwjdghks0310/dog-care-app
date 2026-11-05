@@ -693,6 +693,7 @@ const RECORD_RULES = `너는 강아지 돌봄 앱 "멍케어"의 기록 도우�
 - 기록할 일이 분명하면 알맞은 도구를 부른다. 여러 가지를 말하면 도구를 여러 번 부른다.
 - 말한 것만으로 기록할 수 있으면 바로 기록한다. 모르는 칸은 비워 두고 아는 것만 적는다(예: "아침 사료 다 먹었어" → 식사 기록 appetite 평소, "사료 3만 원 샀어" → 지출 3만 원·분류 사료).
 - 꼭 필요한 값(지출 금액, 체중 숫자 등)이 없을 때만 도구를 부르지 말고, 무엇을 알려 주면 되는지 한 문장으로 되묻는다(예: "얼마 썼는지 알려 주면 바로 적어 둘게!").
+- 시각(time)은 보호자가 "8시", "3시 반"처럼 시각을 말했을 때만 적는다. "아침·저녁"만 말하면 비워 둔다.
 - 답은 항상 한국어로, 기록했으면 따로 말하지 않아도 된다.
 - 기록이 아니라 질문·고민·잡담이면 도구를 부르지 말고 QUESTION 한 단어만 답한다. 건강 질문에 답하거나 조언·진단하지 않는다.`;
 app.post("/api/record", async (req, res) => {
@@ -714,7 +715,9 @@ app.post("/api/record", async (req, res) => {
     });
     logCache(response);
     const actions = response.content.filter((b) => b.type === "tool_use").map((u) => ({ ...u.input, type: u.name }));
-    const reply = claudeText(response);
+    // 되묻는 답에 영어 속생각이 섞여 나올 때가 있어 영어가 더 많은 줄은 버린다(QUESTION 표시는 남김).
+    const ko = (l) => (l.match(/[가-힣]/g) || []).length > (l.match(/[A-Za-z]/g) || []).length;
+    const reply = claudeText(response).split("\n").filter((l) => ko(l) || /^QUESTION\b/i.test(l.trim())).join("\n").trim();
     const question = !actions.length && (!reply || /^QUESTION\b/i.test(reply));
     res.json({ actions, question, reply: question ? "" : reply.replace(/^QUESTION\s*/i, "") });
   } catch (err) {
