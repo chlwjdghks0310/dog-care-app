@@ -63,7 +63,8 @@ const s = reactionFor({ type: "daily", at: "2026-11-04T08:00", data: { kind: "�
 assert.match(s.line, /3/);
 Math.random = rnd;
 // 첫 기록 문구, 이름 넣기
-assert.ok(FIRST_LINES.some((l) => l.replace("{what}", "산책") === reactionFor({ type: "daily", data: { kind: "산책" } }, { first: true }).line));
+const firstLine = reactionFor({ type: "daily", data: { kind: "산책" } }, { first: true }).line; // 한 번만 뽑는다(some 안에서 부르면 매번 새로 뽑힘)
+assert.ok(FIRST_LINES.some((l) => l.replace("{what}", "산책") === firstLine));
 const named = Array.from({ length: LINES.meal.length }, () => reactionFor(meal, { dogName: "초코" }).line);
 assert.ok(named.includes("초코는 배불러! *배 통통*"));
 assert.ok(!named.some((l) => l.includes("{")));
