@@ -6,7 +6,7 @@ import { STOOL_COLORS, STOOL_SIGNS, CHECK_ITEMS, CHECK_LEVELS, stoolFromScore } 
 // 모양 1~7: 그림은 직접 그린 단순한 모양(점·통나무·덩어리·물웅덩이)
 const SHAPES = [
   { n: 1, label: "아주 딱딱한 알갱이", desc: "하나씩 떨어진 딱딱한 알갱이", art: <><circle cx="8" cy="15" r="4" /><circle cx="19" cy="10" r="4" /><circle cx="30" cy="15" r="4" /><circle cx="19" cy="19" r="3.5" /></> },
-  { n: 2, label: "단단하고 마디 있음", desc: "마디가 보이고 집어도 모양 그대로 (이상적인 쪽)", art: <><ellipse cx="10" cy="13" rx="7" ry="6" /><ellipse cx="20" cy="12" rx="7" ry="6" /><ellipse cx="30" cy="13" rx="7" ry="6" /></> },
+  { n: 2, label: "단단하고 마디 있음", desc: "마디가 보이고 집어도 모양 그대로", art: <><ellipse cx="10" cy="13" rx="7" ry="6" /><ellipse cx="20" cy="12" rx="7" ry="6" /><ellipse cx="30" cy="13" rx="7" ry="6" /></> },
   { n: 3, label: "촉촉한 통나무 모양", desc: "겉이 촉촉하고 금이 조금, 집으면 자국이 남음", art: <><rect x="2" y="6" width="36" height="12" rx="6" /><path d="M13 6v4M21 18v-4M28 6v3" stroke="var(--surface)" strokeWidth="1.6" /></> },
   { n: 4, label: "아주 촉촉한 통나무", desc: "모양은 있지만 집으면 바닥에 묻어남", art: <rect x="2" y="7" width="36" height="10" rx="5" /> },
   { n: 5, label: "무른 덩어리", desc: "모양이 있는 무른 덩어리, 집으면 흩어짐", art: <><ellipse cx="9" cy="14" rx="7" ry="5" /><ellipse cx="22" cy="12" rx="6" ry="5" /><ellipse cx="33" cy="15" rx="5" ry="4" /></> },
