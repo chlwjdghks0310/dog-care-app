@@ -75,7 +75,6 @@ export default function App() {
   const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
-  const [checkinSignal, setCheckinSignal] = useState(0); // 저녁 체크인 알림으로 열리면 올려서 체크인 창을 띄운다
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
   const [vitalMetric, setVitalMetric] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
@@ -234,7 +233,6 @@ export default function App() {
     // 저녁 체크인 알림(/?checkin=1) → 비서 첫 화면에서 체크인 창
     if (params.get("checkin")) {
       setTab("main");
-      setCheckinSignal((n) => n + 1);
       return true;
     }
     // 주간 리포트 알림(/?report=1&dog=..) → 그 강아지의 이번 주 리포트
@@ -433,7 +431,7 @@ export default function App() {
       <>
         <div style={{ display: pageKey === "main" && tab !== "main" ? "none" : "contents" }}>
           <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-            <Main dog={dog} resetSignal={mainResetSignal} checkinSignal={checkinSignal} onCheckinHandled={() => setCheckinSignal(0)} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
+            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenVet={() => setTab("vet")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
           </Suspense>
         </div>
         {homeScreens[tab] && <Fragment key={`${dog.id}-${pageVersion}`}>{tab === "home" ? <SwipeBack key="home" onBack={() => setTab("main")} renderUnderlay={() => null}>{homeScreens.home()}</SwipeBack> : renderStack(homeScreens, "home")}</Fragment>}

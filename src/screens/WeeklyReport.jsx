@@ -29,7 +29,7 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
       {r.records < 3 && (
         <div className="wr-hint">
           <Ico name="idea" size={18} />
-          <span>이번 주는 기록이 {r.records}개예요. 저녁에 홈 화면의 <b>30초 체크인</b>만 눌러도 다음 주 리포트가 채워져요.</span>
+          <span>이번 주는 기록이 {r.records}개예요. 오늘 탭에서 <b>[평소와 같아요]</b>만 눌러도 다음 주 리포트가 채워져요.</span>
         </div>
       )}
 

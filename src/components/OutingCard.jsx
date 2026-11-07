@@ -1,28 +1,20 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { outingState, leaveNow, backNow, durationLabel, backTip, checkedInToday, markCheckedIn, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
-import { saveRecord, newRecordId, localNow } from "../services/records";
+import { outingState, leaveNow, backNow, durationLabel, backTip, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 
-// 비서 첫 화면의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어] → [30초 체크인]. 밖에 오래 있는 보호자가 아침·저녁에 한 번씩만 누르면 되게.
-// 체크인을 마치면 비서 화면에선 사라지고(place="main") 체크리스트의 '오늘 해야 할 일' 위에 같은 모양으로 보인다(place="checklist")
-export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose, place = "main" }) {
+// 오늘 탭의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어]. 하루 상태 체크는 위의 하루 체크 카드(DailyCheck)가 맡는다.
+export default function OutingCard({ dog }) {
   const [, setTick] = useState(0);
-  const [sheet, setSheet] = useState(openCheckin ? "checkin" : null); // "checkin" | "routine" | null
+  const [sheet, setSheet] = useState(null); // "routine" | "routine-ask" | null
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 60 * 1000); // "n시간째"를 1분마다 새로
     return () => clearInterval(id);
   }, []);
-  useEffect(() => {
-    if (openCheckin) setSheet("checkin"); // 저녁 체크인 알림을 눌러 들어온 경우
-  }, [openCheckin]);
 
   const s = outingState();
-  const done = checkedInToday(dog.id);
-  const evening = new Date().getHours() >= 17;
   const refresh = () => setTick((n) => n + 1);
-  const close = () => (setSheet(null), onCheckinClose?.());
   // 처음 [다녀올게]: 평소 외출 시간을 한 번만 물어본다(저녁 체크인 알림·혼자 있는 시간 어림에 필요)
   function leave() {
     leaveNow();
@@ -35,27 +27,20 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose, pl
     title = `${dog.name} 혼자 ${durationLabel(s.minutes)}째`;
     sub = s.estimated ? `평소 나가는 시각(${s.since}) 기준이에요` : `${s.since}에 나갔어요`;
     action = { label: "왔어", run: () => (backNow(), refresh()) };
-  } else if (s.state === "back" && !done) {
+  } else if (s.state === "back") {
     title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
     sub = backTip(s.minutes);
-    action = { label: "30초 체크인", run: () => setSheet("checkin") };
-  } else if (s.state === "back" || done) {
-    title = done ? "오늘 체크인 완료" : `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
-    sub = s.state === "back" ? `혼자 ${durationLabel(s.minutes)} · 내일 아침 나갈 때 또 눌러 주세요` : "기록은 프로필 건강 기록에 있어요";
   } else {
-    title = evening ? `${dog.name} 오늘 어땠어요?` : "외출할 때 눌러 주세요";
-    sub = evening ? "밥·배변·산책을 30초에 기록해요" : `${dog.name}가 혼자 있는 시간을 챙겨 줄게요`;
-    action = evening ? { label: "30초 체크인", run: () => setSheet("checkin") } : { label: "다녀올게", run: leave };
+    title = "외출할 때 눌러 주세요";
+    sub = `${dog.name} 혼자 있는 시간을 챙겨 줄게요`;
+    action = { label: "다녀올게", run: leave };
   }
 
-  // 체크인을 마친 날: 비서 화면에선 숨기고(닫는 중인 창은 그대로) 체크리스트에서만 보인다
-  const show = place === "checklist" ? done : !done || sheet;
-  if (!show) return null;
   return (
     <>
-      <div className="outing-card" style={done && place === "main" ? { display: "none" } : undefined}>
+      <div className="outing-card">
         <span className="outing-ico">
-          <Ico name={done ? "check" : s.state === "away" ? "timer" : "house"} size={20} />
+          <Ico name={s.state === "away" ? "timer" : "house"} size={20} />
         </span>
         <div className="outing-text">
           <b>{title}</b>
@@ -70,106 +55,8 @@ export default function OutingCard({ dog, onAsk, openCheckin, onCheckinClose, pl
           <Ico name="settings" size={17} />
         </button>
       </div>
-      {sheet === "checkin" && <CheckinSheet dog={dog} onClose={close} onAsk={onAsk} onDone={() => (markCheckedIn(dog.id), refresh())} />}
       {(sheet === "routine" || sheet === "routine-ask") && <RoutineSheet ask={sheet === "routine-ask"} onClose={() => setSheet(null)} />}
     </>
-  );
-}
-
-const MEAL = { "다 먹었어": "평소", 남겼어: "평소보다 적음", "안 먹었어": "평소보다 적음" };
-const STOOL_PICK = ["정상", "무름", "설사", "못 봤어"];
-const URINE_PICK = ["정상", "실수했어", "못 봤어"];
-const ODD = ["토했어", "기운 없어", "물건 망가뜨림", "많이 짖었대요"];
-const WALK = ["못 했어", "10분", "20분", "30분", "1시간"];
-
-// 저녁 체크인: 버튼만 눌러 기록 여러 개를 한 번에. 고른 것만 기록하고, 프로필에서 직접 적은 기록과 같은 모양으로 저장한다.
-function CheckinSheet({ dog, onClose, onDone, onAsk }) {
-  const [meal, setMeal] = useState("");
-  const [stool, setStool] = useState("");
-  const [urine, setUrine] = useState("");
-  const [odd, setOdd] = useState([]);
-  const [walk, setWalk] = useState("");
-  const [saved, setSaved] = useState(null); // 저장한 기록 수
-  const [error, setError] = useState("");
-
-  const toggleOdd = (v) => setOdd((l) => (l.includes(v) ? l.filter((x) => x !== v) : [...l, v]));
-  const concern = meal === "안 먹었어" || odd.includes("토했어") || odd.includes("기운 없어") || stool === "설사";
-
-  function save() {
-    const at = localNow();
-    const rec = (type, data, memo = "") => ({ id: newRecordId(), type, at, data, memo, photos: [] });
-    const list = [];
-    if (meal) list.push(rec("meal", { appetite: MEAL[meal] }, meal === "안 먹었어" ? "저녁에 보니 거의 안 먹음" : ""));
-    const st = STOOL_PICK.includes(stool) && stool !== "못 봤어" ? stool : "";
-    const ur = urine === "정상" ? "정상" : urine === "실수했어" ? "실수" : "";
-    if (st || ur) list.push(rec("potty", { ...(st && { stool: st }), ...(ur && { urine: ur }) }));
-    const kinds = [odd.includes("토했어") && "구토", odd.includes("기운 없어") && "기운 없음"].filter(Boolean);
-    if (kinds.length) list.push(rec("symptom", { kinds }, "저녁 체크인에서 기록"));
-    const alone = odd.filter((o) => !["토했어", "기운 없어"].includes(o));
-    if (alone.length) list.push(rec("condition", {}, `혼자 있을 때: ${alone.join(", ")}`));
-    const walkMin = { "10분": 10, "20분": 20, "30분": 30, "1시간": 60 }[walk];
-    if (walkMin) list.push(rec("vital", { metric: "walk", value: walkMin }));
-    if (!list.length) return setError("하나 이상 골라 주세요.");
-    try {
-      list.forEach((r) => saveRecord(dog.id, r));
-    } catch (e) {
-      return setError(e.message);
-    }
-    onDone();
-    syncPushAlarms(); // 산책을 기록했으면 오늘 산책 알람은 건너뛰게
-    setSaved(list.length);
-  }
-
-  const Pick = ({ label, options, value, onPick, multi }) => (
-    <div className="ci-q">
-      <div className="xs-label">{label}</div>
-      <div className="chip-wrap">
-        {options.map((o) => {
-          const on = multi ? value.includes(o) : value === o;
-          return (
-            <button key={o} type="button" className={`seg${on ? " on" : ""}`} aria-pressed={on} onClick={() => onPick(on && !multi ? "" : o)}>
-              {o}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  return createPortal(
-    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="es-sheet" role="dialog" aria-label="저녁 체크인">
-        <div className="es-top">
-          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
-          <div className="es-title">{dog.name} 오늘 어땠어요?</div>
-          <span style={{ width: 36 }} />
-        </div>
-        {saved ? (
-          <div className="es-scroll" style={{ padding: "8px 16px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>기록 {saved}개를 남겼어요</div>
-            <p className="subtle" style={{ margin: 0 }}>기록 탭에서 보거나 고칠 수 있어요. 완료 표시는 오늘 할 일 위로 옮겨 둘게요.</p>
-            {concern && onAsk && (
-              <button type="button" className="btn-ghost" style={{ marginTop: 14 }} onClick={() => (onAsk(`오늘 저녁에 보니 ${[meal === "안 먹었어" && "밥을 거의 안 먹었고", stool === "설사" && "설사를 했고", ...odd.filter((o) => ["토했어", "기운 없어"].includes(o))].filter(Boolean).join(", ")} 어떻게 하면 좋을까?`), onClose())}>
-                관련 정보 찾아보기
-              </button>
-            )}
-            <button type="button" className="btn-primary" style={{ marginTop: 10 }} onClick={onClose}>닫기</button>
-          </div>
-        ) : (
-          <div className="es-scroll" style={{ padding: "4px 16px 16px" }}>
-            <p className="subtle" style={{ margin: "0 0 4px" }}>본 것만 누르세요. 안 누른 건 기록하지 않아요.</p>
-            <Pick label="밥" options={Object.keys(MEAL)} value={meal} onPick={setMeal} />
-            <Pick label="대변 (패드·바닥)" options={STOOL_PICK} value={stool} onPick={setStool} />
-            <Pick label="소변" options={URINE_PICK} value={urine} onPick={setUrine} />
-            <Pick label="이상한 점 (여러 개 가능)" options={ODD} value={odd} onPick={toggleOdd} multi />
-            <Pick label="산책" options={WALK} value={walk} onPick={setWalk} />
-            {error && <p className="error-text">{error}</p>}
-            <button type="button" className="btn-primary" onClick={save}>기록하기</button>
-          </div>
-        )}
-      </div>
-    </div>,
-    document.body
   );
 }
 
@@ -200,7 +87,7 @@ function RoutineSheet({ onClose, ask }) {
         </div>
         <div className="es-scroll" style={{ padding: "4px 16px 16px" }}>
           <p className="subtle" style={{ margin: 0 }}>
-            {ask ? "평소 외출 시간도 정해 둘까요? 들어오는 시각 30분 뒤에 저녁 체크인 알림을 보내 드리고, 버튼을 깜빡한 날도 혼자 있는 시간을 어림해요." : "[다녀올게]를 깜빡해도 이 시간으로 혼자 있는 시간을 어림해요."}
+            {ask ? "평소 외출 시간도 정해 둘까요? 들어오는 시각 30분 뒤에 하루 체크 알림을 보내 드리고, 버튼을 깜빡한 날도 혼자 있는 시간을 어림해요." : "[다녀올게]를 깜빡해도 이 시간으로 혼자 있는 시간을 어림해요."}
           </p>
           <div style={{ display: "flex", gap: 10 }}>
             <label className="field" style={{ flex: 1, margin: 0 }}>
@@ -225,7 +112,7 @@ function RoutineSheet({ onClose, ask }) {
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15 }}>
             <input type="checkbox" checked={r.remind} onChange={(e) => set({ remind: e.target.checked })} />
-            들어오는 시각 30분 뒤에 저녁 체크인 알림 받기
+            들어오는 시각 30분 뒤에 하루 체크 알림 받기
           </label>
           <button type="button" className="btn-primary" onClick={save}>저장</button>
           {ask && <button type="button" className="btn-ghost" onClick={onClose}>다음에 할게요</button>}

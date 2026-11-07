@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { recordFromText } from "../services/aiClient";
+import DailyCheck, { dailyPending, dailySummaryLines } from "../components/DailyCheck";
 import OutingCard from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
@@ -28,7 +29,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight, checkinSignal, onCheckinHandled }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -241,6 +242,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
                 onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
               />
             </SpeechBubble>
+          ) : dailyPending(dog.id) ? (
+            <SpeechBubble>
+              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} />
+            </SpeechBubble>
           ) : (
             <button type="button" className="summary-bubble" onClick={onOpenToday} aria-label="오늘 요약 — 눌러서 오늘 할 일 보기">
               <SpeechBubble>
@@ -362,12 +367,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      {!isChat && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
+      {/* 말풍선이 첫 걸음·하루 체크를 묻는 동안엔 오늘 할 일로 가는 줄을 따로 */}
+      {!isChat && (getFirstSteps(dog.id).show || dailyPending(dog.id)) && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
 
       {/* 처음 쓰는 사람(첫 걸음 말풍선)에겐 외출 카드는 첫 걸음을 마친 뒤에 — 첫 화면 칸 줄이기 */}
-      {!isChat && (checkinSignal || !getFirstSteps(dog.id).show) && (
-        <div style={{ marginTop: 10 }}>
-          <OutingCard dog={dog} openCheckin={checkinSignal} onCheckinClose={onCheckinHandled} onAsk={(t) => (setInput(t), inputElRef.current?.focus())} />
+      {!isChat && !getFirstSteps(dog.id).show && (
+        <div style={{ marginTop: 10, flexShrink: 0 }}>
+          <OutingCard dog={dog} />
         </div>
       )}
 
@@ -501,7 +507,7 @@ function TodayTasksRow({ dog, onOpen }) {
 
 function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
-  const lines = [];
+  const lines = dailySummaryLines(dog.id);
   if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
   else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
@@ -517,7 +523,7 @@ function TodaySummary({ dog }) {
       </span>
       {lines.length ? (
         lines.map(([ico, tone, text]) => (
-          <span key={ico} className="summary-line">
+          <span key={text} className="summary-line">
             <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
             <span>{text}</span>
           </span>

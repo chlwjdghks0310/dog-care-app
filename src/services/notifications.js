@@ -220,7 +220,7 @@ export function buildPushAlarms() {
     all.push({
       time: checkinAlarmTime(routine),
       title: `🐾 ${who} 오늘 어땠어요?`,
-      body: "30초면 돼요. 밥·배변·산책만 눌러 주세요.",
+      body: "평소와 같으면 한 번만 누르면 끝이에요.",
       url: "/?checkin=1",
       days: routine.days,
       skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,

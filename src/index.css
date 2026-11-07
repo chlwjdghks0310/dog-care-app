@@ -1113,7 +1113,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ig-install { width: 100%; max-width: 300px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .ig-foot { text-align: center; margin: 8px 20px 0; font-size: 12.5px; }
 
-/* 비서 첫 화면 외출 카드(OutingCard): 다녀올게 → 혼자 n시간째·왔어 → 30초 체크인 */
+/* 비서 첫 화면 외출 카드(OutingCard): 다녀올게 → 혼자 n시간째·왔어(하루 체크는 DailyCheck) */
 .outing-card { display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
 .outing-ico { width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent-strong); display: inline-flex; align-items: center; justify-content: center; }
 .outing-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
@@ -1191,4 +1191,19 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ck-seg.on.lv2 { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
 
 /* 오늘 탭: 오늘 할 일로 가는 한 줄 */
-.today-row { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 12px 14px; border: none; color: inherit; font: inherit; cursor: pointer; }
+.today-row { flex-shrink: 0; display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 12px 14px; border: none; color: inherit; font: inherit; cursor: pointer; }
+
+/* 10초 하루 체크(오늘 탭): 평소와 같아요 한 번이면 끝 */
+.dc-card { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); padding: 14px; margin-top: 10px; }
+.dc-q { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.dc-q b { font-size: 16px; }
+.dc-q span { font-size: 13px; color: var(--text-soft); }
+.dc-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dc-usual, .dc-diff { flex: 1; min-height: 44px; border-radius: 14px; font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.dc-usual { background: var(--accent, #4a90e2); color: #fff; border: none; }
+.dc-diff { background: transparent; color: inherit; border: 1.5px solid var(--border, #dfe6f0); }
+.dc-done { display: flex; align-items: center; gap: 10px; }
+.dc-done > span { display: flex; flex-direction: column; gap: 2px; font-size: 14px; min-width: 0; }
+.dc-run { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--tone-bg, #f3f6fb); font-size: 13.5px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.dc-warn { font-size: 14px; margin: 0 0 8px; }
+.seg.red { border-color: #e05f5f; }
