@@ -10,6 +10,7 @@ import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 import VetDocSheet from "../components/VetDocSheet";
 import MedicalLedger from "../components/MedicalLedger";
+import QuickAddFab from "../components/QuickAddFab";
 import { getRulesForAge } from "../data/careRules";
 
 const MEDICAL = ["vet", "vaccine", "recheck", "checkup", "scaling", "deworm", "heartworm", "med"];
@@ -19,7 +20,7 @@ const dDay = (today, date) => {
   return n === 0 ? "오늘" : n === 1 ? "내일" : `D-${n}`;
 };
 
-export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, onOpenHealth, vetDocSignal, onVetDocHandled }) {
+export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, onOpenHealth, vetDocSignal, onVetDocHandled, onQuickAdd }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
@@ -249,6 +250,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         />
       )}
 
+      <QuickAddFab onPick={onQuickAdd} />
     </div>
   );
 }

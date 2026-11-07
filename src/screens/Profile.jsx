@@ -8,6 +8,7 @@ import { getPermission, isNotificationSupported, requestPermission, syncPushAlar
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { backupJson, recordsCsv, shareFile } from "../services/exportData";
+import QuickAddFab from "../components/QuickAddFab";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
 import { isVisitEvent } from "../services/vetVisits";
@@ -47,7 +48,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
-export default function Profile({ dog, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
+export default function Profile({ dog, onQuickAdd, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
@@ -255,7 +256,7 @@ export default function Profile({ dog, onOpenVet, onOpenReport, onOpenVital, onO
 
       <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} />
 
-      <NewRecordFab onClick={() => onNewRecord()} />
+      <QuickAddFab onPick={onQuickAdd} />
 
       {editing &&
         createPortal(
@@ -679,31 +680,6 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
 }
 
 // 새 기록 둥근 버튼(가계부 탭 바로 위): 아래로 내리면 숨고, 위로 올리거나 맨 위면 나타난다
-function NewRecordFab({ onClick }) {
-  const ref = useRef(null);
-  const [show, setShow] = useState(true);
-  useEffect(() => {
-    const page = ref.current?.closest(".screen"); // 프로필은 .screen이 스크롤된다
-    if (!page) return;
-    let last = page.scrollTop;
-    const onScroll = () => {
-      const top = page.scrollTop;
-      if (top <= 8) setShow(true);
-      else if (top > last + 4) setShow(false);
-      else if (top < last - 4) setShow(true);
-      last = top;
-    };
-    page.addEventListener("scroll", onScroll, { passive: true });
-    return () => page.removeEventListener("scroll", onScroll);
-  }, []);
-  return (
-    <div ref={ref} className="fab-wrap">
-      <button type="button" className={`fab${show ? "" : " hidden"}`} onClick={onClick} aria-label="새 기록" tabIndex={show ? 0 : -1}>
-        <Ico name="pencil" size={24} />
-      </button>
-    </div>
-  );
-}
 
 // 배경 테마: 색 조합 11개(기본 소프트 블루 포함) + 같은 색 발바닥. 눌러서 펼치고, 고르면 바로 바뀌고 저장된다.
 // 다크 모드일 때는 흐리게 잠가 둔다(다크 색이 우선이라 골라도 안 보이므로) — 다크 모드를 끄면 다시 열 수 있다

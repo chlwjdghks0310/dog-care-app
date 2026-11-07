@@ -10,7 +10,7 @@ import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
 import { applyAppActions, applyConfirmedAction, saveAskedExpense } from "../services/appActions";
 import { getCategories } from "../services/expenses";
-import { getRecords } from "../services/records";
+import { getRecords, deleteRecord } from "../services/records";
 import { isEmergency, findInfo, looksLikeQuestion } from "../services/infoSearch";
 import { EMERGENCY } from "../data/emergency";
 import { GUIDEBOOK_CHAPTERS, GUIDEBOOK_URL } from "../data/guidebookChapters";
@@ -19,6 +19,10 @@ import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
+import { quickParse } from "../services/quickParse";
+import { getWeightRecords, deleteWeightRecord } from "../services/weightLog";
+import { syncPushAlarms } from "../services/notifications";
+import { todayKey } from "../utils/date";
 import { calculateAge, formatAge } from "../utils/age";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
@@ -168,6 +172,21 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
       setMessages((m) => [...m, infoMessage(said)]);
       speak();
       return;
+    }
+    // 자주 쓰는 짧은 말은 AI 없이 바로 저장 + [되돌리기](비용 0원) — 애매하면 지금처럼 AI로
+    const local = quickParse(said, todayKey());
+    if (local) {
+      const before = new Set(getRecords(dog.id).map((r) => r.id));
+      const beforeW = new Set(getWeightRecords(dog.id).map((r) => r.id));
+      const records = applyAppActions(dog, local);
+      if (records.done.length) {
+        markFirstSteps(dog.id, { chat: true });
+        const added = getRecords(dog.id).filter((r) => !before.has(r.id));
+        const addedW = getWeightRecords(dog.id).filter((r) => !beforeW.has(r.id)).map((r) => r.id);
+        setMessages((m) => [...m, { role: "ai", kind: "record", records, reacted: added.slice(-1)[0] || null, undo: { recs: added.map((r) => r.id), weights: addedW } }]);
+        speak();
+        return;
+      }
     }
     run(said);
   }
@@ -379,6 +398,16 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
                   </div>
                 ))}
                 {m.records.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>기록하지 못한 내용이 있어요. 조금 더 자세히 말해 주세요.</div>}
+                {m.undo && (
+                  <button type="button" className="link-btn" style={{ margin: "4px 0 0" }} onClick={() => {
+                    m.undo.recs.forEach((id) => deleteRecord(dog.id, id));
+                    m.undo.weights.forEach((id) => deleteWeightRecord(dog.id, id));
+                    syncPushAlarms();
+                    setMessages((list) => list.map((x, k) => (k === i ? { role: "ai", kind: "more", text: "되돌렸어요. 다시 말해 주세요!" } : x)));
+                  }}>
+                    <Ico name="arrowDown" size={14} /> 되돌리기
+                  </button>
+                )}
                 {m.reacted && <DogReaction dog={dog} rec={m.reacted} onClose={() => setMessages((list) => list.map((x, k) => (k === i ? { ...x, reacted: null } : x)))} />}
               </div>
             );

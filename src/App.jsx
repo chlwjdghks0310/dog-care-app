@@ -82,7 +82,10 @@ export default function App() {
   const [vitalMetric, setVitalMetric] = useState(null);
   const [vetDocSignal, setVetDocSignal] = useState(0);
   const [vetFrom, setVetFrom] = useState("hospital"); // 병원용 기록을 연 곳(주간 리포트·우리 아이·병원) — 뒤로 가면 거기로
-  const openVet = (from) => (setVetFrom(from), setTab("vet")); // 병원 다녀온 뒤 알림으로 열리면 진료 정리 창을 띄운다 // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
+  const openVet = (from) => (setVetFrom(from), setTab("vet"));
+  // 어디서나 + 버튼(QuickAddFab)
+  const quickAdd = (kind) =>
+    kind === "check" ? setTab("main") : kind === "record" ? (setRecordsOpts({}), setTab("records-new")) : kind === "doc" ? (setVetDocSignal((n) => n + 1), setTab("hospital")) : setTab("weight"); // 병원 다녀온 뒤 알림으로 열리면 진료 정리 창을 띄운다 // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
   // 메인 탭이 이미 열려 있는 상태에서 메인을 또 누르면(채팅 중이어도) 메인 화면으로 리셋한다.
   function handleTabChange(key) {
@@ -389,6 +392,7 @@ export default function App() {
     profile: () => (
       <Profile
         dog={dog}
+        onQuickAdd={quickAdd}
         onOpenVet={() => openVet("profile")}
         onOpenReport={() => setTab("report")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
@@ -411,13 +415,13 @@ export default function App() {
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
   const recordScreens = {
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} onQuickAdd={quickAdd} />,
     "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} />,
     "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
     "records-meds": () => <Medications dog={dog} backLabel={recordsOpts.medsFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.medsFrom || "records-new")} />,
   };
   const hospitalScreens = {
-    hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => openVet("hospital")} onOpenBudget={() => setTab("budget")} onOpenHealth={() => setTab("health")} />,
+    hospital: () => <Calendar dog={dog} onQuickAdd={quickAdd} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => openVet("hospital")} onOpenBudget={() => setTab("budget")} onOpenHealth={() => setTab("health")} />,
     vet: () => <VetSummary dog={dog} backLabel={{ report: "← 이번 주 리포트로", profile: "← 우리 아이로", main: "← 오늘로" }[vetFrom] || "← 병원으로"} onBack={() => setTab(vetFrom)} />,
     health: () => (
       <HealthHub

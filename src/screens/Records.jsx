@@ -8,6 +8,7 @@ import DogReaction from "../components/DogReaction";
 import { VITAL, fmtValue } from "../data/vitals";
 import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
+import QuickAddFab from "../components/QuickAddFab";
 import { periodSummary } from "../services/dailyCheck";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, groupVitalDays, deleteRecord, levelSeries } from "../services/records";
@@ -24,7 +25,7 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding }) {
+export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding, onQuickAdd }) {
   const [view, setView] = useState("list");
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
@@ -145,6 +146,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
 
       {!form && view === "cal" && <RecordCalendar dog={dog} items={items} onChanged={reload} />}
       {!form && view === "trend" && <Trends dog={dog} items={items} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
+      {!form && !startNew && <QuickAddFab onPick={onQuickAdd} />}
     </div>
   );
 }
