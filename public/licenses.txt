@@ -115,4 +115,7 @@ SOFTWARE.
 - score-1-photo-b.jpg: "Brandenburg Hundekot.jpg" — Geoprofi Lars, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0) — https://commons.wikimedia.org/wiki/File:Brandenburg_Hundekot.jpg
 - score-4-photo-a.jpg: "Hundekot Berlin.jpg" — Geoprofi Lars, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Hundekot_Berlin.jpg
 - score-5-photo-a.jpg: "Wuppertal Nüller Str 0033.JPG" — Atamari, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0) — https://commons.wikimedia.org/wiki/File:Wuppertal_N%C3%BCller_Str_0033.JPG
-  모두 크기만 줄이고(자르기·보정 없음) 위치 정보 등 메타데이터를 지웠습니다.
+  위 사진은 크기만 줄이고(자르기·보정 없음) 위치 정보 등 메타데이터를 지웠습니다.
+- score-6-paper-crop.jpg: Zhang 외(2025) Front. Vet. Sci. 12:1534665, 그림 3(E) 일부를 잘라냄 — CC BY 4.0 (https://creativecommons.org/licenses/by/4.0) — https://doi.org/10.3389/fvets.2025.1534665
+- score-7-crop.jpg: "Parvovirosis-dog.JPG" — Uwe Gille, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Parvovirosis-dog.JPG
+  바닥(변) 부분만 잘라 냈습니다(수정함). 잘라 낸 이 이미지도 CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)으로 공개합니다.

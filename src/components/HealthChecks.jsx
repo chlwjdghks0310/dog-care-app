@@ -106,7 +106,7 @@ export function ConditionCheck({ check = {}, onChange, flags }) {
   );
 }
 
-// 실제 사진 1~5점(위키미디어, 자료용 11/7 — 단계는 자료용이 사진을 보고 매김, 수의사 검수 없음). 6·7점(설사·물 변)은 쓸 수 있는 사진이 없어 그림만.
+// 실제 사진 1~7점(위키미디어·오픈액세스 논문, 자료용 11/7 — 단계는 자료용이 사진을 보고 매김, 수의사 검수 없음). 7점은 아픈 강아지가 찍혀 있어 바닥만 잘라 씀(CC BY-SA, 수정함 표기).
 // 사람용 브리스톨 척도는 기준이 달라 안 씀. 크기만 줄이고(자르기·보정 없음) 메타데이터를 지웠다.
 // 처음엔 접어 둔다(보기 싫은 사람 배려). 출처는 public/licenses.txt에도
 const PHOTOS = [
@@ -115,23 +115,25 @@ const PHOTOS = [
   { src: "/img/stool/score-3-photo.jpg", n: 3, credit: "사진: BrokenSphere / Wikimedia Commons, CC BY 3.0" },
   { src: "/img/stool/score-4-photo-a.jpg", n: 4, credit: "사진: Geoprofi Lars / Wikimedia Commons, CC BY-SA 4.0" },
   { src: "/img/stool/score-5-photo-a.jpg", n: 5, credit: "사진: Atamari / Wikimedia Commons, CC BY-SA 3.0" },
+  { src: "/img/stool/score-6-paper-crop.jpg", n: 6, credit: "사진: Zhang 외, Front. Vet. Sci. 2025, 그림 3E 일부를 잘라냄, CC BY 4.0", small: true },
+  { src: "/img/stool/score-7-crop.jpg", n: 7, credit: "사진: Uwe Gille / Wikimedia Commons, CC BY-SA 3.0 — 바닥 부분만 잘라냄(수정함)" },
 ];
 function StoolPhotos() {
   const [open, setOpen] = useState(false);
   return (
     <div className="sc-photos">
       <button type="button" className="link-btn" style={{ margin: "0 0 6px" }} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        실제 사진으로 보기(1~5) {open ? "▴" : "▾"}
+        실제 사진으로 보기(1~7) {open ? "▴" : "▾"}
       </button>
       {open && (
         <div className="sc-photo-row">
           {PHOTOS.map((ph) => (
             <figure key={ph.src}>
-              <img src={ph.src} alt={`${ph.n}점 예시: ${SHAPES[ph.n - 1].label}`} width="240" height="180" loading="lazy" />
+              <img src={ph.src} alt={`${ph.n}점 예시: ${SHAPES[ph.n - 1].label}`} width="240" height="180" loading="lazy" className={ph.small ? "small" : undefined} />
               <figcaption><b>{ph.n}점</b> {SHAPES[ph.n - 1].label}<small>{ph.credit}</small></figcaption>
             </figure>
           ))}
-          <p className="faint" style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12 }}>6·7(설사·물 같은 변)은 아래 그림으로 봐 주세요. 길에서 찍은 사진이라 마르거나 젖었을 수 있어요.</p>
+          <p className="faint" style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12 }}>6은 연구 논문 사진이라 작아요. 길·병원에서 찍은 사진이라 마르거나 젖었을 수 있어요. 피가 섞였거나 물 같은 설사가 이어지면 사진보다 병원 연락이 먼저예요.</p>
         </div>
       )}
     </div>
