@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { recordFromText } from "../services/aiClient";
-import DailyCheck, { dailyPending, dailySummaryLines } from "../components/DailyCheck";
+import DailyCheck, { dailyPending, dailySummaryLines, UsualNote } from "../components/DailyCheck";
+import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import { getSignals } from "../services/signals";
 import { isMilestone, togetherDays } from "../services/shareCard";
@@ -33,7 +34,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight, onOpenVet }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -215,6 +216,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
     }
   }
 
+  const [usualOpen, setUsualOpen] = useState(false); // 첫 걸음 "평소 모습 적어 두기" 창
   const [dcOpen, setDcOpen] = useState(false); // 하루 체크 고르기 창이 열려 있는 동안(다시 그려져도 창 유지)
   const isChat = mode === "chat";
 
@@ -235,6 +237,23 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           : "calc(56px + env(safe-area-inset-top, 0px)) 16px 20px",
       }}
     >
+      {usualOpen &&
+        createPortal(
+          <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && setUsualOpen(false)}>
+            <div className="es-sheet" role="dialog" aria-label="평소 모습">
+              <div className="es-top">
+                <button type="button" className="es-x" aria-label="닫기" onClick={() => setUsualOpen(false)}>✕</button>
+                <div className="es-title">{dog.name} 평소 모습</div>
+                <span style={{ width: 36 }} />
+              </div>
+              <div className="es-scroll" style={{ padding: "4px 16px 20px" }}>
+                <p className="subtle" style={{ margin: "0 0 10px" }}>밥·변·산책·기운이 평소 어떤지 한두 줄로 적어 두면, 다른 날을 고를 때 비교하기 쉽고 병원용 기록에도 들어가요.</p>
+                <UsualNote dog={dog} startEditing onSaved={() => (setUsualOpen(false), refresh((n) => n + 1))} />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
           {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
@@ -250,9 +269,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
             <SpeechBubble>
               <FirstSteps
                 dog={dog}
-                onMeal={onOpenFeeding}
                 onWeight={onOpenWeight}
-                onChat={() => (setInput(RECORD_EXAMPLES[0]), inputElRef.current?.focus())}
+                onUsual={() => setUsualOpen(true)}
+                onVet={onOpenVet}
                 onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
               />
             </SpeechBubble>
@@ -551,12 +570,13 @@ function TodaySummary({ dog }) {
 }
 
 // 처음 쓰는 사람: 말풍선이 "첫 걸음 3가지"를 말한다. 한 것은 ✓(실제 기록으로 판단), 누르면 그 화면으로
-function FirstSteps({ dog, onMeal, onWeight, onChat, onLater }) {
+// 첫 걸음(병원 수첩에 맞춤, 11/7): 몸무게 · 평소 모습(다른 날과 비교할 기준) · 병원용 기록 미리 보기(이렇게 쌓여요)
+function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
   const { steps } = getFirstSteps(dog.id);
   const items = [
-    ["meal", "bowl", "rose", "밥 시간 정하기", onMeal],
-    ["weight", "scales", "blue", "몸무게 적기", onWeight],
-    ["chat", "pencil", "teal", "나한테 말로 기록해 보기", onChat],
+    ["weight", "scales", "blue", "지금 몸무게 적기", onWeight],
+    ["usual", "pencil", "teal", "평소 모습 적어 두기", onUsual],
+    ["vet", "clipboard", "rose", "병원용 기록 미리 보기", onVet],
   ];
   return (
     <span className="summary">

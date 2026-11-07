@@ -56,7 +56,7 @@ function Login({ onGuest }) {
         <SpeechBubble>안녕! 나랑 같이 시작해 볼래? 🐾</SpeechBubble>
         <DogAvatarVideo state="idle" height={210} breed="pomeranian" />
         <div className="onb-title" style={{ marginBottom: 6 }}>멍케어</div>
-        <p className="onb-text" style={{ margin: "0 auto" }}>우리 아이 기록·알림·일정을 한곳에</p>
+        <p className="onb-text" style={{ margin: "0 auto" }}>병원 갈 때 꺼내는 우리 아이 건강 수첩</p>
       </div>
       <div className="login-bottom">
         <LoginForm onEmail={() => setSheet("email")} />
@@ -241,7 +241,7 @@ function Setup({ onRegistered, restore }) {
     birthDate: `${name} 생일은 언제야?`,
     gender: `${josa(name, "은", "는")} 남자야, 여자야?`,
     weight: `지금 ${name} 몸무게는 얼마야?`,
-    done: `안녕! 나 ${nameCall(name)}.\n앞으로 잘 부탁해!`,
+    done: `안녕! 나 ${nameCall(name)}.\n매일 "오늘 어땠어?"만 물어볼게!`,
   };
 
   const filteredBreeds = BREEDS.filter((b) => b.includes(breedQuery.trim())).slice(0, 24);

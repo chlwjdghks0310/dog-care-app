@@ -150,7 +150,7 @@ export default function InstallGate() {
         <div className="onb-mock ig-why">
           <div style={{ fontWeight: 800, marginBottom: 6 }}>왜 설치해야 하나요?</div>
           {[
-            ["bell", "밥·약·병원 일정 알림이 와요", "아이폰은 홈 화면에 설치한 앱에서만 알림을 받을 수 있어요"],
+            ["bell", "하루 체크·약·병원 알림이 와요", "아이폰은 홈 화면에 설치한 앱에서만 알림을 받을 수 있어요"],
             ["lock", "기록이 한곳에 이어져요", "브라우저에서 적은 기록은 설치한 앱으로 옮겨지지 않아서, 처음부터 앱에서 시작해요"],
             ["zap", "앱처럼 바로 열려요", "주소창 없이 전체 화면으로, 아이콘 한 번에"],
           ].map(([ico, head, sub]) => (

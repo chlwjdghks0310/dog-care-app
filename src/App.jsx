@@ -418,7 +418,7 @@ export default function App() {
   };
   const hospitalScreens = {
     hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => openVet("hospital")} onOpenBudget={() => setTab("budget")} onOpenHealth={() => setTab("health")} />,
-    vet: () => <VetSummary dog={dog} backLabel={{ report: "← 이번 주 리포트로", profile: "← 우리 아이로" }[vetFrom] || "← 병원으로"} onBack={() => setTab(vetFrom)} />,
+    vet: () => <VetSummary dog={dog} backLabel={{ report: "← 이번 주 리포트로", profile: "← 우리 아이로", main: "← 오늘로" }[vetFrom] || "← 병원으로"} onBack={() => setTab(vetFrom)} />,
     health: () => (
       <HealthHub
         dog={dog}
@@ -449,7 +449,7 @@ export default function App() {
         {/* 세부 화면(오늘 할 일 등)은 오늘 화면 위에 겹쳐 그려서, 밀어서 뒤로 갈 때 아래에 오늘 화면이 보인다 */}
         <div style={{ display: "contents" }}>
           <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenVet={() => setTab("vet")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
+            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
           </Suspense>
         </div>
         {homeScreens[tab] && <Fragment key={`${dog.id}-${pageVersion}`}>{tab === "home" ? <SwipeBack key="home" onBack={() => setTab("main")} renderUnderlay={() => null}>{homeScreens.home()}</SwipeBack> : renderStack(homeScreens, "home")}</Fragment>}

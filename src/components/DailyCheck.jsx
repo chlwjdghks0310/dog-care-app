@@ -180,9 +180,9 @@ export function DiffSheet({ dog, date, initial, onClose, onSaved }) {
 }
 
 // 평소 모습: 한 번 적어 두면 "다른 점"을 고를 때 옆에 보이고, 병원용 기록 기본 정보에 들어간다(ZOE의 '평소 나' 방식)
-function UsualNote({ dog }) {
+export function UsualNote({ dog, startEditing = false, onSaved }) {
   const [text, setText] = useState(dog.usual || "");
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   if (!editing)
     return (
       <div className="dc-usual-note">
@@ -193,7 +193,7 @@ function UsualNote({ dog }) {
   return (
     <div className="dc-usual-note col">
       <textarea rows={2} value={text} maxLength={200} onChange={(e) => setText(e.target.value)} placeholder="예: 하루 두 번 다 먹음, 변은 하루 2번 단단함, 산책 30분" aria-label="평소 모습" />
-      <button type="button" className="btn-ghost small" onClick={() => (saveDog({ ...dog, usual: text.trim() }), (dog.usual = text.trim()), setEditing(false))}>저장</button>
+      <button type="button" className="btn-ghost small" onClick={() => (saveDog({ ...dog, usual: text.trim() }), (dog.usual = text.trim()), setEditing(false), onSaved?.())}>저장</button>
     </div>
   );
 }
