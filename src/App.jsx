@@ -89,6 +89,8 @@ export default function App() {
 
   // 메인 탭이 이미 열려 있는 상태에서 메인을 또 누르면(채팅 중이어도) 메인 화면으로 리셋한다.
   function handleTabChange(key) {
+    // 하단 탭을 눌렀다는 건 손가락이 화면(페이저)에 없다는 뜻 — 새로고침 중 화면이 다시 그려져 '손 뗌'을 놓친 경우에도 탭 이동이 막히지 않게(11/7 버그)
+    touchingRef.current = false;
     if (key === "main" && tab === "main") {
       setMainResetSignal((s) => s + 1);
     }
@@ -136,12 +138,18 @@ export default function App() {
     document.addEventListener("visibilitychange", onVisible);
     const ro = new ResizeObserver(alignPager);
     ro.observe(el);
+    // 손 뗌은 화면 어디서든 받는다: 당겨서 새로고침하면 손가락 아래 화면이 새로 그려져 페이저가 touchend를 못 받는 일이 있다
+    const release = () => (touchingRef.current = false);
+    window.addEventListener("touchend", release, true);
+    window.addEventListener("touchcancel", release, true);
     return () => {
       frames.forEach(cancelAnimationFrame);
       timers.forEach(clearTimeout);
       events.forEach((e) => window.removeEventListener(e, alignPager));
       document.removeEventListener("visibilitychange", onVisible);
       ro.disconnect();
+      window.removeEventListener("touchend", release, true);
+      window.removeEventListener("touchcancel", release, true);
     };
   }, [loading, route, alignPager]);
 
@@ -179,6 +187,7 @@ export default function App() {
     await syncNow();
     const fresh = getDogs().find((d) => d.id === dog?.id);
     if (fresh) setDog(fresh);
+    touchingRef.current = false;
     setPageVersion((v) => v + 1);
   }
 
