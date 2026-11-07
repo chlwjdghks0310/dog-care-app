@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { cloneElement, isValidElement, useId, useMemo, useRef, useState } from "react";
 import { todayKey } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { addWeightRecord, updateWeightRecord } from "../services/weightLog";
@@ -60,10 +60,12 @@ function Pick({ options, value, onChange, multi }) {
 }
 
 function Field({ label, children }) {
+  const id = useId();
   return (
+    // 입력칸이면 칸 이름과 이어 화면 읽기가 읽게 한다(점검 11/7, axe label). 버튼 묶음(Pick)은 그대로
     <div className="field">
-      <label>{label}</label>
-      {children}
+      <label htmlFor={isValidElement(children) && ["input", "textarea", "select"].includes(children.type) ? id : undefined}>{label}</label>
+      {isValidElement(children) && ["input", "textarea", "select"].includes(children.type) ? cloneElement(children, { id }) : children}
     </div>
   );
 }

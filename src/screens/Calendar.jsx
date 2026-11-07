@@ -24,10 +24,12 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
   const [selectedDateKey, setSelectedDateKey] = useState(today);
   const [events, setEvents] = useState(() => getEventsByDog(dog.id));
   const [sheet, setSheet] = useState(null);
-  const [docOpen, setDocOpen] = useState(false); // 진료 정리(사진·말)
+  // 진료 정리(사진·말) — 다녀온 뒤 알림으로 열리면 바로. 화면이 다시 그려져도 열려 있게, 신호는 창을 닫을 때 지운다
+  const [docOpen, setDocOpen] = useState(() => Boolean(vetDocSignal));
   useEffect(() => {
-    if (vetDocSignal) (setDocOpen(true), onVetDocHandled?.()); // 다녀온 뒤 알림으로 열리면 바로(한 번만)
-  }, [vetDocSignal]); // eslint-disable-line react-hooks/exhaustive-deps // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
+    if (vetDocSignal) setDocOpen(true);
+  }, [vetDocSignal]);
+  const closeDoc = () => (setDocOpen(false), onVetDocHandled?.()); // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
   // 지난 병원 진료·접종 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
   // 같은 날 병원 일정이 있으면 그 일정 카드 안에 붙여 하나로 보여 준다
   const vetByDate = useMemo(() => {
@@ -53,7 +55,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
   const upcoming = useMemo(() => {
     const seen = new Set();
     return getOccurrences(dog.id, today, toDateKey(addDays(new Date(), 90)))
-      .filter((o) => o.isStart && MEDICAL.includes(o.event.kind) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
+      .filter((o) => o.isStart && (isVisitEvent(o.event) || o.event.kind === "med") && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
       .slice(0, 3);
   }, [dog.id, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -199,7 +201,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
       </div>
 
 
-      {docOpen && <VetDocSheet onClose={() => setDocOpen(false)} onUse={(prefill) => (setDocOpen(false), onRecordVisit?.(prefill))} />}
+      {docOpen && <VetDocSheet onClose={closeDoc} onUse={(prefill) => (closeDoc(), onRecordVisit?.(prefill))} />}
       {sheet && (
         <EventSheet
           dog={dog}

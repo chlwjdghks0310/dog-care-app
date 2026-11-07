@@ -4,6 +4,7 @@ import { buildWeeklyReport } from "./weeklyReport";
 import { daysInRange } from "./dailyCheck";
 import { md, getTimeline } from "./records";
 import { josa } from "../utils/text";
+import { toDateKey } from "../utils/date";
 
 export function weeklyCardStats(dog, today) {
   const r = buildWeeklyReport(dog, today);
@@ -36,7 +37,7 @@ export function togetherCardStats(dog, today) {
     title: `${josa(dog.name, "이랑", "랑")} 함께한 지 ${n}일`,
     range: `${start.replaceAll("-", ".")}부터 ${dog.adoptionDate ? "함께" : "태어나서"}`,
     rows: [
-      ["함께 본 날", `${daysInRange(dog.id, start, today || new Date().toISOString().slice(0, 10))}일`],
+      ["함께 본 날", `${daysInRange(dog.id, start, today || toDateKey(new Date()))}일`],
       ["남긴 기록", `${getTimeline(dog.id).filter((r) => r.type !== "med").length}개`],
     ],
   };

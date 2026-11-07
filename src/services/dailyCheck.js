@@ -78,6 +78,10 @@ export function saveDiff(dogId, date, picks) {
   const prev = getDay(dogId, date);
   const ids = { ...(prev?.recIds || {}) };
   const at = atFor(date);
+  // 고치면서 뺀 항목·기록 없는 선택지로 바꾼 항목의 예전 기록은 지운다(남으면 이상 신호·병원용 기록에 잘못 남음)
+  for (const id of Object.keys(ids)) {
+    if (!option(id, picks[id])?.rec) (deleteRecord(dogId, ids[id]), delete ids[id]);
+  }
   for (const [id, label] of entries) {
     const o = option(id, label);
     if (!o.rec) continue;

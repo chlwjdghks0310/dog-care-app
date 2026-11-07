@@ -13,7 +13,7 @@ import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
 import { checkAlarmPlan, checkedInToday } from "./routine";
-import { allowed, getNotifPrefs } from "./notifPrefs";
+import { getNotifPrefs } from "./notifPrefs";
 import { getFoodStock } from "./foodStock";
 import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
 import { getOccurrences } from "./calendarEvents";
@@ -208,8 +208,11 @@ export function buildPushAlarms() {
       seenVisit.add(o.date);
       const eve = toDateKey(addDays(new Date(`${o.date}T00:00:00`), -1));
       if (eve >= todayKey()) alarms.push({ cat: "visit", time: "20:00", onlyDate: eve, title: `🏥 내일 ${dog.name} 병원 가는 날이에요`, body: "보여 줄 기록 한 장을 준비해 뒀어요. 물어볼 것도 적어 두세요.", url: `/?vet=1&dog=${encodeURIComponent(dog.id)}` });
-      const after = o.event.time && o.event.time < "21:00" ? minutesBefore(o.event.time, -120) : "15:00";
-      alarms.push({ cat: "visit", time: after, onlyDate: o.date, title: `🩺 ${dog.name} 병원 다녀오셨나요?`, body: "영수증 사진 한 장이면 진료 기록을 정리해 드려요.", url: `/?vetdoc=1&dog=${encodeURIComponent(dog.id)}` });
+      // 예약 2시간 뒤(늦어도 밤 9시 반 — 조용한 시간 전), 시각이 없으면 오후 3시, 밤 9시 이후 예약이면 다음 날 아침 9시
+      const late = o.event.time && o.event.time >= "21:00";
+      const after = late ? "09:00" : o.event.time ? (minutesBefore(o.event.time, -120) > "21:30" || minutesBefore(o.event.time, -120) < o.event.time ? "21:30" : minutesBefore(o.event.time, -120)) : "15:00";
+      const afterDate = late ? toDateKey(addDays(new Date(`${o.date}T00:00:00`), 1)) : o.date;
+      alarms.push({ cat: "visit", time: after, onlyDate: afterDate, title: `🩺 ${dog.name} 병원 다녀오셨나요?`, body: "영수증 사진 한 장이면 진료 기록을 정리해 드려요.", url: `/?vetdoc=1&dog=${encodeURIComponent(dog.id)}` });
     }
     // 약: 서버가 기간(from~until)·요일(days)을 보고 울린다. 오늘 이미 기록한 복용 건은 오늘만 건너뛴다.
     const today = todayKey();
@@ -229,7 +232,8 @@ export function buildPushAlarms() {
         });
       }
     }
-    all.push(...alarms.filter((a) => allowed(a.cat, a.time, prefs)).map(({ cat, ...a }) => ({ ...a, petId: dog.id })));
+    // 거르기는 서버가 기기마다(가족이 같은 강아지 알람 목록을 같이 써서, 한 사람의 설정이 가족 모두에게 번지지 않게)
+    all.push(...alarms.map((a) => ({ ...a, petId: dog.id })));
   }
   // 저녁 체크인(평소 들어오는 시각 30분 뒤, 나가는 요일만). 사람 기준 알람이라 petId 없이 — 가족 기기로 퍼지지 않게
   const dogs = getDogs();
@@ -245,6 +249,7 @@ export function buildPushAlarms() {
       skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,
     });
   }
+  all.push({ prefs }); // 이 기기의 알림 종류·조용한 시간(서버 alarmsForDevice가 읽는다)
   return all;
 }
 

@@ -25,7 +25,7 @@ export default function MedicalLedger({ dog, onOpenBudget }) {
   }, [dog.id, today]);
 
   return (
-    <button type="button" className="card ml-card" onClick={onOpenBudget} aria-label="병원비 — 눌러서 가계부 전체 보기">
+    <button type="button" className="card ml-card" onClick={onOpenBudget}>
       <div className="ml-head">
         <span className="h2" style={{ margin: 0 }}><Ico name="wallet" size={18} /> 병원비</span>
         <span className="ml-more">가계부 전체 ›</span>

@@ -256,7 +256,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
               />
             </SpeechBubble>
           ) : (
-            <button type="button" className="summary-bubble" onClick={onOpenToday} aria-label="오늘 요약 — 눌러서 오늘 할 일 보기">
+            <button type="button" className="summary-bubble" onClick={onOpenToday}>
               <SpeechBubble>
                 <TodaySummary dog={dog} />
               </SpeechBubble>
@@ -518,7 +518,7 @@ function TodayTasksRow({ dog, onOpen }) {
 function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
   const together = togetherDays(dog);
-  const lines = [...getSignals(dog).map((s) => ["alert", "rose", s.text]), ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
+  const lines = [...getSignals(dog).filter((s) => !(s.id === "med" && t.checkDoses)).map((s) => ["alert", "rose", s.text]) /* 약은 아래 '약 기록 확인' 줄과 겹치면 뺌 */, ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
   if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
   else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
@@ -533,7 +533,8 @@ function TodaySummary({ dog }) {
         말로 하면 내가 기록해 줄게 ✍️
       </span>
       {lines.length ? (
-        lines.map(([ico, tone, text]) => (
+        // 작은 화면에서 말풍선이 길어지면 아래 입력칸이 밀려나서 4줄까지만(점검 11/7, 아이폰 SE)
+        [...lines.slice(0, 4), ...(lines.length > 4 ? [["checklist", "blue", `그 밖에 ${lines.length - 4}개 — 눌러서 오늘 할 일에서 보기`]] : [])].map(([ico, tone, text]) => (
           <span key={text} className="summary-line">
             <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
             <span>{text}</span>
@@ -576,7 +577,7 @@ function FirstSteps({ dog, onMeal, onWeight, onChat, onLater }) {
 // 응급 단어가 보이면 이 버튼 대신 병원 연락 안내만 보여 준다.
 function AskOutside({ dog, question }) {
   const age = dog.birthDate ? formatAge(calculateAge(dog.birthDate)) : "";
-  const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question}\n\n수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
+  const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question.split(dog.name).join("우리 강아지")}\n\n수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
   return (
     <div className="ask-out">
       <a className="btn-ghost small" href={`https://chatgpt.com/?q=${encodeURIComponent(prompt)}`} target="_blank" rel="noopener noreferrer">

@@ -942,7 +942,7 @@ const VET_DOC_TOOL = {
 
 app.post("/api/vet-doc", async (req, res) => {
   const { images, text, today } = req.body || {};
-  const imgs = (Array.isArray(images) ? images : []).filter((x) => typeof x === "string" && x.length < 8_000_000).slice(0, 3);
+  const imgs = (Array.isArray(images) ? images : []).filter((x) => typeof x === "string" && x.length > 100 && x.length < 4_000_000 && /^[A-Za-z0-9+/=]+$/.test(x.slice(0, 200))).slice(0, 3);
   const said = typeof text === "string" ? text.slice(0, 2000).trim() : "";
   if (!imgs.length && !said) return res.status(400).json({ error: "사진이나 들은 설명이 필요해요." });
   try {
@@ -956,7 +956,7 @@ app.post("/api/vet-doc", async (req, res) => {
         "보호자 이름·전화번호·주소·카드번호·승인번호는 어떤 칸에도 옮기지 않습니다.",
         "영수증의 과세공급가액·부가세·비과세 줄은 항목이 아니라 합계 확인용입니다. total은 최종 청구·결제 금액입니다. 재진 안내는 영수증보다 들은 설명에 있을 때가 많습니다.",
         "금액은 원 단위 정수. 날짜는 YYYY-MM-DD(연도가 없으면 오늘 날짜의 연도). 칸 글은 짧은 한국어로.",
-        `오늘 날짜: ${typeof today === "string" ? today.slice(0, 10) : kstDay()}`,
+        `오늘 날짜: ${typeof today === "string" && /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : kstDay()}`,
       ].join("\n"),
       tools: [VET_DOC_TOOL],
       messages: [{ role: "user", content: [...imgs.map((data) => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } })), { type: "text", text: said ? `들은 설명: ${said}` : "이 서류를 진료 기록으로 정리해 주세요." }] }],
@@ -966,7 +966,8 @@ app.post("/api/vet-doc", async (req, res) => {
     res.json({ doc: out });
   } catch (err) {
     console.error("[server] vet-doc error:", err.message);
-    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+    if (err.status === 400) return res.status(400).json({ error: "사진을 읽지 못했어요. 다른 사진으로 다시 해 주세요." });
+    res.status(502).json({ error: "정리하지 못했어요. 잠시 뒤 다시 시도해 주세요." });
   }
 });
 
@@ -1164,10 +1165,22 @@ async function verifiedPets(accessToken) {
 }
 
 // 이 기기가 울려야 할 알람: 가족으로 확인된 강아지는 그 강아지의 공유 목록, 나머지(로그인 전·백업 전 강아지)는 기기가 보낸 목록
+// 알림 종류·조용한 시간(앱 notifPrefs.js와 같은 규칙). 설정은 기기 알람 목록 안의 { prefs } 한 칸으로 온다(DB 칸을 늘리지 않으려고)
+const QUIET_OK = new Set(["med", "custom", "meal"]);
+const hm = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+function allowedFor(prefs, a) {
+  if (!prefs || !a.cat) return true;
+  if (prefs[a.cat] === false) return false;
+  const q = prefs.quiet;
+  if (!q?.on || QUIET_OK.has(a.cat) || !/^\d\d:\d\d$/.test(q.from || "") || !/^\d\d:\d\d$/.test(q.to || "")) return true;
+  const t = hm(a.time), f = hm(q.from), e = hm(q.to);
+  return !(f <= e ? t >= f && t < e : t >= f || t < e);
+}
 function alarmsForDevice(device) {
-  if (!device.pets?.size) return device.alarms;
-  const own = device.alarms.filter((a) => !device.pets.has(a.petId));
-  return [...own, ...[...device.pets].flatMap((p) => petAlarms.get(p) || [])];
+  const prefs = device.alarms.find((a) => a.prefs)?.prefs;
+  const own = device.pets?.size ? device.alarms.filter((a) => !device.pets.has(a.petId)) : device.alarms;
+  const shared = device.pets?.size ? [...device.pets].flatMap((p) => petAlarms.get(p) || []) : [];
+  return [...own, ...shared].filter((a) => a.time && allowedFor(prefs, a));
 }
 
 app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res) => {

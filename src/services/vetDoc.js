@@ -1,11 +1,12 @@
 // 진료 정리 결과(서버 vet_doc) → 진료 기록 새로 쓰기 칸(RecordForm prefill). 보호자가 확인·고친 뒤 기존 저장 길로 간다
 // (진료비 → 가계부 병원·치료, 다음 진료일 → 일정·알림). 약은 처방 칸에 적힌 그대로 — 약 관리 등록은 보호자가 직접.
 import { VET_ITEMS } from "./expenses";
+import { toDateKey } from "../utils/date";
 const won = (n) => `${Number(n).toLocaleString("ko-KR")}원`;
 const okDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d || "");
 
 export function docToPrefill(doc, now = new Date(), { claim = false } = {}) {
-  const today = now.toISOString().slice(0, 10);
+  const today = toDateKey(now); // 한국 날짜(toISOString은 오전 9시 전엔 어제)
   const date = okDate(doc.visit_date) && doc.visit_date <= today ? doc.visit_date : today;
   const items = (doc.items || []).filter((i) => i.name && i.amount > 0);
   const sum = items.reduce((a, i) => a + i.amount, 0);

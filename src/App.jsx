@@ -409,10 +409,10 @@ export default function App() {
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
   const recordScreens = {
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => setTab("records-meds")} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} />,
     "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
-    "records-meds": () => <Medications dog={dog} backLabel="← 종류 고르기로" onBack={() => setTab("records-new")} />,
+    "records-meds": () => <Medications dog={dog} backLabel={recordsOpts.medsFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.medsFrom || "records-new")} />,
   };
   const hospitalScreens = {
     hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} onOpenHealth={() => setTab("health")} />,
@@ -433,7 +433,7 @@ export default function App() {
   function renderStack(screens, root) {
     if (!screens[tab] || tab === root) return screens[root]();
     return (
-      <SwipeBack key={tab} onBack={() => (tab === "records-new" && recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
+      <SwipeBack key={tab} onBack={() => (tab === "records-new" && recordsOpts.back ? handleTabChange(recordsOpts.back) : tab === "records-meds" && recordsOpts.medsFrom ? setTab(recordsOpts.medsFrom) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
         {screens[tab]()}
       </SwipeBack>
     );

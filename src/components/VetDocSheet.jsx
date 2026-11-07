@@ -19,8 +19,10 @@ export default function VetDocSheet({ onClose, onUse }) {
   const [claim, setClaim] = useState(false); // 보험 청구할 병원비
 
   function addFiles(list) {
-    const next = [...files, ...[...list].map((file) => ({ file, url: URL.createObjectURL(file) }))].slice(0, 3);
-    setFiles(next);
+    const all = [...files, ...[...list].map((file) => ({ file, url: URL.createObjectURL(file) }))];
+    all.slice(3).forEach((f) => URL.revokeObjectURL(f.url));
+    setFiles(all.slice(0, 3));
+    setError(all.length > 3 ? "사진은 3장까지 넣을 수 있어요." : "");
   }
   async function run() {
     setBusy(true);
@@ -57,7 +59,7 @@ export default function VetDocSheet({ onClose, onUse }) {
                 {files.map((f, i) => (
                   <div key={f.url} className="vd-thumb">
                     <img src={f.url} alt={`사진 ${i + 1}`} />
-                    <button type="button" aria-label="사진 빼기" onClick={() => setFiles(files.filter((x) => x !== f))}>✕</button>
+                    <button type="button" aria-label="사진 빼기" onClick={() => (URL.revokeObjectURL(f.url), setFiles(files.filter((x) => x !== f)))}>✕</button>
                   </div>
                 ))}
                 {files.length < 3 && (

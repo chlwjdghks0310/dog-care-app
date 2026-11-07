@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Ico from "../components/Ico";
 import { buildWeeklyReport } from "../services/weeklyReport";
 import { stockLabel } from "../services/foodStock";
@@ -78,19 +78,27 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
 // 이번 주 카드 공유(인스타 스토리·카톡 등) — 건강 문제 없이 함께한 기록만 그림으로
 function ShareCardButton({ dog }) {
   const [msg, setMsg] = useState("");
+  const [files, setFiles] = useState({}); // 미리 만든 그림 — 아이폰은 누른 직후에만 공유 창이 열려서(만드는 동안 기다리면 막힘)
   const days = togetherDays(dog);
-  async function share(kind) {
+  useEffect(() => {
+    let alive = true;
+    const make = async (kind, draw, name) => new File([await draw(dog)], name, { type: "image/png" });
+    Promise.all([make("week", drawWeeklyCard, `${dog.name}-이번주.png`), days > 0 ? make("together", drawTogetherCard, `${dog.name}-함께한${days}일.png`) : null])
+      .then(([week, together]) => alive && setFiles({ week, together }))
+      .catch(() => alive && setMsg("카드를 만들지 못했어요."));
+    return () => (alive = false);
+  }, [dog, days]);
+  function share(kind) {
     setMsg("");
-    try {
-      const blob = await (kind === "together" ? drawTogetherCard(dog) : drawWeeklyCard(dog));
-      const file = new File([blob], `${dog.name}-${kind === "together" ? `함께한${days}일` : "이번주"}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: `${dog.name}의 이번 주` });
-      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: file.name });
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    } catch (e) {
-      if (e.name !== "AbortError") setMsg("카드를 만들지 못했어요. 다시 시도해 주세요.");
+    const file = files[kind];
+    if (!file) return setMsg("카드를 만드는 중이에요. 잠시 뒤 다시 눌러 주세요.");
+    if (navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file], title: `${dog.name}의 카드` }).catch((e) => e.name !== "AbortError" && setMsg("공유하지 못했어요. 다시 시도해 주세요."));
+      return;
     }
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: file.name });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   return (
     <>

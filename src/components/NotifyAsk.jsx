@@ -13,7 +13,8 @@ const everChecked = (dogId) => Object.keys(readJSON("dogcare-daily-check-v1", {}
 // "20:30" → "저녁 8시 30분"
 const when = (t) => {
   const h = Number(t.slice(0, 2)), m = Number(t.slice(3, 5));
-  return `${h >= 18 ? "저녁 " : h < 12 ? "아침 " : ""}${h > 12 ? h - 12 : h}시${m ? ` ${m}분` : ""}`;
+  const part = h < 5 ? "새벽 " : h < 12 ? "아침 " : h < 18 ? "오후 " : "저녁 ";
+  return `${part}${h % 12 || 12}시${m ? ` ${m}분` : ""}`;
 };
 
 export const notifyAskPending = (dogId) =>

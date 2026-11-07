@@ -25,7 +25,7 @@ self.addEventListener("fetch", (event) => {
           (hit) =>
             hit ||
             fetch(event.request).then((res) => {
-              if (res.ok) {
+              if (res.ok && !(res.headers.get("content-type") || "").includes("text/html")) {
                 c.put(event.request, res.clone());
                 c.keys().then((keys) => keys.length > ASSET_MAX && Promise.all(keys.slice(0, keys.length - ASSET_MAX).map((k) => c.delete(k))));
               }

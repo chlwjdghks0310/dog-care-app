@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import MonthGrid from "./MonthGrid";
 import Ico from "./Ico";
 import { DiffSheet } from "./DailyCheck";
-import { ITEMS, getDay, saveUsual, saveUnknown } from "../services/dailyCheck";
+import { ITEMS, getDay, saveUsual, saveUnknown, clearDay } from "../services/dailyCheck";
+import { syncPushAlarms } from "../services/notifications";
 import { markCheckedIn } from "../services/routine";
 import { TYPES, summarize } from "../services/records";
 import { isVisitRecord } from "../services/vetVisits";
@@ -21,7 +22,7 @@ export default function RecordCalendar({ dog, items, onChanged }) {
   const [only, setOnly] = useState(""); // 이 항목이 다른 날만
   const [sheet, setSheet] = useState(null);
   const [, refresh] = useState(0);
-  const changed = (d) => (d === today && markCheckedIn(dog.id), refresh((n) => n + 1), onChanged?.());
+  const changed = (d) => (d === today && (markCheckedIn(dog.id), syncPushAlarms()), refresh((n) => n + 1), onChanged?.());
 
   const vetDays = useMemo(() => new Set(items.filter(isVisitRecord).map((r) => r.at.slice(0, 10))), [items]);
   const dayOf = (k) => {
@@ -88,7 +89,10 @@ export default function RecordCalendar({ dog, items, onChanged }) {
         {sel && sel.status !== "unknown" ? (
           <div className="rc-day">
             <span>{sel.status === "usual" ? "평소와 같았어요" : `다른 점: ${Object.entries(sel.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}`}</span>
-            <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setSheet(selected)}>고치기</button>
+            <span style={{ display: "flex", gap: 12 }}>
+              {sel.status === "diff" && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, selected), saveUsual(dog.id, selected), changed(selected))}>평소였어요</button>}
+              <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setSheet(selected)}>고치기</button>
+            </span>
           </div>
         ) : selected <= today ? (
           <>
@@ -96,7 +100,7 @@ export default function RecordCalendar({ dog, items, onChanged }) {
             <div className="dc-btns">
               <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, selected), changed(selected))}>평소였어요</button>
               <button type="button" className="dc-diff" onClick={() => setSheet(selected)}>다른 게 있었어요</button>
-              {!sel && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (saveUnknown(dog.id, selected), changed(selected))}>기억 안 나요</button>}
+              {!sel && selected < today && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (saveUnknown(dog.id, selected), changed(selected))}>기억 안 나요</button>}
             </div>
           </>
         ) : (

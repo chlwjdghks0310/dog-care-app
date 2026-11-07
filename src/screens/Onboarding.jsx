@@ -314,7 +314,7 @@ function Setup({ onRegistered, restore }) {
 
           {key === "breed" && (
             <>
-              <input value={breedQuery} onChange={(e) => setBreedQuery(e.target.value)} placeholder="견종 검색 (예: 푸들)" />
+              <input value={breedQuery} aria-label="견종 검색" onChange={(e) => (setBreedQuery(e.target.value), BREEDS.includes(e.target.value.trim()) && update("breed", e.target.value.trim()))} placeholder="견종 검색 (예: 푸들)" />
               <div className="onb-chips">
                 {filteredBreeds.map((b) => (
                   <button key={b} type="button" className="chip" style={chip(form.breed === b)} onClick={() => update("breed", b)}>

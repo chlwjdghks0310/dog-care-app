@@ -3,11 +3,20 @@
 // ② 기록 표(CSV): 강아지 한 마리의 기록을 엑셀에서 열 수 있게(사진은 빼고 "사진 n장"만)
 import { TYPES, summarize, getTimeline } from "./records";
 
+// 가족 초대 코드(비밀번호처럼 쓰임)·동기화 상태·알림 보낸 기록·등록 진행 상태는 넣지 않는다
+const EXCLUDE = ["dogcare-invite", "dogcare-sync", "dogcare-notified", "dogcare-onboarding"];
+
 export function backupJson(storage = localStorage) {
   const data = {};
   for (let i = 0; i < storage.length; i++) {
     const k = storage.key(i);
-    if (k.startsWith("dogcare-")) data[k] = JSON.parse(storage.getItem(k));
+    if (!k.startsWith("dogcare-") || EXCLUDE.some((x) => k.startsWith(x))) continue;
+    const v = storage.getItem(k);
+    try {
+      data[k] = JSON.parse(v);
+    } catch {
+      data[k] = v; // 테마처럼 글자 그대로 저장된 값("dark")
+    }
   }
   return JSON.stringify({ app: "멍케어", version: 1, exportedAt: new Date().toISOString(), data }, null, 1);
 }

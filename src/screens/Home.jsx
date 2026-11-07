@@ -11,6 +11,7 @@ import { getRuleById } from "../data/careRules";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
+import { syncPushAlarms } from "../services/notifications";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
@@ -195,7 +196,7 @@ function DailyRow({ dog, dateKey, onBack }) {
     <div className="card dc-row" style={{ marginBottom: 14 }}>
       <Ico name="check" size={18} className="cat-ico tone-teal" />
       <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
-      <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), setDay(null), onBack())}>다시 고르기</button>
+      <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), onBack())}>다시 고르기</button>
     </div>
   );
 }

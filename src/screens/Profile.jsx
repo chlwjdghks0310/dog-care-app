@@ -803,7 +803,7 @@ function LinksCard() {
 // 기록 내보내기(무료): 병원용 한 장 · 기록 표(엑셀) · 전체 백업 파일
 function ExportCard({ dog, onOpenVet }) {
   const [msg, setMsg] = useState("");
-  const day = new Date().toISOString().slice(0, 10);
+  const day = toDateKey(new Date());
   async function run(make) {
     setMsg("");
     try {

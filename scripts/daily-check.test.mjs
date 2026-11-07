@@ -32,6 +32,12 @@ assert.equal(R.getRecords("a").length, n);
 assert.ok(R.getRecords("a").some((r) => r.memo === "하루 체크: 밥 안 먹음"));
 assert.throws(() => D.saveDiff("a", today, {}), /하나 이상/);
 
+// 고치면서 뺀 항목의 기록은 지워진다
+D.saveDiff("e", day(-1), { meal: "조금 남김", stool: "무름" });
+const before2 = R.getRecords("e").length;
+D.saveDiff("e", day(-1), { meal: "조금 남김" });
+assert.equal(R.getRecords("e").length, before2 - 1);
+assert.ok(!R.getRecords("e").some((r) => r.type === "potty"));
 // 신호: 피·검은 변은 바로 연락, 안 먹음은 물어볼 신호
 const sig = D.signalsOf(D.getDay("a", today).picks);
 assert.deepEqual(sig.red.map((x) => x.label), ["피·검은 변"]);
