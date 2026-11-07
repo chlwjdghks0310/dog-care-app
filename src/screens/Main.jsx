@@ -17,6 +17,7 @@ import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
+import { calculateAge, formatAge } from "../utils/age";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
@@ -148,7 +149,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
   // 질문으로 보이면: 응급 단어 → 응급 카드, 아니면 우리 자료(정보 카드·가이드북)에서 찾기. AI는 부르지 않는다.
   const infoMessage = (said) => {
     const hit = isEmergency(said);
-    return { role: "ai", kind: "info", emergency: hit ? EMERGENCY : null, situation: hit ? EMERGENCY.situations.find((x) => x.keywords.includes(hit))?.line : null, results: findInfo(said) };
+    return { role: "ai", kind: "info", said, emergency: hit ? EMERGENCY : null, situation: hit ? EMERGENCY.situations.find((x) => x.keywords.includes(hit))?.line : null, results: findInfo(said) };
   };
 
   // 보내기: 🎤 음성 인식이 끝나도 바로 이리로(듣는 동안 화면이 바뀌어도 최신 send를 쓰도록 ref로)
@@ -306,7 +307,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
                 </div>
               );
             }
-            if (m.kind === "info") return <InfoAnswer key={i} msg={m} />;
+            if (m.kind === "info") return <InfoAnswer key={i} msg={m} dog={dog} />;
             if (m.kind === "more") return <div key={i} className="rec-card">{m.text}</div>;
             return (
               <div key={i} className="rec-card">
@@ -435,8 +436,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 }
 
 // 질문에 대한 안내: 응급이면 응급 카드가 먼저, 그다음 우리 정보 카드·가이드북. 진단·판단 없이 일반 참고 + 병원 안내만.
-function InfoAnswer({ msg }) {
-  const { emergency, situation, results } = msg;
+function InfoAnswer({ msg, dog }) {
+  const { emergency, situation, results, said } = msg;
   return (
     <div className="rec-card">
       {emergency && (
@@ -456,6 +457,7 @@ function InfoAnswer({ msg }) {
         r.type === "card" ? <InfoCard key={r.card.id} card={r.card} /> : <GuideLink key={r.chapter.chapter} chapter={r.chapter} />
       )}
       {!emergency && !results.length && <p className="info-lead">아직 준비된 자료가 없어요. 걱정되면 동물병원에 물어보세요. 기록할 내용이었다면 "산책 30분 했어"처럼 말해 주세요.</p>}
+      {!emergency && said && <AskOutside dog={dog} question={said} />}
       <p className="faint" style={{ margin: "8px 0 0", fontSize: 12 }}>일반적인 참고 정보예요. 우리 아이 상태는 동물병원에서 확인해 주세요.</p>
     </div>
   );
@@ -565,5 +567,20 @@ function FirstSteps({ dog, onMeal, onWeight, onChat, onLater }) {
       ))}
       <button type="button" className="link-btn summary-more" onClick={onLater}>다음에 할게</button>
     </span>
+  );
+}
+
+// 더 묻고 싶으면 ChatGPT로 넘기기(멍케어 비용 0원, 사용자 결정 11/7 A안). 보호자가 누를 때만 열고, 이름은 넣지 않는다(견종·나이·몸무게만).
+// 응급 단어가 보이면 이 버튼 대신 병원 연락 안내만 보여 준다.
+function AskOutside({ dog, question }) {
+  const age = dog.birthDate ? formatAge(calculateAge(dog.birthDate)) : "";
+  const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question}\n\n수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
+  return (
+    <div className="ask-out">
+      <a className="btn-ghost small" href={`https://chatgpt.com/?q=${encodeURIComponent(prompt)}`} target="_blank" rel="noopener noreferrer">
+        <Ico name="chatHeart" size={15} /> ChatGPT에 물어보기
+      </a>
+      <span className="faint">멍케어 밖 AI예요. 답은 참고만 하고, 걱정되면 병원에 물어보세요.</span>
+    </div>
   );
 }

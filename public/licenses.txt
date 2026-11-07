@@ -112,4 +112,7 @@ SOFTWARE.
 변 모양 예시 사진 (Wikimedia Commons)
 - score-2-photo-a.jpg: "Dog feces.jpg" — Kulmalukko, 퍼블릭 도메인 — https://commons.wikimedia.org/wiki/File:Dog_feces.jpg
 - score-3-photo.jpg: "Dog feces at SF Bay Trail.JPG" — BrokenSphere, CC BY 3.0 (https://creativecommons.org/licenses/by/3.0) — https://commons.wikimedia.org/wiki/File:Dog_feces_at_SF_Bay_Trail.JPG
-  크기만 줄이고 위치 정보 등 메타데이터를 지웠습니다.
+- score-1-photo-b.jpg: "Brandenburg Hundekot.jpg" — Geoprofi Lars, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0) — https://commons.wikimedia.org/wiki/File:Brandenburg_Hundekot.jpg
+- score-4-photo-a.jpg: "Hundekot Berlin.jpg" — Geoprofi Lars, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Hundekot_Berlin.jpg
+- score-5-photo-a.jpg: "Wuppertal Nüller Str 0033.JPG" — Atamari, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0) — https://commons.wikimedia.org/wiki/File:Wuppertal_N%C3%BCller_Str_0033.JPG
+  모두 크기만 줄이고(자르기·보정 없음) 위치 정보 등 메타데이터를 지웠습니다.
