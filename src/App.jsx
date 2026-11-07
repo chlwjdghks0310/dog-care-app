@@ -81,6 +81,14 @@ export default function App() {
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
   const [vitalMetric, setVitalMetric] = useState(null);
   const [vetDocSignal, setVetDocSignal] = useState(0);
+  // 인터넷 연결(비행기 모드 등) — 끊기면 위에 한 줄 안내. 기록은 원래 폰에 저장돼서 그대로 쓴다
+  const [online, setOnline] = useState(() => navigator.onLine !== false);
+  useEffect(() => {
+    const on = () => setOnline(true), off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => (window.removeEventListener("online", on), window.removeEventListener("offline", off));
+  }, []);
   const [vetFrom, setVetFrom] = useState("hospital"); // 병원용 기록을 연 곳(주간 리포트·우리 아이·병원) — 뒤로 가면 거기로
   const openVet = (from) => (setVetFrom(from), setTab("vet"));
   // 어디서나 + 버튼(QuickAddFab)
@@ -475,7 +483,7 @@ export default function App() {
   };
 
   return (
-    <div className={`app-shell${chatReading && TABS[visibleIndex]?.key === "main" ? " reading" : ""}`}>
+    <div className={`app-shell${online ? "" : " is-offline"}${chatReading && TABS[visibleIndex]?.key === "main" ? " reading" : ""}`}>
       {/* 인스타그램처럼 옆으로 밀면 옆 탭이 같이 끌려 나온다(브라우저 기본 가로 스크롤 + 스냅이라 손가락 속도·관성이 폰 그대로).
           화면 사이 틈(gap)으로 두 화면이 구분된다. */}
       <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
@@ -486,6 +494,7 @@ export default function App() {
         ))}
       </div>
       {/* 비서(채팅) 화면은 대화 스크롤과 겹치지 않게 빼고, 나머지 화면은 맨 위에서 당기면 새로고침 */}
+      {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
       <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
       <BottomNav
         active={TABS[visibleIndex]?.key || pageKey}

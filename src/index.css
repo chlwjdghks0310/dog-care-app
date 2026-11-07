@@ -7,6 +7,7 @@
   --text-soft: #6b6056; /* 점검 11/7: 연한 파랑 바탕 위에서도 4.5:1 넘게(예전 #7a6f63) */
   --text-faint: #6f6359; /* 예전 #80726a */
   --accent: #4b90e2;
+  --accent-btn: #3676c6; /* 흰 글씨가 올라가는 버튼 바탕 — 테마마다 [data-color]에서 바꿈(대비 4.5:1 이상) */
   --accent-soft: #dde9fa;
   --accent-strong: #255a9c; /* 연한 파랑 칩 위 글자 대비 5.7:1(예전 #2f6fbd) */
   --success: #4c8c5b;
@@ -501,7 +502,7 @@ button {
 .onb-check { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; font-weight: 800; }
 .onb-check.on { background: var(--accent); border-color: var(--accent-strong); }
 .onb-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; margin-bottom: 10px; text-align: left; line-height: 1.5; }
-.onb-bubble.me { margin-left: auto; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.onb-bubble.me { margin-left: auto; background: var(--accent-btn, var(--accent)); color: #fff; border-bottom-right-radius: 4px; }
 .onb-bubble.ai { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .onb-text { white-space: pre-line; }
 .onb-example { font-size: 11px; font-weight: 700; color: var(--text-faint); text-align: right; margin: -4px 0 4px; }
@@ -926,7 +927,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .dog-health-line .faint { flex-shrink: 0; min-width: 52px; }
 .dog-info-rows { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
 .fab-wrap { position: sticky; bottom: -82px; /* .screen 아래 여백(96px) 안쪽까지 내려 탭 바로 위(약 14px)에 */ display: flex; justify-content: flex-end; pointer-events: none; margin: 4px -2px 0 0; z-index: 4; } /* 오른쪽 끝 = 가계부 탭 바로 위 */
-.fab { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; padding: 0; border: none; border-radius: 50%; background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(75, 144, 226, 0.4); transition: transform 0.22s ease, opacity 0.22s ease; }
+.fab { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; padding: 0; border: none; border-radius: 50%; background: var(--accent-btn, var(--accent)); color: #fff; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform 0.22s ease, opacity 0.22s ease; }
 .fab.hidden { transform: translateY(90px); opacity: 0; pointer-events: none; }
 .fab:active { transform: scale(0.96); }
 .report-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 14px; }
@@ -978,23 +979,23 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 /* 배경 테마(설정 → 배경 테마): 색 조합 5개 + 같은 색 발바닥 5개. 다크 모드에서는 다크 색이 우선(:not([data-theme=dark])).
    대표색(--accent)·보조색 3개(--c-teal/violet/rose 자리)를 함께 바꾼다. 아이콘 색은 옅은 바탕 위 3:1 이상, 진한 글자(--accent-strong)는 4.5:1 이상으로 고른 값. */
 :root[data-color="coral"]:not([data-theme="dark"]) { /* 크림 코랄 */
-  --bg: #fff7f2; --border: #f3e2d8; --accent: #e0695a; --accent-soft: #fde4dc; --accent-strong: #b4483b; --check-border: #ecc9bb; --grid-line: #f7ebe4;
+  --bg: #fff7f2; --border: #f3e2d8; --accent: #e0695a; --accent-btn: #b75649; --accent-soft: #fde4dc; --accent-strong: #b4483b; --check-border: #ecc9bb; --grid-line: #f7ebe4;
   --c-teal: #1f7a6c; --c-teal-bg: #dcefe9; --c-violet: #6a54a8; --c-violet-bg: #ebe5f7; --c-rose: #99610f; --c-rose-bg: #fbecd2;
 }
 :root[data-color="mint"]:not([data-theme="dark"]) { /* 민트 포레스트 */
-  --bg: #eff8f4; --border: #d3e9e0; --accent: #2f9e84; --accent-soft: #d7f0e8; --accent-strong: #1f7562; --check-border: #b8dccd; --grid-line: #e2f1ea;
+  --bg: #eff8f4; --border: #d3e9e0; --accent: #2f9e84; --accent-btn: #26816c; --accent-soft: #d7f0e8; --accent-strong: #1f7562; --check-border: #b8dccd; --grid-line: #e2f1ea;
   --c-teal: #2f6fbd; --c-teal-bg: #dde9fa; --c-violet: #6a54a8; --c-violet-bg: #ebe5f7; --c-rose: #b0406c; --c-rose-bg: #fae0ea;
 }
 :root[data-color="lavender"]:not([data-theme="dark"]) { /* 라벤더 */
-  --bg: #f5f2fd; --border: #e2dbf5; --accent: #7b61d6; --accent-soft: #e9e3fb; --accent-strong: #5a43b0; --check-border: #cfc4ee; --grid-line: #ece7fa;
+  --bg: #f5f2fd; --border: #e2dbf5; --accent: #7b61d6; --accent-btn: #7b61d6; --accent-soft: #e9e3fb; --accent-strong: #5a43b0; --check-border: #cfc4ee; --grid-line: #ece7fa;
   --c-teal: #1d7673; --c-teal-bg: #d9f1ef; --c-violet: #b0406c; --c-violet-bg: #fae0ea; --c-rose: #2f6fbd; --c-rose-bg: #dde9fa;
 }
 :root[data-color="peach"]:not([data-theme="dark"]) { /* 피치 핑크 */
-  --bg: #fff4f7; --border: #f5dbe3; --accent: #e06a8c; --accent-soft: #fde1ea; --accent-strong: #b23e62; --check-border: #efc3d1; --grid-line: #fae9ef;
+  --bg: #fff4f7; --border: #f5dbe3; --accent: #e06a8c; --accent-btn: #b3546f; --accent-soft: #fde1ea; --accent-strong: #b23e62; --check-border: #efc3d1; --grid-line: #fae9ef;
   --c-teal: #1d7673; --c-teal-bg: #d9f1ef; --c-violet: #5b4fb8; --c-violet-bg: #e8e5fa; --c-rose: #99610f; --c-rose-bg: #fbecd2;
 }
 :root[data-color="sage"]:not([data-theme="dark"]) { /* 세이지 */
-  --bg: #f3f7f0; --border: #dce8d6; --accent: #5f8f5a; --accent-soft: #e1eedd; --accent-strong: #456d41; --check-border: #c4d8bc; --grid-line: #e8f0e4;
+  --bg: #f3f7f0; --border: #dce8d6; --accent: #5f8f5a; --accent-btn: #537d4f; --accent-soft: #e1eedd; --accent-strong: #456d41; --check-border: #c4d8bc; --grid-line: #e8f0e4;
   --c-teal: #2f6fbd; --c-teal-bg: #dde9fa; --c-violet: #8a4f9e; --c-violet-bg: #f1e3f6; --c-rose: #b0563a; --c-rose-bg: #f9e2da;
 }
 :root[data-color="coral"][data-paw]:not([data-theme="dark"]) {
@@ -1025,27 +1026,27 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .theme-name { min-width: 0; line-height: 1.25; }
 /* 배경 테마 추가(2026-10-26): 색 조합 5개 + 그레이, 소프트 블루·그레이 발바닥 */
 :root[data-color="honey"]:not([data-theme="dark"]) { /* 허니 머스터드 */
-  --bg: #fffaf0; --border: #f1e4c8; --accent: #b8860b; --accent-soft: #f8ecd0; --accent-strong: #8a6408; --check-border: #e6d3a6; --grid-line: #f6eedb;
+  --bg: #fffaf0; --border: #f1e4c8; --accent: #b8860b; --accent-btn: #966d09; --accent-soft: #f8ecd0; --accent-strong: #8a6408; --check-border: #e6d3a6; --grid-line: #f6eedb;
   --c-teal: #2f6fbd; --c-teal-bg: #dde9fa; --c-violet: #b0406c; --c-violet-bg: #fae0ea; --c-rose: #1d7673; --c-rose-bg: #d9f1ef;
 }
 :root[data-color="ocean"]:not([data-theme="dark"]) { /* 오션 틸 */
-  --bg: #eef8fa; --border: #cfe6eb; --accent: #1f8fa3; --accent-soft: #d5eef2; --accent-strong: #166b7a; --check-border: #b3d8e0; --grid-line: #e0f0f3;
+  --bg: #eef8fa; --border: #cfe6eb; --accent: #1f8fa3; --accent-btn: #1b8092; --accent-soft: #d5eef2; --accent-strong: #166b7a; --check-border: #b3d8e0; --grid-line: #e0f0f3;
   --c-teal: #5b4fb8; --c-teal-bg: #e8e5fa; --c-violet: #b4483b; --c-violet-bg: #fde4dc; --c-rose: #99610f; --c-rose-bg: #fbecd2;
 }
 :root[data-color="mocha"]:not([data-theme="dark"]) { /* 모카 */
-  --bg: #faf6f3; --border: #eadfd7; --accent: #a0705a; --accent-soft: #f1e4dc; --accent-strong: #7a5240; --check-border: #dcc7ba; --grid-line: #f2ebe5;
+  --bg: #faf6f3; --border: #eadfd7; --accent: #a0705a; --accent-btn: #966954; --accent-soft: #f1e4dc; --accent-strong: #7a5240; --check-border: #dcc7ba; --grid-line: #f2ebe5;
   --c-teal: #456d41; --c-teal-bg: #e1eedd; --c-violet: #2f6fbd; --c-violet-bg: #dde9fa; --c-rose: #b0406c; --c-rose-bg: #fae0ea;
 }
 :root[data-color="indigo"]:not([data-theme="dark"]) { /* 인디고 */
-  --bg: #f2f4fd; --border: #d9ddf5; --accent: #4f5fc9; --accent-soft: #e1e5fa; --accent-strong: #3a47a3; --check-border: #c5cbef; --grid-line: #e8ebfa;
+  --bg: #f2f4fd; --border: #d9ddf5; --accent: #4f5fc9; --accent-btn: #4f5fc9; --accent-soft: #e1e5fa; --accent-strong: #3a47a3; --check-border: #c5cbef; --grid-line: #e8ebfa;
   --c-teal: #1d7673; --c-teal-bg: #d9f1ef; --c-violet: #b0406c; --c-violet-bg: #fae0ea; --c-rose: #99610f; --c-rose-bg: #fbecd2;
 }
 :root[data-color="cherry"]:not([data-theme="dark"]) { /* 체리 */
-  --bg: #fff5f5; --border: #f5dada; --accent: #d14b5a; --accent-soft: #fde2e4; --accent-strong: #a8323f; --check-border: #efc3c7; --grid-line: #faeaea;
+  --bg: #fff5f5; --border: #f5dada; --accent: #d14b5a; --accent-btn: #c84856; --accent-soft: #fde2e4; --accent-strong: #a8323f; --check-border: #efc3c7; --grid-line: #faeaea;
   --c-teal: #1d7673; --c-teal-bg: #d9f1ef; --c-violet: #5b4fb8; --c-violet-bg: #e8e5fa; --c-rose: #2f6fbd; --c-rose-bg: #dde9fa;
 }
 :root[data-color="gray"]:not([data-theme="dark"]) { /* 그레이 */
-  --bg: #f4f5f7; --border: #dfe2e7; --accent: #6b7280; --accent-soft: #e7e9ed; --accent-strong: #4b5160; --check-border: #cdd1d8; --grid-line: #eceef1;
+  --bg: #f4f5f7; --border: #dfe2e7; --accent: #6b7280; --accent-btn: #6b7280; --accent-soft: #e7e9ed; --accent-strong: #4b5160; --check-border: #cdd1d8; --grid-line: #eceef1;
   --c-teal: #1d7673; --c-teal-bg: #d9f1ef; --c-violet: #5b4fb8; --c-violet-bg: #e8e5fa; --c-rose: #b0406c; --c-rose-bg: #fae0ea;
 }
 :root[data-color="honey"][data-paw]:not([data-theme="dark"]) {
@@ -1223,7 +1224,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .vd-total td { font-weight: 800; border-bottom: none; }
 
 /* 오늘 요약 말풍선 아래 "오늘 할 일 보기 ›" — 눌러서 들어간다는 표시 */
-.summary-go { color: #255a9c !important; display: inline-flex; align-items: center; gap: 6px; align-self: center; margin-top: 10px; padding: 7px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13.5px; font-weight: 800; }
+.summary-go { color: var(--accent-strong) !important; display: inline-flex; align-items: center; gap: 6px; align-self: center; margin-top: 10px; padding: 7px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13.5px; font-weight: 800; }
 .summary-go span { font-size: 16px; line-height: 1; }
 .summary-bubble:active .summary-go { filter: brightness(0.95); }
 
@@ -1284,3 +1285,5 @@ button.seg, button.chip { min-height: 36px; }
 .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .qa-item { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; text-align: left; min-height: 96px; }
 .qa-item .faint { font-size: 12.5px; }
+.onb-rec { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+.offline-bar { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 6px); left: 12px; right: 12px; z-index: 90; padding: 8px 12px; border-radius: 12px; background: #3b3f46; color: #fff; font-size: 12.5px; font-weight: 600; text-align: center; box-shadow: var(--shadow); }

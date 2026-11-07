@@ -19,14 +19,15 @@ import Ico from "../components/Ico";
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
-// 소개는 2장(방향 A, 2026-11-07): NN/g 실험 — 소개를 건너뛴 쪽이 성공률·쉬움 점수가 더 높음, Apple HIG — 짧고 건너뛸 수 있게.
+// 소개는 3장(방향 A, 2026-11-07 — 3장째 "말하면 기록" 사용자 요청): NN/g 실험 — 소개를 건너뛴 쪽이 성공률·쉬움 점수가 더 높음, Apple HIG — 짧고 건너뛸 수 있게.
 // 한 장 = 한 약속, 그림 속 내용은 "예시"로 표시, 마지막 버튼은 첫 행동. 근거: ../자료용/자료/2026-11-07-온보딩-2장.md
 // 빠진 내용은 제자리에서 안내: 말로 기록=입력줄 예시, 출처=정보 카드·수치마다, 손동작=도움말
 const SLIDES = [
   { title: "“평소엔 어땠어요?”", text: "병원에서 이 질문을 받으면\n멍케어를 보여 주세요." },
-  { title: "하루 10초, 다른 날만", text: "평소와 같으면 한 번만 누르고, 다르면 그것만.\n말로 해도 알아서 기록해요." },
+  { title: "하루 10초, 다른 날만", text: "평소와 같으면 한 번만 누르고, 다르면 그것만." },
+  { title: "말하면 기록해 줘요", text: "“산책 30분 했어” “몸무게 3.2kg”\n비서에게 말하거나 적으면 알아서 기록해요." },
 ];
-const SLIDE_VISUALS = [VetMock, DailyMock];
+const SLIDE_VISUALS = [VetMock, DailyMock, TalkMock];
 
 
 const PROGRESS_KEY = "dogcare-onboarding-v1";
@@ -160,7 +161,21 @@ function DailyMock() {
           <span className="dc-diff" aria-hidden="true">다른 게 있었어요</span>
         </div>
       </div>
-      <div className="onb-bubble me" style={{ marginTop: 12 }}>산책 30분 했어</div>
+    </div>
+  );
+}
+
+// 3장: 비서에게 말하면 기록(예시) — 말 → 기록 카드
+function TalkMock() {
+  return (
+    <div className="onb-mock" style={{ background: "transparent", boxShadow: "none", border: "none" }}>
+      <Example />
+      <div className="onb-bubble me">산책 30분 했어. 몸무게는 3.2kg</div>
+      <div className="onb-bubble ai">
+        둘 다 적어 뒀어!
+        <div className="onb-rec"><Ico name="walk" size={13} className="cat-ico tone-violet" /> 산책 30분</div>
+        <div className="onb-rec"><Ico name="scales" size={13} className="cat-ico tone-blue" /> 몸무게 3.2kg</div>
+      </div>
     </div>
   );
 }

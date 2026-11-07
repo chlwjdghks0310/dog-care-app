@@ -3,6 +3,7 @@
 // 화면(HTML)은 지금처럼 늘 새로 받아서 업데이트는 바로 반영된다(새 HTML이 새 이름의 파일을 부름).
 const OFFLINE_CACHE = "mungcare-offline-v2"; // 안내 페이지를 바꾸면 숫자를 올려 새로 받게
 const ASSET_CACHE = "mungcare-assets-v1";
+const SHELL_CACHE = "mungcare-shell-v1"; // 마지막으로 연 앱 화면(HTML) — 인터넷이 없을 때 이걸로 앱을 연다(기록은 폰에 있으니 그대로 쓸 수 있게)
 const ASSET_MAX = 80; // ponytail: 오래된 파일은 개수로만 정리(먼저 넣은 것부터) — 용량 기준이 필요하면 그때
 const OFFLINE_URL = "/offline.html";
 
@@ -11,7 +12,7 @@ self.addEventListener("install", (event) => {
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== OFFLINE_CACHE && k !== ASSET_CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== OFFLINE_CACHE && k !== ASSET_CACHE && k !== SHELL_CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
   );
 });
 
@@ -37,7 +38,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (event.request.mode !== "navigate") return;
-  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+  // 화면: 늘 인터넷에서 새로 받고(업데이트 바로 반영), 앱 화면이면 받아 둔다. 인터넷이 없으면 받아 둔 앱 화면 → 없으면(처음·홈페이지) 안내 페이지
+  const isApp = url.pathname === "/" || url.pathname === "/index.html";
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        if (isApp && res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
+          const copy = res.clone(); // 사본은 바로 만든다(브라우저가 원본을 먼저 읽으면 나중엔 못 만듦)
+          caches.open(SHELL_CACHE).then((c) => c.put("/", copy));
+        }
+        return res;
+      })
+      .catch(() => (isApp ? caches.open(SHELL_CACHE).then((c) => c.match("/")).then((hit) => hit || caches.match(OFFLINE_URL)) : caches.match(OFFLINE_URL)))
+  );
 });
 
 // 서버가 보낸 웹 푸시를 받아서 실제 알림으로 띄운다 — 브라우저(탭)가 닫혀 있어도

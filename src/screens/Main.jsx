@@ -507,7 +507,7 @@ function InfoAnswer({ msg, dog }) {
         r.type === "card" ? <InfoCard key={r.card.id} card={r.card} /> : <GuideLink key={r.chapter.chapter} chapter={r.chapter} />
       )}
       {!emergency && !results.length && <p className="info-lead">아직 준비된 자료가 없어요. 걱정되면 동물병원에 물어보세요. 기록할 내용이었다면 "산책 30분 했어"처럼 말해 주세요.</p>}
-      {!emergency && said && <AskOutside dog={dog} question={said} />}
+      {said && <AskOutside dog={dog} question={said} urgent={Boolean(emergency)} />}
       <p className="faint" style={{ margin: "8px 0 0", fontSize: 12 }}>일반적인 참고 정보예요. 우리 아이 상태는 동물병원에서 확인해 주세요.</p>
     </div>
   );
@@ -625,15 +625,15 @@ function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
 
 // 더 묻고 싶으면 ChatGPT로 넘기기(멍케어 비용 0원, 사용자 결정 11/7 A안). 보호자가 누를 때만 열고, 이름은 넣지 않는다(견종·나이·몸무게만).
 // 응급 단어가 보이면 이 버튼 대신 병원 연락 안내만 보여 준다.
-function AskOutside({ dog, question }) {
+function AskOutside({ dog, question, urgent }) {
   const age = dog.birthDate ? formatAge(calculateAge(dog.birthDate)) : "";
-  const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question.split(dog.name).join("우리 강아지")}\n\n수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
+  const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question.split(dog.name).join("우리 강아지")}\n\n${urgent ? "응급일 수 있어요. 지금 해야 할 일과 병원에 전화할 때 알려 줄 정보를 먼저 짧게 알려 주세요. " : ""}수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
   return (
     <div className="ask-out">
       <a className="btn-ghost small" href={`https://chatgpt.com/?q=${encodeURIComponent(prompt)}`} target="_blank" rel="noopener noreferrer">
         <Ico name="chatHeart" size={15} /> ChatGPT에 물어보기
       </a>
-      <span className="faint">멍케어 밖 AI예요. 답은 참고만 하고, 걱정되면 병원에 물어보세요.</span>
+      <span className="faint">{urgent ? "응급일 수 있어요 — 병원 전화가 먼저예요. ChatGPT 답은 전화를 기다리는 동안 참고만 해 주세요." : "멍케어 밖 AI예요. 답은 참고만 하고, 걱정되면 병원에 물어보세요."}</span>
     </div>
   );
 }
