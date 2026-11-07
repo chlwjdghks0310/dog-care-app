@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Ico from "../components/Ico";
 import { buildWeeklyReport } from "../services/weeklyReport";
 import { stockLabel } from "../services/foodStock";
 import { durationLabel } from "../services/routine";
 import { md } from "../services/records";
 import { josa } from "../utils/text";
+import { drawWeeklyCard } from "../services/shareCard";
 
 // 주간 리포트(일요일 밤 알림·프로필에서). 기록된 사실만 숫자로 — 좋다/나쁘다 판단은 하지 않는다.
 export default function WeeklyReport({ dog, onBack, onOpenVet }) {
@@ -65,10 +66,38 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
         {r.food && <div className="wr-row"><span className="faint">사료</span><span>{stockLabel(r.food)}</span></div>}
       </div>
 
+      <ShareCardButton dog={dog} />
       <button type="button" className="btn-ghost report-btn" style={{ marginTop: 14 }} onClick={onOpenVet}>
         <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록으로 보기
       </button>
       <p className="faint" style={{ marginTop: 10 }}>적어 둔 기록을 그대로 센 숫자예요. 몸 상태를 판단한 결과가 아니에요.</p>
     </div>
+  );
+}
+
+// 이번 주 카드 공유(인스타 스토리·카톡 등) — 건강 문제 없이 함께한 기록만 그림으로
+function ShareCardButton({ dog }) {
+  const [msg, setMsg] = useState("");
+  async function share() {
+    setMsg("");
+    try {
+      const blob = await drawWeeklyCard(dog);
+      const file = new File([blob], `${dog.name}-이번주.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: `${dog.name}의 이번 주` });
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: file.name });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) {
+      if (e.name !== "AbortError") setMsg("카드를 만들지 못했어요. 다시 시도해 주세요.");
+    }
+  }
+  return (
+    <>
+      <button type="button" className="btn-primary" style={{ marginTop: 14 }} onClick={share}>
+        <Ico name="camera" size={18} /> 이번 주 카드로 자랑하기
+      </button>
+      <p className="faint" style={{ margin: "6px 0 0", fontSize: 12.5 }}>함께 본 날·산책·몸무게·기록 수만 들어가요. 건강 기록은 넣지 않아요.</p>
+      {msg && <p className="error-text">{msg}</p>}
+    </>
   );
 }

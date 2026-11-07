@@ -115,6 +115,9 @@ export function signalsOf(picks = {}) {
   return { red: list.filter((x) => x.red), warn: list.filter((x) => x.warn) };
 }
 
+// 기간 안에 함께 본 날(평소·다름, 기억 안 나요 제외)
+export const daysInRange = (dogId, from, to) => Object.entries(all()[dogId] || {}).filter(([d, v]) => d >= from && d <= to && v.status !== "unknown").length;
+
 // 이번 달 함께 본 날(평소·다름 모두, 기억 안 나요는 빼고)
 export function daysThisMonth(dogId, today = todayKey()) {
   const month = today.slice(0, 7);

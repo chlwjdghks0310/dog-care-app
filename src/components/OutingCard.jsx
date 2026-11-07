@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { outingState, leaveNow, backNow, durationLabel, backTip, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
+import { outingState, leaveNow, backNow, durationLabel, backTip, aloneSummary, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 import { BackCheckSheet } from "./DailyCheck";
 import { getDay } from "../services/dailyCheck";
-import { todayKey } from "../utils/date";
+import { addDays, toDateKey, todayKey } from "../utils/date";
 
 // 오늘 탭의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어]. 하루 상태 체크는 위의 하루 체크 카드(DailyCheck)가 맡는다.
 export default function OutingCard({ dog, onChecked }) {
@@ -35,7 +35,10 @@ export default function OutingCard({ dog, onChecked }) {
     sub = backTip(s.minutes);
   } else {
     title = "외출할 때 눌러 주세요";
-    sub = `${dog.name} 혼자 있는 시간을 챙겨 줄게요`;
+    // 최근 7일(어제까지) 평균 혼자 있던 시간 — 쌓이면 보여 준다(방향 정리 결정 4: 평균 외출 시간 + 귀가 체크)
+    const t = todayKey();
+    const avg = aloneSummary(toDateKey(addDays(new Date(`${t}T00:00:00`), -7)), toDateKey(addDays(new Date(`${t}T00:00:00`), -1)));
+    sub = avg ? `최근 7일 평균 혼자 ${durationLabel(avg.avg)} · ${avg.days}일 기록` : `${dog.name} 혼자 있는 시간을 챙겨 줄게요`;
     action = { label: "다녀올게", run: leave };
   }
 
