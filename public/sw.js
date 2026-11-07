@@ -1,5 +1,9 @@
-// 인터넷 없이 앱을 열면 보여 줄 안내 페이지 하나만 저장해 둔다(앱 파일은 저장하지 않아 업데이트는 그대로 바로 반영).
+// 인터넷 없이 앱을 열면 보여 줄 안내 페이지를 저장해 둔다.
+// 앱 파일(/assets/ — 이름에 내용 해시가 붙어 바뀌면 이름도 바뀜)은 한 번 받으면 저장해 두고 다시 쓴다 → 두 번째 열 때부터 빠르게.
+// 화면(HTML)은 지금처럼 늘 새로 받아서 업데이트는 바로 반영된다(새 HTML이 새 이름의 파일을 부름).
 const OFFLINE_CACHE = "mungcare-offline-v2"; // 안내 페이지를 바꾸면 숫자를 올려 새로 받게
+const ASSET_CACHE = "mungcare-assets-v1";
+const ASSET_MAX = 80; // ponytail: 오래된 파일은 개수로만 정리(먼저 넣은 것부터) — 용량 기준이 필요하면 그때
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
@@ -7,12 +11,31 @@ self.addEventListener("install", (event) => {
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== OFFLINE_CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== OFFLINE_CACHE && k !== ASSET_CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
   );
 });
 
 // 화면을 여는 요청(앱 켜기·새로고침)만: 인터넷이 안 되면 안내 페이지. 나머지 요청은 손대지 않는다.
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method === "GET" && url.origin === self.location.origin && url.pathname.startsWith("/assets/")) {
+    event.respondWith(
+      caches.open(ASSET_CACHE).then((c) =>
+        c.match(event.request).then(
+          (hit) =>
+            hit ||
+            fetch(event.request).then((res) => {
+              if (res.ok) {
+                c.put(event.request, res.clone());
+                c.keys().then((keys) => keys.length > ASSET_MAX && Promise.all(keys.slice(0, keys.length - ASSET_MAX).map((k) => c.delete(k))));
+              }
+              return res;
+            })
+        )
+      )
+    );
+    return;
+  }
   if (event.request.mode !== "navigate") return;
   event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
 });

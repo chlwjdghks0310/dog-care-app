@@ -7,6 +7,7 @@ import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme, themeLabel
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
+import { backupJson, recordsCsv, shareFile } from "../services/exportData";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
 import { isVisitEvent } from "../services/vetVisits";
@@ -414,6 +415,8 @@ export default function Profile({ dog, onOpenVet, onOpenReport, onOpenVital, onO
               </button>
             </div>
 
+            <ExportCard dog={dog} onOpenVet={() => (setSettingsOpen(false), onOpenVet())} />
+
             <button className="btn-ghost" style={{ width: "100%", marginTop: 14, color: "var(--danger)" }} onClick={handleDeleteCurrent}>
               이 강아지 삭제
             </button>
@@ -793,6 +796,33 @@ function LinksCard() {
       )}
       {doc === "terms" && <Terms onClose={() => setDoc(null)} />}
       {doc === "privacy" && <PrivacyPolicy onClose={() => setDoc(null)} />}
+    </div>
+  );
+}
+
+// 기록 내보내기(무료): 병원용 한 장 · 기록 표(엑셀) · 전체 백업 파일
+function ExportCard({ dog, onOpenVet }) {
+  const [msg, setMsg] = useState("");
+  const day = new Date().toISOString().slice(0, 10);
+  async function run(make) {
+    setMsg("");
+    try {
+      await make();
+    } catch (err) {
+      if (err.name !== "AbortError") setMsg("내보내지 못했어요. 다시 시도해 주세요.");
+    }
+  }
+  return (
+    <div className="card" style={{ marginTop: 14 }}>
+      <div className="h2">기록 내보내기</div>
+      <p className="subtle" style={{ margin: "0 0 10px" }}>내 기록은 언제든 무료로 가져갈 수 있어요.</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button type="button" className="btn-ghost" onClick={onOpenVet}>병원용 기록 한 장(PDF·공유)</button>
+        <button type="button" className="btn-ghost" onClick={() => run(() => shareFile(recordsCsv(dog.id), `${dog.name}-기록-${day}.csv`, "text/csv"))}>{dog.name} 기록 표(엑셀용 CSV)</button>
+        <button type="button" className="btn-ghost" onClick={() => run(() => shareFile(backupJson(), `멍케어-백업-${day}.json`, "application/json"))}>전체 백업 파일(JSON)</button>
+      </div>
+      <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>백업 파일엔 사진과 모든 강아지 기록이 들어 있어요. 믿을 수 있는 곳에만 보관해 주세요. 로그인 정보는 들어가지 않아요.</p>
+      {msg && <p className="error-text">{msg}</p>}
     </div>
   );
 }

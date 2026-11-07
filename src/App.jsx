@@ -4,6 +4,7 @@ import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/d
 import { getTodayChecklist } from "./services/careEngine";
 import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, checkMedAlarms, registerServiceWorker, syncPushAlarms } from "./services/notifications";
 import { getFeedingSettings } from "./services/feedingSettings";
+import { allowed } from "./services/notifPrefs";
 import { getCustomSchedules } from "./services/customSchedules";
 import { syncEventAlarms } from "./services/calendarEvents";
 import { applyFixedExpenses } from "./services/expenses";
@@ -293,16 +294,18 @@ export default function App() {
     registerServiceWorker();
     const timer = setInterval(() => {
       const dateKey = todayKey();
+      const now = new Date().toTimeString().slice(0, 5);
+      const on = (cat) => allowed(cat, now); // 알림 종류·조용한 시간(알림·알람 설정)
       for (const d of getDogs()) {
-        checkAndNotify(d, getTodayChecklist(d, dateKey), dateKey);
+        if (on("care")) checkAndNotify(d, getTodayChecklist(d, dateKey), dateKey);
         const feedingSettings = getFeedingSettings(d.id);
-        if (feedingSettings.times.length > 0) {
+        if (on("meal") && feedingSettings.times.length > 0) {
           const age = calculateAge(d.birthDate);
           const soak = getSoakGuidance(age.ageInWeeks);
           checkFeedingSoakReminders(d, feedingSettings.times, soak.needed === true, dateKey);
         }
-        checkCustomAlarms(d, getCustomSchedules(d.id), dateKey);
-        checkMedAlarms(d, dateKey);
+        if (on("custom")) checkCustomAlarms(d, getCustomSchedules(d.id), dateKey);
+        if (on("med")) checkMedAlarms(d, dateKey);
       }
     }, 30 * 1000);
     // 앱을 열 때와 백그라운드로 보낼 때마다 최신 알람 목록을 서버에 보내, 앱이 꺼져 있어도 서버가 푸시를 쏘게 한다.
