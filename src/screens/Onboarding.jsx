@@ -474,7 +474,7 @@ function Setup({ onRegistered, restore }) {
                 <span style={{ fontWeight: 700 }}>kg</span>
               </div>
               {form.weight && !valid && <p className="error-text" style={{ marginTop: 6 }}>0.1~120kg 사이로 적어 주세요.</p>}
-              <p className="faint" style={{ marginTop: 6 }}>모르면 건너뛰어도 돼요. 사료·알레르기 같은 정보는 나중에 프로필에서 적을 수 있어요.</p>
+              <p className="faint" style={{ marginTop: 6 }}>모르면 건너뛰어도 돼요. 사료·알레르기 같은 정보는 나중에 우리 아이 탭에서 적을 수 있어요.</p>
             </>
           )}
 

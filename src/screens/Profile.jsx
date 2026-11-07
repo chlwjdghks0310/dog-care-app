@@ -500,7 +500,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}>다가오는 병원·접종</div>
-        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenCalendar}>일정표 ›</button>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenCalendar}>병원 ›</button>
       </div>
       {items.map((e, i) => (
           <div key={i} className="vet-line">

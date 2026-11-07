@@ -525,7 +525,6 @@ function TodaySummary({ dog }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
-      <span className="summary-more">눌러서 오늘 할 일 보기 ›</span>
     </span>
   );
 }

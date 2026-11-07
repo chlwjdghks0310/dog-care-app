@@ -81,7 +81,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }
         </button>
       </div>
 
-      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 병원 일정</div>
+      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 병원·접종·약</div>
       {upcoming.length === 0 ? (
         <div className="card subtle" style={{ marginBottom: 14 }}>
           앞으로 90일 안에 병원·접종·약 일정이 없어요. [＋ 일정]으로 넣어 두면 미리 알려 드려요.
