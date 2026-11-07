@@ -932,11 +932,12 @@ const VET_DOC_TOOL = {
       tests: { type: "string", description: "검사 이름과 적힌 결과" },
       cautions: { type: "string", description: "주의사항(먹이지 말 것·목욕 금지·산책 줄이기 등)으로 적히거나 말한 것" },
       prescription: { type: "string", description: "약 이름·용량·횟수·일수를 적힌 그대로. 바꾸거나 계산하지 않음" },
+      meds: { type: "array", description: "처방전·약봉투·설명에 적힌 약마다 한 칸. 적힌 것만, 모르면 빈 값/0", items: { type: "object", properties: { name: { type: "string", description: "약 이름(봉투에 이름이 없으면 '처방약 1')" }, dose: { type: "string", description: "1회 양을 적힌 그대로(예: 1포, 1알, 0.5ml)" }, per_day: { type: "integer", description: "하루 몇 번(적힌 대로, 모르면 0)" }, days: { type: "integer", description: "며칠분(모르면 0)" }, note: { type: "string", description: "식후·식전 등 먹는 법" } }, required: ["name", "dose", "per_day", "days", "note"], additionalProperties: false } },
       items: { type: "array", items: { type: "object", properties: { name: { type: "string", description: "영수증에 적힌 이름 그대로" }, kind: { type: "string", enum: ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약", "미용", "기타"], description: "분류(주사·처방식은 처치·약, 마취는 수술)" }, amount: { type: "integer" } }, required: ["name", "kind", "amount"], additionalProperties: false }, description: "진료비 항목과 금액(원). 소계·합계·부가세 줄은 넣지 않음" },
       total: { type: "integer", description: "총 결제·청구 금액(원), 없으면 0" },
       next_date: { type: "string", description: "재진·재검·다음 접종 날짜 YYYY-MM-DD, 없으면 빈 문자열" },
     },
-    required: ["is_doc", "retake", "visit_date", "hospital", "reason", "explanation", "tests", "cautions", "prescription", "items", "total", "next_date"],
+    required: ["is_doc", "retake", "visit_date", "hospital", "reason", "explanation", "tests", "cautions", "prescription", "meds", "items", "total", "next_date"],
     additionalProperties: false,
   },
 };

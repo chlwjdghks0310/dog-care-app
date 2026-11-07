@@ -1,6 +1,6 @@
 // 진료 정리 → 진료 기록 칸 확인: npm test
 import assert from "node:assert/strict";
-const { docToPrefill, findSameVisit } = await import("../src/services/vetDoc.js");
+const { docToPrefill, findSameVisit, medDrafts } = await import("../src/services/vetDoc.js");
 const now = new Date("2026-11-07T15:30:00");
 const p = docToPrefill({ visit_date: "2026-11-05", hospital: "행복동물병원", reason: "구토", explanation: "", tests: "혈액검사 정상", prescription: "위장약 1일 2회 5일분", items: [{ name: "진찰료", kind: "진찰", amount: 15000 }, { name: "CBC", kind: "검사", amount: 40000 }], total: 55000, next_date: "2026-11-12" }, now);
 assert.equal(p.at, "2026-11-05T12:00");
@@ -19,4 +19,7 @@ assert.match(docToPrefill({ explanation: "장염", cautions: "하루 굶기기" 
 const recs = [{ type: "vet", at: "2026-11-05T12:00", data: { hospital: "행복병원", cost: "54000" } }];
 assert.ok(findSameVisit(recs, { visit_date: "2026-11-05", hospital: "", total: 54000 }));
 assert.equal(findSameVisit(recs, { visit_date: "2026-11-06", hospital: "행복병원", total: 54000 }), null);
+const md = medDrafts({ reason: "장염", meds: [{ name: "위장약", dose: "1포", per_day: 2, days: 3, note: "식후" }, { name: "연고", dose: "", per_day: 0, days: 0, note: "" }] }, "2026-11-05");
+assert.deepEqual(md[0], { name: "위장약", dose: "1포", times: ["08:00", "20:00"], perDay: 2, courseDays: 3, startDate: "2026-11-05", endDate: "2026-11-07", purpose: "장염 · 식후", remind: true, use: true });
+assert.equal(md[1].use, false, "용량을 모르면 기본으로 등록하지 않음");
 console.log("진료 정리 OK");

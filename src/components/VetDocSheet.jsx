@@ -2,7 +2,11 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { readVetDoc } from "../services/aiClient";
-import { docToPrefill, findSameVisit } from "../services/vetDoc";
+import { docToPrefill, findSameVisit, medDrafts, TIMES_BY_COUNT } from "../services/vetDoc";
+import { addMed } from "../services/medications";
+import { getVetNote } from "../services/vetSummary";
+import { syncPushAlarms } from "../services/notifications";
+import { todayKey } from "../utils/date";
 import { getRecords } from "../services/records";
 import { imageForAI } from "../utils/image";
 import MaskEditor from "./MaskEditor";
@@ -20,6 +24,9 @@ export default function VetDocSheet({ dog, onClose, onUse }) {
   const [doc, setDoc] = useState(null);
   const [claim, setClaim] = useState(false); // 보험 청구할 병원비
   const [masking, setMasking] = useState(null); // 가리는 중인 사진
+  const [meds, setMeds] = useState([]); // 약 일정 초안(확인 후 저장)
+  const [answers, setAnswers] = useState(""); // 진료 전에 적어 둔 '물어볼 것'에 들은 답
+  const questions = dog ? getVetNote(dog.id).questions.trim() : "";
 
   function addFiles(list) {
     const all = [...files, ...[...list].map((file) => ({ file, url: URL.createObjectURL(file) }))];
@@ -34,7 +41,7 @@ export default function VetDocSheet({ dog, onClose, onUse }) {
       const images = await Promise.all(files.map((f) => imageForAI(f.file).then((x) => x.data)));
       const out = await readVetDoc({ images, text: said });
       if (!out?.is_doc) setError(out?.retake || "병원 서류로 읽지 못했어요. 영수증이 화면에 꽉 차게 다시 찍어 주세요.");
-      else setDoc(out);
+      else (setDoc(out), setMeds(medDrafts(out, /^\d{4}-\d{2}-\d{2}$/.test(out.visit_date || "") && out.visit_date <= todayKey() ? out.visit_date : todayKey())));
     } catch (e) {
       if (e.name !== "AbortError") setError(e instanceof TypeError ? "인터넷에 연결하지 못했어요. 연결을 확인하고 다시 시도해 주세요. 아래 [직접 적기]로도 남길 수 있어요." : `${e.message} 아래 [직접 적기]로도 남길 수 있어요.`);
     } finally {
@@ -116,7 +123,52 @@ export default function VetDocSheet({ dog, onClose, onUse }) {
                   보험 청구할 병원비예요 (가계부에 "청구 전"으로)
                 </label>
               )}
-              <button type="button" className="btn-primary" onClick={() => onUse(docToPrefill(doc, new Date(), { claim }))}>진료 기록으로 열기</button>
+              {meds.length > 0 && (
+                <div className="vd-meds">
+                  <div className="xs-label">약 일정으로 만들기 (적힌 그대로 — 확인해 주세요)</div>
+                  {meds.map((m, i) => {
+                    const set = (patch) => setMeds((l) => l.map((x, k) => (k === i ? { ...x, ...patch } : x)));
+                    return (
+                      <div key={i} className="vd-med">
+                        <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 700 }}>
+                          <input type="checkbox" checked={m.use} onChange={(e) => set({ use: e.target.checked })} /> {m.name}
+                        </label>
+                        <div className="vd-med-row">
+                          <input value={m.dose} onChange={(e) => set({ dose: e.target.value })} placeholder="1회 양(예: 1포)" aria-label={`${m.name} 1회 양`} />
+                          <select value={m.times.length} onChange={(e) => set({ times: TIMES_BY_COUNT[e.target.value] })} aria-label={`${m.name} 하루 횟수`}>
+                            {[1, 2, 3, 4].map((n) => <option key={n} value={n}>하루 {n}번</option>)}
+                          </select>
+                          <input type="number" min="0" max="90" value={m.courseDays || ""} onChange={(e) => set({ courseDays: Number(e.target.value) || 0, endDate: Number(e.target.value) ? new Date(new Date(`${m.startDate}T00:00:00`).getTime() + (Number(e.target.value) - 1) * 86400000).toLocaleDateString("sv-SE") : "" })} placeholder="며칠" aria-label={`${m.name} 며칠분`} />
+                        </div>
+                        <span className="faint" style={{ fontSize: 12 }}>{m.startDate}부터 {m.times.join(", ")}{m.endDate ? ` · ${m.endDate}까지` : ""} — 시각은 약 관리에서 바꿀 수 있어요</span>
+                      </div>
+                    );
+                  })}
+                  <p className="faint" style={{ fontSize: 12, margin: "4px 0 0" }}>멍케어는 용량을 바꾸지 않아요. 처방전·약봉투와 다르면 고쳐 주세요.</p>
+                </div>
+              )}
+              {questions && (
+                <div className="vd-meds">
+                  <div className="xs-label">진료 전에 적어 둔 물어볼 것</div>
+                  <p style={{ margin: "0 0 6px", whiteSpace: "pre-line", fontSize: 14 }}>{questions}</p>
+                  <textarea rows={2} value={answers} onChange={(e) => setAnswers(e.target.value)} placeholder="들은 답을 한 줄씩 적어 두세요" aria-label="물어본 것에 들은 답" />
+                </div>
+              )}
+              {error && <p className="error-text">{error}</p>}
+              <button type="button" className="btn-primary" onClick={() => {
+                // 고른 약은 약 관리에 바로 등록(알림 켜짐) — 실패하면 진료 기록으로 넘어가지 않고 알려 준다
+                const chosen = meds.filter((m) => m.use);
+                try {
+                  for (const m of chosen) addMed(dog.id, { name: m.name, dose: m.dose, times: m.times, startDate: m.startDate, endDate: m.endDate, purpose: m.purpose, remind: true }); // 며칠분(courseDays)은 끝나는 날로만
+                } catch (e) {
+                  return setError(`약 일정을 만들지 못했어요: ${e.message}`);
+                }
+                if (chosen.length) syncPushAlarms();
+                const pre = docToPrefill(doc, new Date(), { claim });
+                if (questions || answers.trim()) pre.data.explanation = [pre.data.explanation, `물어본 것: ${questions.replace(/\n/g, " / ")}`, answers.trim() && `들은 답: ${answers.trim()}`].filter(Boolean).join("\n");
+                if (chosen.length) pre.memo = [pre.memo, `약 일정 만듦: ${chosen.map((m) => m.name).join(", ")}`].filter(Boolean).join("\n");
+                onUse(pre);
+              }}>진료 기록으로 열기{meds.some((m) => m.use) ? ` · 약 ${meds.filter((m) => m.use).length}개 일정 만들기` : ""}</button>
               <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => setDoc(null)}>다시 정리하기</button>
             </>
           )}

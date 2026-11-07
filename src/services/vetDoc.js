@@ -36,3 +36,13 @@ export function findSameVisit(records, doc) {
   const total = doc.total > 0 ? doc.total : (doc.items || []).reduce((a, i) => a + (i.amount || 0), 0);
   return records.find((r) => r.type === "vet" && r.at.slice(0, 10) === doc.visit_date && ((doc.hospital && r.data.hospital === doc.hospital) || (total && Number(r.data.cost) === total))) || null;
 }
+
+// 약봉투·처방전 → 약 일정 초안(보호자가 확인·고친 뒤에만 저장). 용량은 적힌 그대로, 시각은 하루 횟수로 기본값만 채운다
+export const TIMES_BY_COUNT = { 1: ["08:00"], 2: ["08:00", "20:00"], 3: ["08:00", "14:00", "20:00"], 4: ["08:00", "12:00", "16:00", "20:00"] };
+export function medDrafts(doc, startDate) {
+  return (doc.meds || []).filter((m) => m.name).map((m) => {
+    const days = m.days > 0 ? Math.min(m.days, 90) : 0;
+    const end = days ? toDateKey(new Date(new Date(`${startDate}T00:00:00`).getTime() + (days - 1) * 86400000)) : "";
+    return { name: m.name, dose: m.dose || "", times: TIMES_BY_COUNT[m.per_day] || TIMES_BY_COUNT[1], perDay: m.per_day || 0, courseDays: days, startDate, endDate: end, purpose: [doc.reason, m.note].filter(Boolean).join(" · "), remind: true, use: Boolean(m.dose) };
+  });
+}
