@@ -7,6 +7,15 @@ import { FramedPhoto } from "../components/PhotoFrame";
 import { saveDog } from "../services/dogRepository";
 import { TYPES } from "../services/records";
 import { resizeImageFile } from "../utils/image";
+import { getDay, ITEMS } from "../services/dailyCheck";
+import { togetherDays } from "../services/shareCard";
+
+// 그날 하루 체크 한 줄(멍케어만의 것): 사진 옆에 그날 건강 기록을 사실 그대로
+const dayLine = (dogId, at) => {
+  const d = getDay(dogId, at.slice(0, 10));
+  if (!d || d.status === "unknown") return "";
+  return d.status === "usual" ? "평소와 같았던 날" : Object.entries(d.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id)?.label} ${l}`).join(" · ");
+};
 
 // 아이 갤러리(우리 아이 → 갤러리): 달마다 사진 모음, 누르면 크게 보고 메모·추억 적기·대표 사진으로·지우기
 const ym = (at) => `${Number(at.slice(0, 4))}년 ${Number(at.slice(5, 7))}월`;
@@ -57,7 +66,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           <input type="file" accept="image/*" multiple hidden onChange={add} />
         </label>
       </div>
-      <p className="subtle" style={{ margin: "0 0 12px" }}>사진 {photos.length}장 · 사진을 누르면 그날의 메모·추억을 적을 수 있어요. 넣은 사진은 기록 탭에도 '사진'으로 남아요.</p>
+      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장 · 사진을 누르면 그날의 메모·추억을 적을 수 있어요. 넣은 사진은 기록 탭에도 '사진'으로 남아요.</p>
       {error && <p className="error-text">{error}</p>}
       {photos.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
@@ -144,6 +153,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
               ) : (
                 <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditing(true)}>✏️ 이날의 문구·추억 쓰기</button>
               )}
+              {dayLine(dog.id, photo.at) && <p className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, photo.at)}</p>}
               <span className="faint post-date">{agoLabel(photo.at)}</span>
             </div>
           ) : (

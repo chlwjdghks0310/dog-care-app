@@ -1340,8 +1340,13 @@ button.seg, button.chip { min-height: 36px; }
 .de-item { position: absolute; line-height: 1.15; cursor: grab; user-select: none; touch-action: none; }
 .de-item.on { outline: 2px dashed rgba(255,255,255,.9); outline-offset: 4px; border-radius: 8px; }
 .de-tools { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
-.de-stickers { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 10px; }
-.de-stickers button { font-size: 26px; padding: 6px 0; border: none; background: var(--surface); border-radius: 10px; }
+.de-cats { flex-wrap: nowrap; overflow-x: auto; margin-top: 10px; padding: 2px 2px 8px; align-items: flex-start; scrollbar-width: none; }
+.de-cats .seg { flex-shrink: 0; height: auto; overflow: visible; }
+.de-stickers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.de-stickers button { padding: 6px; border: none; background: var(--surface); border-radius: 12px; aspect-ratio: 1; }
+.de-stickers img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.de-item.sticker { width: 1em; height: 1em; line-height: 1; }
+.de-item.sticker img { width: 100%; height: 100%; display: block; pointer-events: none; }
 .de-text { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .de-text textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; font: inherit; color: var(--text); background: var(--surface); }
 .btn-ghost.on { background: var(--accent-soft); color: var(--accent-strong); }
@@ -1360,3 +1365,4 @@ button.seg, button.chip { min-height: 36px; }
 .feed-card { background: var(--surface); border-radius: 18px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); cursor: pointer; }
 .feed-card img { width: 100%; display: block; max-height: 520px; object-fit: cover; }
 .feed-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.post-day { display: flex; align-items: center; gap: 5px; margin: 6px 0 0; font-size: 12.5px; color: var(--text-soft); }
