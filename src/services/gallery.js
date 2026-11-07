@@ -1,0 +1,35 @@
+// 아이 갤러리: 사진이 붙은 모든 기록(사진 기록·증상·병원 등)을 한곳에 모아 본다. 새로 넣는 사진은 '사진' 기록(media)으로 하나씩 남겨
+// 사진마다 메모·추억을 따로 적을 수 있게 한다(사용자 요청 11/7). 사진은 폰 저장소에 줄여서(긴 변 900px) — 로그인하면 백업.
+import { getRecords, saveRecord, deleteRecord, newRecordId, localNow } from "./records";
+
+export function getPhotos(dogId) {
+  const out = [];
+  for (const r of getRecords(dogId)) (r.photos || []).forEach((src, idx) => out.push({ key: `${r.id}:${idx}`, recId: r.id, idx, src, at: r.at, memo: r.memo || "", type: r.type }));
+  return out.sort((a, b) => b.at.localeCompare(a.at));
+}
+
+// 사진 여러 장 → 사진 기록 여러 개(한 장에 하나). 저장 공간이 꽉 차 저장이 안 되면 알려 준다
+export function addPhotos(dogId, dataUrls, at = localNow()) {
+  const ids = [];
+  for (const src of dataUrls) {
+    const id = newRecordId();
+    saveRecord(dogId, { id, type: "media", at, data: {}, memo: "", photos: [src] });
+    if (!getRecords(dogId).some((r) => r.id === id)) throw new Error("폰 저장 공간이 꽉 차서 사진을 더 넣지 못했어요. 오래된 사진을 지우거나 로그인해 백업해 주세요.");
+    ids.push(id);
+  }
+  return ids;
+}
+
+export function setPhotoMemo(dogId, recId, memo) {
+  const r = getRecords(dogId).find((x) => x.id === recId);
+  if (r) saveRecord(dogId, { ...r, memo: memo.trim().slice(0, 500) });
+}
+
+// 사진 지우기: 사진 기록에 한 장뿐이면 기록째, 다른 기록(증상 등)에 붙은 사진이면 그 사진만
+export function removePhoto(dogId, recId, idx) {
+  const r = getRecords(dogId).find((x) => x.id === recId);
+  if (!r) return;
+  const photos = r.photos.filter((_, i) => i !== idx);
+  if (r.type === "media" && !photos.length) deleteRecord(dogId, recId);
+  else saveRecord(dogId, { ...r, photos });
+}

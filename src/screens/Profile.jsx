@@ -9,6 +9,8 @@ import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { backupJson, recordsCsv, shareFile } from "../services/exportData";
 import QuickAddFab from "../components/QuickAddFab";
+import { addPhotos, getPhotos } from "../services/gallery";
+import { togetherDays } from "../services/shareCard";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
 import { isVisitEvent } from "../services/vetVisits";
@@ -48,7 +50,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
 
-export default function Profile({ dog, onQuickAdd, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
+export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
@@ -148,8 +150,13 @@ export default function Profile({ dog, onQuickAdd, onOpenVet, onOpenReport, onOp
     e.target.value = ""; // 같은 사진을 다시 골라도 바뀌게
     if (!file) return;
     try {
-      const photo = await resizeImageFile(file);
+      const photo = await resizeImageFile(file, 900, 0.8);
       onUpdateDog?.(saveDog({ ...dog, photo }));
+      try {
+        addPhotos(dog.id, [photo]); // 대표 사진도 갤러리·기록 탭에 남긴다
+      } catch {
+        // 저장 공간이 모자라면 대표 사진만
+      }
     } catch {
       window.alert("사진을 불러오지 못했어요. 다른 사진으로 해 주세요.");
     }
@@ -157,60 +164,33 @@ export default function Profile({ dog, onQuickAdd, onOpenVet, onOpenReport, onOp
 
   return (
     <div className="screen">
-      <div className="settings-bar">
-        <button type="button" className="btn-ghost settings-btn" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
+      {/* 대표 사진(B안, 11/7): 화면 위를 꽉 채우고, 이름 카드가 살짝 겹쳐 올라온다. 사진을 바꾸면 갤러리·기록에도 남는다 */}
+      <div className={`pf-cover${dog.photo ? "" : " empty"}`}>
+        {dog.photo ? <img src={dog.photo} alt={`${dog.name} 대표 사진`} /> : (
+          <label className="pf-cover-empty">
+            <Ico name="camera" size={26} />
+            <b>대표 사진 넣기</b>
+            <span>가로로 찍은 사진이 잘 어울려요</span>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} hidden />
+          </label>
+        )}
+        <button type="button" className="btn-ghost settings-btn pf-menu" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
           <Ico name="menu" size={22} />
         </button>
-      </div>
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-          <label style={{ position: "relative", cursor: "pointer", flexShrink: 0 }}>
-            {dog.photo ? (
-              <img
-                src={dog.photo}
-                alt={`${dog.name} 사진`}
-                style={{ width: 84, height: 84, borderRadius: 20, objectFit: "cover" }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: 20,
-                  background: "var(--accent-soft)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 40,
-                }}
-                aria-hidden="true"
-              >
-                <Ico name="dog" size={44} style={{ color: "var(--accent-strong)" }} />
-              </div>
-            )}
-            <span
-              style={{
-                position: "absolute",
-                bottom: -4,
-                right: -4,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "50%",
-                width: 24,
-                height: 24,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-              }}
-            >
-              <Ico name="camera" size={13} />
-            </span>
-            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
+        {dog.photo && (
+          <label className="pf-cam" aria-label="대표 사진 바꾸기">
+            <Ico name="camera" size={18} />
+            <input type="file" accept="image/*" onChange={handlePhotoChange} hidden />
           </label>
-
+        )}
+      </div>
+      <div className="card pf-namecard" style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="h1" style={{ marginBottom: 6 }}>{dog.name}</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+              <div className="h1" style={{ margin: 0 }}>{dog.name}</div>
+              {togetherDays(dog) > 0 && <span className="faint" style={{ fontSize: 13 }}>함께한 지 {togetherDays(dog)}일</span>}
+            </div>
             <div className="dog-chips">
               <span className="chip">{formatAge(age)}</span>
               {dog.breed && <span className="chip quiet">{dog.breed}</span>}
@@ -252,6 +232,7 @@ export default function Profile({ dog, onQuickAdd, onOpenVet, onOpenReport, onOp
 
       <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
 
+      <GalleryStrip dog={dog} onOpen={onOpenGallery} />
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
       <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} />
@@ -799,6 +780,28 @@ function ExportCard({ dog, onOpenVet }) {
       </div>
       <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>백업 파일엔 사진과 모든 강아지 기록이 들어 있어요. 믿을 수 있는 곳에만 보관해 주세요. 로그인 정보는 들어가지 않아요.</p>
       {msg && <p className="error-text">{msg}</p>}
+    </div>
+  );
+}
+
+// 갤러리 줄: 최근 사진 4장 + [전체 보기] — 누르면 아이 갤러리
+function GalleryStrip({ dog, onOpen }) {
+  const photos = getPhotos(dog.id);
+  return (
+    <div className="card pf-gallery" style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div className="h2" style={{ margin: 0 }}>{dog.name} 갤러리</div>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpen}>{photos.length ? `전체 ${photos.length}장 ›` : "사진 넣기 ›"}</button>
+      </div>
+      <div className="pf-thumbs">
+        {photos.slice(0, 4).map((p) => (
+          <button key={p.key} type="button" onClick={onOpen} aria-label="갤러리 열기"><img src={p.src} alt="" loading="lazy" /></button>
+        ))}
+        {photos.length < 4 && (
+          <button type="button" className="pf-thumb-add" onClick={onOpen} aria-label="사진 넣기">＋</button>
+        )}
+      </div>
+      {!photos.length && <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>사진마다 그날의 메모·추억을 적어 둘 수 있어요</p>}
     </div>
   );
 }

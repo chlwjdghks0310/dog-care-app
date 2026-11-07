@@ -31,6 +31,7 @@ import Medications from "./screens/Medications";
 import VetSummary from "./screens/VetSummary";
 import WeeklyReport from "./screens/WeeklyReport";
 import Records from "./screens/Records";
+import Gallery from "./screens/Gallery";
 import VitalDetail from "./screens/VitalDetail";
 import DogSwitcherSheet from "./components/DogSwitcherSheet";
 import SwipeBack from "./components/SwipeBack";
@@ -53,6 +54,7 @@ const PARENT_TAB = {
   vet: "hospital",
   budget: "hospital",
   "add-dog": "profile",
+  gallery: "profile", // 아이 갤러리(11/7)
   weight: "profile",
   meds: "profile",
   report: "profile",
@@ -410,6 +412,7 @@ export default function App() {
       <Profile
         dog={dog}
         onQuickAdd={quickAdd}
+        onOpenGallery={() => setTab("gallery")}
         onOpenVet={() => openVet("profile")}
         onOpenReport={() => setTab("report")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
@@ -424,6 +427,7 @@ export default function App() {
         onDogRegistered={handleAddDog}
       />
     ),
+    gallery: () => <Gallery dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("profile")} />,
     weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("profile")} />,
     meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("profile"))} />,
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
