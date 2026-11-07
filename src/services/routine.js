@@ -12,6 +12,15 @@ const CHECKIN_KEY = "dogcare-checkin-v1"; // { [dogId]: "YYYY-MM-DD"(마지막 �
 export const DEFAULT_ROUTINE = { leave: "08:30", back: "19:00", days: [1, 2, 3, 4, 5], remind: true };
 export const getRoutine = () => readJSON(ROUTINE_KEY, null);
 export const saveRoutine = (r) => writeJSON(ROUTINE_KEY, r);
+// 하루 체크 알림 { on, time } — 한 번도 안 정했으면 null(외출 시간 알림을 켠 사람은 들어오는 시각 30분 뒤, 아니면 저녁 8시)
+const CHECK_ALARM_KEY = "dogcare-check-alarm-v1";
+export const getCheckAlarm = () => readJSON(CHECK_ALARM_KEY, null);
+export const saveCheckAlarm = (a) => writeJSON(CHECK_ALARM_KEY, a);
+export function checkAlarmPlan(routine = getRoutine(), set = getCheckAlarm()) {
+  if (set) return set.on ? { time: set.time } : null;
+  if (routine?.remind && routine.days?.length) return { time: checkinAlarmTime(routine), days: routine.days };
+  return { time: "20:00" };
+}
 
 const hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 const mins = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));

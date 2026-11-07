@@ -12,7 +12,7 @@ import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
 import { getSoakGuidance } from "../data/feedingGuide";
 import { calculateAge } from "../utils/age";
 import { supabase } from "./supabase";
-import { getRoutine, checkinAlarmTime, checkedInToday } from "./routine";
+import { checkAlarmPlan, checkedInToday } from "./routine";
 import { getFoodStock } from "./foodStock";
 import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
 
@@ -169,7 +169,6 @@ async function postSubscription(subscription, alarms, { beacon = false } = {}) {
 // ponytail: 완료 체크 여부는 무시하고 매일 보낸다 — 서버는 체크 상태를 모른다.
 export function buildPushAlarms() {
   const all = [];
-  const routine = getRoutine();
   for (const dog of getDogs()) {
     const alarms = [];
     for (const item of getTodayChecklist(dog)) {
@@ -215,14 +214,15 @@ export function buildPushAlarms() {
   }
   // 저녁 체크인(평소 들어오는 시각 30분 뒤, 나가는 요일만). 사람 기준 알람이라 petId 없이 — 가족 기기로 퍼지지 않게
   const dogs = getDogs();
-  if (routine?.remind && routine.days?.length && dogs.length) {
+  const plan = checkAlarmPlan();
+  if (plan && dogs.length) {
     const who = dogs.length > 1 ? "우리 아이들" : dogs[0].name;
     all.push({
-      time: checkinAlarmTime(routine),
+      time: plan.time,
       title: `🐾 ${who} 오늘 어땠어요?`,
       body: "평소와 같으면 한 번만 누르면 끝이에요.",
       url: "/?checkin=1",
-      days: routine.days,
+      days: plan.days,
       skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,
     });
   }

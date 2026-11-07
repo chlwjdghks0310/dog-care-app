@@ -9,6 +9,8 @@ import { getFeedingSettings } from "../services/feedingSettings";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
 import { getFoodStock, stockLabel } from "../services/foodStock";
+import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
+import { markCheckedIn } from "../services/routine";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
@@ -86,6 +88,8 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeed
         </button>
       )}
 
+
+      <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} />
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -182,6 +186,20 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeed
         <Ico name="book" size={18} /> 월령별 케어 정보 더 보기
       </button>
 
+    </div>
+  );
+}
+
+// 오늘 하루 체크 결과 — 잘못 눌렀으면 [다시 고르기](체크와 체크로 만든 기록을 지우고 오늘 탭 말풍선이 다시 물어본다)
+function DailyRow({ dog, dateKey, onBack }) {
+  const [day, setDay] = useState(() => getDay(dog.id, dateKey));
+  if (!day || day.status === "unknown") return null;
+  const text = day.status === "usual" ? "평소와 같았어요" : Object.entries(day.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ");
+  return (
+    <div className="card dc-row" style={{ marginBottom: 14 }}>
+      <Ico name="check" size={18} className="cat-ico tone-teal" />
+      <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
+      <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), setDay(null), onBack())}>다시 고르기</button>
     </div>
   );
 }

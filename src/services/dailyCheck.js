@@ -3,7 +3,7 @@
 // 놓친 날은 [기억 안 나요]로 가짜 '평소' 기록을 막는다.
 // 하루 상태는 이 파일의 저장소에, "다른 것"은 기존 기록(식사·배변·증상·컨디션)으로도 저장해 병원용 기록·기록 탭·주간 리포트에 그대로 이어진다.
 import { readJSON, writeJSON } from "./storage";
-import { saveRecord, newRecordId, localNow } from "./records";
+import { saveRecord, deleteRecord, newRecordId, localNow } from "./records";
 import { addDays, toDateKey, todayKey } from "../utils/date";
 
 const KEY = "dogcare-daily-check-v1"; // { [dogId]: { [date]: { status: "usual"|"diff"|"unknown", picks?: { [itemId]: option } } } }
@@ -87,6 +87,26 @@ export function saveDiff(dogId, date, picks) {
     saveRecord(dogId, { id: ids[id], type, at, data, memo: `하루 체크: ${item.label} ${label}`, photos: [] });
   }
   setDay(dogId, date, { status: "diff", picks: Object.fromEntries(entries), recIds: ids });
+}
+
+// 다시 고르기: 그날 체크와 체크로 만든 기록을 지운다
+export function clearDay(dogId, date) {
+  const d = getDay(dogId, date);
+  for (const id of Object.values(d?.recIds || {})) deleteRecord(dogId, id);
+  const data = all();
+  if (data[dogId]) delete data[dogId][date];
+  writeJSON(KEY, data);
+}
+
+// 병원용 기록 한 줄: "최근 30일 하루 체크 24일 — 평소 20일 · 다른 날 4일(밥 3, 변 1)"
+export function periodSummary(dogId, from, to) {
+  const days = Object.entries(all()[dogId] || {}).filter(([d, v]) => d >= from && d <= to && v.status !== "unknown");
+  if (!days.length) return null;
+  const diff = days.filter(([, v]) => v.status === "diff");
+  const count = {};
+  for (const [, v] of diff) for (const id of Object.keys(v.picks || {})) count[id] = (count[id] || 0) + 1;
+  const parts = ITEMS.filter((i) => count[i.id]).map((i) => `${i.label} ${count[i.id]}`);
+  return `하루 체크 ${days.length}일 — 평소 ${days.length - diff.length}일 · 다른 날 ${diff.length}일${parts.length ? `(${parts.join(", ")})` : ""}`;
 }
 
 // 고른 것 중 바로 연락할 신호·물어볼 신호

@@ -48,4 +48,12 @@ assert.equal(D.runsOf("b", today).length, 0);
 
 // 이번 달 함께 본 날: '기억 안 나요'는 빼고
 assert.equal(D.daysThisMonth("b", today), [day(-1), today].filter((d) => d.slice(0, 7) === today.slice(0, 7)).length);
+// 병원용 기록 한 줄
+assert.match(D.periodSummary("a", day(-30), today), /^하루 체크 \d+일 — 평소 \d+일 · 다른 날 \d+일\(밥 \d+, 변 1\)$/);
+assert.equal(D.periodSummary("zz", day(-30), today), null);
+// 다시 고르기: 체크와 체크로 만든 기록이 함께 지워진다
+const before = R.getRecords("a").length;
+D.clearDay("a", today);
+assert.equal(D.getDay("a", today), null);
+assert.equal(R.getRecords("a").length, before - 2);
 console.log("하루 체크 OK");

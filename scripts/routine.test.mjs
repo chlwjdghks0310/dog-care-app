@@ -17,6 +17,11 @@ assert.equal(R.durationLabel(570), "9시간 30분");
 assert.equal(R.durationLabel(45), "45분");
 assert.equal(R.checkinAlarmTime(routine), "19:30");
 assert.equal(R.checkinAlarmTime({ back: "23:50" }), "00:20");
+// 하루 체크 알림: 정한 적 없으면 외출 알림 켠 사람은 들어오는 시각 30분 뒤(나가는 요일), 아니면 매일 저녁 8시. 끄면 없음
+assert.deepEqual(R.checkAlarmPlan(routine, null), { time: "19:30", days: [1, 2, 3, 4, 5] });
+assert.deepEqual(R.checkAlarmPlan(null, null), { time: "20:00" });
+assert.deepEqual(R.checkAlarmPlan(routine, { on: true, time: "21:00" }), { time: "21:00" });
+assert.equal(R.checkAlarmPlan(routine, { on: false, time: "21:00" }), null);
 // 저장: 나감 → 들어옴, 체크인은 강아지별
 R.leaveNow(at("08:40"));
 assert.equal(R.getOuting("2026-10-27").leftAt, "08:40");

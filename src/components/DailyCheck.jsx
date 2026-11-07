@@ -6,6 +6,7 @@ import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 import { EMERGENCY } from "../data/emergency";
 import { todayKey } from "../utils/date";
+import { saveDog } from "../services/dogRepository";
 
 // 오늘 탭 말풍선의 10초 하루 체크: 강아지가 "오늘 어땠어?" 하고 묻는다. [평소와 같아요] 한 번이면 끝, [다른 게 있었어요]면 다른 항목만.
 // 어제를 놓쳤으면 어제 것부터([기억 안 나요]는 '평소'로 치지 않음). 판단하지 않고 기록된 사실과 병원 상담 기준만 보여 준다.
@@ -109,6 +110,7 @@ function DiffSheet({ dog, date, initial, onClose, onSaved }) {
           ) : (
             <>
               <p className="subtle" style={{ margin: "0 0 8px" }}>달랐던 것만 눌러요. 안 누른 건 평소와 같았던 걸로 봐요.</p>
+              <UsualNote dog={dog} />
               <div className="chip-wrap" style={{ marginBottom: 6 }}>
                 {ITEMS.map((i) => (
                   <button key={i.id} type="button" className={`seg${open.includes(i.id) ? " on" : ""}`} aria-pressed={open.includes(i.id)} onClick={() => toggleItem(i.id)}>
@@ -139,5 +141,24 @@ function DiffSheet({ dog, date, initial, onClose, onSaved }) {
       </div>
     </div>,
     document.body
+  );
+}
+
+// 평소 모습: 한 번 적어 두면 "다른 점"을 고를 때 옆에 보이고, 병원용 기록 기본 정보에 들어간다(ZOE의 '평소 나' 방식)
+function UsualNote({ dog }) {
+  const [text, setText] = useState(dog.usual || "");
+  const [editing, setEditing] = useState(false);
+  if (!editing)
+    return (
+      <div className="dc-usual-note">
+        {dog.usual ? <span><b>{dog.name} 평소</b> · {text}</span> : <span className="faint">평소 모습을 적어 두면 비교하기 쉬워요</span>}
+        <button type="button" className="link-btn" style={{ margin: 0, flexShrink: 0 }} onClick={() => setEditing(true)}>{dog.usual ? "고치기" : "적어 두기"}</button>
+      </div>
+    );
+  return (
+    <div className="dc-usual-note col">
+      <textarea rows={2} value={text} maxLength={200} onChange={(e) => setText(e.target.value)} placeholder="예: 하루 두 번 다 먹음, 변은 하루 2번 단단함, 산책 30분" aria-label="평소 모습" />
+      <button type="button" className="btn-ghost small" onClick={() => (saveDog({ ...dog, usual: text.trim() }), (dog.usual = text.trim()), setEditing(false))}>저장</button>
+    </div>
   );
 }

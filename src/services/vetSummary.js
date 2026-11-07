@@ -8,6 +8,7 @@ import { visitsByDate, isVisitEvent, eventTitle } from "./vetVisits";
 import { getChatMemory } from "./chatMemory";
 import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily, stoolCheckText, checkText } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
+import { periodSummary } from "./dailyCheck";
 
 // 병원용 기록 — 앱에 쌓인 기록 + 보호자가 이번 진료를 위해 적은 메모를 수의사가 한눈에 읽게 정리한다.
 // 기록에 있는 사실만 옮기고, 추정·진단 문구는 넣지 않는다(빈 곳은 "기록 없음").
@@ -66,6 +67,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     ...(dog.vaccines ? [`예방접종·건강 정보: ${dog.vaccines}`] : []),
     ...(dog.hospital ? [`다니는 병원: ${dog.hospital}`] : []),
     ...(dog.notes ? [`특이사항: ${dog.notes}`] : []),
+    ...(dog.usual ? [`평소 모습(보호자): ${dog.usual}`] : []),
   ]);
 
   // 보호자가 남긴 기록(통합 기록) — 기간 안 것만, 적힌 그대로
@@ -76,6 +78,8 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     recs.filter((r) => r.type === "symptom").map((r) => `${mdKey(r.at.slice(0, 10))} ${r.at.slice(11, 16)} ${r.data.kinds.join(", ")}${r.data.repeat ? ` (${r.data.repeat})` : ""}${r.data.since ? ` · ${mdKey(r.data.since)}부터` : ""}${r.data.observed ? ` — ${r.data.observed}` : ""}${r.memo ? ` · 메모: ${r.memo}` : ""}`)
   );
   const observeLines = [];
+  const daily = periodSummary(dog.id, from, today); // "평소엔 어땠어요?"에 바로 답하는 한 줄
+  if (daily) observeLines.push(daily);
   for (const [type, field, label, options] of [["meal", "appetite", "식욕", LEVELS], ["meal", "water", "물", LEVELS], ["potty", "stool", "대변"], ["potty", "urine", "소변"], ["condition", "activity", "활동량", LEVELS], ["condition", "sleep", "수면", LEVELS]]) {
     const vals = recs.filter((r) => r.type === type && r.data[field]);
     if (!vals.length) continue;

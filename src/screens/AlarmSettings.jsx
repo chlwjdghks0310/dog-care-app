@@ -7,6 +7,7 @@ import {
   deleteCustomSchedule,
 } from "../services/customSchedules";
 import Ico from "../components/Ico";
+import { checkAlarmPlan, saveCheckAlarm } from "../services/routine";
 import {
   isNotificationSupported,
   getPermission,
@@ -126,6 +127,8 @@ export default function AlarmSettings({ dog, onBack }) {
         </div>
       )}
 
+      <CheckAlarmCard />
+
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="h2">새 알람 추가</div>
         <form onSubmit={handleAdd}>
@@ -195,6 +198,31 @@ export default function AlarmSettings({ dog, onBack }) {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+// 하루 체크("오늘 어땠어요?") 알림: 하루 한 번, 시각은 보호자가 고른다. 체크한 날은 오지 않는다
+function CheckAlarmCard() {
+  const [plan, setPlan] = useState(() => checkAlarmPlan());
+  const [time, setTime] = useState(plan?.time || "20:00");
+  function save(on, t = time) {
+    saveCheckAlarm({ on, time: t });
+    setPlan(checkAlarmPlan());
+    syncPushAlarms();
+  }
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="h2">하루 체크 알림</div>
+      <p className="subtle" style={{ margin: "0 0 10px" }}>“오늘 어땠어요?” 알림을 하루 한 번 보내요. 이미 체크한 날은 오지 않아요.</p>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, flex: 1 }}>
+          <input type="checkbox" checked={Boolean(plan)} onChange={(e) => save(e.target.checked)} />
+          받기
+        </label>
+        <input type="time" value={time} disabled={!plan} aria-label="하루 체크 알림 시각" onChange={(e) => e.target.value && (setTime(e.target.value), save(true, e.target.value))} />
+      </div>
+      {plan?.days && <p className="faint" style={{ margin: "8px 0 0" }}>지금은 외출 시간에 맞춰 나가는 요일에만 와요. 시각을 고르면 매일 그 시각에 와요.</p>}
     </div>
   );
 }
