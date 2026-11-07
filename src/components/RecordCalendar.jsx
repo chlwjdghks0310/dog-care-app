@@ -13,7 +13,9 @@ import { josa } from "../utils/text";
 
 // 기록 탭 달력: 하루 체크로 "다른 날"만 눈에 띄게. 색만으로 구분하지 않는다(WCAG 1.4.1) — 평소 ●, 다른 날 항목 첫 글자 배지, 병원 ＋.
 // 기록 없는 날은 아무 표시도 없다(빨간색 안 씀). 근거: ../자료용/자료/2026-11-07-1단계-남은것-조사.md ①(Daylio·DailyBean·Every Wag·WanStep)
-const short = (id) => ITEMS.find((i) => i.id === id)?.label.slice(0, 1);
+// 배지 글자(11/7: "소"만으론 뭔지 몰라서 두 글자까지)
+const SHORT = { vomit: "토", urine: "소변", energy: "기운", etc: "기타" };
+const short = (id) => SHORT[id] || ITEMS.find((i) => i.id === id)?.label;
 
 export default function RecordCalendar({ dog, items, onChanged }) {
   const today = todayKey();
@@ -81,7 +83,8 @@ export default function RecordCalendar({ dog, items, onChanged }) {
             );
           }}
         />
-        <p className="faint rc-legend"><span className="rc-dot">●</span> 평소 · <span className="rc-badge">밥</span> 다른 날(여러 개면 숫자) · <span className="rc-vet">＋</span> 병원</p>
+        <p className="faint rc-legend"><span><span className="rc-dot">●</span> 평소</span><span><span className="rc-badge">소변</span> 평소와 달랐던 것</span><span><span className="rc-vet">＋</span> 병원</span></p>
+        <p className="faint" style={{ margin: "4px 0 0", fontSize: 12.5 }}>빨간 글자는 그날 하루 체크에서 평소와 달랐다고 고른 것이에요(밥·변·토·소변·기운·물·기타). 두 개 이상이면 개수가 나와요.</p>
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>

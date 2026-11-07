@@ -25,7 +25,7 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding, onQuickAdd }) {
+export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding, onQuickAdd, onOpenGallery }) {
   const [view, setView] = useState("list");
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
@@ -78,7 +78,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
       </div>}
 
       {form ? (
-        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} onOpenFeeding={onOpenFeeding} />
+        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} onOpenFeeding={onOpenFeeding} onOpenGallery={onOpenGallery} />
       ) : (
         <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (onNew ? onNew() : (setNotice(""), setReaction(null), setForm({ initial: null })))}>
           ＋ 새 기록
@@ -292,9 +292,9 @@ function Trends({ dog, items, onAdd }) {
         {inPeriod.length === 0 ? (
           <Empty text={`최근 ${days}일 기록이 없습니다.`} onAdd={onAdd} />
         ) : (
-          <div className="vet-line">
-            {Object.entries(TYPES).map(([t, v]) => [v, inPeriod.filter((r) => r.type === t).length]).filter(([, n]) => n).map(([v, n], i) => (
-              <span key={v.label} style={{ whiteSpace: "nowrap" }}>{i ? " · " : ""}<Ico name={v.ico} size={14} /> {v.label} {n}</span>
+          <div className="chip-wrap">
+            {Object.entries(TYPES).map(([t, v]) => [v, inPeriod.filter((r) => r.type === t).length]).filter(([, n]) => n).map(([v, n]) => (
+              <span key={v.label} className="seg" style={{ cursor: "default" }}><Ico name={v.ico} size={14} /> {v.label} <b>{n}</b></span>
             ))}
           </div>
         )}

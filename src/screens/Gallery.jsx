@@ -66,7 +66,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 우리 아이로</button>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <div className="h1" style={{ margin: 0 }}>{dog.name} 갤러리</div>
+        <div className="h1" style={{ margin: 0 }}>{dog.name} 성장 추억</div>
         <label className="btn-primary small" style={{ cursor: "pointer" }}>
           ＋ 사진
           <input type="file" accept="image/*" multiple hidden onChange={add} />
@@ -111,7 +111,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           </div>
         </section>
       ))}
-      {photos.length > 0 && <p className="faint" style={{ fontSize: 12.5, margin: "16px 2px 0" }}>사진을 누르면 그날의 문구·추억을 적고 꾸밀 수 있어요. 넣은 사진은 기록 탭에도 '사진'으로 남아요.</p>}
+      {photos.length > 0 && <p className="faint" style={{ fontSize: 12.5, margin: "16px 2px 0" }}>사진을 누르면 그날의 문구·추억을 적고 꾸밀 수 있어요. 넣은 사진은 기록 탭에도 '성장 추억'으로 남아요. 병원·증상 기록에 붙인 사진은 여기 대신 그 기록에 있어요.</p>}
       {open && (
         <PhotoSheet
           dog={dog}
@@ -170,7 +170,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
             <div className="post-body">
               <label className="field">
                 <span className="xs-label">문구 · 추억</span>
-                <textarea rows={3} maxLength={500} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 처음으로 공원에 간 날. 낙엽 냄새를 한참 맡았어요" autoFocus />
+                <textarea rows={3} maxLength={500} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 처음으로 공원에 간 날. 낙엽 냄새를 한참 맡았어요" />
               </label>
               {photo.type === "media" ? (
                 <label className="field post-dayfield">

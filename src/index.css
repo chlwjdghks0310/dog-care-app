@@ -137,6 +137,7 @@ button {
   /* 아이폰 홈 화면 앱은 화면이 상태바(시계·배터리) 밑까지 올라가므로 그 높이만큼 내려서 시작한다 */
   padding: calc(20px + env(safe-area-inset-top, 0px)) 18px 96px;
   overflow-y: auto;
+  overflow-x: hidden; /* 넓은 줄 하나가 화면 전체를 좌우로 밀지 않게(11/7) */
 }
 
 .card {
@@ -1212,7 +1213,8 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .rc-vet { color: var(--accent-strong); font-weight: 900; font-size: 13px; }
 .mg-grid .rc-diff { background: #fdecea; }
 :root[data-theme="dark"] .mg-grid .rc-diff { background: #4a2a2a; }
-.rc-legend { margin: 10px 0 0; font-size: 12.5px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.rc-legend { margin: 10px 0 0; font-size: 12.5px; display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.rc-legend > span { display: inline-flex; align-items: center; gap: 4px; }
 .rc-day { display: flex; align-items: center; gap: 10px; justify-content: space-between; font-weight: 600; }
 .rc-recs { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 10px; }
 .rc-rec { display: flex; gap: 8px; align-items: center; font-size: 14px; }

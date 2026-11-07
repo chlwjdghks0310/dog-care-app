@@ -165,8 +165,8 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
         <button type="button" className="btn-ghost settings-btn pf-menu" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
           <Ico name="menu" size={22} />
         </button>
-        <button type="button" className="pf-gal-btn" aria-label={`${dog.name} 갤러리 열기`} onClick={onOpenGallery}>
-          <Ico name="image" size={18} /> 갤러리
+        <button type="button" className="pf-gal-btn" aria-label={`${dog.name} 성장 추억 열기`} onClick={onOpenGallery}>
+          <Ico name="image" size={18} /> 성장 추억
         </button>
       </div>
       <div className="card pf-namecard" style={{ marginBottom: 14 }}>
@@ -607,7 +607,6 @@ const SERVICES = [
   { key: "eat", label: "식사·배변", ico: "bowl", tone: "rose", types: ["meal", "potty"], add: "meal" },
   { key: "condition", label: "컨디션", ico: "smiley", tone: "violet", types: ["condition"] },
   { key: "daily", label: "산책·일상", ico: "walk", tone: "violet", types: ["daily"] },
-  { key: "memory", label: "사진·추억", ico: "camera", tone: "rose", types: ["media", "life"], add: "media" },
   { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
 const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
@@ -791,7 +790,7 @@ function GalleryStrip({ dog, onOpen }) {
   return (
     <div className="card pf-gallery" style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <div className="h2" style={{ margin: 0 }}>{dog.name} 갤러리</div>
+        <div className="h2" style={{ margin: 0 }}>{dog.name} 성장 추억</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpen}>{photos.length ? `전체 ${photos.length}장 ›` : "사진 넣기 ›"}</button>
       </div>
       <div className="pf-thumbs">

@@ -417,7 +417,7 @@ export default function App() {
         onOpenReport={() => setTab("report")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
         onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
-        onNewRecord={(type) => (setRecordsOpts({ type, back: "profile" }), setTab("records-new"))}
+        onNewRecord={(type) => (type === "media" ? setTab("gallery") : (setRecordsOpts({ type, back: "profile" }), setTab("records-new")))}
         onOpenWeight={() => setTab("weight")}
         onOpenMeds={() => setTab("meds")}
         onOpenCalendar={() => setTab("hospital")}
@@ -436,8 +436,8 @@ export default function App() {
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
   const recordScreens = {
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} onQuickAdd={quickAdd} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} onQuickAdd={quickAdd} onOpenGallery={() => setTab("gallery")} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} onOpenGallery={() => setTab("gallery")} />,
     "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
     "records-meds": () => <Medications dog={dog} backLabel={recordsOpts.medsFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.medsFrom || "records-new")} />,
   };

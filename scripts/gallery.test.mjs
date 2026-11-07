@@ -10,7 +10,9 @@ assert.equal(G.setPhotoDate("a", id, "2026-11-06", "2026-11-07"), "2026-11-06T18
 assert.equal(G.setPhotoDate("a", id, "2026-11-09", "2026-11-07"), "2026-11-06T18:30", "내일로는 안 바뀜");
 R.saveRecord("a", { id: "s1", type: "symptom", at: "2026-11-05T09:00", data: { kinds: ["구토"] }, photos: ["data:y"] });
 assert.equal(G.setPhotoDate("a", "s1", "2026-11-01", "2026-11-07"), "2026-11-05T09:00", "증상 기록 사진은 기록 날짜를 따름");
-assert.equal(G.getPhotos("a")[1].at, "2026-11-05T09:00");
+assert.equal(G.getPhotos("a").length, 1, "증상 사진은 성장 추억에 안 나옴");
+R.saveRecord("a", { id: "d1", type: "daily", at: "2026-11-04T09:00", data: { kind: "산책" }, photos: ["data:z"] });
+assert.equal(G.getPhotos("a")[1].at, "2026-11-04T09:00", "산책 사진은 나옴");
 // 사진 파일 속 찍은 시각(EXIF) 읽기: 최소 JPEG(SOI + APP1 Exif, 리틀엔디언, IFD0 → Exif IFD → DateTimeOriginal)
 const { parseExifDate } = await import("../src/utils/exifDate.js");
 function jpeg(dateStr, le = true) {

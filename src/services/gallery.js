@@ -1,10 +1,14 @@
 // 아이 갤러리: 사진이 붙은 모든 기록(사진 기록·증상·병원 등)을 한곳에 모아 본다. 새로 넣는 사진은 '사진' 기록(media)으로 하나씩 남겨
 // 사진마다 메모·추억을 따로 적을 수 있게 한다(사용자 요청 11/7). 사진은 폰 저장소에 줄여서(긴 변 900px) — 로그인하면 백업.
 import { getRecords, saveRecord, deleteRecord, newRecordId, localNow } from "./records";
+import { isVisitRecord } from "./vetVisits";
+
+// 성장 추억(11/7): 병원·증상·배변 사진은 빼고 — 그 사진은 각 기록과 병원용 기록에 남는다
+const MEDICAL = new Set(["symptom", "vet", "potty"]);
 
 export function getPhotos(dogId) {
   const out = [];
-  for (const r of getRecords(dogId)) (r.photos || []).forEach((src, idx) => out.push({ key: `${r.id}:${idx}`, recId: r.id, idx, src, at: r.at, memo: r.memo || "", type: r.type }));
+  for (const r of getRecords(dogId)) if (!MEDICAL.has(r.type) && !isVisitRecord(r)) (r.photos || []).forEach((src, idx) => out.push({ key: `${r.id}:${idx}`, recId: r.id, idx, src, at: r.at, memo: r.memo || "", type: r.type }));
   return out.sort((a, b) => b.at.localeCompare(a.at));
 }
 
