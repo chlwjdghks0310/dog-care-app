@@ -15,20 +15,18 @@ import { readJSON, writeJSON } from "../services/storage";
 import { acceptInvite } from "../services/sync/family";
 
 import Ico from "../components/Ico";
-// 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 4장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 알림 켜기 → ⑤ 인사.
+// 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 2장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 알림 켜기 → ⑤ 인사.
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
-// 소개는 가르치기보다 "가치 보여 주기"(NN/g·Apple HIG 참고, ../자료용/자료/2026-10-20-온보딩-레퍼런스.md):
-// 6장(신뢰·손동작 포함), 한 장 = 한 가지, 제목 짧게·설명 두 줄 안쪽, 그림 속 내용은 "예시"로 표시(실제 기록처럼 보이지 않게), 마지막 버튼은 첫 행동으로.
+// 소개는 2장(방향 A, 2026-11-07): NN/g 실험 — 소개를 건너뛴 쪽이 성공률·쉬움 점수가 더 높음, Apple HIG — 짧고 건너뛸 수 있게.
+// 한 장 = 한 약속, 그림 속 내용은 "예시"로 표시, 마지막 버튼은 첫 행동. 근거: ../자료용/자료/2026-11-07-온보딩-2장.md
+// 빠진 내용은 제자리에서 안내: 말로 기록=입력줄 예시, 출처=정보 카드·수치마다, 손동작=도움말
 const SLIDES = [
-  { title: "말만 하면 기록 끝", text: "“산책 30분 했어” 한마디면\n건강 기록·가계부·일정·체중까지 알아서 적어요." },
-  { title: "변·컨디션도 쉽게 기록", text: "보고 고르기만 하면 기록이 쌓여요.\n원할 때만 AI가 사진·영상을 참고로 봐 줘요." },
-  { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에, 일정·가계부도 한곳에\n밥·약·일정 시간엔 알림이 와요." },
-  { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n참고 수치에는 출처를 밝혀요." },
-  { title: "손끝으로 빠르게", text: "아래 우리 아이 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
+  { title: "“평소엔 어땠어요?”", text: "병원에서 이 질문을 받으면\n멍케어를 보여 주세요." },
+  { title: "하루 10초, 다른 날만", text: "평소와 같으면 한 번만 누르고, 다르면 그것만.\n말로 해도 알아서 기록해요." },
 ];
-const SLIDE_VISUALS = [ChatMock, PhotoMock, CareMock, TrustMock, GestureMock];
+const SLIDE_VISUALS = [VetMock, DailyMock];
 
 const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -138,126 +136,33 @@ function Intro({ onDone }) {
 
 const Example = () => <div className="onb-example">예시 화면</div>;
 
-function PhotoMock() {
+// 1장: 병원용 기록 한 장(예시) — 하루 체크가 모여 "평소엔요?"에 답이 된다
+function VetMock() {
   return (
     <div className="onb-mock" style={{ textAlign: "left" }}>
       <Example />
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-        <div className="onb-photo sv-icon tone-rose"><Ico name="camera" size={22} /></div>
-        <div style={{ fontWeight: 800, lineHeight: 1.4 }}>변 체크 · 컨디션 체크</div>
-      </div>
-      <div className="onb-section"><Ico name="check" size={13} /> 모양·색을 보고 고르기</div>
-      <div className="onb-section caution"><Ico name="stethoscope" size={13} /> 이럴 땐 병원에 연락</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-        <span className="onb-followup">AI로 사진 확인 (선택)</span>
-      </div>
+      <div style={{ fontWeight: 800, marginBottom: 8 }}><Ico name="clipboard" size={16} /> 병원용 기록</div>
+      <div className="onb-mock-row"><Ico name="check" size={15} className="cat-ico tone-teal" /><span style={{ flex: 1 }}>최근 30일 — 평소 26일 · 다른 날 4일</span></div>
+      <div className="onb-mock-row"><Ico name="bowl" size={15} className="cat-ico tone-rose" /><span style={{ flex: 1 }}>밥 남긴 날 3일째 (11/3부터)</span></div>
+      <div className="onb-mock-row"><Ico name="scales" size={15} className="cat-ico tone-blue" /><span style={{ flex: 1 }}>몸무게 2.4 → 3.0kg</span></div>
+      <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>진단하지 않아요 · 참고 수치엔 수의학 자료 출처를 밝혀요</div>
     </div>
   );
 }
 
-function ChatMock() {
-  return (
-    <div className="onb-mock" style={{ background: "transparent", boxShadow: "none", border: "none" }}>
-      <Example />
-      <div className="onb-bubble me">산책 30분 했어. 사료도 3만원에 샀어</div>
-      <div className="onb-bubble ai">
-        둘 다 적어 뒀어!
-        <div className="onb-record"><Ico name="walk" size={13} className="cat-ico tone-violet" /> 산책 30분 · 건강 수치</div>
-        <div className="onb-record"><Ico name="wallet" size={13} /> 사료 30,000원 · 가계부</div>
-      </div>
-    </div>
-  );
-}
-
-function CareMock() {
+// 2장: 강아지가 묻는 하루 체크(예시) + 말로 기록
+function DailyMock() {
   return (
     <div style={{ width: "100%", maxWidth: 300 }}>
-      <div className="onb-notice">
-        <span style={{ color: "var(--accent-strong)" }}><Ico name="bell" size={20} /></span>
-        <div style={{ textAlign: "left", lineHeight: 1.4 }}>
-          <b>멍케어</b>
-          <div className="subtle" style={{ fontSize: 14 }}>산책 갈 시간이에요!</div>
-        </div>
-      </div>
       <div className="onb-mock">
         <Example />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 4 }}>
-          {[
-            ["scales", "몸무게", "blue"],
-            ["droplet", "음수량", "teal"],
-            ["walk", "산책", "violet"],
-          ].map(([icon, label, tone]) => (
-            <div key={label} className="onb-tile">
-              <Ico name={icon} size={18} className={`cat-ico tone-${tone}`} />
-              <span>{label}</span>
-            </div>
-          ))}
+        <div style={{ fontWeight: 800, marginBottom: 10 }}>오늘 나 어땠어?</div>
+        <div className="dc-btns">
+          <span className="dc-usual" aria-hidden="true"><Ico name="check" size={16} /> 평소와 같아요</span>
+          <span className="dc-diff" aria-hidden="true">다른 게 있었어요</span>
         </div>
-        {[
-          ["아침 밥 주기", "08:00", true],
-          ["규칙적인 산책", "18:00", false],
-        ].map(([t, time, done]) => (
-          <div key={t} className="onb-mock-row">
-            <span className={`onb-check${done ? " on" : ""}`}>{done ? "✓" : ""}</span>
-            <span style={{ flex: 1, textAlign: "left", textDecoration: done ? "line-through" : "none", color: done ? "var(--text-faint)" : "var(--text)" }}>{t}</span>
-            <span className="faint"><Ico name="alarm" size={13} /> {time}</span>
-          </div>
-        ))}
       </div>
-    </div>
-  );
-}
-
-// 신뢰: 실제로 참고한 자료(src/data/vitalTips.js·vitals.js·사료 계산·품종 정보에 적힌 출처)만 쓴다. 로고 대신 이름만 — 제휴·보증처럼 보이지 않게
-const TRUST_SOURCES = [["WSAVA", "세계소동물수의사회"], ["AAHA", "미국동물병원협회"], ["ACVIM", "미국수의내과학회"], ["Merck", "수의학 매뉴얼"], ["코넬대", "수의대"], ["농촌진흥청", ""]];
-function TrustMock() {
-  return (
-    <div className="onb-mock" style={{ textAlign: "left" }}>
-      <div className="onb-trust-head" style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}><Ico name="book" size={14} /> 이런 자료를 바탕으로 해요</div>
-      <div className="onb-trust-chips">
-        {TRUST_SOURCES.map(([short, full]) => (
-          <span key={short}>
-            {short}
-            {full && <span className="onb-trust-full"> {full}</span>}
-          </span>
-        ))}
-      </div>
-      {[
-        ["search", "참고 수치에 출처 표시", "확인되지 않은 수치는 넣지 않아요"],
-        ["stethoscope", "진단하지 않아요", "참고 범위와 병원에 물어볼 때만 알려요"],
-        ["lock", "기록은 나와 가족만", "백업은 암호화해 보내고, 초대한 가족만 볼 수 있어요"],
-      ].map(([icon, head, sub]) => (
-        <div key={head} className="onb-mock-row">
-          <span style={{ width: 28, textAlign: "center", color: "var(--accent-strong)" }}><Ico name={icon} size={18} /></span>
-          <span style={{ flex: 1, lineHeight: 1.35 }}>
-            <b style={{ fontSize: 14 }}>{head}</b>
-            <div className="faint onb-trust-sub" style={{ fontSize: 12.5 }}>{sub}</div>
-          </span>
-        </div>
-      ))}
-      <div className="faint onb-trust-note" style={{ fontSize: 11.5, marginTop: 6 }}>각 기관의 공개 자료를 참고했어요. 기관의 보증·제휴는 아니에요.</div>
-    </div>
-  );
-}
-
-// 손동작 안내: 실제 하단 탭처럼 보이는 줄 + 동작 목록
-function GestureMock() {
-  return (
-    <div className="onb-mock" style={{ textAlign: "left" }}>
-      {[
-        ["tap", "우리 아이 탭 두 번 톡", "다음 강아지로 바꾸기"],
-        ["hand", "우리 아이 탭 꾹 누르기", "강아지 목록 열기"],
-        ["arrowDown", "화면 맨 위에서 아래로 당기기", "새로고침 · 가족 기록 받기"],
-        ["arrowRight", "왼쪽에서 오른쪽으로 밀기", "이전 화면으로"],
-      ].map(([icon, how, what]) => (
-        <div key={how} className="onb-mock-row">
-          <span style={{ width: 40, textAlign: "center", color: "var(--accent-strong)" }}><Ico name={icon} size={20} /></span>
-          <span style={{ flex: 1, lineHeight: 1.35 }}>
-            <b style={{ fontSize: 14 }}>{how}</b>
-            <div className="faint" style={{ fontSize: 13 }}>{what}</div>
-          </span>
-        </div>
-      ))}
+      <div className="onb-bubble me" style={{ marginTop: 12 }}>산책 30분 했어</div>
     </div>
   );
 }

@@ -503,15 +503,8 @@ button {
 .onb-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; margin-bottom: 10px; text-align: left; line-height: 1.5; }
 .onb-bubble.me { margin-left: auto; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
 .onb-bubble.ai { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-.onb-record { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
 .onb-text { white-space: pre-line; }
 .onb-example { font-size: 11px; font-weight: 700; color: var(--text-faint); text-align: right; margin: -4px 0 4px; }
-.onb-photo { width: 52px; height: 52px; flex-shrink: 0; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; }
-.onb-section { font-size: 14px; font-weight: 700; padding: 7px 10px; border-radius: 10px; background: var(--accent-soft); margin-top: 6px; }
-.onb-section.caution { background: var(--danger-bg); border-left: 3px solid var(--danger); }
-.onb-followup { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent-strong); background: var(--surface); }
-.onb-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 600; }
-.onb-notice { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(43, 35, 32, 0.12); }
 .onb-setup { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 20px 0; overflow-y: auto; }
 .onb-login { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; margin-top: 22px; text-align: left; }
 .onb-login + .btn-ghost, .onb-login ~ .faint { width: 100%; max-width: 360px; }
@@ -800,7 +793,6 @@ button {
 /* 아주 작은 화면(SE 1세대·확대 모드)에선 소개 그림을 줄여 위가 잘리지 않게 */
 @media (max-height: 600px) {
   .onb-visual { min-height: 0; margin-bottom: 16px; }
-  .onb-notice { display: none; }
   .onb-mock { padding: 10px 14px; }
 }
 .family-code { font-size: 28px; font-weight: 800; letter-spacing: 0.18em; text-align: center; padding: 14px 8px; border-radius: 16px; background: var(--accent-soft); color: var(--accent-strong); font-variant-numeric: tabular-nums; user-select: all; }
@@ -823,19 +815,9 @@ button {
 .vd-how li { font-size: 14px; line-height: 1.55; color: var(--text); }
 /* 비서 탭 페이지는 통째로 위아래로 움직이지 않게(대화 목록만 안에서 스크롤) */
 .pager-page[data-tab="main"] { overflow-y: hidden; overscroll-behavior: none; }
-.onb-trust-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
-.onb-trust-chips > span { font-size: 12px; white-space: nowrap; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); }
-/* 키가 작은 폰: 신뢰 페이지는 설명 한 줄씩을 숨기고 칩을 촘촘하게(제목과 겹치지 않게) */
+/* 키가 작은 폰: 소개 그림 줄 간격 줄이기 */
 @media (max-height: 720px) {
-  .onb-trust-sub { display: none; }
-  .onb-trust-chips > span { font-size: 11px; padding: 2px 7px; }
   .onb-slide .onb-mock-row { padding: 6px 0; }
-}
-@media (max-height: 600px) {
-  .onb-trust-head { display: none; } /* 제목·설명이 같은 말을 하니 아주 작은 폰에선 생략 */
-  .onb-trust-chips { gap: 4px; }
-  .onb-trust-full { display: none; } /* 아주 작은 폰은 기관 약칭만 */
-  .onb-slide .onb-trust-note { margin-top: 2px !important; line-height: 1.35; }
 }
 /* 비서 입력창 🎤(VoiceButton) — 시리처럼 아래에서 듣기 화면이 올라온다. 동그라미는 목소리 크기에 따라 커진다 */
 .voice-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 18px; flex-shrink: 0; box-shadow: var(--shadow); color: var(--text); display: flex; align-items: center; justify-content: center; }
