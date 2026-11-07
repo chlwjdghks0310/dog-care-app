@@ -25,6 +25,16 @@ export function setPhotoMemo(dogId, recId, memo) {
   if (r) saveRecord(dogId, { ...r, memo: memo.trim().slice(0, 500) });
 }
 
+// 찍은 날 바꾸기(11/7: 오늘 넣었어도 어제 사진일 수 있음). 사진 기록만 — 증상·병원 기록에 붙은 사진은 그 기록 날짜를 따른다.
+// 시각은 그대로 두고 날짜만, 오늘보다 뒤로는 안 됨. 바뀐 at을 돌려준다
+export function setPhotoDate(dogId, recId, date, today = localNow().slice(0, 10)) {
+  const r = getRecords(dogId).find((x) => x.id === recId);
+  if (!r || r.type !== "media" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today) return r?.at;
+  const at = `${date}${r.at.slice(10)}`;
+  saveRecord(dogId, { ...r, at });
+  return at;
+}
+
 // 사진 지우기: 사진 기록에 한 장뿐이면 기록째, 다른 기록(증상 등)에 붙은 사진이면 그 사진만
 export function removePhoto(dogId, recId, idx) {
   const r = getRecords(dogId).find((x) => x.id === recId);

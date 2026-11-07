@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "../components/Ico";
-import { getPhotos, addPhotos, setPhotoMemo, removePhoto, saveDecorated, decoOf } from "../services/gallery";
+import { getPhotos, addPhotos, setPhotoMemo, setPhotoDate, removePhoto, saveDecorated, decoOf } from "../services/gallery";
+import { localNow } from "../services/records";
+import { photoTakenAt } from "../utils/exifDate";
 import DecoEditor from "../components/DecoEditor";
 import { useSheetSwipe } from "../components/SwipeBack";
 import { FramedPhoto } from "../components/PhotoFrame";
@@ -40,14 +42,17 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
     if (!files.length) return;
     setError("");
     try {
-      const urls = await Promise.all(files.map((f) => resizeImageFile(f, 900, 0.8)));
-      addPhotos(dog.id, urls);
+      const now = localNow();
+      // 찍은 날로 넣기(파일 속 EXIF) — 없으면 넣은 지금
+      const items = await Promise.all(files.map(async (f) => [await resizeImageFile(f, 900, 0.8), (await photoTakenAt(f, now)) || now]));
+      for (const [url, at] of items) addPhotos(dog.id, [url], at);
     } catch (err) {
       setError(err.message || "사진을 불러오지 못했어요.");
     }
     reload();
     const fresh = getPhotos(dog.id);
-    if (files.length === 1 && fresh[0]) setOpen(fresh[0]); // 한 장이면 바로 메모 적기
+    const added = fresh.reduce((a, p) => (!a || p.recId > a.recId ? p : a), null); // 방금 넣은 것(찍은 날이 옛날이면 맨 위가 아닐 수 있음)
+    if (files.length === 1 && added) setOpen(added); // 한 장이면 바로 메모 적기
   }
 
   const groups = [];
@@ -131,6 +136,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
   const [memo, setMemo] = useState(photo.memo);
   const [src, setSrc] = useState(photo.src);
   const [editing, setEditing] = useState(false);
+  const [at, setAt] = useState(photo.at);
   const [deco, setDeco] = useState(null);
   const [error, setError] = useState("");
   const done = () => (setPhotoMemo(dog.id, photo.recId, memo), setEditing(false));
@@ -143,7 +149,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
           <FramedPhoto src={dog.photo} pos={dog.coverPos} frame={dog.frame} size={34} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <b>{dog.name}</b>
-            <span className="faint">{fullDate(photo.at)}{photo.type !== "media" ? ` · ${TYPES[photo.type]?.label} 기록` : ""}</span>
+            <span className="faint">{fullDate(at)}{photo.type !== "media" ? ` · ${TYPES[photo.type]?.label} 기록` : ""}</span>
           </div>
           {!editing && <button type="button" className="btn-ghost small" onClick={() => setEditing(true)}>수정</button>}
           <button type="button" className="es-x" aria-label="닫기" onClick={() => (editing && done(), onClose())}>✕</button>
@@ -157,8 +163,8 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
               ) : (
                 <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditing(true)}>✏️ 이날의 문구·추억 쓰기</button>
               )}
-              {dayLine(dog.id, photo.at) && <p className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, photo.at)}</p>}
-              <span className="faint post-date">{agoLabel(photo.at)}</span>
+              {dayLine(dog.id, at) && <p className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, at)}</p>}
+              <span className="faint post-date">{agoLabel(at)}</span>
             </div>
           ) : (
             <div className="post-body">
@@ -166,6 +172,14 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
                 <span className="xs-label">문구 · 추억</span>
                 <textarea rows={3} maxLength={500} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 처음으로 공원에 간 날. 낙엽 냄새를 한참 맡았어요" autoFocus />
               </label>
+              {photo.type === "media" ? (
+                <label className="field post-dayfield">
+                  <span className="xs-label">찍은 날</span>
+                  <input type="date" value={at.slice(0, 10)} max={localNow().slice(0, 10)} onChange={(e) => e.target.value && setAt(setPhotoDate(dog.id, photo.recId, e.target.value) || at)} />
+                </label>
+              ) : (
+                <p className="faint" style={{ fontSize: 12.5, margin: "0 0 10px" }}>{TYPES[photo.type]?.label} 기록에 붙은 사진이라 그 기록 날짜를 따라요. 날짜는 기록 탭에서 바꿔요.</p>
+              )}
               <div className="post-edit">
                 <button type="button" onClick={() => setDeco(decoOf(dog.id, photo.recId, photo.idx))}><span aria-hidden="true">🎨</span>꾸미기</button>
                 <button type="button" disabled={isCover} onClick={() => (done(), onCover(src))}><span aria-hidden="true">⭐</span>{isCover ? "대표 사진" : "대표 사진으로"}</button>

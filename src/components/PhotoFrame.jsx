@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { getPhotos, addPhotos } from "../services/gallery";
 import { resizeImageFile } from "../utils/image";
+import { photoTakenAt } from "../utils/exifDate";
+import { localNow } from "../services/records";
 
 // 프로필 사진 틀(사용자가 고름): 둥근 네모·동그라미·네모·하트(11/7 사용자 결정, 발바닥·별 뺌 — 예전에 고른 사람은 둥근 네모로). 하트는 SVG 모양으로 잘라 보인다(mask)
 const svg = (path, vb = "0 0 100 100") => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='${vb}'><path d='${path}'/></svg>`)}")`;
@@ -40,7 +42,7 @@ export function PhotoSourceSheet({ dog, onPicked, onClose, onAdjust, onRemove })
     try {
       const src = await resizeImageFile(file, 1200, 0.8);
       try {
-        addPhotos(dog.id, [src]); // 가져온 사진도 갤러리·기록에 남긴다
+        addPhotos(dog.id, [src], (await photoTakenAt(file, localNow())) || localNow()); // 가져온 사진도 갤러리·기록에 남긴다(찍은 날로)
       } catch {
         // 공간이 모자라면 프로필 사진으로만
       }

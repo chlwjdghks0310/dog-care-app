@@ -1438,3 +1438,4 @@ button.seg, button.chip { min-height: 36px; }
 .es-scroll { overscroll-behavior: contain; }
 /* 발바닥 테마: 프로필 사진 뒤 바탕도 투명하게 — 사진 말고는 발바닥 무늬가 보이게(11/7) */
 :root[data-paw]:not([data-theme="dark"]) .pf-hero { background: linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 45%, transparent), transparent); }
+.post-dayfield input { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); }
