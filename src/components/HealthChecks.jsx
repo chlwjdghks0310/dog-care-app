@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { STOOL_COLORS, STOOL_SIGNS, CHECK_ITEMS, CHECK_LEVELS, stoolFromScore } from "../services/records";
 
 // 변 체크·컨디션 체크 — 보호자가 직접 고르는 칸(기록 고치기·변 체크·컨디션 체크 화면이 같이 쓴다).
@@ -50,7 +51,8 @@ export function StoolCheck({ data, onChange, flags }) {
   return (
     <>
       <div className="field">
-        <label id="sc-shape">변 모양 (1 딱딱함 ~ 7 물 같음)</label>
+        <label id="sc-shape">변 모양 (1 딱딱함 ~ 7 물 같음 · 2가 가장 좋아요)</label>
+        <StoolPhotos />
         <div className="sc-list" role="group" aria-labelledby="sc-shape">
           {SHAPES.map((s) => (
             <button key={s.n} type="button" className={`sc-row${data.stoolScore === s.n ? " on" : ""}`} aria-pressed={data.stoolScore === s.n} onClick={() => pickScore(s.n)}>
@@ -101,5 +103,32 @@ export function ConditionCheck({ check = {}, onChange, flags }) {
       ))}
       <FlagBox flags={flags} />
     </>
+  );
+}
+
+// 실제 사진(정상 예시만): 무른 변·설사 사진은 쓸 수 있는 무료 사진이 없어 그림으로만 보여 준다(자료용 11/7 — 사람용 브리스톨 척도는 기준이 달라 안 씀).
+// 처음엔 접어 둔다(보기 싫은 사람 배려). 출처는 public/licenses.txt에도
+const PHOTOS = [
+  { src: "/img/stool/score-2-photo-a.jpg", n: 2, credit: "사진: Kulmalukko / Wikimedia Commons (퍼블릭 도메인)" },
+  { src: "/img/stool/score-3-photo.jpg", n: 3, credit: "사진: BrokenSphere / Wikimedia Commons, CC BY 3.0" },
+];
+function StoolPhotos() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="sc-photos">
+      <button type="button" className="link-btn" style={{ margin: "0 0 6px" }} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        좋은 변 실제 사진 보기 {open ? "▴" : "▾"}
+      </button>
+      {open && (
+        <div className="sc-photo-row">
+          {PHOTOS.map((ph) => (
+            <figure key={ph.src}>
+              <img src={ph.src} alt={`${ph.n}점 예시: ${SHAPES[ph.n - 1].label}`} width="240" height="180" loading="lazy" />
+              <figcaption><b>{ph.n}점</b> {SHAPES[ph.n - 1].label}<small>{ph.credit}</small></figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

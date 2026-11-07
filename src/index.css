@@ -1238,3 +1238,10 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ml-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .ml-row { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .ml-claim { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #fff1d6; color: #8a5a00; }
+
+/* 변 모양: 좋은 변 실제 사진(접어 둠) */
+.sc-photo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.sc-photo-row figure { margin: 0; }
+.sc-photo-row img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; display: block; }
+.sc-photo-row figcaption { font-size: 12.5px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.sc-photo-row small { font-size: 10.5px; color: var(--text-faint); }
