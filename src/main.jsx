@@ -19,6 +19,8 @@ if (vv) {
   const fit = () => {
     document.documentElement.style.setProperty('--vvh', `${vv.height}px`)
     document.documentElement.style.setProperty('--vvt', `${vv.offsetTop}px`)
+    // 키보드가 내려갔는데 문서가 밀려 있으면(아이폰: 하단 탭이 떠 보이고 밑에 빈 공간) 제자리로(11/7)
+    if (vv.height >= innerHeight - 2 && scrollY && !document.activeElement?.matches?.('input, textarea, select')) window.scrollTo(0, 0)
   }
   vv.addEventListener('resize', fit)
   vv.addEventListener('scroll', fit)

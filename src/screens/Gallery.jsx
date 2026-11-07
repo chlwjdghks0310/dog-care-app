@@ -29,7 +29,7 @@ const agoLabel = (at) => {
   return d <= 0 ? "오늘" : d === 1 ? "어제" : d < 7 ? `${d}일 전` : d < 31 ? `${Math.floor(d / 7)}주 전` : fullDate(at);
 };
 
-export default function Gallery({ dog, onBack, onUpdateDog }) {
+export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우리 아이로" }) {
   const [photos, setPhotos] = useState(() => getPhotos(dog.id));
   const [open, setOpen] = useState(null); // 크게 보는 사진
   const [error, setError] = useState("");
@@ -64,7 +64,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
 
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 우리 아이로</button>
+      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
         <div className="h1" style={{ margin: 0 }}>{dog.name} 성장 추억</div>
         <label className="btn-primary small" style={{ cursor: "pointer" }}>

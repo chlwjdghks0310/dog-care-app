@@ -19,10 +19,10 @@ const MAX_PHOTOS = 4;
 
 // 새 기록 추가: 종류를 고르면 그 종류에 필요한 칸만 보여 준다. initial이 있으면 그 기록 고치기.
 // prefill: 새 기록에 미리 채울 { at?, data? } (예: 지난 병원 일정에서 "진료 내용 기록하기")
-export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds, onOpenFeeding, onOpenGallery }) {
+export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds, onOpenFeeding, onOpenGallery, onPickType }) {
   const [type, setType] = useState(initial?.type || startType || null);
-  if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : t === "media" && onOpenGallery ? onOpenGallery() : setType(t))} onCancel={onCancel} />;
-  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
+  if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : t === "media" && onOpenGallery ? onOpenGallery() : onPickType ? onPickType(t) : setType(t))} onCancel={onCancel} />;
+  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : onPickType ? null : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
 }
 
 function TypePicker({ onPick, onCancel }) {
@@ -139,7 +139,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
     <div className="card">
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
-        <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill ? "취소" : "← 종류"}</button>
+        {onBack && <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill ? "취소" : "← 종류"}</button>}
       </div>
 
       <Field label={type === "vet" ? "방문 날짜·시각" : type === "symptom" ? "본 날짜·시각" : "날짜·시각"}>

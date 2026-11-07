@@ -50,6 +50,7 @@ const PARENT_TAB = {
   "health-behavior": "hospital",
   "records-new": "records",
   "records-meds": "records",
+  "records-gallery": "records", // 기록 탭에서 연 성장 추억 — 나가면 기록 화면으로(11/7)
   "records-feeding": "records", // 식사 기록 → 사료 계산기(사용자 제안 11/7) // 새 기록 → 복약도 기록 탭 안에서(사용자 요청 11/7 — 다른 종류처럼 뒤로 가면 종류 고르기로)
   vet: "hospital",
   budget: "hospital",
@@ -62,7 +63,7 @@ const PARENT_TAB = {
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
 const MAIN_SUB = ["week", "feeding", "alarms", "info"];
-const BACK_OF = { ...PARENT_TAB, "records-meds": "records-new", "records-feeding": "records-new", ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
+const BACK_OF = { ...PARENT_TAB, "records-meds": "records-new", "records-gallery": "records-new", "records-feeding": "records-new", ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
@@ -435,10 +436,13 @@ export default function App() {
     report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("report")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
+  // 새 기록: 종류 고르기에서 고른 기록이면 뒤로 = 종류 고르기로(복약·성장 추억과 같게, 11/7)
+  const recordsBack = () => (recordsOpts.picked ? setRecordsOpts((o) => ({ ...o, type: undefined, picked: false })) : recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"));
   const recordScreens = {
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} onQuickAdd={quickAdd} onOpenGallery={() => setTab("gallery")} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} onOpenGallery={() => setTab("gallery")} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} onQuickAdd={quickAdd} onOpenGallery={() => (setRecordsOpts((o) => ({ ...o, galleryFrom: "records" })), setTab("records-gallery"))} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.picked ? "← 종류 고르기로" : recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={recordsBack} onPickType={(t) => setRecordsOpts((o) => ({ ...o, type: t, picked: true }))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} onOpenGallery={() => (setRecordsOpts((o) => ({ ...o, galleryFrom: "records-new" })), setTab("records-gallery"))} />,
     "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
+    "records-gallery": () => <Gallery dog={dog} onUpdateDog={setActiveDog} backLabel={recordsOpts.galleryFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.galleryFrom || "records-new")} />,
     "records-meds": () => <Medications dog={dog} backLabel={recordsOpts.medsFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.medsFrom || "records-new")} />,
   };
   const hospitalScreens = {
@@ -460,7 +464,7 @@ export default function App() {
   function renderStack(screens, root) {
     if (!screens[tab] || tab === root) return screens[root]();
     return (
-      <SwipeBack key={tab} onBack={() => (tab === "records-new" && recordsOpts.back ? handleTabChange(recordsOpts.back) : tab === "records-meds" && recordsOpts.medsFrom ? setTab(recordsOpts.medsFrom) : tab === "vet" ? setTab(vetFrom) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
+      <SwipeBack key={tab} onBack={() => (tab === "records-new" ? recordsBack() : tab === "records-meds" && recordsOpts.medsFrom ? setTab(recordsOpts.medsFrom) : tab === "records-gallery" && recordsOpts.galleryFrom ? setTab(recordsOpts.galleryFrom) : tab === "vet" ? setTab(vetFrom) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
         {screens[tab]()}
       </SwipeBack>
     );
