@@ -33,3 +33,20 @@ export function removePhoto(dogId, recId, idx) {
   if (r.type === "media" && !photos.length) deleteRecord(dogId, recId);
   else saveRecord(dogId, { ...r, photos });
 }
+
+// 꾸민 사진 저장: 보이는 사진은 꾸민 것으로 바꾸고, 원본과 꾸밈(스티커·글자 위치)은 남겨 다시 고칠 수 있게
+export function saveDecorated(dogId, recId, idx, src, items) {
+  const r = getRecords(dogId).find((x) => x.id === recId);
+  if (!r) return;
+  const orig = { ...(r.data?.orig || {}) };
+  if (!orig[idx]) orig[idx] = r.photos[idx];
+  const deco = { ...(r.data?.deco || {}), [idx]: items };
+  if (!items.length) (r.photos[idx] = orig[idx]), delete orig[idx], delete deco[idx];
+  else r.photos[idx] = src;
+  saveRecord(dogId, { ...r, photos: [...r.photos], data: { ...r.data, orig, deco } });
+  if (!getRecords(dogId).find((x) => x.id === recId)?.photos.includes(items.length ? src : r.photos[idx])) throw new Error("폰 저장 공간이 꽉 차서 저장하지 못했어요.");
+}
+export const decoOf = (dogId, recId, idx) => {
+  const r = getRecords(dogId).find((x) => x.id === recId);
+  return { orig: r?.data?.orig?.[idx] || r?.photos?.[idx], items: r?.data?.deco?.[idx] || [] };
+};

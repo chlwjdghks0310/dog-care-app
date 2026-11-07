@@ -119,3 +119,6 @@ SOFTWARE.
 - score-6-paper-crop.jpg: Zhang 외(2025) Front. Vet. Sci. 12:1534665, 그림 3(E) 일부를 잘라냄 — CC BY 4.0 (https://creativecommons.org/licenses/by/4.0) — https://doi.org/10.3389/fvets.2025.1534665
 - score-7-crop.jpg: "Parvovirosis-dog.JPG" — Uwe Gille, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Parvovirosis-dog.JPG
   바닥(변) 부분만 잘라 냈습니다(수정함). 잘라 낸 이 이미지도 CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)으로 공개합니다.
+
+
+주아체(Jua) — 우아한형제들, SIL Open Font License 1.1 — 사진 꾸미기 글자에 사용(완성형 2350자만 잘라 woff2로 바꿈)

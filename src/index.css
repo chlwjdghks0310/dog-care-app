@@ -1,3 +1,5 @@
+/* 꾸미기 글자용 주아체(OFL, 완성형 2350자만 잘라 350KB — 꾸미기 화면에서 쓸 때만 내려받음) */
+@font-face { font-family: "Jua"; src: url("/fonts/jua-subset.woff2") format("woff2"); font-display: swap; }
 /* 기본(밝은 화면): 아이콘 소프트블루. 흐린 글자(--text-faint)는 흰 바탕 대비 4.5:1 이상으로 맞춘 값. */
 :root {
   --bg: #f0f6ff;
@@ -1331,3 +1333,30 @@ button.seg, button.chip { min-height: 36px; }
 .pf-edit-photo { position: relative; padding: 0; border: none; background: none; cursor: pointer; }
 .pf-edit-badge { position: absolute; right: -4px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
 .pf-hero + .pf-namecard { margin-top: -34px; }
+/* 사진 꾸미기 */
+.de-sheet { max-height: 98vh; }
+.de-box { position: relative; container-type: inline-size; touch-action: none; border-radius: 12px; overflow: hidden; background: #000; }
+.de-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
+.de-item { position: absolute; line-height: 1.15; cursor: grab; user-select: none; touch-action: none; }
+.de-item.on { outline: 2px dashed rgba(255,255,255,.9); outline-offset: 4px; border-radius: 8px; }
+.de-tools { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+.de-stickers { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 10px; }
+.de-stickers button { font-size: 26px; padding: 6px 0; border: none; background: var(--surface); border-radius: 10px; }
+.de-text { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.de-text textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; font: inherit; color: var(--text); background: var(--surface); }
+.btn-ghost.on { background: var(--accent-soft); color: var(--accent-strong); }
+
+/* 갤러리 게시물(인스타·블로그 느낌) */
+.post-sheet { max-height: 98vh; }
+.post-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.post-head > div { display: flex; flex-direction: column; line-height: 1.25; }
+.post-head > div span { font-size: 12px; }
+.post-img { width: 100%; display: block; max-height: 66vh; object-fit: contain; background: #000; }
+.post-body { padding: 12px 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.post-caption { margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-line; word-break: keep-all; }
+.post-caption b { margin-right: 4px; }
+.post-date { font-size: 12px; }
+.post-edit { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.feed-card { background: var(--surface); border-radius: 18px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); cursor: pointer; }
+.feed-card img { width: 100%; display: block; max-height: 520px; object-fit: cover; }
+.feed-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
