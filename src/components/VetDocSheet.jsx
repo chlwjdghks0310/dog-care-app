@@ -30,7 +30,7 @@ export default function VetDocSheet({ onClose, onUse }) {
       if (!out?.is_doc) setError(out?.retake || "병원 서류로 읽지 못했어요. 영수증이 화면에 꽉 차게 다시 찍어 주세요.");
       else setDoc(out);
     } catch (e) {
-      if (e.name !== "AbortError") setError(e.message);
+      if (e.name !== "AbortError") setError(e instanceof TypeError ? "인터넷에 연결하지 못했어요. 연결을 확인하고 다시 시도해 주세요." : e.message);
     } finally {
       setBusy(false);
     }

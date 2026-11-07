@@ -16,6 +16,8 @@ import { checkAlarmPlan, checkedInToday } from "./routine";
 import { allowed, getNotifPrefs } from "./notifPrefs";
 import { getFoodStock } from "./foodStock";
 import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
+import { getOccurrences } from "./calendarEvents";
+import { isVisitEvent } from "./vetVisits";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -194,6 +196,17 @@ export function buildPushAlarms() {
     for (const alarm of getCustomSchedules(dog.id)) {
       // 하루만 울리는 알람은 그날만(onlyDate) — 지난 날짜 알람은 보내지 않는다
       if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ cat: "custom", time: alarm.time, ...customAlarmMessage(dog, alarm), onlyDate: alarm.date });
+    }
+    // 병원 가기 전날 저녁 8시: "보여 줄 기록 한 장" / 다녀온 뒤(예약 2시간 뒤, 시각 없으면 오후 3시): "영수증 사진 한 장이면 정리"
+    // 잠금화면에 보이므로 병명·증상·일정 제목은 넣지 않는다(Apple HIG — ../자료용/자료/2026-11-07-2단계-병원루프-조사.md ②)
+    const seenVisit = new Set();
+    for (const o of getOccurrences(dog.id, todayKey(), toDateKey(addDays(new Date(), 30)))) {
+      if (!o.isStart || !isVisitEvent(o.event) || seenVisit.has(o.date)) continue;
+      seenVisit.add(o.date);
+      const eve = toDateKey(addDays(new Date(`${o.date}T00:00:00`), -1));
+      if (eve >= todayKey()) alarms.push({ cat: "visit", time: "20:00", onlyDate: eve, title: `🏥 내일 ${dog.name} 병원 가는 날이에요`, body: "보여 줄 기록 한 장을 준비해 뒀어요. 물어볼 것도 적어 두세요.", url: `/?vet=1&dog=${encodeURIComponent(dog.id)}` });
+      const after = o.event.time && o.event.time < "21:00" ? minutesBefore(o.event.time, -120) : "15:00";
+      alarms.push({ cat: "visit", time: after, onlyDate: o.date, title: `🩺 ${dog.name} 병원 다녀오셨나요?`, body: "영수증 사진 한 장이면 진료 기록을 정리해 드려요.", url: `/?vetdoc=1&dog=${encodeURIComponent(dog.id)}` });
     }
     // 약: 서버가 기간(from~until)·요일(days)을 보고 울린다. 오늘 이미 기록한 복용 건은 오늘만 건너뛴다.
     const today = todayKey();

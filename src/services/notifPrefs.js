@@ -6,6 +6,7 @@ const KEY = "dogcare-notif-prefs-v1";
 export const CATS = [
   { id: "med", label: "약 먹일 시간", quietOk: true }, // 조용한 시간에도 울림(약은 시간이 중요)
   { id: "custom", label: "내가 만든 알람·일정 알림", quietOk: true }, // 직접 정한 시각이라 그대로
+  { id: "visit", label: "병원 가기 전날·다녀온 뒤 안내" },
   { id: "care", label: "오늘 할 일(양치·산책 등 추천)" },
   { id: "meal", label: "밥 시간(사료 불리기)", quietOk: true }, // 보호자가 정한 급여 시각 기준
   { id: "food", label: "사료 떨어짐 예고" },

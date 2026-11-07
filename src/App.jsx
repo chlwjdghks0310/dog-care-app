@@ -77,7 +77,8 @@ export default function App() {
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
-  const [vitalMetric, setVitalMetric] = useState(null); // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
+  const [vitalMetric, setVitalMetric] = useState(null);
+  const [vetDocSignal, setVetDocSignal] = useState(0); // 병원 다녀온 뒤 알림으로 열리면 진료 정리 창을 띄운다 // 복용 알림을 눌러 들어왔을 때 보여 줄 복용 건
 
   // 메인 탭이 이미 열려 있는 상태에서 메인을 또 누르면(채팅 중이어도) 메인 화면으로 리셋한다.
   function handleTabChange(key) {
@@ -234,6 +235,14 @@ export default function App() {
     // 저녁 체크인 알림(/?checkin=1) → 비서 첫 화면에서 체크인 창
     if (params.get("checkin")) {
       setTab("main");
+      return true;
+    }
+    // 병원 전날 알림(/?vet=1) → 병원용 기록, 다녀온 뒤 알림(/?vetdoc=1) → 병원 탭 진료 정리
+    if (params.get("vet") || params.get("vetdoc")) {
+      const d = getDogs().find((x) => x.id === params.get("dog"));
+      if (d) setActiveDog(d);
+      if (params.get("vetdoc")) setVetDocSignal((n) => n + 1);
+      setTab(params.get("vet") ? "vet" : "hospital");
       return true;
     }
     // 주간 리포트 알림(/?report=1&dog=..) → 그 강아지의 이번 주 리포트
@@ -413,7 +422,7 @@ export default function App() {
     "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => setTab("meds")} />,
   };
   const hospitalScreens = {
-    hospital: () => <Calendar dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} />,
+    hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("hospital")} />,
     budget: () => <Budget dog={dog} onBack={() => setTab("hospital")} />,
   };

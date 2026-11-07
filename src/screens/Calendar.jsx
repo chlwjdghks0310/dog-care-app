@@ -17,13 +17,16 @@ const dDay = (today, date) => {
   return n === 0 ? "오늘" : n === 1 ? "내일" : `D-${n}`;
 };
 
-export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }) {
+export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, vetDocSignal, onVetDocHandled }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
   const [events, setEvents] = useState(() => getEventsByDog(dog.id));
   const [sheet, setSheet] = useState(null);
-  const [docOpen, setDocOpen] = useState(false); // 진료 정리(사진·말) // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
+  const [docOpen, setDocOpen] = useState(false); // 진료 정리(사진·말)
+  useEffect(() => {
+    if (vetDocSignal) (setDocOpen(true), onVetDocHandled?.()); // 다녀온 뒤 알림으로 열리면 바로(한 번만)
+  }, [vetDocSignal]); // eslint-disable-line react-hooks/exhaustive-deps // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
   // 지난 병원 진료·접종 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
   // 같은 날 병원 일정이 있으면 그 일정 카드 안에 붙여 하나로 보여 준다
   const vetByDate = useMemo(() => {
