@@ -10,6 +10,7 @@ import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 import VetDocSheet from "../components/VetDocSheet";
 import MedicalLedger from "../components/MedicalLedger";
+import { getRulesForAge } from "../data/careRules";
 
 const MEDICAL = ["vet", "vaccine", "recheck", "checkup", "scaling", "deworm", "heartworm", "med"];
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
@@ -58,6 +59,27 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
       .filter((o) => o.isStart && (isVisitEvent(o.event) || MEDICAL.includes(o.event.kind)) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
       .slice(0, 3);
   }, [dog.id, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 월령 추천: 지금~8주 안에 시작하는 접종 규칙 + 심장사상충(생후 8주부터 매달) — 같은 종류 일정이 앞으로 60일 안에 있으면 안 보임
+  const suggest = useMemo(() => {
+    if (!dog.birthDate) return [];
+    const weeks = calculateAge(dog.birthDate).ageInWeeks;
+    const soon = getOccurrences(dog.id, today, toDateKey(addDays(new Date(), 60)));
+    const has = (kind) => soon.some((o) => o.event.kind === kind);
+    const all = Object.values(getEventsByDog(dog.id)).flat();
+    const out = [];
+    const seen = new Set();
+    for (let w = weeks; w <= weeks + 8; w++) {
+      for (const r of getRulesForAge(w, dog.breed)) {
+        if (r.category !== "예방접종" || seen.has(r.id) || has("vaccine")) continue;
+        seen.add(r.id);
+        const date = w <= weeks ? toDateKey(addDays(new Date(), 7)) : toDateKey(addDays(new Date(`${dog.birthDate}T00:00:00`), r.minWeek * 7));
+        out.push({ key: r.id, title: r.title, when: `생후 ${r.minWeek}~${r.maxWeek}주 권장`, date, event: { title: r.title.replace(/\(.*\)/, "").trim(), kind: "vaccine", alarm: "eve" } });
+      }
+    }
+    if (weeks >= 8 && !all.some((e) => e.kind === "heartworm")) out.push({ key: "hw", title: "심장사상충 예방", when: "생후 8주부터 매달", date: toDateKey(addDays(new Date(), 1)), event: { title: "심장사상충 예방", kind: "heartworm", repeat: "monthly", alarm: "morning" } });
+    return out.slice(0, 3);
+  }, [dog.id, dog.birthDate, dog.breed, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedOcc = useMemo(() => getOccurrences(dog.id, selectedDateKey, selectedDateKey), [dog.id, selectedDateKey, events]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedAge = calculateAge(dog.birthDate, new Date(selectedDateKey));
@@ -121,6 +143,20 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         </div>
       )}
 
+
+      {/* 월령에 맞춘 추천(접종·심장사상충) — 일정이 없을 때만, 눌러서 날짜를 정해 넣는다(제안 분석 11/7) */}
+      {suggest.length > 0 && (
+        <div className="card sg-card" style={{ marginBottom: 14 }}>
+          <div className="h2" style={{ margin: "0 0 6px" }}>{dog.name} 나이에 맞춘 추천</div>
+          {suggest.map((x) => (
+            <div key={x.key} className="sg-row">
+              <span style={{ flex: 1, minWidth: 0 }}><b>{x.title}</b><span className="faint" style={{ display: "block", fontSize: 12.5 }}>{x.when}</span></span>
+              <button type="button" className="btn-ghost small" onClick={() => setSheet({ start: x.date, event: x.event })}>일정 넣기</button>
+            </div>
+          ))}
+          <p className="faint" style={{ margin: "6px 0 0", fontSize: 12 }}>일반 권장 시기예요. 정확한 날짜는 다니는 병원과 정해 주세요.</p>
+        </div>
+      )}
 
       <MedicalLedger dog={dog} onOpenBudget={onOpenBudget} />
 

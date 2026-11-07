@@ -6,6 +6,7 @@ import { BREEDS } from "../data/breeds";
 import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import { localNow } from "../services/records";
+import { saveEvent } from "../services/calendarEvents";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import { BottomSheet, EmailLogin, LoginForm, LoginSheet, PolicyLine, useSyncStatus } from "../components/AccountCard";
 import SpeechBubble from "../components/SpeechBubble";
@@ -166,8 +167,9 @@ function DailyMock() {
 
 // ── 강아지 정보: 한 화면에 질문 하나 ──
 // 알림 허락은 첫 하루 체크 뒤 오늘 탭 말풍선에서 묻는다(NotifyAsk)
-const STEPS = ["name", "breed", "birthDate", "gender", "weight", "done"];
-const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
+// extras: 평소 모습·다니는 병원·다음 접종일(모두 건너뛰기 가능) — 첫 화면부터 '다가오는 병원'과 '평소'가 채워지게(제안 분석 11/7)
+const STEPS = ["name", "breed", "birthDate", "gender", "weight", "extras", "done"];
+const QUESTION_STEPS = 6; // 진행 막대에 보이는 질문 수(name~extras)
 
 function Setup({ onRegistered, restore }) {
   const saved = restore ? loadProgress() : {};
@@ -219,6 +221,7 @@ function Setup({ onRegistered, restore }) {
     birthDate: Boolean(form.birthDate) && form.birthDate <= todayKey(),
     gender: Boolean(form.gender),
     weight: !form.weight || (Number(form.weight) > 0 && Number(form.weight) < 120), // 프로필 편집과 같은 범위
+    extras: !form.nextVaccine || form.nextVaccine >= todayKey(),
   }[key];
 
   function next() {
@@ -229,6 +232,15 @@ function Setup({ onRegistered, restore }) {
       if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
       setDog(created);
       if (restore) clearProgress();
+    }
+    if (key === "extras" && dog) {
+      const usual = (form.usual || "").trim(), hospital = (form.hospital || "").trim();
+      if (usual || hospital) {
+        const next = { ...dog, ...(usual && { usual }), ...(hospital && { hospital }) };
+        saveDog(next);
+        setDog(next);
+      }
+      if (form.nextVaccine) saveEvent(dog.id, form.nextVaccine, { title: "다음 접종", kind: "vaccine", alarm: "eve" });
     }
     setStep((s) => s + 1);
   }
@@ -241,6 +253,7 @@ function Setup({ onRegistered, restore }) {
     birthDate: `${name} 생일은 언제야?`,
     gender: `${josa(name, "은", "는")} 남자야, 여자야?`,
     weight: `지금 ${name} 몸무게는 얼마야?`,
+    extras: `${josa(name, "은", "는")} 평소에 어때? 병원도 알려 줘!`,
     done: `안녕! 나 ${nameCall(name)}.\n매일 "오늘 어땠어?"만 물어볼게!`,
   };
 
@@ -255,7 +268,7 @@ function Setup({ onRegistered, restore }) {
   return (
     <div className="onb">
       <div className="onb-top">
-        {step > 0 && key !== "done" ? (
+        {step > 0 && key !== "done" && key !== "extras" ? ( /* 몸무게 다음엔 강아지가 이미 저장돼서 뒤로 가면 두 번 만들어짐 — 숨김 */
           <button type="button" className="onb-skip" onClick={back}>
             ← 이전
           </button>
@@ -356,6 +369,24 @@ function Setup({ onRegistered, restore }) {
             </>
           )}
 
+          {key === "extras" && (
+            <div className="onb-extras">
+              <label className="field">
+                <span>평소 모습 (선택)</span>
+                <textarea rows={2} maxLength={200} value={form.usual || ""} onChange={(e) => update("usual", e.target.value)} placeholder="예: 하루 두 번 다 먹음, 변 하루 2번, 산책 30분" />
+              </label>
+              <label className="field">
+                <span>다니는 동물병원 (선택)</span>
+                <input value={form.hospital || ""} onChange={(e) => update("hospital", e.target.value)} placeholder="예: 행복동물병원" />
+              </label>
+              <label className="field">
+                <span>다음 접종일 (선택)</span>
+                <input type="date" min={todayKey()} value={form.nextVaccine || ""} onChange={(e) => update("nextVaccine", e.target.value)} />
+              </label>
+              <p className="faint" style={{ margin: 0 }}>평소 모습은 다른 날과 비교하는 기준이 되고, 병원용 기록에도 들어가요. 접종일은 전날 저녁에 알려 드려요.</p>
+            </div>
+          )}
+
           {key === "weight" && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -384,6 +415,11 @@ function Setup({ onRegistered, restore }) {
             ) : (
               <button type="button" className="btn-primary" disabled={!valid} onClick={next}>
                 다음
+              </button>
+            )}
+            {key === "extras" && !(form.usual || form.hospital || form.nextVaccine) && (
+              <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={next}>
+                나중에 할게요
               </button>
             )}
             {key === "weight" && !form.weight && (
