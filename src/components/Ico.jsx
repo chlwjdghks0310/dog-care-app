@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 // 데이터 파일(records·vitals·calendarEvents 등)에는 아이콘 이름(글자)만 두고 여기서 그린다 — 노드 테스트에서도 데이터를 그대로 불러올 수 있게.
 import {
   AlarmClockIcon, ArrowDownIcon, ArrowRightIcon, BellIcon, BellOffIcon, BookOpenIcon, Building2Icon, CalendarDaysIcon, CameraIcon,
-  ChartColumnIcon, ChartLineIcon, CircleCheckIcon, CircleStopIcon, ClipboardListIcon, DogIcon, DropletIcon, DropletsIcon,
+  ChartColumnIcon, ImageIcon, ImagePlusIcon, ChartLineIcon, CircleCheckIcon, CircleStopIcon, ClipboardListIcon, DogIcon, DropletIcon, DropletsIcon,
   EyeIcon, GiftIcon, HandIcon, HeartPulseIcon, HouseIcon, LightbulbIcon, ListChecksIcon, LockIcon, MenuIcon,
   MicIcon, MoonIcon, XIcon, MailIcon, ZapIcon, MessageCircleHeartIcon, PuzzleIcon, SprayCanIcon, CarIcon, GraduationCapIcon, UmbrellaIcon, ShoppingBagIcon, BoxIcon, MousePointerClickIcon, NotebookPenIcon, PaperclipIcon, PartyPopperIcon, PawPrintIcon, PencilIcon,
   PillIcon, PinIcon, PipetteIcon, PrinterIcon, RepeatIcon, RulerIcon, ScissorsIcon, SearchIcon, SettingsIcon, SirenIcon,
@@ -17,7 +17,7 @@ import {
 
 const ICONS = {
   alarm: AlarmClockIcon, arrowDown: ArrowDownIcon, arrowRight: ArrowRightIcon, bell: BellIcon, bellOff: BellOffIcon, book: BookOpenIcon,
-  building: Building2Icon, calendar: CalendarDaysIcon, camera: CameraIcon, chart: ChartColumnIcon, chartLine: ChartLineIcon,
+  building: Building2Icon, calendar: CalendarDaysIcon, camera: CameraIcon, image: ImageIcon, imagePlus: ImagePlusIcon, chart: ChartColumnIcon, chartLine: ChartLineIcon,
   check: CircleCheckIcon, stop: CircleStopIcon, clipboard: ClipboardListIcon, dog: DogIcon, droplet: DropletIcon,
   droplets: DropletsIcon, eye: EyeIcon, gift: GiftIcon, hand: HandIcon, heart: HeartPulseIcon,
   house: HouseIcon, idea: LightbulbIcon, checklist: ListChecksIcon, lock: LockIcon, menu: MenuIcon, mic: MicIcon, moon: MoonIcon,

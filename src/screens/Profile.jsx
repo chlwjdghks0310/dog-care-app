@@ -5,12 +5,12 @@ import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
 import { addWeightRecord, getLatestWeightRecord } from "../services/weightLog";
 import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme, themeLabel } from "../services/themeSettings";
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
-import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { backupJson, recordsCsv, shareFile } from "../services/exportData";
 import QuickAddFab from "../components/QuickAddFab";
-import CoverAdjust, { coverStyle } from "../components/CoverAdjust";
-import { addPhotos, getPhotos } from "../services/gallery";
+import CoverAdjust from "../components/CoverAdjust";
+import { FramedPhoto, PhotoSourceSheet } from "../components/PhotoFrame";
+import { getPhotos } from "../services/gallery";
 import { togetherDays } from "../services/shareCard";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
 import { getOccurrences } from "../services/calendarEvents";
@@ -146,54 +146,28 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
     onDeleteAll?.();
   }
 
+  const [photoSheet, setPhotoSheet] = useState(false); // 프로필 사진 바꾸기(갤러리/보관함)
   const [adjusting, setAdjusting] = useState(false); // 대표 사진 맞추기 창
-  async function handlePhotoChange(e) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // 같은 사진을 다시 골라도 바뀌게
-    if (!file) return;
-    try {
-      const photo = await resizeImageFile(file, 1200, 0.8);
-      onUpdateDog?.(saveDog({ ...dog, photo, coverPos: null }));
-      setAdjusting(true); // 새 사진은 바로 맞추기 창으로
-      try {
-        addPhotos(dog.id, [photo]); // 대표 사진도 갤러리·기록 탭에 남긴다
-      } catch {
-        // 저장 공간이 모자라면 대표 사진만
-      }
-    } catch {
-      window.alert("사진을 불러오지 못했어요. 다른 사진으로 해 주세요.");
-    }
-  }
+
 
   return (
     <div className="screen">
-      {/* 대표 사진(B안, 11/7): 화면 위를 꽉 채우고, 이름 카드가 살짝 겹쳐 올라온다. 사진을 바꾸면 갤러리·기록에도 남는다 */}
-      <div className={`pf-cover${dog.photo ? "" : " empty"}`}>
-        {dog.photo ? <img src={dog.photo} alt={`${dog.name} 대표 사진`} style={coverStyle(dog.coverPos)} /> : (
-          <label className="pf-cover-empty">
-            <Ico name="camera" size={26} />
-            <b>대표 사진 넣기</b>
-            <span>가로로 찍은 사진이 잘 어울려요</span>
-            <input type="file" accept="image/*" onChange={handlePhotoChange} hidden />
-          </label>
+      {/* 위쪽: 사용자가 고른 틀(하트·동그라미…)에 넣은 프로필 사진 + 갤러리 버튼(11/7). 사진 바꾸기는 프로필 편집에서 */}
+      <div className="pf-hero">
+        {dog.photo ? (
+          <FramedPhoto src={dog.photo} pos={dog.coverPos} frame={dog.frame} size={210} alt={`${dog.name} 사진`} />
+        ) : (
+          <button type="button" className="pf-hero-add" onClick={() => setPhotoSheet(true)}>
+            <FramedPhoto frame={dog.frame} size={150} />
+            <span><Ico name="imagePlus" size={16} /> 프로필 사진 넣기</span>
+          </button>
         )}
         <button type="button" className="btn-ghost settings-btn pf-menu" aria-label="설정 열기" onClick={() => setSettingsOpen(true)}>
           <Ico name="menu" size={22} />
         </button>
-        {dog.photo && (
-          <button type="button" className="pf-cam" aria-label="대표 사진 맞추기·바꾸기" onClick={() => setAdjusting(true)}>
-            <Ico name="camera" size={18} />
-          </button>
-        )}
-        {adjusting && dog.photo && (
-          <CoverAdjust
-            src={dog.photo}
-            pos={dog.coverPos}
-            onClose={() => setAdjusting(false)}
-            onChangePhoto={(e) => (setAdjusting(false), handlePhotoChange(e))}
-            onSave={(coverPos) => (onUpdateDog?.(saveDog({ ...dog, coverPos })), setAdjusting(false))}
-          />
-        )}
+        <button type="button" className="pf-gal-btn" aria-label={`${dog.name} 갤러리 열기`} onClick={onOpenGallery}>
+          <Ico name="image" size={18} /> 갤러리
+        </button>
       </div>
       <div className="card pf-namecard" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
@@ -250,6 +224,24 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
 
       <QuickAddFab onPick={onQuickAdd} />
 
+      {photoSheet && (
+        <PhotoSourceSheet
+          dog={dog}
+          onClose={() => setPhotoSheet(false)}
+          onPicked={(src) => (onUpdateDog?.(saveDog({ ...dog, photo: src, coverPos: null })), setPhotoSheet(false), setAdjusting(true))}
+          onAdjust={dog.photo ? () => (setPhotoSheet(false), setAdjusting(true)) : undefined}
+          onRemove={dog.photo ? () => window.confirm("프로필 사진을 지울까요? 갤러리 사진은 그대로 남아요.") && (onUpdateDog?.(saveDog({ ...dog, photo: null })), setPhotoSheet(false)) : undefined}
+        />
+      )}
+      {adjusting && dog.photo && (
+        <CoverAdjust
+          src={dog.photo}
+          pos={dog.coverPos}
+          frame={dog.frame}
+          onClose={() => setAdjusting(false)}
+          onSave={(coverPos, frame) => (onUpdateDog?.(saveDog({ ...dog, coverPos, frame })), setAdjusting(false))}
+        />
+      )}
       {editing &&
         createPortal(
           <div className="settings-sheet" role="dialog" aria-label="프로필 편집" style={{ zIndex: 120 }}>
@@ -261,15 +253,13 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               </div>
             </div>
             <div className="card">
-            {dog.photo && (
-              <div className="field" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <img src={dog.photo} alt="" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover" }} />
-                <span style={{ flex: 1 }} className="faint">사진을 바꾸려면 프로필 화면의 사진을 눌러 주세요.</span>
-                <button type="button" className="btn-ghost small" style={{ color: "var(--danger)" }} onClick={() => window.confirm("프로필 사진을 지울까요?") && onUpdateDog?.(saveDog({ ...dog, photo: null }))}>
-                  사진 지우기
-                </button>
-              </div>
-            )}
+            <div className="field" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button type="button" className="pf-edit-photo" onClick={() => setPhotoSheet(true)} aria-label="프로필 사진 바꾸기">
+                <FramedPhoto src={dog.photo} pos={dog.coverPos} frame={dog.frame} size={72} />
+                <span className="pf-edit-badge"><Ico name="camera" size={13} /></span>
+              </button>
+              <span style={{ flex: 1 }} className="faint">사진을 누르면 바꾸거나 틀(하트·동그라미…)과 위치를 맞출 수 있어요.</span>
+            </div>
             <div className="field">
               <label>이름</label>
               <input value={editForm.name} maxLength={20} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
