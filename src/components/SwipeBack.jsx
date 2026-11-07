@@ -8,14 +8,14 @@ const ANIM_MS = 220;
 
 // 오른쪽으로 미는 손가락 따라가기(세로 스크롤·입력칸·가로 스크롤 영역은 건드리지 않음).
 // onMove(dx): 끄는 중, onEnd(back): 손을 뗌(back=뒤로 갈지)
-function useRightDrag({ onStart, onMove, onEnd }) {
+export function useRightDrag({ onStart, onMove, onEnd }) {
   const drag = useRef(null);
   return {
     onTouchStart(e) {
       const t = e.touches[0];
       // 입력칸 위에서 시작해도 밀 수 있게(등록 화면처럼 입력칸이 화면을 채운 곳) — 글자를 입력 중인 칸·슬라이더만 막는다
       const field = e.target.closest?.("input, textarea, select");
-      const blocked = e.touches.length > 1 || (field && (field === document.activeElement || field.type === "range")) || e.target.closest?.("[data-no-swipe]") || hasHorizontalScroll(e.target);
+      const blocked = e.touches.length > 1 || (field && (field === document.activeElement || field.type === "range")) || e.target.closest?.("[data-no-swipe]") || hasHorizontalScroll(e.target) || foreignSheet(e);
       drag.current = blocked ? null : { x: t.clientX, y: t.clientY, at: Date.now(), dx: 0, active: false };
     },
     onTouchMove(e) {
@@ -46,6 +46,23 @@ function useRightDrag({ onStart, onMove, onEnd }) {
       onEnd(d.dx > width * BACK_RATIO || speed > FLICK_SPEED, width);
     },
   };
+}
+
+// 화면 위에 뜬 창(portal)의 터치도 React에선 화면까지 올라온다 — 창 안에서 민 건 그 창만 닫게(11/7: 게시물 수정 중 밀면 우리 아이로 나가던 문제)
+function foreignSheet(e) {
+  const bd = e.target.closest?.(".es-backdrop");
+  return bd && !bd.contains(e.currentTarget);
+}
+
+// 창(시트)을 오른쪽으로 밀어 한 단계 뒤로: 창이 손가락을 따라가다 onBack
+export function useSheetSwipe(onBack) {
+  const ref = useRef(null);
+  const set = (dx, anim) => ref.current && Object.assign(ref.current.style, { transition: anim ? `transform ${ANIM_MS}ms ease-out` : "none", transform: dx ? `translateX(${dx}px)` : "" });
+  const handlers = useRightDrag({
+    onMove: (dx) => set(dx),
+    onEnd: (back) => (set(0, true), back && onBack()),
+  });
+  return { ref, ...handlers, onTouchCancel: handlers.onTouchEnd };
 }
 
 export default function SwipeBack({ renderUnderlay, onBack, children }) {

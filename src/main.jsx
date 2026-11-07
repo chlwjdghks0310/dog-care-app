@@ -13,6 +13,18 @@ const page = new URLSearchParams(location.search)
 // 이용 통계(첫 실행·오늘 사용) — 처리방침·약관·문의만 보러 온 경우는 세지 않는다. 앱이 기록을 쓰기 전에 불러야 첫 실행을 알아본다
 if (!['privacy', 'terms', 'support', 'stats'].some((k) => page.has(k))) trackAppStart()
 
+// 아이폰 키보드가 올라오면 보이는 높이만큼만 창을 그린다(11/7: 게시물 수정 중 위가 잘리던 문제)
+const vv = window.visualViewport
+if (vv) {
+  const fit = () => {
+    document.documentElement.style.setProperty('--vvh', `${vv.height}px`)
+    document.documentElement.style.setProperty('--vvt', `${vv.offsetTop}px`)
+  }
+  vv.addEventListener('resize', fit)
+  vv.addEventListener('scroll', fit)
+  fit()
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?terms(이용약관), ?support(문의) — 설치 안 한 사람도 브라우저로 본다. ?stats는 운영자 이용 통계(로그인 필요) */}

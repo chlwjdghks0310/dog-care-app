@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import Ico from "../components/Ico";
 import { getPhotos, addPhotos, setPhotoMemo, removePhoto, saveDecorated, decoOf } from "../services/gallery";
 import DecoEditor from "../components/DecoEditor";
+import { useSheetSwipe } from "../components/SwipeBack";
 import { FramedPhoto } from "../components/PhotoFrame";
 import { saveDog } from "../services/dogRepository";
 import { TYPES } from "../services/records";
@@ -66,7 +67,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           <input type="file" accept="image/*" multiple hidden onChange={add} />
         </label>
       </div>
-      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장 · 사진을 누르면 그날의 메모·추억을 적을 수 있어요. 넣은 사진은 기록 탭에도 '사진'으로 남아요.</p>
+      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장</p>
       {error && <p className="error-text">{error}</p>}
       {photos.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
@@ -105,6 +106,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           </div>
         </section>
       ))}
+      {photos.length > 0 && <p className="faint" style={{ fontSize: 12.5, margin: "16px 2px 0" }}>사진을 누르면 그날의 문구·추억을 적고 꾸밀 수 있어요. 넣은 사진은 기록 탭에도 '사진'으로 남아요.</p>}
       {open && (
         <PhotoSheet
           dog={dog}
@@ -113,7 +115,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           onClose={() => (setOpen(null), reload())}
           onCover={(src) => (onUpdateDog?.(saveDog({ ...dog, photo: src || open.src, coverPos: null })), setOpen(null), reload())}
           onDelete={() => {
-            if (!window.confirm("이 사진을 지울까요?")) return;
+            if (!window.confirm("이 사진을 지울까요?\n지우면 되돌릴 수 없어요. 문구·꾸미기도 함께 지워져요.")) return;
             removePhoto(dog.id, open.recId, open.idx);
             setOpen(null);
             reload();
@@ -132,9 +134,11 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
   const [deco, setDeco] = useState(null);
   const [error, setError] = useState("");
   const done = () => (setPhotoMemo(dog.id, photo.recId, memo), setEditing(false));
+  // 밀어서 뒤로: 수정 중이면 고친 게시물로, 보고 있으면 갤러리로(11/7)
+  const swipe = useSheetSwipe(() => (editing ? done() : onClose()));
   return createPortal(
     <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="es-sheet post-sheet" role="dialog" aria-label="사진 보기">
+      <div className={`es-sheet post-sheet${editing ? " editing" : ""}`} role="dialog" aria-label="사진 보기" {...swipe}>
         <div className="post-head">
           <FramedPhoto src={dog.photo} pos={dog.coverPos} frame={dog.frame} size={34} />
           <div style={{ flex: 1, minWidth: 0 }}>
