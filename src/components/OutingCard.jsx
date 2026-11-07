@@ -29,10 +29,11 @@ export default function OutingCard({ dog, onChecked }) {
   if (s.state === "away") {
     title = `${dog.name} 혼자 ${durationLabel(s.minutes)}째`;
     sub = s.estimated ? `평소 나가는 시각(${s.since}) 기준이에요` : `${s.since}에 나갔어요`;
-    action = { label: "왔어", run: () => (backNow(), refresh(), !getDay(dog.id, todayKey()) && setSheet("back-check")) }; // 오늘 체크 전이면 바로 체크
+    action = { label: "왔어", run: () => (backNow(), refresh(), setSheet("back-check")) }; // 들어오면 늘 오늘 하루 체크로(사용자 요청 11/7)
   } else if (s.state === "back") {
     title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
     sub = backTip(s.minutes);
+    action = { label: getDay(dog.id, todayKey()) ? "체크 보기" : "하루 체크", run: () => setSheet("back-check") };
   } else {
     title = "외출할 때 눌러 주세요";
     // 최근 7일(어제까지) 평균 혼자 있던 시간 — 쌓이면 보여 준다(방향 정리 결정 4: 평균 외출 시간 + 귀가 체크)

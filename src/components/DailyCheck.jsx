@@ -49,8 +49,9 @@ export default function DailyCheck({ dog, onChange, onSheetChange }) {
 export function BackCheckSheet({ dog, alone, onClose }) {
   const today = todayKey();
   const [diff, setDiff] = useState(false);
+  const day = getDay(dog.id, today); // 이미 체크했으면 결과를 보여 주고 고칠 수 있게(사용자 요청 11/7 — [왔어]는 늘 하루 체크로)
   const done = () => (markCheckedIn(dog.id), syncPushAlarms(), onClose());
-  if (diff) return <DiffSheet dog={dog} date={today} onClose={onClose} onSaved={() => (markCheckedIn(dog.id), syncPushAlarms())} />;
+  if (diff) return <DiffSheet dog={dog} date={today} initial={day?.picks} onClose={onClose} onSaved={() => (markCheckedIn(dog.id), syncPushAlarms())} />;
   return createPortal(
     <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="es-sheet" role="dialog" aria-label="다녀와서 체크">
@@ -61,8 +62,14 @@ export function BackCheckSheet({ dog, alone, onClose }) {
         </div>
         <div className="es-scroll" style={{ padding: "4px 16px 20px" }}>
           {alone && <p className="subtle" style={{ margin: "0 0 12px" }}>오늘 혼자 {alone} 있었어요. 밥·물·배변 자리를 한 번 봐 주세요.</p>}
+          {day && day.status !== "unknown" && (
+            <p className="dc-row" style={{ margin: "0 0 12px" }}>
+              <Ico name="check" size={18} className="cat-ico tone-teal" />
+              <span><b>오늘 하루 체크</b> · {day.status === "usual" ? "평소와 같았어요" : Object.entries(day.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}. 달라진 게 있으면 다시 골라요.</span>
+            </p>
+          )}
           <div className="dc-btns">
-            <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, today), done())}><Ico name="check" size={18} /> 평소와 같아요</button>
+            <button type="button" className="dc-usual" onClick={() => (day?.status === "diff" ? onClose() : (saveUsual(dog.id, today), done()))}><Ico name="check" size={18} /> {day?.status === "diff" ? "그대로 둘게요" : "평소와 같아요"}</button>
             <button type="button" className="dc-diff" onClick={() => setDiff(true)}>다른 게 있었어요</button>
           </div>
         </div>
