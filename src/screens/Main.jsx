@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { recordFromText } from "../services/aiClient";
 import DailyCheck, { dailyPending, dailySummaryLines } from "../components/DailyCheck";
+import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import OutingCard from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
@@ -232,7 +233,16 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
     >
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
-          {getFirstSteps(dog.id).show ? (
+          {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
+          {dailyPending(dog.id) ? (
+            <SpeechBubble>
+              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} />
+            </SpeechBubble>
+          ) : notifyAskPending(dog.id) ? (
+            <SpeechBubble>
+              <NotifyAsk dog={dog} onDone={() => refresh((n) => n + 1)} />
+            </SpeechBubble>
+          ) : getFirstSteps(dog.id).show ? (
             <SpeechBubble>
               <FirstSteps
                 dog={dog}
@@ -241,10 +251,6 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
                 onChat={() => (setInput(RECORD_EXAMPLES[0]), inputElRef.current?.focus())}
                 onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
               />
-            </SpeechBubble>
-          ) : dailyPending(dog.id) ? (
-            <SpeechBubble>
-              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} />
             </SpeechBubble>
           ) : (
             <button type="button" className="summary-bubble" onClick={onOpenToday} aria-label="오늘 요약 — 눌러서 오늘 할 일 보기">
@@ -368,7 +374,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
       {/* 말풍선이 첫 걸음·하루 체크를 묻는 동안엔 오늘 할 일로 가는 줄을 따로 */}
-      {!isChat && (getFirstSteps(dog.id).show || dailyPending(dog.id)) && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
+      {!isChat && (getFirstSteps(dog.id).show || dailyPending(dog.id) || notifyAskPending(dog.id)) && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
 
       {/* 처음 쓰는 사람(첫 걸음 말풍선)에겐 외출 카드는 첫 걸음을 마친 뒤에 — 첫 화면 칸 줄이기 */}
       {!isChat && !getFirstSteps(dog.id).show && (

@@ -3,7 +3,6 @@ import { createDog } from "../models/dog";
 import { getDogs, saveDog, setActiveDogId } from "../services/dogRepository";
 import { addWeightRecord } from "../services/weightLog";
 import { BREEDS } from "../data/breeds";
-import { isPushSupported, subscribeToPush } from "../services/notifications";
 import { josa, nameCall } from "../utils/text";
 import { todayKey } from "../utils/date";
 import { localNow } from "../services/records";
@@ -15,7 +14,7 @@ import { readJSON, writeJSON } from "../services/storage";
 import { acceptInvite } from "../services/sync/family";
 
 import Ico from "../components/Ico";
-// 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 2장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 알림 켜기 → ⑤ 인사.
+// 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 2장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 인사. 알림 허락은 첫 하루 체크 뒤(NotifyAsk).
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
@@ -28,8 +27,6 @@ const SLIDES = [
 ];
 const SLIDE_VISUALS = [VetMock, DailyMock];
 
-const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
-const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
 
 const PROGRESS_KEY = "dogcare-onboarding-v1";
 const loadProgress = () => readJSON(PROGRESS_KEY, null) || {};
@@ -168,7 +165,8 @@ function DailyMock() {
 }
 
 // ── 강아지 정보: 한 화면에 질문 하나 ──
-const STEPS = ["name", "breed", "birthDate", "gender", "weight", "notify", "done"];
+// 알림 허락은 첫 하루 체크 뒤 오늘 탭 말풍선에서 묻는다(NotifyAsk)
+const STEPS = ["name", "breed", "birthDate", "gender", "weight", "done"];
 const QUESTION_STEPS = 5; // 진행 막대에 보이는 질문 수(name~weight)
 
 function Setup({ onRegistered, restore }) {
@@ -179,7 +177,6 @@ function Setup({ onRegistered, restore }) {
   const [invite, setInvite] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [dog, setDog] = useState(null);
-  const [notifyStatus, setNotifyStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const { user } = useSyncStatus();
@@ -226,7 +223,7 @@ function Setup({ onRegistered, restore }) {
 
   function next() {
     if (key === "weight") {
-      // 필수 정보가 다 모였으니 여기서 저장 — 알림 켜기가 이 강아지의 알람까지 서버에 등록하도록
+      // 필수 정보가 다 모였으니 여기서 저장
       const created = createDog(form);
       saveDog(created);
       if (created.weight) addWeightRecord(created.id, { weightKg: created.weight, measuredAt: `${localNow()}:00`, note: "처음 등록" });
@@ -236,19 +233,7 @@ function Setup({ onRegistered, restore }) {
     setStep((s) => s + 1);
   }
 
-  async function enablePush() {
-    setBusy(true);
-    setNotifyStatus("");
-    try {
-      await subscribeToPush();
-      setNotifyStatus("ok");
-      setTimeout(() => setStep((s) => s + 1), 700);
-    } catch (err) {
-      setNotifyStatus(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+
 
   const QUESTIONS = {
     name: "안녕! 내 이름은 뭐야?",
@@ -256,7 +241,6 @@ function Setup({ onRegistered, restore }) {
     birthDate: `${name} 생일은 언제야?`,
     gender: `${josa(name, "은", "는")} 남자야, 여자야?`,
     weight: `지금 ${name} 몸무게는 얼마야?`,
-    notify: "밥·산책 시간을 알림으로 알려 줄까?",
     done: `안녕! 나 ${nameCall(name)}.\n앞으로 잘 부탁해!`,
   };
 
@@ -271,7 +255,7 @@ function Setup({ onRegistered, restore }) {
   return (
     <div className="onb">
       <div className="onb-top">
-        {step > 0 && key !== "done" && key !== "notify" ? (
+        {step > 0 && key !== "done" ? (
           <button type="button" className="onb-skip" onClick={back}>
             ← 이전
           </button>
@@ -383,16 +367,11 @@ function Setup({ onRegistered, restore }) {
             </>
           )}
 
-          {key === "notify" && <NotifyStep busy={busy} status={notifyStatus} onEnable={enablePush} />}
         </div>
       </div>
 
       <div className="onb-bottom">
-        {key === "notify" ? (
-          <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={() => setStep((s) => s + 1)}>
-            나중에 할게요
-          </button>
-        ) : key === "done" ? (
+        {key === "done" ? (
           <button type="button" className="btn-primary" onClick={() => onRegistered(dog)}>
             {josa(name, "이랑", "랑")} 시작하기
           </button>
@@ -419,25 +398,3 @@ function Setup({ onRegistered, restore }) {
   );
 }
 
-// 아이폰은 홈 화면에 추가한 앱에서만 푸시가 와서, 사파리로 열었으면 설치 방법부터 안내한다.
-function NotifyStep({ busy, status, onEnable }) {
-  if (isIOS() && !isStandalone()) {
-    return (
-      <div className="onb-mock" style={{ textAlign: "left", lineHeight: 1.7 }}>
-        <strong>아이폰은 홈 화면에 추가해야 알림이 와요</strong>
-        <div>1. 사파리 아래쪽 공유 버튼 <b>⬆︎</b> 누르기</div>
-        <div>2. <b>홈 화면에 추가</b> 누르기</div>
-        <div>3. 홈 화면의 멍케어로 열고 알림 켜기</div>
-      </div>
-    );
-  }
-  if (!isPushSupported()) return <p className="faint">이 브라우저는 알림을 지원하지 않아요. 나중에 다른 브라우저에서 켤 수 있어요.</p>;
-  return (
-    <>
-      <button type="button" className="btn-primary" onClick={onEnable} disabled={busy || status === "ok"}>
-        {status === "ok" ? "알림이 켜졌어요 ✓" : busy ? "켜는 중…" : <><Ico name="bell" size={18} /> 알림 켜기</>}
-      </button>
-      {status && status !== "ok" && <p className="error-text" style={{ marginTop: 8 }}>{status}</p>}
-    </>
-  );
-}
