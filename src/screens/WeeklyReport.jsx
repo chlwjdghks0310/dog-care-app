@@ -20,7 +20,7 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
   ];
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 프로필로</button>
+      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 우리 아이로</button>
       <div className="h1">{josa(dog.name, "이의", "의")} 이번 주</div>
       <p className="subtle" style={{ marginBottom: 14 }}>
         {md(r.from)} ~ {md(r.to)} · 기록 {r.records}개를 모았어요

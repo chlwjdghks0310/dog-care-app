@@ -178,7 +178,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 프로필로
+        ← 우리 아이로
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>

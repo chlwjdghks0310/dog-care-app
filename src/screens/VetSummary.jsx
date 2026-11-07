@@ -68,7 +68,7 @@ export default function VetSummary({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 프로필로
+        ← 병원으로
       </button>
       <div className="h1">병원용 기록</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

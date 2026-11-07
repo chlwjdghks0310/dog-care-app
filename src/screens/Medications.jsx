@@ -92,7 +92,7 @@ export default function Medications({ dog, focusDose, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 프로필로
+        ← 우리 아이로
       </button>
       <div className="h1">약 관리</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

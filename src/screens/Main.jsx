@@ -28,7 +28,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile, onOpenFeeding, onOpenWeight, checkinSignal, onCheckinHandled }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight, checkinSignal, onCheckinHandled }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -242,7 +242,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
               />
             </SpeechBubble>
           ) : (
-            <button type="button" className="summary-bubble" onClick={onOpenProfile} aria-label="오늘 요약 — 눌러서 프로필 보기">
+            <button type="button" className="summary-bubble" onClick={onOpenToday} aria-label="오늘 요약 — 눌러서 오늘 할 일 보기">
               <SpeechBubble>
                 <TodaySummary dog={dog} />
               </SpeechBubble>
@@ -362,7 +362,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenProfile,
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      {!isChat && (
+      {!isChat && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
+
+      {/* 처음 쓰는 사람(첫 걸음 말풍선)에겐 외출 카드는 첫 걸음을 마친 뒤에 — 첫 화면 칸 줄이기 */}
+      {!isChat && (checkinSignal || !getFirstSteps(dog.id).show) && (
         <div style={{ marginTop: 10 }}>
           <OutingCard dog={dog} openCheckin={checkinSignal} onCheckinClose={onCheckinHandled} onAsk={(t) => (setInput(t), inputElRef.current?.focus())} />
         </div>
@@ -481,6 +484,21 @@ function GuideLink({ chapter, inline }) {
 }
 
 // 첫 화면 말풍선: 우리 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
+// 오늘 할 일(옛 체크리스트 탭)로 가는 한 줄 — 처음 쓰는 사람(첫 걸음 말풍선)도 늘 보이게
+function TodayTasksRow({ dog, onOpen }) {
+  const t = getTodaySummary(dog);
+  const left = t.tasksLeft.length;
+  return (
+    <button type="button" className="card today-row" onClick={onOpen}>
+      <Ico name="checklist" size={20} className="cat-ico tone-blue" />
+      <span style={{ flex: 1, textAlign: "left", fontWeight: 600 }}>
+        {left ? `오늘 할 일 ${left}개 남았어요` : t.tasksTotal ? "오늘 할 일을 다 했어요" : "오늘 할 일 보기"}
+      </span>
+      <span className="faint" aria-hidden="true">›</span>
+    </button>
+  );
+}
+
 function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
   const lines = [];
@@ -507,7 +525,7 @@ function TodaySummary({ dog }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
-      <span className="summary-more">눌러서 프로필 보기 ›</span>
+      <span className="summary-more">눌러서 오늘 할 일 보기 ›</span>
     </span>
   );
 }

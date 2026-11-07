@@ -80,7 +80,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
 
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 프로필로</button>
+      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 우리 아이로</button>
       <div className="vd-head">
         <span className={`vd-icon tone-${def.tone}`} aria-hidden="true"><Ico name={def.ico} size={26} /></span>
         <div>

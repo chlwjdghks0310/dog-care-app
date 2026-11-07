@@ -26,7 +26,7 @@ const SLIDES = [
   { title: "변·컨디션도 쉽게 기록", text: "보고 고르기만 하면 기록이 쌓여요.\n원할 때만 AI가 사진·영상을 참고로 봐 줘요." },
   { title: "기록과 할 일을 한눈에", text: "건강 수치는 프로필에, 일정·가계부도 한곳에\n밥·약·일정 시간엔 알림이 와요." },
   { title: "믿을 수 있는 정보로", text: "수의학 기관·대학의 공개 자료를 바탕으로 하고\n참고 수치에는 출처를 밝혀요." },
-  { title: "손끝으로 빠르게", text: "아래 프로필 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
+  { title: "손끝으로 빠르게", text: "아래 우리 아이 탭을 두 번 톡 하면 다음 강아지로,\n꾹 누르면 강아지 목록이 열려요." },
 ];
 const SLIDE_VISUALS = [ChatMock, PhotoMock, CareMock, TrustMock, GestureMock];
 
@@ -245,8 +245,8 @@ function GestureMock() {
   return (
     <div className="onb-mock" style={{ textAlign: "left" }}>
       {[
-        ["tap", "프로필 탭 두 번 톡", "다음 강아지로 바꾸기"],
-        ["hand", "프로필 탭 꾹 누르기", "강아지 목록 열기"],
+        ["tap", "우리 아이 탭 두 번 톡", "다음 강아지로 바꾸기"],
+        ["hand", "우리 아이 탭 꾹 누르기", "강아지 목록 열기"],
         ["arrowDown", "화면 맨 위에서 아래로 당기기", "새로고침 · 가족 기록 받기"],
         ["arrowRight", "왼쪽에서 오른쪽으로 밀기", "이전 화면으로"],
       ].map(([icon, how, what]) => (

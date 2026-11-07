@@ -12,7 +12,7 @@ import { getFoodStock, stockLabel } from "../services/foodStock";
 import OutingCard from "../components/OutingCard";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenMain }) {
+export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -63,7 +63,8 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
 
   return (
     <div className="screen">
-      <div className="h1" style={{ marginBottom: 10 }}>체크리스트</div>
+      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 오늘로</button>
+      <div className="h1" style={{ marginBottom: 10 }}>오늘 할 일</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
         <button className="quick-tile tone-blue filled" onClick={onOpenHealth}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} /></span>
@@ -186,9 +187,6 @@ export default function Home({ dog, onOpenWeek, onOpenHealth, onOpenFeeding, onO
         <Ico name="book" size={18} /> 월령별 케어 정보 더 보기
       </button>
 
-      <button type="button" className="link-btn" style={{ display: "block", margin: "14px auto 0" }} onClick={onOpenMain}>
-        홈 화면에서 말로 기록하기 ›
-      </button>
     </div>
   );
 }

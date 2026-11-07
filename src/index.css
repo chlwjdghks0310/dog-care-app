@@ -1189,3 +1189,6 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ck-seg { min-height: 44px; padding: 8px 2px; font-size: 13.5px; }
 .ck-seg.on.lv1 { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
 .ck-seg.on.lv2 { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+/* 오늘 탭: 오늘 할 일로 가는 한 줄 */
+.today-row { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 12px 14px; border: none; color: inherit; font: inherit; cursor: pointer; }

@@ -38,24 +38,26 @@ import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow } from "./services/sync";
 
 const PARENT_TAB = {
-  week: "home",
-  feeding: "home",
-  alarms: "home",
-  info: "home",
-  health: "home",
-  "health-stool": "home",
-  "health-behavior": "home",
+  home: "main", // 오늘 할 일(옛 체크리스트 탭)은 오늘 탭 안으로
+  week: "main",
+  feeding: "main",
+  alarms: "main",
+  info: "main",
+  health: "main",
+  "health-stool": "main",
+  "health-behavior": "main",
+  "records-new": "records",
+  vet: "hospital",
+  budget: "hospital",
   "add-dog": "profile",
   weight: "profile",
   meds: "profile",
-  vet: "profile",
   report: "profile",
-  records: "profile",
   vital: "profile",
-  "records-new": "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
-const BACK_OF = { ...PARENT_TAB, "health-stool": "health", "health-behavior": "health" };
+const MAIN_SUB = ["week", "feeding", "alarms", "info", "health"];
+const BACK_OF = { ...PARENT_TAB, ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
@@ -82,6 +84,7 @@ export default function App() {
     if (key === "main" && tab === "main") {
       setMainResetSignal((s) => s + 1);
     }
+    if (key === "records") setRecordsOpts({}); // 기록 탭을 직접 누르면 고른 종류 없이 전체 기록
     if ((PARENT_TAB[tab] || tab) === key) alignPager(); // 이미 그 탭이면 화면 위치만 다시 맞춘다(하단 탭과 화면이 어긋났을 때 눌러서 바로잡기)
     setTab(key);
   }
@@ -356,15 +359,15 @@ export default function App() {
     home: () => (
       <Home
         dog={dog}
+        onBack={() => setTab("main")}
         onOpenWeek={() => setTab("week")}
         onOpenHealth={() => setTab("health")}
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
-        onOpenMain={() => handleTabChange("main")}
       />
     ),
-    week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => handleTabChange("main")} />,
+    week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => setTab("main")} />,
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,
@@ -387,10 +390,10 @@ export default function App() {
         onOpenReport={() => setTab("report")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
         onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
-        onNewRecord={(type) => (setRecordsOpts({ type }), setTab("records-new"))}
+        onNewRecord={(type) => (setRecordsOpts({ type, back: "profile" }), setTab("records-new"))}
         onOpenWeight={() => setTab("weight")}
         onOpenMeds={() => setTab("meds")}
-        onOpenCalendar={() => setTab("calendar")}
+        onOpenCalendar={() => setTab("hospital")}
         onUpdateDog={setActiveDog}
         onDeleteCurrent={handleDeleteCurrentDog}
         onDeleteAll={handleDeleteAllDogs}
@@ -402,9 +405,16 @@ export default function App() {
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => setTab("vet")} />,
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onBack={() => setTab("profile")} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back ? "← 일정표로" : undefined} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("profile"))} onOpenMeds={() => setTab("meds")} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
+  };
+  const recordScreens = {
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => setTab("meds")} />,
+  };
+  const hospitalScreens = {
+    hospital: () => <Calendar dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} />,
+    vet: () => <VetSummary dog={dog} onBack={() => setTab("hospital")} />,
+    budget: () => <Budget dog={dog} onBack={() => setTab("hospital")} />,
   };
   // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
   function renderStack(screens, root) {
@@ -418,15 +428,20 @@ export default function App() {
   const inSubScreen = Boolean(PARENT_TAB[tab]);
   const pages = {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
+    // 오늘 탭: 비서는 세부 화면(오늘 할 일 등)을 여는 동안에도 숨겨 둔 채 살려 둔다(3D·말로 기록 내용 유지)
     main: (
-      <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-        <Main dog={dog} resetSignal={mainResetSignal} checkinSignal={checkinSignal} onCheckinHandled={() => setCheckinSignal(0)} onReadingChange={setChatReading} onOpenProfile={() => handleTabChange("profile")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
-      </Suspense>
+      <>
+        <div style={{ display: pageKey === "main" && tab !== "main" ? "none" : "contents" }}>
+          <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
+            <Main dog={dog} resetSignal={mainResetSignal} checkinSignal={checkinSignal} onCheckinHandled={() => setCheckinSignal(0)} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
+          </Suspense>
+        </div>
+        {homeScreens[tab] && <Fragment key={`${dog.id}-${pageVersion}`}>{tab === "home" ? <SwipeBack key="home" onBack={() => setTab("main")} renderUnderlay={() => null}>{homeScreens.home()}</SwipeBack> : renderStack(homeScreens, "home")}</Fragment>}
+      </>
     ),
     // 강아지를 바꾸면(dog.id) 화면을 새로 그려 앞 강아지의 상태(숨긴 할 일·수치 칸 등)가 남지 않게
-    home: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(homeScreens, "home")}</Fragment>,
-    calendar: <Calendar key={`${dog.id}-${pageVersion}`} dog={dog} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "calendar" }), setTab("records-new"))} />,
-    budget: <Budget key={`${dog.id}-${pageVersion}`} dog={dog} />,
+    records: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(recordScreens, "records")}</Fragment>,
+    hospital: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(hospitalScreens, "hospital")}</Fragment>,
     profile: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(profileScreens, "profile")}</Fragment>,
   };
 

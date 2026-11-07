@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 // 움직이는 아이콘(animateicons.in, MIT · Lucide 모양 기반 — 저작권 표시는 public/licenses.txt)
-import { CalendarDaysIcon, DogIcon, ListChecksIcon, PawPrintIcon, WalletIcon } from "@animateicons/react/lucide";
+import { DogIcon, NotebookPenIcon, PawPrintIcon, StethoscopeIcon } from "@animateicons/react/lucide";
 
 export const TABS = [
-  { key: "main", label: "홈", Icon: DogIcon },
-  { key: "home", label: "체크리스트", Icon: ListChecksIcon },
-  { key: "profile", label: "프로필", Icon: PawPrintIcon },
-  { key: "calendar", label: "일정표", Icon: CalendarDaysIcon },
-  { key: "budget", label: "가계부", Icon: WalletIcon },
+  // 방향 A(병원 수첩, 2026-11-07): 오늘 · 기록 · 병원 · 우리 아이
+  { key: "main", label: "오늘", Icon: DogIcon },
+  { key: "records", label: "기록", Icon: NotebookPenIcon },
+  { key: "hospital", label: "병원", Icon: StethoscopeIcon },
+  { key: "profile", label: "우리 아이", Icon: PawPrintIcon },
 ];
 
 const LONG_PRESS_MS = 500;

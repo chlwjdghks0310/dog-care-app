@@ -9,13 +9,14 @@ import { HOLIDAYS } from "../data/holidays";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 
+const MEDICAL = ["vet", "vaccine", "med"];
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
 const dDay = (today, date) => {
   const n = Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
   return n === 0 ? "오늘" : n === 1 ? "내일" : `D-${n}`;
 };
 
-export default function Calendar({ dog, onRecordVisit }) {
+export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
@@ -46,7 +47,7 @@ export default function Calendar({ dog, onRecordVisit }) {
   const upcoming = useMemo(() => {
     const seen = new Set();
     return getOccurrences(dog.id, today, toDateKey(addDays(new Date(), 90)))
-      .filter((o) => o.isStart && !seen.has(o.event.id) && seen.add(o.event.id))
+      .filter((o) => o.isStart && MEDICAL.includes(o.event.kind) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
       .slice(0, 3);
   }, [dog.id, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -66,9 +67,48 @@ export default function Calendar({ dog, onRecordVisit }) {
   return (
     <div className="screen">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div className="h1" style={{ margin: 0 }}>일정표</div>
+        <div className="h1" style={{ margin: 0 }}>병원</div>
         <button type="button" className="btn-primary small" onClick={() => setSheet({ start: selectedDateKey < today ? today : selectedDateKey })}>＋ 일정</button>
       </div>
+      <div className="quick-actions" style={{ marginBottom: 14 }}>
+        <button className="quick-tile tone-blue filled" onClick={onOpenVet}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="note" size={24} /></span>
+          <span className="quick-tile-label">병원용 기록</span>
+        </button>
+        <button className="quick-tile tone-teal filled" onClick={onOpenBudget}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="wallet" size={24} /></span>
+          <span className="quick-tile-label">가계부</span>
+        </button>
+      </div>
+
+      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 병원 일정</div>
+      {upcoming.length === 0 ? (
+        <div className="card subtle" style={{ marginBottom: 14 }}>
+          앞으로 90일 안에 병원·접종·약 일정이 없어요. [＋ 일정]으로 넣어 두면 미리 알려 드려요.
+        </div>
+      ) : (
+        <div className="up-list">
+          {upcoming.map((o) => {
+            const k = kindOf(o.event);
+            const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
+            return (
+              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card tinted" style={{ "--ev": colorOf(o.event) }} onClick={() => setSheet({ start: o.start, event: o.event, date: o.date })}>
+                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
+                <span className="up-body">
+                  <span className="up-title">{o.event.title}</span>
+                  <span className="up-when">
+                    {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
+                    {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
+                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
+                  </span>
+                </span>
+                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
 
       <div className="card" style={{ marginBottom: 14 }}>
         <MonthGrid
@@ -145,34 +185,6 @@ export default function Calendar({ dog, onRecordVisit }) {
           ＋ 이 날 일정 추가
         </button>
       </div>
-
-      <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 일정</div>
-      {upcoming.length === 0 ? (
-        <div className="card subtle" style={{ marginBottom: 14 }}>
-          앞으로 90일 안에 일정이 없어요. 병원·미용·접종처럼 챙길 날을 넣어 두면 미리 알려 드려요.
-        </div>
-      ) : (
-        <div className="up-list">
-          {upcoming.map((o) => {
-            const k = kindOf(o.event);
-            const nights = o.event.endDate ? Math.round((new Date(`${o.event.endDate}T00:00:00`) - new Date(`${o.date}T00:00:00`)) / 86400000) : 0;
-            return (
-              <button key={`${o.event.id}-${o.date}`} type="button" className="up-card tinted" style={{ "--ev": colorOf(o.event) }} onClick={() => setSheet({ start: o.start, event: o.event, date: o.date })}>
-                <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
-                <span className="up-body">
-                  <span className="up-title">{o.event.title}</span>
-                  <span className="up-when">
-                    {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
-                    {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
-                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
-                  </span>
-                </span>
-                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
 
 
       {sheet && (

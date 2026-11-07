@@ -37,7 +37,7 @@ const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 // 달력 칸에 들어갈 짧은 금액: 12,000 → 1.2만
 const shortWon = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1).replace(/\.0$/, "")}억` : n >= 10000 ? `${Math.round(n / 1000) / 10}만`.replace(/\.0만$/, "만") : n.toLocaleString("ko-KR"));
 
-export default function Budget({ dog }) {
+export default function Budget({ dog, onBack }) {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey());
   // 매달 나가는 돈(직접 등록)은 날이 되면 저절로 기록 — 가계부를 열 때 먼저 채운다
@@ -174,6 +174,7 @@ export default function Budget({ dog }) {
 
   return (
     <div className="screen">
+      {onBack && <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 병원으로</button>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div className="h1" style={{ margin: 0 }}>가계부</div>
         <button type="button" className="btn-primary small" onClick={() => openAdd()}>＋ 지출</button>
