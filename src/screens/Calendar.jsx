@@ -18,7 +18,7 @@ const dDay = (today, date) => {
   return n === 0 ? "오늘" : n === 1 ? "내일" : `D-${n}`;
 };
 
-export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, vetDocSignal, onVetDocHandled }) {
+export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, onOpenHealth, vetDocSignal, onVetDocHandled }) {
   const today = todayKey();
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
@@ -80,6 +80,10 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         <button className="quick-tile tone-rose filled" onClick={() => setDocOpen(true)}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="camera" size={24} /></span>
           <span className="quick-tile-label">진료 정리</span>
+        </button>
+        <button className="quick-tile tone-violet filled" onClick={onOpenHealth}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} /></span>
+          <span className="quick-tile-label">건강 체크</span>
         </button>
         <button className="quick-tile tone-blue filled" onClick={onOpenVet}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="note" size={24} /></span>

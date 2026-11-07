@@ -24,7 +24,7 @@ const FIELD_LABEL = {
 const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "활동량"], ["sleep", "수면"]];
 
 // 전체 기록(타임라인) + 변화 보기. startNew면 열자마자 새 기록 추가.
-export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital }) {
+export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding }) {
   const [view, setView] = useState("list");
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
   const [items, setItems] = useState(() => getTimeline(dog.id));
@@ -77,9 +77,9 @@ export default function Records({ dog, startNew, startType, prefill, initialType
       </div>}
 
       {form ? (
-        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
+        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} onOpenFeeding={onOpenFeeding} />
       ) : (
-        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (setNotice(""), setReaction(null), setForm({ initial: null }))}>
+        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (onNew ? onNew() : (setNotice(""), setReaction(null), setForm({ initial: null })))}>
           ＋ 새 기록
         </button>
       )}
@@ -144,7 +144,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
       )}
 
       {!form && view === "cal" && <RecordCalendar dog={dog} items={items} onChanged={reload} />}
-      {!form && view === "trend" && <Trends dog={dog} items={items} onAdd={() => setForm({ initial: null })} />}
+      {!form && view === "trend" && <Trends dog={dog} items={items} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
     </div>
   );
 }

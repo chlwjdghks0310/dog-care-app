@@ -33,7 +33,7 @@ const DEFAULT_TIMES = [["08:00"], ["08:00", "20:00"], ["08:00", "14:00", "20:00"
 
 const daysLabel = (days) => (days?.length ? days.map((d) => DAY_NAMES[d]).join("·") : "매일");
 
-export default function Medications({ dog, focusDose, onBack }) {
+export default function Medications({ dog, focusDose, onBack, backLabel = "← 우리 아이로" }) {
   const [date, setDate] = useState(() => focusDose?.split("|")[1] || todayKey()); // 알림을 눌러 들어오면 그 날짜로
   const [, setVersion] = useState(0); // 기록이 바뀌면 다시 그려 새로 읽는다
   const [editing, setEditing] = useState(null); // null | "new" | med
@@ -92,7 +92,7 @@ export default function Medications({ dog, focusDose, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 우리 아이로
+        {backLabel}
       </button>
       <div className="h1">약 관리</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

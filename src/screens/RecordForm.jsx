@@ -19,10 +19,10 @@ const MAX_PHOTOS = 4;
 
 // 새 기록 추가: 종류를 고르면 그 종류에 필요한 칸만 보여 준다. initial이 있으면 그 기록 고치기.
 // prefill: 새 기록에 미리 채울 { at?, data? } (예: 지난 병원 일정에서 "진료 내용 기록하기")
-export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds }) {
+export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds, onOpenFeeding }) {
   const [type, setType] = useState(initial?.type || startType || null);
   if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : setType(t))} onCancel={onCancel} />;
-  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : () => setType(null)} />;
+  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
 }
 
 function TypePicker({ onPick, onCancel }) {
@@ -68,7 +68,7 @@ function Field({ label, children }) {
   );
 }
 
-function Form({ dog, type, initial, prefill, onSaved, onBack }) {
+function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
   const [id] = useState(() => initial?.id || newRecordId()); // 같은 id로 저장해 두 번 눌러도 기록은 하나
   const [at, setAt] = useState(initial?.at || prefill?.at || localNow());
   const [data, setData] = useState(() => ({ ...defaults(type, dog), ...prefill?.data, ...initial?.data }));
@@ -175,6 +175,11 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
           <Field label="물 마시는 양"><Pick options={LEVELS} value={data.water} onChange={set("water")} /></Field>
           <Field label="사료">{input("food", { placeholder: "예: 로얄캐닌 미니" })}</Field>
           <Field label="급여량">{input("amount", { placeholder: "예: 40g, 반 컵" })}</Field>
+          {onOpenFeeding && (
+            <button type="button" className="link-btn" style={{ margin: "-4px 0 12px" }} onClick={onOpenFeeding}>
+              <Ico name="bowl" size={15} /> 하루에 얼마나 줘야 할지 사료 계산기로 보기 ›
+            </button>
+          )}
           <Field label="간식">{input("treats", { placeholder: "예: 닭가슴살 육포 2개" })}</Field>
         </>
       )}

@@ -44,10 +44,12 @@ const PARENT_TAB = {
   feeding: "main",
   alarms: "main",
   info: "main",
-  health: "main",
-  "health-stool": "main",
-  "health-behavior": "main",
+  health: "hospital", // 건강 체크(변·컨디션)는 병원 탭에서(사용자 요청 11/7)
+  "health-stool": "hospital",
+  "health-behavior": "hospital",
   "records-new": "records",
+  "records-meds": "records",
+  "records-feeding": "records", // 식사 기록 → 사료 계산기(사용자 제안 11/7) // 새 기록 → 복약도 기록 탭 안에서(사용자 요청 11/7 — 다른 종류처럼 뒤로 가면 종류 고르기로)
   vet: "hospital",
   budget: "hospital",
   "add-dog": "profile",
@@ -57,8 +59,8 @@ const PARENT_TAB = {
   vital: "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
-const MAIN_SUB = ["week", "feeding", "alarms", "info", "health"];
-const BACK_OF = { ...PARENT_TAB, ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
+const MAIN_SUB = ["week", "feeding", "alarms", "info"];
+const BACK_OF = { ...PARENT_TAB, "records-meds": "records-new", "records-feeding": "records-new", ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
@@ -371,7 +373,6 @@ export default function App() {
         dog={dog}
         onBack={() => setTab("main")}
         onOpenWeek={() => setTab("week")}
-        onOpenHealth={() => setTab("health")}
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
@@ -381,16 +382,6 @@ export default function App() {
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,
-    health: () => (
-      <HealthHub
-        dog={dog}
-        onBack={() => setTab("home")}
-        onOpenStool={() => setTab("health-stool")}
-        onOpenBehavior={() => setTab("health-behavior")}
-      />
-    ),
-    "health-stool": () => <HealthCheck dog={dog} onBack={() => setTab("health")} />,
-    "health-behavior": () => <BehaviorCheck dog={dog} onBack={() => setTab("health")} />,
   };
   const profileScreens = {
     profile: () => (
@@ -418,19 +409,31 @@ export default function App() {
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
   };
   const recordScreens = {
-    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => setTab("meds")} />,
+    records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => setTab("meds")} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={() => (setRecordsOpts({}), setTab("records-new"))} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={() => (recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"))} onOpenMeds={() => setTab("records-meds")} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} />,
+    "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
+    "records-meds": () => <Medications dog={dog} backLabel="← 종류 고르기로" onBack={() => setTab("records-new")} />,
   };
   const hospitalScreens = {
-    hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} />,
+    hospital: () => <Calendar dog={dog} vetDocSignal={vetDocSignal} onVetDocHandled={() => setVetDocSignal(0)} onRecordVisit={(prefill) => (setRecordsOpts({ type: "vet", prefill, back: "hospital" }), setTab("records-new"))} onOpenVet={() => setTab("vet")} onOpenBudget={() => setTab("budget")} onOpenHealth={() => setTab("health")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("hospital")} />,
+    health: () => (
+      <HealthHub
+        dog={dog}
+        onBack={() => setTab("hospital")}
+        onOpenStool={() => setTab("health-stool")}
+        onOpenBehavior={() => setTab("health-behavior")}
+      />
+    ),
+    "health-stool": () => <HealthCheck dog={dog} onBack={() => setTab("health")} />,
+    "health-behavior": () => <BehaviorCheck dog={dog} onBack={() => setTab("health")} />,
     budget: () => <Budget dog={dog} onBack={() => setTab("hospital")} />,
   };
   // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
   function renderStack(screens, root) {
     if (!screens[tab] || tab === root) return screens[root]();
     return (
-      <SwipeBack key={tab} onBack={() => setTab(BACK_OF[tab])} renderUnderlay={screens[BACK_OF[tab]]}>
+      <SwipeBack key={tab} onBack={() => (tab === "records-new" && recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
         {screens[tab]()}
       </SwipeBack>
     );

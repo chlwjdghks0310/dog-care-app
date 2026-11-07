@@ -18,6 +18,7 @@ import { getFoodStock } from "./foodStock";
 import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
 import { getOccurrences } from "./calendarEvents";
 import { isVisitEvent } from "./vetVisits";
+import { getSignals } from "./signals";
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -197,6 +198,8 @@ export function buildPushAlarms() {
       // 하루만 울리는 알람은 그날만(onlyDate) — 지난 날짜 알람은 보내지 않는다
       if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ cat: "custom", time: alarm.time, ...customAlarmMessage(dog, alarm), onlyDate: alarm.date });
     }
+    // 이상 신호: 하루 1번 저녁 7시에 모아서. 잠금화면엔 증상을 쓰지 않는다(자세한 건 앱 안에서)
+    if (getSignals(dog).some((x) => x.level === "vet")) alarms.push({ cat: "signal", time: "19:00", onlyDate: todayKey(), title: `🐾 ${dog.name} 기록에서 확인할 게 있어요`, body: "눌러서 오늘 요약을 확인해 보세요.", url: "/?checkin=1" });
     // 병원 가기 전날 저녁 8시: "보여 줄 기록 한 장" / 다녀온 뒤(예약 2시간 뒤, 시각 없으면 오후 3시): "영수증 사진 한 장이면 정리"
     // 잠금화면에 보이므로 병명·증상·일정 제목은 넣지 않는다(Apple HIG — ../자료용/자료/2026-11-07-2단계-병원루프-조사.md ②)
     const seenVisit = new Set();

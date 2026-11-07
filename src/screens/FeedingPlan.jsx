@@ -15,7 +15,7 @@ const STOOL_OPTIONS = [
   { value: "constipated", label: "단단한 편" },
 ];
 
-export default function FeedingPlan({ dog, onBack }) {
+export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 일로" }) {
   const [settings, setSettings] = useState(() => getFeedingSettings(dog.id));
   const [saved, setSaved] = useState(false);
 
@@ -78,7 +78,7 @@ export default function FeedingPlan({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 오늘 할 일로
+        {backLabel}
       </button>
       <div className="h1">사료량·급여시간 계산기</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

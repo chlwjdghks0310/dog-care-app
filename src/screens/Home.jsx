@@ -13,7 +13,7 @@ import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
+export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -67,10 +67,6 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenHealth, onOpenFeed
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 오늘로</button>
       <div className="h1" style={{ marginBottom: 10 }}>오늘 할 일</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile tone-blue filled" onClick={onOpenHealth}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} /></span>
-          <span className="quick-tile-label">건강 체크</span>
-        </button>
         <button className="quick-tile tone-rose filled" onClick={onOpenFeeding}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
           <span className="quick-tile-label">사료 계산기</span>

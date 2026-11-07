@@ -44,12 +44,39 @@ export default function DailyCheck({ dog, onChange }) {
   );
 }
 
+// 외출에서 돌아와 [왔어]를 누르면: 오늘 체크를 아직 안 했으면 바로 묻는다(사용자 요청 11/7). 이상 없으면 한 번, 있으면 고르기
+export function BackCheckSheet({ dog, alone, onClose }) {
+  const today = todayKey();
+  const [diff, setDiff] = useState(false);
+  const done = () => (markCheckedIn(dog.id), syncPushAlarms(), onClose());
+  if (diff) return <DiffSheet dog={dog} date={today} onClose={onClose} onSaved={() => (markCheckedIn(dog.id), syncPushAlarms())} />;
+  return createPortal(
+    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="es-sheet" role="dialog" aria-label="다녀와서 체크">
+        <div className="es-top">
+          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
+          <div className="es-title">다녀오셨어요! {dog.name} 괜찮아요?</div>
+          <span style={{ width: 36 }} />
+        </div>
+        <div className="es-scroll" style={{ padding: "4px 16px 20px" }}>
+          {alone && <p className="subtle" style={{ margin: "0 0 12px" }}>오늘 혼자 {alone} 있었어요. 밥·물·배변 자리를 한 번 봐 주세요.</p>}
+          <div className="dc-btns">
+            <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, today), done())}><Ico name="check" size={18} /> 평소와 같아요</button>
+            <button type="button" className="dc-diff" onClick={() => setDiff(true)}>다른 게 있었어요</button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // 오늘 요약 말풍선에 붙일 줄: 오늘 체크 결과와 며칠째 다른 항목
 export function dailySummaryLines(dogId, today = todayKey()) {
   const d = getDay(dogId, today);
   if (!d) return [];
   const lines = [["check", "teal", d.status === "usual" ? `오늘은 평소와 같았어 · 이번 달 ${daysThisMonth(dogId, today)}일째 함께 봤어` : `오늘 다른 점: ${Object.entries(d.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}`]];
-  for (const r of runsOf(dogId, today)) lines.push(["alert", "rose", `${r.item.label} 평소와 다른 날 ${r.days}일째 · 병원용 기록에 모여 있어`]);
+  for (const r of runsOf(dogId, today).filter((x) => !["meal", "stool"].includes(x.item.id))) lines.push(["alert", "rose", `${r.item.label} 평소와 다른 날 ${r.days}일째 · 병원용 기록에 모여 있어`]);
   return lines;
 }
 

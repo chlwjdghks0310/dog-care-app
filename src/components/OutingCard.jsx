@@ -3,9 +3,12 @@ import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { outingState, leaveNow, backNow, durationLabel, backTip, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
+import { BackCheckSheet } from "./DailyCheck";
+import { getDay } from "../services/dailyCheck";
+import { todayKey } from "../utils/date";
 
 // 오늘 탭의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어]. 하루 상태 체크는 위의 하루 체크 카드(DailyCheck)가 맡는다.
-export default function OutingCard({ dog }) {
+export default function OutingCard({ dog, onChecked }) {
   const [, setTick] = useState(0);
   const [sheet, setSheet] = useState(null); // "routine" | "routine-ask" | null
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function OutingCard({ dog }) {
   if (s.state === "away") {
     title = `${dog.name} 혼자 ${durationLabel(s.minutes)}째`;
     sub = s.estimated ? `평소 나가는 시각(${s.since}) 기준이에요` : `${s.since}에 나갔어요`;
-    action = { label: "왔어", run: () => (backNow(), refresh()) };
+    action = { label: "왔어", run: () => (backNow(), refresh(), !getDay(dog.id, todayKey()) && setSheet("back-check")) }; // 오늘 체크 전이면 바로 체크
   } else if (s.state === "back") {
     title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
     sub = backTip(s.minutes);
@@ -55,6 +58,7 @@ export default function OutingCard({ dog }) {
           <Ico name="settings" size={17} />
         </button>
       </div>
+      {sheet === "back-check" && <BackCheckSheet dog={dog} alone={outingState().minutes >= 1 ? durationLabel(outingState().minutes) : ""} onClose={() => (setSheet(null), onChecked?.())} />}
       {(sheet === "routine" || sheet === "routine-ask") && <RoutineSheet ask={sheet === "routine-ask"} onClose={() => setSheet(null)} />}
     </>
   );

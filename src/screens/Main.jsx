@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { recordFromText } from "../services/aiClient";
 import DailyCheck, { dailyPending, dailySummaryLines } from "../components/DailyCheck";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
+import { getSignals } from "../services/signals";
 import OutingCard from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
@@ -379,7 +380,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
       {/* 처음 쓰는 사람(첫 걸음 말풍선)에겐 외출 카드는 첫 걸음을 마친 뒤에 — 첫 화면 칸 줄이기 */}
       {!isChat && !getFirstSteps(dog.id).show && (
         <div style={{ marginTop: 10, flexShrink: 0 }}>
-          <OutingCard dog={dog} />
+          <OutingCard dog={dog} onChecked={() => refresh((n) => n + 1)} />
         </div>
       )}
 
@@ -513,7 +514,7 @@ function TodayTasksRow({ dog, onOpen }) {
 
 function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
-  const lines = dailySummaryLines(dog.id);
+  const lines = [...getSignals(dog).map((s) => ["alert", "rose", s.text]), ...dailySummaryLines(dog.id)];
   if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
   else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
