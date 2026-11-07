@@ -79,11 +79,12 @@ export default function SwipeBack({ renderUnderlay, onBack, children }) {
     },
   });
 
+  const under = showUnderlay ? renderUnderlay?.() : null;
   return (
     <div className="swipe-back">
-      {showUnderlay && (
+      {under && (
         <div ref={underRef} className="swipe-back-layer swipe-back-under" aria-hidden="true">
-          {renderUnderlay()}
+          {under}
         </div>
       )}
       <div ref={topRef} className="swipe-back-layer swipe-back-top" {...handlers} onTouchCancel={handlers.onTouchEnd}>

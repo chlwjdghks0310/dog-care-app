@@ -13,9 +13,10 @@ import { saveDog } from "../services/dogRepository";
 // 물어볼 게 없으면(오늘 끝) 아무것도 그리지 않고, 열려 있는 고르기 창만 유지한다 — 오늘 요약은 Main 말풍선이 보여 준다.
 export const dailyPending = (dogId, today = todayKey()) => missedYesterday(dogId, today) || (!getDay(dogId, today) && today);
 
-export default function DailyCheck({ dog, onChange }) {
+export default function DailyCheck({ dog, onChange, onSheetChange }) {
   const today = todayKey();
-  const [sheet, setSheet] = useState(null); // 고르는 날짜
+  const [sheet, setSheetState] = useState(null); // 고르는 날짜
+  const setSheet = (d) => (setSheetState(d), onSheetChange?.(Boolean(d)));
   const date = dailyPending(dog.id, today);
   const isYesterday = date && date !== today;
   const mark = (d) => d === today && (markCheckedIn(dog.id), syncPushAlarms()); // 오늘 했으면 오늘 체크 알림은 건너뛰게

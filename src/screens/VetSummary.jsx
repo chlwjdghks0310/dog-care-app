@@ -6,7 +6,7 @@ import Ico from "../components/Ico";
 import { getVetNote, saveVetNote, buildVetSummary, summaryToText, SYMPTOMS, SECTIONS, PERIODS } from "../services/vetSummary";
 
 // 병원용 기록 — 위에서 이번 진료 메모와 넣을 항목을 고르고, 아래 정리본을 진료실에서 보여 주거나 읽어 준다.
-export default function VetSummary({ dog, onBack }) {
+export default function VetSummary({ dog, onBack, backLabel = "← 병원으로" }) {
   const [note, setNote] = useState(() => getVetNote(dog.id));
   const [showing, setShowing] = useState(false);
   const swipeClose = useSwipeClose(() => setShowing(false));
@@ -68,7 +68,7 @@ export default function VetSummary({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 병원으로
+        {backLabel}
       </button>
       <div className="h1">병원용 기록</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

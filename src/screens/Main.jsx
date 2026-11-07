@@ -215,6 +215,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
     }
   }
 
+  const [dcOpen, setDcOpen] = useState(false); // 하루 체크 고르기 창이 열려 있는 동안(다시 그려져도 창 유지)
   const isChat = mode === "chat";
 
   return (
@@ -237,9 +238,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
           {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
-          {dailyPending(dog.id) ? (
+          {dailyPending(dog.id) || dcOpen ? (
             <SpeechBubble>
-              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} />
+              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} onSheetChange={setDcOpen} />
             </SpeechBubble>
           ) : notifyAskPending(dog.id) ? (
             <SpeechBubble>

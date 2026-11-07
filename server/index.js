@@ -132,7 +132,7 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
 
 // AI 사용 횟수: 앱이 X-MC-V(기기 번호)·X-MC-L(로그인 1/0)을 붙여 보낸다. 채팅은 비서별(source=mode), 나머지는 기능별
 // chat = 말로 기록하기(예전 AI 채팅 자리 — 통계 표의 "AI 채팅" 칸에 그대로 쌓인다)
-const AI_ROUTES = { "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video" };
+const AI_ROUTES = { "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video", "/api/vet-doc": "vet_doc" };
 app.use(Object.keys(AI_ROUTES), (req, res, next) => {
   if (req.method === "POST" && !isBot(req)) {
     const kind = AI_ROUTES[req.baseUrl];

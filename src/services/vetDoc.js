@@ -7,7 +7,10 @@ const okDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d || "");
 
 export function docToPrefill(doc, now = new Date(), { claim = false } = {}) {
   const today = toDateKey(now); // 한국 날짜(toISOString은 오전 9시 전엔 어제)
-  const date = okDate(doc.visit_date) && doc.visit_date <= today ? doc.visit_date : today;
+  let visit = okDate(doc.visit_date) ? doc.visit_date : "";
+  // 연도 없는 영수증을 1~2월에 읽으면 11~12월 진료가 올해로 잡혀 미래가 된다 → 작년으로
+  if (visit > today && visit.slice(0, 4) === today.slice(0, 4) && Number(today.slice(5, 7)) <= 2 && Number(visit.slice(5, 7)) >= 11) visit = `${Number(visit.slice(0, 4)) - 1}${visit.slice(4)}`;
+  const date = visit && visit <= today ? visit : today;
   const items = (doc.items || []).filter((i) => i.name && i.amount > 0);
   const sum = items.reduce((a, i) => a + i.amount, 0);
   const total = doc.total > 0 ? doc.total : sum;

@@ -4,11 +4,11 @@
   --surface: #ffffff;
   --border: #d6e4f5;
   --text: #2b2320;
-  --text-soft: #7a6f63;
-  --text-faint: #80726a;
+  --text-soft: #6b6056; /* 점검 11/7: 연한 파랑 바탕 위에서도 4.5:1 넘게(예전 #7a6f63) */
+  --text-faint: #6f6359; /* 예전 #80726a */
   --accent: #4b90e2;
   --accent-soft: #dde9fa;
-  --accent-strong: #2f6fbd;
+  --accent-strong: #255a9c; /* 연한 파랑 칩 위 글자 대비 5.7:1(예전 #2f6fbd) */
   --success: #4c8c5b;
   --success-bg: #e7f3ea;
   --danger: #c15b4a;
@@ -659,7 +659,7 @@ button {
 .up-title { display: block; font-size: 15.5px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .up-when { display: block; font-size: 13px; color: var(--text-soft); margin-top: 2px; }
 .up-dday { flex-shrink: 0; font-size: 13px; font-weight: 800; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); }
-.up-dday.today { background: var(--accent); color: #fff; }
+.up-dday.today { background: var(--accent-btn, #3676c6); color: #fff; }
 .cal-mark { display: flex; flex-direction: column; gap: 2px; width: 100%; min-height: 5px; }
 .cal-bar { display: block; height: 5px; margin: 0 -4px; opacity: 0.85; }
 .cal-bar.s { margin-left: 4px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
@@ -1262,3 +1262,6 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 @media (max-height: 720px) { .summary-bubble .summary > .summary-line:nth-child(n+5) { display: none; } }
 @media (max-height: 600px) { .summary-bubble .summary > .summary-line:nth-child(n+4) { display: none; } .summary-bubble .summary-open { font-size: 13.5px; } }
 @media (max-height: 720px) { .pager-page[data-tab="main"] .chat-suggest { display: none; } } /* 입력칸 안 예시 문구로 충분 — 입력칸이 탭에 가리지 않게 */
+/* 점검 11/7: 칩·선택 버튼 누르기 크기(가계부 분류·주별·등록 등 25~30px → 36px) */
+button.seg, button.chip { min-height: 36px; }
+.pager-page[data-tab="main"] > .swipe-back { z-index: 20; } /* 오늘 화면 위에 겹치는 세부 화면이 강아지 그림(z 5)보다 위로 */
