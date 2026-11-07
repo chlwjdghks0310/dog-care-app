@@ -3,6 +3,7 @@ import { recordFromText } from "../services/aiClient";
 import DailyCheck, { dailyPending, dailySummaryLines } from "../components/DailyCheck";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import { getSignals } from "../services/signals";
+import { isMilestone, togetherDays } from "../services/shareCard";
 import OutingCard from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
@@ -516,7 +517,8 @@ function TodayTasksRow({ dog, onOpen }) {
 
 function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
-  const lines = [...getSignals(dog).map((s) => ["alert", "rose", s.text]), ...dailySummaryLines(dog.id)];
+  const together = togetherDays(dog);
+  const lines = [...getSignals(dog).map((s) => ["alert", "rose", s.text]), ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
   if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
   else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);

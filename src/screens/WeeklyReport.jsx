@@ -5,7 +5,7 @@ import { stockLabel } from "../services/foodStock";
 import { durationLabel } from "../services/routine";
 import { md } from "../services/records";
 import { josa } from "../utils/text";
-import { drawWeeklyCard } from "../services/shareCard";
+import { drawTogetherCard, drawWeeklyCard, togetherDays } from "../services/shareCard";
 
 // 주간 리포트(일요일 밤 알림·프로필에서). 기록된 사실만 숫자로 — 좋다/나쁘다 판단은 하지 않는다.
 export default function WeeklyReport({ dog, onBack, onOpenVet }) {
@@ -78,11 +78,12 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
 // 이번 주 카드 공유(인스타 스토리·카톡 등) — 건강 문제 없이 함께한 기록만 그림으로
 function ShareCardButton({ dog }) {
   const [msg, setMsg] = useState("");
-  async function share() {
+  const days = togetherDays(dog);
+  async function share(kind) {
     setMsg("");
     try {
-      const blob = await drawWeeklyCard(dog);
-      const file = new File([blob], `${dog.name}-이번주.png`, { type: "image/png" });
+      const blob = await (kind === "together" ? drawTogetherCard(dog) : drawWeeklyCard(dog));
+      const file = new File([blob], `${dog.name}-${kind === "together" ? `함께한${days}일` : "이번주"}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: `${dog.name}의 이번 주` });
       const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: file.name });
       a.click();
@@ -93,9 +94,14 @@ function ShareCardButton({ dog }) {
   }
   return (
     <>
-      <button type="button" className="btn-primary" style={{ marginTop: 14 }} onClick={share}>
+      <button type="button" className="btn-primary" style={{ marginTop: 14 }} onClick={() => share("week")}>
         <Ico name="camera" size={18} /> 이번 주 카드로 자랑하기
       </button>
+      {days > 0 && (
+        <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => share("together")}>
+          <Ico name="heartPlain" size={18} /> 함께한 {days}일 카드 만들기
+        </button>
+      )}
       <p className="faint" style={{ margin: "6px 0 0", fontSize: 12.5 }}>함께 본 날·산책·몸무게·기록 수만 들어가요. 건강 기록은 넣지 않아요.</p>
       {msg && <p className="error-text">{msg}</p>}
     </>

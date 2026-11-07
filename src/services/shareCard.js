@@ -2,7 +2,7 @@
 // 남에게 보이는 그림이라 건강 문제(무른 변·증상·병원)는 넣지 않고 함께한 기록만: 함께 본 날·산책·몸무게·기록 수.
 import { buildWeeklyReport } from "./weeklyReport";
 import { daysInRange } from "./dailyCheck";
-import { md } from "./records";
+import { md, getTimeline } from "./records";
 import { josa } from "../utils/text";
 
 export function weeklyCardStats(dog, today) {
@@ -21,8 +21,31 @@ export function weeklyCardStats(dog, today) {
 
 const loadImg = (src) => new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = src; });
 
-export async function drawWeeklyCard(dog, today) {
-  const s = weeklyCardStats(dog, today);
+// 함께한 날: 입양일(없으면 생일)부터 오늘까지. 100일·200일…·1년·1000일 같은 날을 기념 카드로
+export function togetherDays(dog, today = new Date()) {
+  const start = dog.adoptionDate || dog.birthDate;
+  if (!start) return null;
+  return Math.floor((new Date(today.toDateString()) - new Date(`${start}T00:00:00`)) / 86400000) + 1;
+}
+export const isMilestone = (n) => n > 0 && (n % 100 === 0 || n % 365 === 0);
+
+export function togetherCardStats(dog, today) {
+  const n = togetherDays(dog, today ? new Date(`${today}T00:00:00`) : new Date());
+  const start = dog.adoptionDate || dog.birthDate;
+  return {
+    title: `${josa(dog.name, "이랑", "랑")} 함께한 지 ${n}일`,
+    range: `${start.replaceAll("-", ".")}부터 ${dog.adoptionDate ? "함께" : "태어나서"}`,
+    rows: [
+      ["함께 본 날", `${daysInRange(dog.id, start, today || new Date().toISOString().slice(0, 10))}일`],
+      ["남긴 기록", `${getTimeline(dog.id).filter((r) => r.type !== "med").length}개`],
+    ],
+  };
+}
+
+export const drawWeeklyCard = (dog, today) => drawCard(dog, weeklyCardStats(dog, today));
+export const drawTogetherCard = (dog, today) => drawCard(dog, togetherCardStats(dog, today));
+
+async function drawCard(dog, s) {
   const W = 1080, H = 1350, c = document.createElement("canvas");
   c.width = W; c.height = H;
   const g = c.getContext("2d");
@@ -43,7 +66,7 @@ export async function drawWeeklyCard(dog, today) {
   g.font = font(800, 72); g.fillText(s.title, W / 2, 660);
   g.font = font(500, 38); g.fillStyle = "#7a6f63"; g.fillText(s.range, W / 2, 715);
   s.rows.forEach(([k, v], i) => {
-    const x = 90 + (i % 2) * 460, y = 780 + Math.floor(i / 2) * 210;
+    const x = 90 + (i % 2) * 460, y = (s.rows.length > 2 ? 780 : 860) + Math.floor(i / 2) * 210;
     g.fillStyle = "#ffffff"; g.beginPath(); g.roundRect(x, y, 440, 180, 36); g.fill();
     g.textAlign = "left"; g.fillStyle = "#7a6f63"; g.font = font(600, 36); g.fillText(k, x + 40, y + 66);
     g.fillStyle = "#2f6fbd"; g.font = font(800, 60); g.fillText(v, x + 40, y + 140);
