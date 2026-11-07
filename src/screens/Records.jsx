@@ -7,6 +7,7 @@ import RecordForm from "./RecordForm";
 import DogReaction from "../components/DogReaction";
 import { VITAL, fmtValue } from "../data/vitals";
 import Ico from "../components/Ico";
+import RecordCalendar from "../components/RecordCalendar";
 import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, groupVitalDays, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
@@ -68,6 +69,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
       <div className="h1">{dog.name}의 기록</div>
       <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
         <button type="button" className={`seg${view === "list" ? " on" : ""}`} onClick={() => setView("list")}>전체 기록</button>
+        <button type="button" className={`seg${view === "cal" ? " on" : ""}`} onClick={() => setView("cal")}>달력</button>
         <button type="button" className={`seg${view === "trend" ? " on" : ""}`} onClick={() => setView("trend")}>변화 보기</button>
       </div>
 
@@ -137,6 +139,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
         </>
       )}
 
+      {!form && view === "cal" && <RecordCalendar dog={dog} items={items} onChanged={reload} />}
       {!form && view === "trend" && <Trends dog={dog} items={items} onAdd={() => setForm({ initial: null })} />}
     </div>
   );

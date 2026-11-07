@@ -68,7 +68,7 @@ function RedBox() {
 }
 
 // 다른 점 고르기: 항목을 누르면 그 항목의 선택지만 펼친다. 항목마다 하나씩
-function DiffSheet({ dog, date, initial, onClose, onSaved }) {
+export function DiffSheet({ dog, date, initial, onClose, onSaved }) {
   initial ||= {};
   const [picks, setPicks] = useState(initial);
   const [open, setOpen] = useState(() => Object.keys(initial));
@@ -93,7 +93,7 @@ function DiffSheet({ dog, date, initial, onClose, onSaved }) {
       <div className="es-sheet" role="dialog" aria-label="평소와 다른 점">
         <div className="es-top">
           <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
-          <div className="es-title">{date === todayKey() ? "오늘" : "어제"} 무엇이 달랐어요?</div>
+          <div className="es-title">{date === todayKey() ? "오늘" : `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`} 무엇이 달랐어요?</div>
           <span style={{ width: 36 }} />
         </div>
         <div className="es-scroll" style={{ padding: "4px 16px 18px" }}>
