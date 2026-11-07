@@ -167,9 +167,9 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
                 <textarea rows={3} maxLength={500} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 처음으로 공원에 간 날. 낙엽 냄새를 한참 맡았어요" autoFocus />
               </label>
               <div className="post-edit">
-                <button type="button" className="btn-ghost" onClick={() => setDeco(decoOf(dog.id, photo.recId, photo.idx))}>🎨 스티커·글자 꾸미기</button>
-                <button type="button" className="btn-ghost" disabled={isCover} onClick={() => (done(), onCover(src))}>{isCover ? "지금 대표 사진" : "대표 사진으로"}</button>
-                <button type="button" className="btn-ghost" style={{ color: "var(--danger)" }} onClick={onDelete}>지우기</button>
+                <button type="button" onClick={() => setDeco(decoOf(dog.id, photo.recId, photo.idx))}><span aria-hidden="true">🎨</span>꾸미기</button>
+                <button type="button" disabled={isCover} onClick={() => (done(), onCover(src))}><span aria-hidden="true">⭐</span>{isCover ? "대표 사진" : "대표 사진으로"}</button>
+                <button type="button" className="danger" onClick={onDelete}><span aria-hidden="true">🗑</span>지우기</button>
               </div>
               {error && <p className="error-text">{error}</p>}
               <button type="button" className="btn-primary" onClick={done}>완료</button>

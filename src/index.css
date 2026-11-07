@@ -1342,33 +1342,7 @@ button.seg, button.chip { min-height: 36px; }
 .pf-edit-badge { position: absolute; right: -4px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
 .pf-hero + .pf-namecard { margin-top: -34px; }
 /* 사진 꾸미기 */
-.de-sheet, .post-sheet { max-height: calc(var(--vvh, 100dvh) - env(safe-area-inset-top, 0px) - 8px); }
 .post-sheet.editing .post-img { max-height: 32vh; }
-.de-box.drawing { cursor: crosshair; }
-.de-draw { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.de-sets { display: flex; gap: 4px; margin-top: 10px; padding: 3px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
-.de-sets button { flex: 1; min-height: 36px; border: none; border-radius: 9px; background: none; color: var(--text-soft); font-weight: 700; font-size: 14px; }
-.de-sets button.on { background: var(--accent-soft); color: var(--accent-strong); }
-.de-modes { display: flex; gap: 6px; }
-.de-modes .btn-ghost { flex: 1; padding-left: 4px; padding-right: 4px; }
-.de-colors { display: flex; gap: 8px; flex-wrap: wrap; }
-.de-colors button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); box-shadow: inset 0 0 0 2px var(--bg); }
-.de-colors button.on { border-color: var(--accent-strong); border-width: 3px; }
-.de-box { position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; container-type: inline-size; touch-action: none; border-radius: 12px; overflow: hidden; background: #000; }
-.de-box img { width: 100%; display: block; user-select: none; pointer-events: none; }
-.de-item { position: absolute; line-height: 1.15; cursor: grab; user-select: none; touch-action: none; }
-.de-item.on { outline: 2px dashed rgba(255,255,255,.9); outline-offset: 4px; border-radius: 8px; }
-.de-tools { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
-.de-cats { flex-wrap: nowrap; overflow-x: auto; margin-top: 10px; padding: 2px 2px 8px; align-items: flex-start; scrollbar-width: none; }
-.de-cats .seg { flex-shrink: 0; height: auto; overflow: visible; }
-.de-stickers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-.de-stickers button { padding: 6px; border: none; background: var(--surface); border-radius: 12px; aspect-ratio: 1; }
-.de-stickers img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.de-item.sticker { width: 1em; height: 1em; line-height: 1; }
-.de-item.sticker img { width: 100%; height: 100%; display: block; pointer-events: none; }
-.de-text { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.de-text textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px; font: inherit; color: var(--text); background: var(--surface); }
-.btn-ghost.on { background: var(--accent-soft); color: var(--accent-strong); }
 
 /* 갤러리 게시물(인스타·블로그 느낌) */
 .post-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
@@ -1379,8 +1353,86 @@ button.seg, button.chip { min-height: 36px; }
 .post-caption { margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-line; word-break: keep-all; }
 .post-caption b { margin-right: 4px; }
 .post-date { font-size: 12px; }
-.post-edit { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.post-edit { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.post-edit button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; }
+.post-edit button span { font-size: 20px; }
+.post-edit button:disabled { opacity: .5; }
+.post-edit .danger { color: var(--danger); }
 .feed-card { background: var(--surface); border-radius: 18px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); cursor: pointer; }
 .feed-card img { width: 100%; display: block; max-height: 520px; object-fit: cover; }
 .feed-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
 .post-day { display: flex; align-items: center; gap: 5px; margin: 6px 0 0; font-size: 12.5px; color: var(--text-soft); }
+
+.post-sheet { max-height: calc(var(--vvh, 100dvh) - env(safe-area-inset-top, 0px) - 8px); }
+.btn-ghost.on { background: var(--accent-soft); color: var(--accent-strong); }
+/* 사진 꾸미기(인스타 스토리 편집기 방식): 검은 전체 화면 한 장 */
+.de-full { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 400; background: #0d0d0f; color: #fff; display: flex; flex-direction: column; overscroll-behavior: none; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.de-top { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px; flex-shrink: 0; }
+.de-top-title { flex: 1; text-align: center; font-weight: 700; font-size: 15px; }
+.de-ic { width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255,255,255,.14); color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700; padding: 0; }
+.de-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.de-ic:disabled { opacity: .35; }
+.de-aa { font-family: Georgia, serif; font-size: 18px; }
+.de-done { height: 40px; padding: 0 16px; border-radius: 999px; border: none; background: #fff; color: #111; font-weight: 800; font-size: 15px; }
+.de-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 8px; touch-action: none; }
+.de-box { position: relative; container-type: inline-size; width: min(100%, calc((var(--vvh, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 250px) / var(--r))); border-radius: 14px; overflow: hidden; background: #000; }
+.de-box > img { width: 100%; display: block; pointer-events: none; }
+.de-draw { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.de-item { position: absolute; line-height: 1.15; cursor: grab; transition: opacity .15s; }
+.de-item.on { outline: 1.5px dashed rgba(255,255,255,.85); outline-offset: 5px; border-radius: 8px; }
+.de-item.lift { opacity: .92; }
+.de-item.doom { opacity: .45; }
+.de-item.sticker { width: 1em; height: 1em; line-height: 1; }
+.de-item.sticker img { width: 100%; height: 100%; display: block; pointer-events: none; }
+.de-bottom { flex-shrink: 0; padding: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 8px); display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.de-ctx { height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.de-tools { display: flex; height: 62px; border-top: 1px solid rgba(255,255,255,.1); padding-top: 6px; }
+.de-tools button { flex: 1; border: none; background: none; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 12px; }
+.de-tools button:active { background: rgba(255,255,255,.08); }
+.de-tools button:disabled { opacity: .35; }
+.de-tools svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.de-tools .de-aa { font-size: 20px; line-height: 24px; }
+.de-hint { margin: 0; font-size: 13px; color: rgba(255,255,255,.62); text-align: center; }
+.de-trash { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); display: grid; place-items: center; transition: transform .15s, background .15s; }
+.de-trash svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.de-trash.over { transform: scale(1.25); background: #e5484d; border-color: #e5484d; }
+.de-selbar { display: flex; gap: 6px; }
+.de-selbar button { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 22px; border: none; background: rgba(255,255,255,.14); color: #fff; font-size: 18px; font-weight: 700; display: grid; place-items: center; }
+.de-selbar button:not([aria-label]) { font-size: 14px; }
+.de-selbar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.de-selbar .danger { color: #ff8a8a; }
+.de-colors { display: flex; gap: 10px; justify-content: center; flex-wrap: nowrap; }
+.de-colors button { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); padding: 0; transition: transform .12s; }
+.de-colors button.on { transform: scale(1.22); box-shadow: 0 0 0 2px #0d0d0f, 0 0 0 4px #fff; }
+.de-widths { display: flex; gap: 14px; }
+.de-widths button { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.1); display: grid; place-items: center; }
+.de-widths button.on { background: rgba(255,255,255,.3); }
+.de-widths i { display: block; border-radius: 50%; background: #fff; }
+/* 가로로만 넘기는 줄: 위아래로는 절대 안 움직이게 */
+.de-row { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; overscroll-behavior: contain; scrollbar-width: none; flex-shrink: 0; width: 100%; padding: 2px 0; }
+.de-row::-webkit-scrollbar { display: none; }
+.de-row button { flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.de-row button.on { background: #fff; color: #111; border-color: #fff; }
+/* 스티커 서랍 */
+.de-tray-bg { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; z-index: 2; }
+.de-tray { width: 100%; height: 50%; background: #1c1c1f; border-radius: 20px 20px 0 0; padding: 6px 12px 0; display: flex; flex-direction: column; gap: 10px; animation: es-up .22s ease; }
+.de-grab { width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3); margin: 2px auto 0; flex-shrink: 0; }
+.de-sets { display: flex; gap: 4px; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+.de-sets button { flex: 1; height: 34px; border: none; border-radius: 9px; background: none; color: rgba(255,255,255,.7); font-weight: 700; font-size: 14px; }
+.de-sets button.on { background: rgba(255,255,255,.2); color: #fff; }
+.de-stickers { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; overscroll-behavior: contain; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-content: start; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); }
+.de-stickers button { padding: 8px; border: none; background: none; border-radius: 14px; aspect-ratio: 1; }
+.de-stickers button:active { background: rgba(255,255,255,.1); }
+.de-stickers img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* 글자 쓰기: 화면을 어둡게 하고 가운데서 바로 */
+.de-textmode { position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,.72); display: flex; flex-direction: column; }
+.de-textwrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 20px; }
+.de-textwrap textarea { max-height: 100%; overflow: hidden; background: none; border: none; outline: none; resize: none; text-align: center; caret-color: #fff; padding: 0.2em 0.45em; box-sizing: border-box; field-sizing: content; }
+.de-textwrap textarea::placeholder { color: rgba(255,255,255,.45); }
+.de-textbar { display: flex; flex-direction: column; gap: 10px; padding: 8px 12px 12px; flex-shrink: 0; }
+.de-pill { height: 40px; padding: 0 14px 0 6px; border-radius: 20px; border: none; background: rgba(255,255,255,.14); color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.de-pill-a { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: 17px; }
+.de-pill-a.stroke { color: #fff; -webkit-text-stroke: 1.5px #111; paint-order: stroke fill; background: rgba(255,255,255,.15); }
+.de-pill-a.box { background: #fff; color: #111; }
+.de-pill-a.none { color: #fff; }
+.es-scroll { overscroll-behavior: contain; }

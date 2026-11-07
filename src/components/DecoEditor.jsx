@@ -56,8 +56,6 @@ export const FONTS = [
   { id: "dongle", label: "동글", family: "Dongle", scale: 1.4 },
 ];
 export const COLORS = ["#ffffff", "#2b2320", "#ff6fa0", "#ff8a3d", "#ffd43b", "#51cf66", "#4dabf7", "#9775fa"];
-const DECOS = [["stroke", "테두리"], ["box", "바탕"], ["none", "글씨만"]];
-const PEN_W = [["가늘게", 6], ["보통", 12], ["굵게", 24]];
 const fontOf = (id) => FONTS.find((f) => f.id === id) || FONTS[0];
 const css = (f) => `"${f.family}", "Apple SD Gothic Neo", sans-serif`;
 const isLight = (hex) => {
@@ -153,79 +151,120 @@ export async function composeDeco(src, items) {
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const angle = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const DECO_NEXT = { stroke: "box", box: "none", none: "stroke" };
+const DECO_LABEL = { stroke: "테두리", box: "바탕", none: "글씨만" };
 
+// 아이콘(선 아이콘 직접 그림)
+const I = {
+  sticker: <svg viewBox="0 0 24 24"><path d="M14 3H7a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h7l7-7V7a4 4 0 0 0-4-4h-3" /><path d="M14 21v-3a4 4 0 0 1 4-4h3" /><circle cx="9" cy="10" r=".6" /><circle cx="15" cy="10" r=".6" /><path d="M8.5 14.5c1.6 1.4 3.5 1.6 5.2.6" /></svg>,
+  pen: <svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z" /><path d="M14 7l3 3" /></svg>,
+  undo: <svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5" /><path d="M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0 -6)" /></svg>,
+  trash: <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>,
+};
+
+// 사진 꾸미기(11/7 2판, 인스타 스토리 편집기 방식): 한 화면 안에서 위 도구 아이콘 3개 → 스티커는 아래 서랍, 글자는 사진 위에서 바로, 펜은 화면 그대로.
+// 한 손가락 옮기기 · 두 손가락 크기·돌리기 · 끌어서 아래 휴지통에 놓으면 지우기 · 글자를 누르면 다시 고치기
 export default function DecoEditor({ src, items: initial = [], onSave, onClose }) {
   const [items, setItems] = useState(initial);
   const [sel, setSel] = useState(null);
-  const [panel, setPanel] = useState(null); // "sticker" | "text" | "draw"
+  const [mode, setMode] = useState(null); // null | "sticker" | "text" | "draw"
   const [set, setSet] = useState(0);
   const [cat, setCat] = useState(0);
-  const [text, setText] = useState("");
-  const [font, setFont] = useState("gaegu");
-  const [color, setColor] = useState("#ffffff");
-  const [deco, setDeco] = useState("stroke");
+  const [edit, setEdit] = useState(null); // 글자 고치는 중: { i, v, f, c, d }
+  const [last, setLast] = useState({ f: "gaegu", c: "#ffffff", d: "stroke" });
   const [pen, setPen] = useState({ c: "#ffffff", w: 12 });
   const [ratio, setRatio] = useState(1);
+  const [drag, setDrag] = useState(null); // { over } 옮기는 중이면 휴지통 보이기
   const [busy, setBusy] = useState(false);
   const box = useRef(null);
+  const trash = useRef(null);
   const ptrs = useRef(new Map());
   const gest = useRef(null);
   const live = useRef(items);
   live.current = items;
+  const hist = useRef([]); // 되돌리기: 바꾸기 직전 모습들
+  const remember = () => hist.current.push(live.current);
+  const undo = () => (hist.current.length && setItems(hist.current.pop()), setSel(null));
   const upd = (i, patch) => setItems((l) => l.map((x, k) => (k === i ? { ...x, ...patch } : x)));
-  const add = (it) => (setItems((l) => [...l, it]), setSel(items.length), setPanel(null));
-  const at = (e) => {
-    const r = box.current.getBoundingClientRect();
-    return { x: e.clientX, y: e.clientY, r };
+  const addSticker = (id) => (remember(), setItems((l) => [...l, { t: "sticker", v: id, x: 50, y: 45, s: 26, r: 0 }]), setSel(items.length), setMode(null));
+  const openText = (i) => {
+    const it = i != null ? items[i] : null;
+    setSel(null);
+    setEdit(it ? { i, v: it.v, f: textSpec(it).font.id, c: textSpec(it).color, d: it.d || (it.style === "bubble" ? "box" : "stroke") } : { i: null, v: "", ...last });
+    setMode("text");
   };
+  function finishText() {
+    const e = edit;
+    const v = e.v.trim();
+    setLast({ f: e.f, c: e.c, d: e.d });
+    if (e.i != null || v) remember();
+    if (e.i != null) v ? upd(e.i, { v, f: e.f, c: e.c, d: e.d, style: undefined }) : setItems((l) => l.filter((_, k) => k !== e.i));
+    else if (v) setItems((l) => [...l, { t: "text", v, f: e.f, c: e.c, d: e.d, x: 50, y: 50, s: 10, r: 0 }]);
+    setEdit(null);
+    setMode(null);
+  }
 
-  // 한 손가락: 옮기기 · 두 손가락: 크기·돌리기(인스타 스토리처럼) · 그리기 모드: 펜
+  const rel = (e) => ({ x: e.clientX, y: e.clientY });
   function down(e) {
-    try { box.current.setPointerCapture(e.pointerId); } catch { /* 이미 뗀 손가락 */ }
-    const p = at(e);
-    if (panel === "draw") {
+    if (mode === "sticker" || mode === "text") return;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 합성 이벤트 */ }
+    const r = box.current.getBoundingClientRect();
+    if (mode === "draw") {
       if (gest.current) return;
-      const u = 1000 / p.r.width;
+      const u = 1000 / r.width;
+      remember();
       gest.current = { mode: "draw", id: e.pointerId, i: live.current.length };
-      setItems((l) => [...l, { t: "draw", pts: [[(p.x - p.r.left) * u, (p.y - p.r.top) * u]], c: pen.c, w: pen.w }]);
+      setItems((l) => [...l, { t: "draw", pts: [[(e.clientX - r.left) * u, (e.clientY - r.top) * u]], c: pen.c, w: pen.w }]);
       return;
     }
+    const p = rel(e);
     ptrs.current.set(e.pointerId, p);
     const hit = e.target.closest?.("[data-i]");
     if (ptrs.current.size === 1) {
       if (!hit) return (setSel(null), (gest.current = null));
       const i = Number(hit.dataset.i);
+      const tapEdit = sel === i && live.current[i].t === "text";
       setSel(i);
-      gest.current = { mode: "drag", i, sx: p.x, sy: p.y, x0: live.current[i].x, y0: live.current[i].y };
+      remember();
+      gest.current = { mode: "drag", i, sx: p.x, sy: p.y, x0: live.current[i].x, y0: live.current[i].y, moved: false, tapEdit };
     } else if (ptrs.current.size === 2 && gest.current) startPinch(gest.current.i);
   }
   function startPinch(i) {
     const [a, b] = [...ptrs.current.values()];
     const it = live.current[i];
-    gest.current = { mode: "pinch", i, d0: dist(a, b), a0: angle(a, b), s0: it.s, r0: it.r || 0, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, x0: it.x, y0: it.y };
+    gest.current = { mode: "pinch", i, d0: dist(a, b), a0: angle(a, b), s0: it.s, r0: it.r || 0, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, x0: it.x, y0: it.y, moved: true };
   }
+  const overTrash = (p) => {
+    const t = trash.current?.getBoundingClientRect();
+    return t && p.x > t.left - 16 && p.x < t.right + 16 && p.y > t.top - 16 && p.y < t.bottom + 16;
+  };
   function move(e) {
     const g = gest.current;
     if (!g) return;
-    const p = at(e);
+    const r = box.current.getBoundingClientRect();
     if (g.mode === "draw") {
       if (e.pointerId !== g.id) return;
-      const u = 1000 / p.r.width;
-      const pt = [(p.x - p.r.left) * u, (p.y - p.r.top) * u];
+      const u = 1000 / r.width;
+      const pt = [(e.clientX - r.left) * u, (e.clientY - r.top) * u];
       return setItems((l) => l.map((x, k) => (k === g.i ? { ...x, pts: [...x.pts, pt] } : x)));
     }
     if (!ptrs.current.has(e.pointerId)) return;
+    const p = rel(e);
     ptrs.current.set(e.pointerId, p);
     if (g.mode === "drag") {
-      upd(g.i, { x: clamp(g.x0 + ((p.x - g.sx) / p.r.width) * 100, 0, 100), y: clamp(g.y0 + ((p.y - g.sy) / p.r.height) * 100, 0, 100) });
+      if (!g.moved && Math.hypot(p.x - g.sx, p.y - g.sy) < 6) return;
+      g.moved = true;
+      setDrag({ over: overTrash(p) });
+      upd(g.i, { x: clamp(g.x0 + ((p.x - g.sx) / r.width) * 100, -10, 110), y: clamp(g.y0 + ((p.y - g.sy) / r.height) * 100, -10, 110) });
     } else if (ptrs.current.size >= 2) {
       const [a, b] = [...ptrs.current.values()];
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      setDrag({ over: false });
       upd(g.i, {
         s: clamp(g.s0 * (dist(a, b) / g.d0), 3, 90),
         r: Math.round(g.r0 + angle(a, b) - g.a0),
-        x: clamp(g.x0 + ((mx - g.mx) / p.r.width) * 100, 0, 100),
-        y: clamp(g.y0 + ((my - g.my) / p.r.height) * 100, 0, 100),
+        x: clamp(g.x0 + ((mx - g.mx) / r.width) * 100, -10, 110),
+        y: clamp(g.y0 + ((my - g.my) / r.height) * 100, -10, 110),
       });
     }
   }
@@ -233,11 +272,19 @@ export default function DecoEditor({ src, items: initial = [], onSave, onClose }
     const g = gest.current;
     if (g?.mode === "draw") return e.pointerId === g.id && (gest.current = null);
     ptrs.current.delete(e.pointerId);
-    if (!ptrs.current.size) return (gest.current = null);
-    if (g?.mode === "pinch") { // 한 손가락만 남으면 그 손가락으로 계속 옮기기
-      const p = [...ptrs.current.values()][0];
-      gest.current = { mode: "drag", i: g.i, sx: p.x, sy: p.y, x0: live.current[g.i].x, y0: live.current[g.i].y };
+    if (ptrs.current.size) {
+      if (g?.mode === "pinch") {
+        const p = [...ptrs.current.values()][0];
+        gest.current = { mode: "drag", i: g.i, sx: p.x, sy: p.y, x0: live.current[g.i].x, y0: live.current[g.i].y, moved: true };
+      }
+      return;
     }
+    gest.current = null;
+    setDrag(null);
+    if (!g) return;
+    if (g.mode === "drag" && g.moved && overTrash(rel(e))) return (setItems((l) => l.filter((_, k) => k !== g.i)), setSel(null));
+    if (g.mode === "drag" && !g.moved) hist.current.pop(); // 누르기만 했으면 되돌릴 것 없음
+    if (g.mode === "drag" && !g.moved && g.tapEdit) openText(g.i);
   }
 
   async function save() {
@@ -249,105 +296,149 @@ export default function DecoEditor({ src, items: initial = [], onSave, onClose }
       setBusy(false);
     }
   }
-  const swipe = useSheetSwipe(save); // 밀어서 뒤로 = 꾸민 것 저장하고 게시물로
+  // 왼쪽 끝에서 밀면 뒤로(꾸민 것 저장하고 게시물로) — 사진 위 끌기와 겹치지 않게 가장자리에서만
+  const sw = useSheetSwipe(save);
+  const swipe = { ...sw, onTouchStart: (e) => (e.touches[0].clientX < 28 ? sw.onTouchStart(e) : sw.onTouchEnd({ currentTarget: e.currentTarget })) };
   const s = sel != null ? items[sel] : null;
-  // 글자를 고른 상태에서 글씨체·색을 바꾸면 그 글자에 바로
-  const pickText = (patch) => {
-    if (patch.f) setFont(patch.f);
-    if (patch.c) setColor(patch.c);
-    if (patch.d) setDeco(patch.d);
-    if (s?.t === "text") upd(sel, { ...patch, style: undefined });
-  };
-  const togglePanel = (p) => (setPanel(panel === p ? null : p), setSel(null));
   const draws = items.map((it, i) => [it, i]).filter(([it]) => it.t === "draw");
+  const step = (k) => (remember(), upd(sel, { s: clamp(s.s * k, 3, 90) }));
+  const turn = (d) => (remember(), upd(sel, { r: (s.r || 0) + d }));
+  const del = () => (remember(), setItems((l) => l.filter((_, k) => k !== sel)), setSel(null));
+
   return createPortal(
-    <div className="es-backdrop" style={{ zIndex: 400 }}>
-      <div className="es-sheet de-sheet" role="dialog" aria-label="사진 꾸미기" {...swipe}>
-        <div className="es-top">
-          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
-          <div className="es-title">꾸미기</div>
-          <button type="button" className="btn-primary small" disabled={busy} onClick={save}>{busy ? "…" : "완료"}</button>
+    <div className="de-full" role="dialog" aria-label="사진 꾸미기" {...swipe}>
+      {mode === "text" ? null : mode === "draw" ? (
+        <div className="de-top">
+          <button type="button" className="de-ic" aria-label="되돌리기" disabled={!hist.current.length} onClick={undo}>{I.undo}</button>
+          <span className="de-top-title">손가락으로 그려요</span>
+          <button type="button" className="de-done" onClick={() => setMode(null)}>다 그렸어요</button>
         </div>
-        <div className="es-scroll" style={{ padding: "4px 12px 14px" }}>
-          <div ref={box} data-no-swipe className={`de-box${panel === "draw" ? " drawing" : ""}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-            <img src={src} alt="" draggable={false} onLoad={(e) => setRatio(e.target.naturalHeight / e.target.naturalWidth || 1)} />
-            {draws.length > 0 && (
-              <svg className="de-draw" viewBox={`0 0 1000 ${1000 * ratio}`} aria-hidden="true">
-                {draws.map(([it, i]) => (
-                  <path key={i} d={it.pts.map(([x, y], k) => `${k ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("") + (it.pts.length === 1 ? "l0.1 0" : "")} stroke={it.c} strokeWidth={it.w} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                ))}
-              </svg>
-            )}
-            {items.map((it, i) => it.t !== "draw" && (
-              <span key={i} data-i={i} className={`de-item${sel === i ? " on" : ""} ${it.t}`} style={{ left: `${it.x}%`, top: `${it.y}%`, fontSize: `${it.s * (it.t === "text" ? textSpec(it).font.scale || 1 : 1)}cqw`, transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`, ...(it.t === "text" ? textCss(it) : {}) }}>
-                {isImgSticker(it) ? <img src={stickerSrc(it.v)} alt="" draggable={false} /> : it.v}
-              </span>
-            ))}
-          </div>
-          {s ? (
-            <div className="de-tools">
-              <label className="ca-zoom" style={{ marginTop: 0 }}><span>작게</span><input type="range" min="3" max="90" step="0.5" value={s.s} onChange={(e) => upd(sel, { s: Number(e.target.value) })} aria-label="크기" /><span>크게</span></label>
-              <label className="ca-zoom" style={{ marginTop: 6 }}><span>돌리기</span><input type="range" min="-180" max="180" step="1" value={s.r || 0} onChange={(e) => upd(sel, { r: Number(e.target.value) })} aria-label="돌리기" /><span /></label>
-              {s.t === "text" && <TextOptions font={textSpec(s).font.id} color={textSpec(s).color} deco={s.d || (s.style === "bubble" ? "box" : "stroke")} onPick={pickText} />}
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" className="btn-ghost small" onClick={() => (setItems((l) => [...l.filter((_, k) => k !== sel), l[sel]]), setSel(items.length - 1))}>맨 앞으로</button>
-                <button type="button" className="btn-ghost small" style={{ color: "var(--danger)" }} onClick={() => (setItems((l) => l.filter((_, k) => k !== sel)), setSel(null))}>이것 지우기</button>
-              </div>
-            </div>
-          ) : (
-            <p className="faint" style={{ margin: "8px 2px", fontSize: 12.5 }}>
-              {panel === "draw" ? "사진 위에 손가락으로 그려요." : "한 손가락으로 끌어 옮기고, 두 손가락으로 벌리거나 돌려서 크기·방향을 바꿔요."}
-            </p>
+      ) : (
+        <div className="de-top">
+          <button type="button" className="de-ic" aria-label="닫기(저장 안 함)" onClick={onClose}>✕</button>
+          <span className="de-top-title">꾸미기</span>
+          <button type="button" className="de-done" disabled={busy} onClick={save}>{busy ? "저장 중" : "완료"}</button>
+        </div>
+      )}
+      <div className="de-stage" data-no-swipe onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        <div ref={box} className="de-box" style={{ "--r": ratio }}>
+          <img src={src} alt="" draggable={false} onLoad={(e) => setRatio(e.target.naturalHeight / e.target.naturalWidth || 1)} />
+          {draws.length > 0 && (
+            <svg className="de-draw" viewBox={`0 0 1000 ${1000 * ratio}`} aria-hidden="true">
+              {draws.map(([it, i]) => (
+                <path key={i} d={it.pts.map(([x, y], k) => `${k ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("") + (it.pts.length === 1 ? "l0.1 0" : "")} stroke={it.c} strokeWidth={it.w} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+            </svg>
           )}
-          <div className="de-modes">
-            <button type="button" className={`btn-ghost${panel === "sticker" ? " on" : ""}`} onClick={() => togglePanel("sticker")}>😊 스티커</button>
-            <button type="button" className={`btn-ghost${panel === "text" ? " on" : ""}`} onClick={() => togglePanel("text")}>Aa 글자</button>
-            <button type="button" className={`btn-ghost${panel === "draw" ? " on" : ""}`} onClick={() => togglePanel("draw")}>✏️ 그리기</button>
-          </div>
-          {panel === "sticker" && (
-            <>
-              <div className="de-sets" role="tablist" aria-label="스티커 모양">
-                {STICKER_SETS.map((g, k) => (
-                  <button key={g.label} type="button" role="tab" aria-selected={set === k} className={set === k ? "on" : ""} onClick={() => (setSet(k), setCat(0))}>{g.label}</button>
-                ))}
-              </div>
-              <div className="chip-wrap de-cats" role="tablist" aria-label="스티커 종류">
-                {STICKER_SETS[set].cats.map((c, k) => (
-                  <button key={c.label} type="button" role="tab" aria-selected={cat === k} className={`seg${cat === k ? " on" : ""}`} onClick={() => setCat(k)}>{c.label}</button>
-                ))}
-              </div>
-              <div className="de-stickers">
-                {STICKER_SETS[set].cats[cat].ids.map((id) => (
-                  <button key={id} type="button" onClick={() => add({ t: "sticker", v: id, x: 50, y: 50, s: 22, r: 0 })} aria-label={`스티커 ${id.replace(/^[df]-/, "").replace(/[_-]/g, " ")}`}><img src={stickerSrc(id)} alt="" loading="lazy" /></button>
-                ))}
-              </div>
-            </>
-          )}
-          {panel === "text" && (
-            <div className="de-text">
-              <textarea rows={2} maxLength={60} value={text} onChange={(e) => setText(e.target.value)} placeholder="예: 첫 눈 ❄️ / 4개월 된 날" aria-label="넣을 글자" style={{ fontFamily: css(fontOf(font)) }} />
-              <div className="chip-wrap de-cats" aria-label="자주 쓰는 문구">
-                {TEXT_PRESETS.map((t) => <button key={t} type="button" className="seg" onClick={() => setText(t)}>{t}</button>)}
-              </div>
-              <TextOptions font={font} color={color} deco={deco} onPick={pickText} />
-              <button type="button" className="btn-primary" disabled={!text.trim()} onClick={() => (add({ t: "text", v: text.trim(), f: font, c: color, d: deco, x: 50, y: 82, s: 9, r: 0 }), setText(""))}>글자 넣기</button>
-            </div>
-          )}
-          {panel === "draw" && (
-            <div className="de-text">
-              <Swatches value={pen.c} onPick={(c) => setPen({ ...pen, c })} />
-              <div className="chip-wrap">
-                {PEN_W.map(([l, w]) => <button key={w} type="button" className={`seg${pen.w === w ? " on" : ""}`} onClick={() => setPen({ ...pen, w })}>{l}</button>)}
-                <button type="button" className="seg" disabled={!draws.length} onClick={() => setItems((l) => l.filter((_, k) => k !== draws.at(-1)[1]))}>↩ 되돌리기</button>
-              </div>
-              <button type="button" className="btn-ghost" onClick={() => setPanel(null)}>그리기 끝</button>
-            </div>
-          )}
+          {items.map((it, i) => it.t !== "draw" && !(edit && edit.i === i) && (
+            <span key={i} data-i={i} className={`de-item${sel === i ? " on" : ""} ${it.t}${drag && sel === i ? (drag.over ? " doom" : " lift") : ""}`} style={{ left: `${it.x}%`, top: `${it.y}%`, fontSize: `${it.s * (it.t === "text" ? textSpec(it).font.scale || 1 : 1)}cqw`, transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`, ...(it.t === "text" ? textCss(it) : {}) }}>
+              {isImgSticker(it) ? <img src={stickerSrc(it.v)} alt="" draggable={false} /> : it.v}
+            </span>
+          ))}
         </div>
       </div>
+      <div className="de-bottom" style={mode === "text" ? { visibility: "hidden" } : undefined}>
+        <div className="de-ctx">
+        {drag ? (
+          <div ref={trash} className={`de-trash${drag.over ? " over" : ""}`} aria-hidden="true">{I.trash}</div>
+        ) : mode === "draw" ? (
+          <>
+            <Swatches value={pen.c} onPick={(c) => setPen({ ...pen, c })} />
+            <div className="de-widths">
+              {[6, 12, 24].map((w) => <button key={w} type="button" aria-label={`굵기 ${w}`} className={pen.w === w ? "on" : ""} onClick={() => setPen({ ...pen, w })}><i style={{ width: w / 1.5 + 4, height: w / 1.5 + 4 }} /></button>)}
+            </div>
+          </>
+        ) : s ? (
+          <div className="de-selbar">
+            <button type="button" onClick={() => step(1 / 1.15)} aria-label="작게">－</button>
+            <button type="button" onClick={() => step(1.15)} aria-label="크게">＋</button>
+            <button type="button" onClick={() => turn(-15)} aria-label="왼쪽으로 돌리기">⟲</button>
+            <button type="button" onClick={() => turn(15)} aria-label="오른쪽으로 돌리기">⟳</button>
+            {s.t === "text" && <button type="button" onClick={() => openText(sel)}>고치기</button>}
+            <button type="button" className="danger" onClick={del} aria-label="지우기">{I.trash}</button>
+          </div>
+        ) : (
+          <p className="de-hint">{items.length ? "두 손가락으로 크기·방향 · 끌어서 휴지통에 놓으면 지워져요" : "아래에서 스티커·글자·그리기를 골라요"}</p>
+        )}
+        </div>
+        {mode !== "draw" && (
+          <div className="de-tools">
+            <button type="button" onClick={() => (setSel(null), setMode("sticker"))}>{I.sticker}<span>스티커</span></button>
+            <button type="button" onClick={() => openText(null)}><b className="de-aa">Aa</b><span>글자</span></button>
+            <button type="button" onClick={() => (setSel(null), setMode("draw"))}>{I.pen}<span>그리기</span></button>
+            <button type="button" disabled={!hist.current.length} onClick={undo}>{I.undo}<span>되돌리기</span></button>
+          </div>
+        )}
+      </div>
+
+      {mode === "sticker" && (
+        <div className="de-tray-bg" onClick={(e) => e.target === e.currentTarget && setMode(null)}>
+          <div className="de-tray" role="dialog" aria-label="스티커 고르기">
+            <div className="de-grab" aria-hidden="true" />
+            <div className="de-sets" role="tablist" aria-label="스티커 모양">
+              {STICKER_SETS.map((g, k) => (
+                <button key={g.label} type="button" role="tab" aria-selected={set === k} className={set === k ? "on" : ""} onClick={() => (setSet(k), setCat(0))}>{g.label}</button>
+              ))}
+            </div>
+            <div className="de-row" role="tablist" aria-label="스티커 종류">
+              {STICKER_SETS[set].cats.map((c, k) => (
+                <button key={c.label} type="button" role="tab" aria-selected={cat === k} className={cat === k ? "on" : ""} onClick={() => setCat(k)}>{c.label}</button>
+              ))}
+            </div>
+            <div className="de-stickers">
+              {STICKER_SETS[set].cats[cat].ids.map((id) => (
+                <button key={id} type="button" onClick={() => addSticker(id)} aria-label={`스티커 ${id.replace(/^[df]-/, "").replace(/[_-]/g, " ")}`}><img src={stickerSrc(id)} alt="" loading="lazy" /></button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mode === "text" && edit && (
+        <div className="de-textmode">
+          {/* 위에 원래 줄 대신 */}
+          <div className="de-top">
+            <button type="button" className="de-pill" onClick={() => setEdit({ ...edit, d: DECO_NEXT[edit.d] })} aria-label="글자 모양 바꾸기">
+              <span className={`de-pill-a ${edit.d}`}>A</span> {DECO_LABEL[edit.d]}
+            </button>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="de-done" onClick={finishText}>완료</button>
+          </div>
+          <div className="de-textwrap" onClick={(e) => e.target === e.currentTarget && finishText()}>
+            <textarea
+              autoFocus
+              rows={Math.max(1, edit.v.split("\n").length)}
+              maxLength={60}
+              value={edit.v}
+              onChange={(e) => setEdit({ ...edit, v: e.target.value })}
+              aria-label="넣을 글자"
+              placeholder="글자 입력"
+              style={{ ...textCss({ t: "text", f: edit.f, c: edit.c, d: edit.d }), fontSize: 34 * (fontOf(edit.f).scale || 1), whiteSpace: "pre-wrap", width: `min(100%, ${textWidth(edit) + 34 * 1.2}px)` }}
+            />
+          </div>
+          <div className="de-textbar">
+            <div className="de-row" aria-label="자주 쓰는 문구">
+              {TEXT_PRESETS.map((t) => <button key={t} type="button" onClick={() => setEdit({ ...edit, v: t })}>{t}</button>)}
+            </div>
+            <div className="de-row" aria-label="글씨체">
+              {FONTS.map((f) => <button key={f.id} type="button" className={edit.f === f.id ? "on" : ""} style={{ fontFamily: css(f), fontSize: 15 * (f.scale || 1) }} onClick={() => setEdit({ ...edit, f: f.id })}>{f.label}</button>)}
+            </div>
+            <Swatches value={edit.c} onPick={(c) => setEdit({ ...edit, c })} />
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );
+}
+
+// 입력칸을 글자 길이에 맞추기(사파리 옛 버전엔 field-sizing이 없음)
+let meas;
+function textWidth(e) {
+  const f = fontOf(e.f);
+  meas ||= document.createElement("canvas").getContext("2d");
+  meas.font = `${f.weight || 400} ${34 * (f.scale || 1)}px ${css(f)}`;
+  return Math.max(meas.measureText("글자 입력").width, ...e.v.split("\n").map((l) => meas.measureText(l).width));
 }
 
 function Swatches({ value, onPick }) {
@@ -355,20 +446,6 @@ function Swatches({ value, onPick }) {
     <div className="de-colors" role="radiogroup" aria-label="색">
       {COLORS.map((c) => <button key={c} type="button" role="radio" aria-checked={value === c} aria-label={c} className={value === c ? "on" : ""} style={{ background: c }} onClick={() => onPick(c)} />)}
     </div>
-  );
-}
-
-function TextOptions({ font, color, deco, onPick }) {
-  return (
-    <>
-      <div className="chip-wrap de-cats" aria-label="글씨체">
-        {FONTS.map((f) => <button key={f.id} type="button" className={`seg${font === f.id ? " on" : ""}`} style={{ fontFamily: css(f), fontSize: 16 * (f.scale || 1) }} onClick={() => onPick({ f: f.id })}>{f.label}</button>)}
-      </div>
-      <Swatches value={color} onPick={(c) => onPick({ c })} />
-      <div className="chip-wrap">
-        {DECOS.map(([id, l]) => <button key={id} type="button" className={`seg${deco === id ? " on" : ""}`} onClick={() => onPick({ d: id })}>{l}</button>)}
-      </div>
-    </>
   );
 }
 
