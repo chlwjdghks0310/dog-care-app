@@ -145,7 +145,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
       )}
 
       {!form && view === "cal" && <RecordCalendar dog={dog} items={items} onChanged={reload} />}
-      {!form && view === "trend" && <Trends dog={dog} items={items} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
+      {!form && view === "trend" && <Trends dog={dog} items={items} onPick={(t, d) => (setTypes([t]), setDays(d), setShowFilters(true), setView("list"))} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
       {!form && !startNew && <QuickAddFab onPick={onQuickAdd} />}
     </div>
   );
@@ -210,7 +210,7 @@ function VitalDayItem({ rec, open, onToggle, onEdit }) {
 }
 
 // 변화 보기 — 실제로 저장된 값만 쓴다. 기록 없는 날은 채우지 않고, 비교할 값이 없으면 그렇다고 말한다.
-function Trends({ dog, items, onAdd }) {
+function Trends({ dog, items, onAdd, onPick }) {
   const [days, setDays] = useState(30);
   const [field, setField] = useState("appetite");
   const inPeriod = filterTimeline(items, { days, order: "old" });
@@ -293,8 +293,8 @@ function Trends({ dog, items, onAdd }) {
           <Empty text={`최근 ${days}일 기록이 없습니다.`} onAdd={onAdd} />
         ) : (
           <div className="chip-wrap">
-            {Object.entries(TYPES).map(([t, v]) => [v, inPeriod.filter((r) => r.type === t).length]).filter(([, n]) => n).map(([v, n]) => (
-              <span key={v.label} className="seg" style={{ cursor: "default" }}><Ico name={v.ico} size={14} /> {v.label} <b>{n}</b></span>
+            {Object.entries(TYPES).map(([t, v]) => [t, v, inPeriod.filter((r) => r.type === t).length]).filter(([, , n]) => n).map(([t, v, n]) => (
+              <button key={t} type="button" className="seg" onClick={() => onPick(t, days)} aria-label={`${v.label} ${n}개 보기`}><Ico name={v.ico} size={14} /> {v.label} <b>{n}</b> ›</button>
             ))}
           </div>
         )}

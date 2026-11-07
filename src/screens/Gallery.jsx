@@ -72,7 +72,7 @@ export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우
           <input type="file" accept="image/*" multiple hidden onChange={add} />
         </label>
       </div>
-      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장</p>
+      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장{photos.length > 0 && " · 더 넣으려면 [＋ 사진] (여러 장 한 번에)"}</p>
       {error && <p className="error-text">{error}</p>}
       {photos.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
