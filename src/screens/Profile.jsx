@@ -9,6 +9,7 @@ import { resizeImageFile } from "../utils/image";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { backupJson, recordsCsv, shareFile } from "../services/exportData";
 import QuickAddFab from "../components/QuickAddFab";
+import CoverAdjust, { coverStyle } from "../components/CoverAdjust";
 import { addPhotos, getPhotos } from "../services/gallery";
 import { togetherDays } from "../services/shareCard";
 import { getMeds, getDosesForDate, isEnded } from "../services/medications";
@@ -145,13 +146,15 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
     onDeleteAll?.();
   }
 
+  const [adjusting, setAdjusting] = useState(false); // 대표 사진 맞추기 창
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
     e.target.value = ""; // 같은 사진을 다시 골라도 바뀌게
     if (!file) return;
     try {
-      const photo = await resizeImageFile(file, 900, 0.8);
-      onUpdateDog?.(saveDog({ ...dog, photo }));
+      const photo = await resizeImageFile(file, 1200, 0.8);
+      onUpdateDog?.(saveDog({ ...dog, photo, coverPos: null }));
+      setAdjusting(true); // 새 사진은 바로 맞추기 창으로
       try {
         addPhotos(dog.id, [photo]); // 대표 사진도 갤러리·기록 탭에 남긴다
       } catch {
@@ -166,7 +169,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
     <div className="screen">
       {/* 대표 사진(B안, 11/7): 화면 위를 꽉 채우고, 이름 카드가 살짝 겹쳐 올라온다. 사진을 바꾸면 갤러리·기록에도 남는다 */}
       <div className={`pf-cover${dog.photo ? "" : " empty"}`}>
-        {dog.photo ? <img src={dog.photo} alt={`${dog.name} 대표 사진`} /> : (
+        {dog.photo ? <img src={dog.photo} alt={`${dog.name} 대표 사진`} style={coverStyle(dog.coverPos)} /> : (
           <label className="pf-cover-empty">
             <Ico name="camera" size={26} />
             <b>대표 사진 넣기</b>
@@ -178,10 +181,18 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
           <Ico name="menu" size={22} />
         </button>
         {dog.photo && (
-          <label className="pf-cam" aria-label="대표 사진 바꾸기">
+          <button type="button" className="pf-cam" aria-label="대표 사진 맞추기·바꾸기" onClick={() => setAdjusting(true)}>
             <Ico name="camera" size={18} />
-            <input type="file" accept="image/*" onChange={handlePhotoChange} hidden />
-          </label>
+          </button>
+        )}
+        {adjusting && dog.photo && (
+          <CoverAdjust
+            src={dog.photo}
+            pos={dog.coverPos}
+            onClose={() => setAdjusting(false)}
+            onChangePhoto={(e) => (setAdjusting(false), handlePhotoChange(e))}
+            onSave={(coverPos) => (onUpdateDog?.(saveDog({ ...dog, coverPos })), setAdjusting(false))}
+          />
         )}
       </div>
       <div className="card pf-namecard" style={{ marginBottom: 14 }}>

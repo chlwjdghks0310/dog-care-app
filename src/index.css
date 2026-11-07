@@ -1308,3 +1308,10 @@ button.seg, button.chip { min-height: 36px; }
 .pf-thumbs button { padding: 0; border: none; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--accent-soft); }
 .pf-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pf-thumbs .pf-thumb-add { background: var(--surface); border: 1.5px dashed var(--border); color: var(--accent-strong); font-size: 22px; }
+/* 대표 사진 맞추기 */
+.ca-frame { position: relative; width: 100%; aspect-ratio: 390 / 300; border-radius: 14px; overflow: hidden; background: var(--accent-soft); touch-action: none; cursor: grab; }
+.ca-frame img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; user-select: none; }
+.ca-name { position: absolute; left: 6%; right: 6%; bottom: 0; height: 14%; border-radius: 12px 12px 0 0; background: rgba(255,255,255,.75); font-size: 11px; color: var(--text-soft); display: flex; align-items: center; justify-content: center; }
+.ca-zoom { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 13px; color: var(--text-soft); }
+.ca-zoom input { flex: 1; accent-color: var(--accent-btn, var(--accent)); }
+.pf-cover img { transition: none; }

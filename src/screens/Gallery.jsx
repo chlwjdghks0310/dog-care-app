@@ -78,7 +78,7 @@ export default function Gallery({ dog, onBack, onUpdateDog }) {
           photo={open}
           isCover={dog.photo === open.src}
           onClose={() => (setOpen(null), reload())}
-          onCover={() => (onUpdateDog?.(saveDog({ ...dog, photo: open.src })), setOpen(null))}
+          onCover={() => (onUpdateDog?.(saveDog({ ...dog, photo: open.src, coverPos: null })), setOpen(null))}
           onDelete={() => {
             if (!window.confirm("이 사진을 지울까요?")) return;
             removePhoto(dog.id, open.recId, open.idx);
