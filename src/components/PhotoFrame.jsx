@@ -4,15 +4,14 @@ import Ico from "./Ico";
 import { getPhotos, addPhotos } from "../services/gallery";
 import { resizeImageFile } from "../utils/image";
 
-// 프로필 사진 틀(사용자가 고름): 둥근 네모·동그라미·네모·하트·발바닥·별. 하트·발바닥·별은 SVG 모양으로 잘라 보인다(mask)
+// 프로필 사진 틀(사용자가 고름): 둥근 네모·동그라미·네모·하트(11/7 사용자 결정, 발바닥·별 뺌 — 예전에 고른 사람은 둥근 네모로). 하트는 SVG 모양으로 잘라 보인다(mask)
 const svg = (path, vb = "0 0 100 100") => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='${vb}'><path d='${path}'/></svg>`)}")`;
 export const FRAMES = [
   { id: "round", label: "둥근 네모", style: { borderRadius: "22%" } },
   { id: "circle", label: "동그라미", style: { borderRadius: "50%" } },
   { id: "square", label: "네모", style: { borderRadius: "6%" } },
-  { id: "heart", label: "하트", mask: svg("M50 92 C20 70 2 52 2 31 C2 15 14 4 28 4 C38 4 46 10 50 19 C54 10 62 4 72 4 C86 4 98 15 98 31 C98 52 80 70 50 92 Z") },
-  { id: "paw", label: "발바닥", mask: svg("M50 46 C66 46 84 62 84 78 C84 90 74 96 64 94 C58 93 54 90 50 90 C46 90 42 93 36 94 C26 96 16 90 16 78 C16 62 34 46 50 46 Z M22 40 C14 40 8 32 9 23 C10 15 17 11 23 13 C30 15 34 24 33 31 C32 37 28 40 22 40 Z M78 40 C72 40 68 37 67 31 C66 24 70 15 77 13 C83 11 90 15 91 23 C92 32 86 40 78 40 Z M38 30 C30 30 26 22 27 14 C28 6 34 1 40 2 C47 3 50 11 49 19 C48 26 44 30 38 30 Z M62 30 C56 30 52 26 51 19 C50 11 53 3 60 2 C66 1 72 6 73 14 C74 22 70 30 62 30 Z") },
-  { id: "star", label: "별", mask: svg("M50 4 L62 36 L96 37 L69 58 L79 92 L50 72 L21 92 L31 58 L4 37 L38 36 Z") },
+  // 통통한 큰 하트(11/7): 양쪽 볼록이를 끝까지 키우고 아래 뾰족한 끝은 틀 밖으로(잘려도 됨)
+  { id: "heart", label: "하트", mask: svg("M50 112 C22 92 0 72 0 40 C0 18 15 3 33 3 C42 3 47 8 50 14 C53 8 58 3 67 3 C85 3 100 18 100 40 C100 72 78 92 50 112 Z") },
 ];
 export const frameOf = (id) => FRAMES.find((f) => f.id === id) || FRAMES[0];
 const PLACE = { x: 50, y: 40, z: 1 };
