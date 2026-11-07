@@ -8,6 +8,8 @@ import DogReaction from "../components/DogReaction";
 import { VITAL, fmtValue } from "../data/vitals";
 import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
+import { periodSummary } from "../services/dailyCheck";
+import { todayKey, toDateKey, addDays } from "../utils/date";
 import { TYPES, FILTER_ORDER, LEVELS, md, summarize, getTimeline, filterTimeline, groupVitalDays, deleteRecord, levelSeries } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
@@ -67,11 +69,12 @@ export default function Records({ dog, startNew, startType, prefill, initialType
     <div className="screen">
       {onBack && <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>}
       <div className="h1">{dog.name}의 기록</div>
-      <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
+      {/* 새 기록·고치기 중엔 보기 바꾸기를 숨긴다(사용자 요청 11/7) */}
+      {!form && <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
         <button type="button" className={`seg${view === "list" ? " on" : ""}`} onClick={() => setView("list")}>전체 기록</button>
         <button type="button" className={`seg${view === "cal" ? " on" : ""}`} onClick={() => setView("cal")}>달력</button>
         <button type="button" className={`seg${view === "trend" ? " on" : ""}`} onClick={() => setView("trend")}>변화 보기</button>
-      </div>
+      </div>}
 
       {form ? (
         <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : undefined} onSaved={handleSaved} onCancel={() => setForm(null)} onOpenMeds={onOpenMeds} />
@@ -85,6 +88,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
 
       {!form && view === "list" && (
         <>
+          <WeekGlance dog={dog} items={items} onPick={(t) => (setTypes([t]), setDays(7), setShowFilters(true))} />
           <div className="card" style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", gap: 8 }}>
               <input className="rec-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색 (예: 구토)" aria-label="기록 검색" style={{ flex: 1, minWidth: 0 }} />
@@ -306,6 +310,35 @@ function Empty({ text, onAdd }) {
     <div style={{ textAlign: "center" }}>
       <p className="subtle">{text}</p>
       <button type="button" className="btn-ghost small" onClick={onAdd}>기록하기</button>
+    </div>
+  );
+}
+
+// 최근 7일 한눈에(사용자 요청 11/7 "기록을 좀 더 한눈에"): 하루 체크 한 줄 + 종류별 개수 칩(누르면 그 종류·7일만)
+function WeekGlance({ dog, items, onPick }) {
+  const today = todayKey();
+  const from = toDateKey(addDays(new Date(`${today}T00:00:00`), -6));
+  const week = items.filter((r) => r.at.slice(0, 10) >= from && r.at.slice(0, 10) <= today && r.type !== "med");
+  const count = {};
+  for (const r of week) {
+    const t = r.type === "vital" ? ({ dry: "meal", wet: "meal", treat: "meal", water: "meal", walk: "daily" }[r.data?.metric] || "vital") : r.type;
+    count[t] = (count[t] || 0) + 1;
+  }
+  const lastWeight = items.filter((r) => r.type === "weight").sort((a, b) => b.at.localeCompare(a.at))[0];
+  const daily = periodSummary(dog.id, from, today);
+  if (!week.length && !daily) return null;
+  return (
+    <div className="card wg-card" style={{ marginBottom: 14 }}>
+      <div className="h2" style={{ margin: "0 0 6px" }}>최근 7일</div>
+      {daily && <p className="subtle" style={{ margin: "0 0 8px" }}>{daily}</p>}
+      <div className="chip-wrap">
+        {FILTER_ORDER.filter((t) => count[t]).map((t) => (
+          <button key={t} type="button" className="seg" onClick={() => onPick(t)}>
+            <Ico name={TYPES[t].ico} size={15} /> {TYPES[t].label} <b>{count[t]}</b>
+          </button>
+        ))}
+        {lastWeight && <span className="seg" style={{ cursor: "default" }}><Ico name="scales" size={15} /> 지금 {lastWeight.data.weightKg}kg</span>}
+      </div>
     </div>
   );
 }

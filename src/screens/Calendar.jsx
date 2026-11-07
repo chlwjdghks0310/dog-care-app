@@ -9,6 +9,7 @@ import { HOLIDAYS } from "../data/holidays";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 import VetDocSheet from "../components/VetDocSheet";
+import MedicalLedger from "../components/MedicalLedger";
 
 const MEDICAL = ["vet", "vaccine", "med"];
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
@@ -84,10 +85,6 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="note" size={24} /></span>
           <span className="quick-tile-label">병원용 기록</span>
         </button>
-        <button className="quick-tile tone-teal filled" onClick={onOpenBudget}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="wallet" size={24} /></span>
-          <span className="quick-tile-label">가계부</span>
-        </button>
       </div>
 
       <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 병원·접종·약</div>
@@ -118,6 +115,8 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         </div>
       )}
 
+
+      <MedicalLedger dog={dog} onOpenBudget={onOpenBudget} />
 
       <div className="card" style={{ marginBottom: 14 }}>
         <MonthGrid

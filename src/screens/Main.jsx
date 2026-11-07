@@ -537,6 +537,8 @@ function TodaySummary({ dog }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
+      {/* 누르면 오늘 할 일로 간다는 걸 보이게(사용자 요청 11/7) — 말풍선 전체가 버튼 */}
+      <span className="summary-go" aria-hidden="true"><Ico name="checklist" size={15} /> 오늘 할 일 보기 <span>›</span></span>
     </span>
   );
 }
