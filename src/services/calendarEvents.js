@@ -53,7 +53,12 @@ export function deleteEvent(dogId, dateKey, id) {
 // Event += { kind?, time?("HH:MM"), endDate?(기간 끝, 포함), repeat?("weekly"|"monthly"|"yearly"), memo?, alarm?("morning"|"before1h"|"eve"), alarmId?, alarmAt? }
 export const EVENT_KINDS = [
   { id: "vet", label: "병원", icon: "🏥", ico: "stethoscope", color: "#e05f5f" },
+  { id: "recheck", label: "재검", icon: "🩺", ico: "stethoscope", color: "#d0574f" },
   { id: "vaccine", label: "접종", icon: "💉", ico: "syringe", color: "#9350b8" },
+  { id: "checkup", label: "정기검진", icon: "🩺", ico: "stethoscope", color: "#c4485e" },
+  { id: "scaling", label: "스케일링", icon: "🦷", ico: "tooth", color: "#2f8fb0" },
+  { id: "deworm", label: "구충", icon: "💊", ico: "pill", color: "#7c9a2e" },
+  { id: "heartworm", label: "심장사상충", icon: "💊", ico: "pill", color: "#b5651d" },
   { id: "grooming", label: "미용", icon: "✂️", ico: "scissors", color: "#3fa578" },
   { id: "med", label: "약", icon: "💊", ico: "pill", color: "#dba329" },
   { id: "stay", label: "호텔·돌봄", icon: "🏨", ico: "building", color: "#3f8fe0" },

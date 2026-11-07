@@ -5,6 +5,7 @@ import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent, skipOccur
 import { isVisitEvent, eventTitle } from "../services/vetVisits";
 import { todayKey } from "../utils/date";
 import Ico from "./Ico";
+import { downloadIcs } from "../services/ics";
 import { syncPushAlarms } from "../services/notifications";
 
 const WEEK = "일월화수목금토";
@@ -27,7 +28,7 @@ const keyPlus = (key, n) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 // onRecordVisit: 지난 병원 일정이면 "진료 내용 기록하기"(병원 진료 기록을 이 날짜·제목으로 채워 연다). 이미 그날 기록이 있으면 안 준다
-export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVisit }) {
+export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVisit, onOpenDoc }) {
   const ev = initial.event || {};
   const occ = initial.date || initial.start; // 누른 회차 날짜
   const [scopeAsk, setScopeAsk] = useState(null); // 반복 일정: "save" | "remove" — 범위를 고르는 중
@@ -138,13 +139,24 @@ export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVis
         </div>
 
         <div className="es-scroll">
+          {/* 다녀왔으면 곧바로 진료 정리(영수증 사진) — 제안 분석 11/7 */}
+          {onOpenDoc && ev.id && isVisitEvent(ev) && occ <= todayKey() && (
+            <button type="button" className="es-record-visit" onClick={onOpenDoc}>
+              <Ico name="camera" size={16} /> 다녀왔어요 · 영수증 사진으로 정리하기 ›
+            </button>
+          )}
           {onRecordVisit && ev.id && isVisitEvent(ev) && occ <= todayKey() && (
             <button
               type="button"
               className="es-record-visit"
               onClick={() => onRecordVisit({ at: `${occ}T${ev.time || "10:00"}`, data: { reason: eventTitle(ev).replace(/^.*병원\s*/, "") || eventTitle(ev) } })}
             >
-              <Ico name="note" size={16} /> 다녀왔나요? 진료 내용 기록하기 ›
+              <Ico name="note" size={16} /> 사진 없이 진료 내용 적기 ›
+            </button>
+          )}
+          {ev.id && (
+            <button type="button" className="es-record-visit" onClick={() => downloadIcs(ev, occ, dog?.name)}>
+              <Ico name="calendar" size={16} /> 폰 달력에도 넣기 ›
             </button>
           )}
           {section("what", "무엇을", <><Ico name={k?.ico || "note"} size={15} /> {title.trim() || k?.label || "골라 주세요"}</>, <>

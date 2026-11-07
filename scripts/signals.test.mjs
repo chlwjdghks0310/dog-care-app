@@ -41,4 +41,9 @@ W.addWeightRecord("q", { weightKg: 3.0, measuredAt: `${day(-30)}T09:00` });
 W.addWeightRecord("q", { weightKg: 2.95, measuredAt: `${today}T09:00` });
 assert.deepEqual(getSignals({ id: "q", name: "새끼", birthDate: day(-200) }, today).map((s) => s.id), ["weight"]);
 assert.match(getSignals(c, today)[0].text, /4\.2→3\.7kg/);
+// 7일 중 3일(이어지지 않아도)
+D.saveDiff("w", day(-6), { energy: "덜 놂" }); D.saveDiff("w", day(-4), { energy: "많이 잠" }); D.saveDiff("w", day(-1), { energy: "덜 놂" });
+const w = getSignals({ id: "w", name: "별", birthDate: "2021-01-01" }, today);
+assert.deepEqual(w.map((s) => [s.id, s.level]), [["energy", "watch"]]);
+assert.match(w[0].text, /최근 7일 중 3일 기운이 평소와/);
 console.log("이상 신호 OK");

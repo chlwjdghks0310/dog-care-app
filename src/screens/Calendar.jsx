@@ -11,7 +11,7 @@ import MonthGrid from "../components/MonthGrid";
 import VetDocSheet from "../components/VetDocSheet";
 import MedicalLedger from "../components/MedicalLedger";
 
-const MEDICAL = ["vet", "vaccine", "med"];
+const MEDICAL = ["vet", "vaccine", "recheck", "checkup", "scaling", "deworm", "heartworm", "med"];
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
 const dDay = (today, date) => {
   const n = Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
@@ -55,7 +55,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
   const upcoming = useMemo(() => {
     const seen = new Set();
     return getOccurrences(dog.id, today, toDateKey(addDays(new Date(), 90)))
-      .filter((o) => o.isStart && (isVisitEvent(o.event) || o.event.kind === "med") && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
+      .filter((o) => o.isStart && (isVisitEvent(o.event) || MEDICAL.includes(o.event.kind)) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원 탭: 병원·접종·약만(나머지는 아래 달력에)
       .slice(0, 3);
   }, [dog.id, today, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -201,13 +201,14 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
       </div>
 
 
-      {docOpen && <VetDocSheet onClose={closeDoc} onUse={(prefill) => (closeDoc(), onRecordVisit?.(prefill))} />}
+      {docOpen && <VetDocSheet dog={dog} onClose={closeDoc} onUse={(prefill) => (closeDoc(), onRecordVisit?.(prefill))} />}
       {sheet && (
         <EventSheet
           dog={dog}
           initial={sheet}
           onClose={() => setSheet(null)}
           onSaved={handleSheetSaved}
+          onOpenDoc={() => (setSheet(null), setDocOpen(true))}
           onRecordVisit={onRecordVisit && sheet.event && !(vetByDate[sheet.date || sheet.start] || []).length ? (prefill) => (setSheet(null), onRecordVisit(prefill)) : null}
         />
       )}

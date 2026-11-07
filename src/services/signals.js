@@ -10,6 +10,7 @@ import { getWeightRecords } from "./weightLog";
 import { getDosesForDate } from "./medications";
 import { getDay } from "./dailyCheck";
 import { calculateAge } from "../utils/age";
+import { josa } from "../utils/text";
 import { addDays, toDateKey, todayKey } from "../utils/date";
 
 const back = (day, n) => toDateKey(addDays(new Date(`${day}T00:00:00`), -n));
@@ -53,6 +54,15 @@ export function getSignals(dog, today = todayKey(), now = new Date()) {
 
   const m = streak(lessMealDays, today);
   if (m >= 2 || (months < 4 && m >= 1)) out.push({ id: "meal", level: "vet", text: months < 4 && m < 2 ? "밥을 평소보다 적게 먹었어요. 아주 어린 강아지는 한 끼만 걸러도 병원에 물어보세요." : `밥을 평소보다 적게 먹은 날이 ${m}일째예요. 나아지지 않으면 병원에 물어보세요.` });
+
+  // 7일 중 3일 이상 같은 항목이 평소와 달랐으면(이어지지 않아도) — 제안 분석 11/7
+  const LABEL = { meal: "밥", stool: "변", vomit: "토·기침", urine: "소변", energy: "기운", water: "물" };
+  for (const id of Object.keys(LABEL)) {
+    if (out.some((x) => x.id === id)) continue;
+    let n = 0;
+    for (let i = 0; i < 7; i++) if (getDay(dog.id, back(today, i))?.picks?.[id]) n++;
+    if (n >= 3) out.push({ id, level: "watch", text: `최근 7일 중 ${n}일 ${josa(LABEL[id], "이", "가")} 평소와 달랐어요. 병원에 보여 줄 기록에 모여 있어요.` });
+  }
 
   // 몸무게: 가장 최근 값 vs 25~40일 전 값
   const ws = getWeightRecords(dog.id).map((x) => ({ day: x.measuredAt.slice(0, 10), kg: Number(x.weightKg) })).filter((x) => x.kg > 0 && x.day <= today).sort((a, b) => a.day.localeCompare(b.day));

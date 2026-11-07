@@ -2,21 +2,24 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { readVetDoc } from "../services/aiClient";
-import { docToPrefill } from "../services/vetDoc";
+import { docToPrefill, findSameVisit } from "../services/vetDoc";
+import { getRecords } from "../services/records";
 import { imageForAI } from "../utils/image";
+import MaskEditor from "./MaskEditor";
 
 // 진료 정리: 영수증·세부내역·처방전 사진(최대 3장) + 들은 설명 → "맞는지 확인" → 진료 기록 칸을 채워 연다(저장은 보호자가).
 // 근거: ../자료용/자료/2026-11-07-2단계-병원루프-조사.md ①(병원마다 영수증 형식이 다름·재진 안내는 말로 받음·펫수첩 "맞는지 확인")
 // 사진은 정리에만 쓰고 저장하지 않는다. 보호자 이름·전화·카드번호는 서버가 옮기지 않는다. 약 용량은 적힌 그대로(바꾸지 않음).
 const won = (n) => `${Number(n || 0).toLocaleString("ko-KR")}원`;
 
-export default function VetDocSheet({ onClose, onUse }) {
+export default function VetDocSheet({ dog, onClose, onUse }) {
   const [files, setFiles] = useState([]); // { file, url }
   const [said, setSaid] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [doc, setDoc] = useState(null);
   const [claim, setClaim] = useState(false); // 보험 청구할 병원비
+  const [masking, setMasking] = useState(null); // 가리는 중인 사진
 
   function addFiles(list) {
     const all = [...files, ...[...list].map((file) => ({ file, url: URL.createObjectURL(file) }))];
@@ -33,7 +36,7 @@ export default function VetDocSheet({ onClose, onUse }) {
       if (!out?.is_doc) setError(out?.retake || "병원 서류로 읽지 못했어요. 영수증이 화면에 꽉 차게 다시 찍어 주세요.");
       else setDoc(out);
     } catch (e) {
-      if (e.name !== "AbortError") setError(e instanceof TypeError ? "인터넷에 연결하지 못했어요. 연결을 확인하고 다시 시도해 주세요." : e.message);
+      if (e.name !== "AbortError") setError(e instanceof TypeError ? "인터넷에 연결하지 못했어요. 연결을 확인하고 다시 시도해 주세요. 아래 [직접 적기]로도 남길 수 있어요." : `${e.message} 아래 [직접 적기]로도 남길 수 있어요.`);
     } finally {
       setBusy(false);
     }
@@ -58,7 +61,8 @@ export default function VetDocSheet({ onClose, onUse }) {
               <div className="vd-photos">
                 {files.map((f, i) => (
                   <div key={f.url} className="vd-thumb">
-                    <img src={f.url} alt={`사진 ${i + 1}`} />
+                    <img src={f.url} alt={`사진 ${i + 1}`} onClick={() => setMasking(f)} />
+                    <button type="button" className="vd-mask" onClick={() => setMasking(f)}>{f.masked ? "가림 ✓" : "가리기"}</button>
                     <button type="button" aria-label="사진 빼기" onClick={() => (URL.revokeObjectURL(f.url), setFiles(files.filter((x) => x !== f)))}>✕</button>
                   </div>
                 ))}
@@ -74,15 +78,22 @@ export default function VetDocSheet({ onClose, onUse }) {
                 <span className="xs-label">수의사 선생님이 뭐라고 했나요? (선택)</span>
                 <textarea rows={3} value={said} maxLength={2000} onChange={(e) => setSaid(e.target.value)} placeholder="예: 장염 같다, 위장약 하루 두 번 5일, 다음 주 수요일 다시 오래요" />
               </label>
-              <p className="faint" style={{ fontSize: 12.5, margin: "6px 0 10px" }}>사진은 정리에만 쓰고 저장하지 않아요. 보호자 이름·전화번호·카드번호는 옮기지 않아요. 하루 3번까지.</p>
+              {files.length > 0 && (
+                <div className="vd-privacy">
+                  <b>보내기 전에 가려 주세요</b> · 영수증에 보호자 이름·전화번호·카드번호가 보이면 사진의 <b>[가리기]</b>를 눌러 칠해 주세요. 사진은 AI(Anthropic)로 보내 정리에만 쓰고 저장하지 않아요.
+                </div>
+              )}
+              <p className="faint" style={{ fontSize: 12.5, margin: "6px 0 10px" }}>영수증·진료비 내역·처방전·약봉투 모두 돼요. 하루 3번까지.</p>
               {error && <p className="error-text">{error}</p>}
               <button type="button" className="btn-primary" disabled={busy || (!files.length && !said.trim())} onClick={run}>{busy ? "정리하는 중…" : "정리하기"}</button>
+              {/* AI 없이도: 같은 칸을 직접 채우는 진료 기록으로(AI 동의 안 함·흐린 사진·인터넷 끊김) */}
+              <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => onUse({ data: { reason: "", ...(said.trim() && { explanation: said.trim() }) } })}>AI 없이 직접 적기</button>
             </>
           ) : (
             <>
               <p className="subtle" style={{ margin: "0 0 10px" }}>사진·설명에서 읽은 내용이에요. 다음 화면에서 고칠 수 있어요.</p>
               <dl className="vd-list">
-                {[["진료일", doc.visit_date], ["병원", doc.hospital], ["진료 사유", doc.reason], ["검사", doc.tests], ["처방", doc.prescription], ["들은 설명", doc.explanation], ["다음 진료일", doc.next_date]].map(([k, v]) => (
+                {[["진료일", doc.visit_date], ["병원", doc.hospital], ["진료 사유", doc.reason], ["검사·처치", doc.tests], ["처방", doc.prescription], ["들은 소견", doc.explanation], ["주의사항", doc.cautions], ["다음 진료일", doc.next_date]].map(([k, v]) => (
                   <div key={k} className={v ? "" : "empty"}><dt>{k}</dt><dd>{v || "읽지 못함"}</dd></div>
                 ))}
               </dl>
@@ -96,6 +107,7 @@ export default function VetDocSheet({ onClose, onUse }) {
                   </tbody>
                 </table>
               )}
+              {dog && findSameVisit(getRecords(dog.id), doc) && <p className="dc-warn"><b>이미 정리한 영수증 같아요</b> · {doc.visit_date} 진료 기록이 벌써 있어요. 같은 영수증이면 [진료 기록으로 열기] 대신 닫아 주세요.</p>}
               {mismatch && <p className="dc-warn"><b>합계가 안 맞아요</b> · 항목 합 {won(sum)}, 영수증 합계 {won(doc.total)}. 빠진 항목이 있는지 사진을 확인해 주세요.</p>}
               {doc.prescription && <p className="faint" style={{ fontSize: 12.5 }}>약은 적힌 그대로 옮겼어요. 매일 먹일 약은 약 관리에 등록하면 알림이 와요.</p>}
               {(doc.total > 0 || sum > 0) && (
@@ -110,6 +122,17 @@ export default function VetDocSheet({ onClose, onUse }) {
           )}
         </div>
       </div>
+      {masking && (
+        <MaskEditor
+          file={masking.file}
+          onClose={() => setMasking(null)}
+          onDone={(file) => {
+            URL.revokeObjectURL(masking.url);
+            setFiles((list) => list.map((x) => (x === masking ? { file, url: URL.createObjectURL(file), masked: true } : x)));
+            setMasking(null);
+          }}
+        />
+      )}
     </div>,
     document.body
   );

@@ -251,6 +251,13 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
       <Field label="메모">
         <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="선택" maxLength={500} />
       </Field>
+      {type !== "weight" && (
+        // 메모를 병원에 물어볼 것으로 표시하면 병원용 기록 맨 위 '물어볼 것'에 모인다(제안 분석 11/7)
+        <label className="rec-check" style={{ marginTop: -6 }}>
+          <input type="checkbox" checked={Boolean(data.ask)} onChange={(e) => set("ask")(e.target.checked)} />
+          병원에 물어볼 것으로 표시
+        </label>
+      )}
 
       {type !== "weight" && type !== "vital" && (
         <Field label={`사진 (${photos.length}/${MAX_PHOTOS})`}>

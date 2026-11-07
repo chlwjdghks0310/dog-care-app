@@ -157,7 +157,7 @@ export function DiffSheet({ dog, date, initial, onClose, onSaved }) {
                 <div key={i.id} className="ci-q">
                   <div className="xs-label">{i.label}</div>
                   <div className="chip-wrap">
-                    {i.options.map((o) => {
+                    {i.options.filter((o) => !o.hidden).map((o) => {
                       const on = picks[i.id] === o.label;
                       return (
                         <button key={o.label} type="button" className={`seg${on ? " on" : ""}${o.red ? " red" : ""}`} aria-pressed={on} onClick={() => setPicks((p) => ({ ...p, [i.id]: on ? undefined : o.label }))}>

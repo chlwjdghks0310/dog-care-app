@@ -19,7 +19,7 @@ export function docToPrefill(doc, now = new Date(), { claim = false } = {}) {
     data: {
       ...(doc.hospital && { hospital: doc.hospital }),
       reason: doc.reason || "진료",
-      ...(doc.explanation && { explanation: doc.explanation }),
+      ...((doc.explanation || doc.cautions) && { explanation: [doc.explanation, doc.cautions && `주의사항: ${doc.cautions}`].filter(Boolean).join("\n") }),
       ...(doc.tests && { tests: doc.tests }),
       ...(doc.prescription && { prescription: doc.prescription }),
       ...(total > 0 && { cost: String(total) }),
@@ -29,4 +29,10 @@ export function docToPrefill(doc, now = new Date(), { claim = false } = {}) {
     },
     memo: items.length ? `진료비 항목: ${items.map((i) => `${i.name} ${won(i.amount)}`).join(" · ")}${doc.total > 0 && sum && sum !== doc.total ? ` (항목 합 ${won(sum)}, 영수증 합계 ${won(doc.total)})` : ""}` : "",
   };
+}
+
+// 이미 정리한 영수증 같은지: 같은 날짜 진료 기록이 있고 병원 이름이나 금액이 같으면
+export function findSameVisit(records, doc) {
+  const total = doc.total > 0 ? doc.total : (doc.items || []).reduce((a, i) => a + (i.amount || 0), 0);
+  return records.find((r) => r.type === "vet" && r.at.slice(0, 10) === doc.visit_date && ((doc.hospital && r.data.hospital === doc.hospital) || (total && Number(r.data.cost) === total))) || null;
 }

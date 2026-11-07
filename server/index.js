@@ -930,12 +930,13 @@ const VET_DOC_TOOL = {
       reason: { type: "string", description: "진료 사유·진단명으로 적힌 것(짧게). 없으면 빈 문자열" },
       explanation: { type: "string", description: "수의사 설명·주의사항으로 적히거나 말한 것" },
       tests: { type: "string", description: "검사 이름과 적힌 결과" },
+      cautions: { type: "string", description: "주의사항(먹이지 말 것·목욕 금지·산책 줄이기 등)으로 적히거나 말한 것" },
       prescription: { type: "string", description: "약 이름·용량·횟수·일수를 적힌 그대로. 바꾸거나 계산하지 않음" },
       items: { type: "array", items: { type: "object", properties: { name: { type: "string", description: "영수증에 적힌 이름 그대로" }, kind: { type: "string", enum: ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약", "미용", "기타"], description: "분류(주사·처방식은 처치·약, 마취는 수술)" }, amount: { type: "integer" } }, required: ["name", "kind", "amount"], additionalProperties: false }, description: "진료비 항목과 금액(원). 소계·합계·부가세 줄은 넣지 않음" },
       total: { type: "integer", description: "총 결제·청구 금액(원), 없으면 0" },
       next_date: { type: "string", description: "재진·재검·다음 접종 날짜 YYYY-MM-DD, 없으면 빈 문자열" },
     },
-    required: ["is_doc", "retake", "visit_date", "hospital", "reason", "explanation", "tests", "prescription", "items", "total", "next_date"],
+    required: ["is_doc", "retake", "visit_date", "hospital", "reason", "explanation", "tests", "cautions", "prescription", "items", "total", "next_date"],
     additionalProperties: false,
   },
 };
@@ -951,7 +952,7 @@ app.post("/api/vet-doc", async (req, res) => {
       max_tokens: 2500,
       output_config: { effort: "low" },
       system: [
-        "보호자가 동물병원에서 받은 영수증·진료비 세부내역·처방전 사진이나, 들은 설명을 보냈습니다. 반드시 vet_doc 도구를 한 번 호출해 적히거나 말한 것만 옮기세요. 도구 밖에 다른 글은 쓰지 않습니다.",
+        "보호자가 동물병원에서 받은 영수증·진료비 세부내역·처방전·약봉투 사진이나, 들은 설명을 보냈습니다. 여러 장이면 한 번의 진료로 합쳐 정리합니다. 반드시 vet_doc 도구를 한 번 호출해 적히거나 말한 것만 옮기세요. 도구 밖에 다른 글은 쓰지 않습니다.",
         "추측하지 않습니다. 흐리거나 잘린 글자·숫자는 빈 값(또는 0)으로 둡니다. 진단을 새로 붙이지 않고, 약 용량·횟수를 바꾸거나 계산하지 않습니다.",
         "보호자 이름·전화번호·주소·카드번호·승인번호는 어떤 칸에도 옮기지 않습니다.",
         "영수증의 과세공급가액·부가세·비과세 줄은 항목이 아니라 합계 확인용입니다. total은 최종 청구·결제 금액입니다. 재진 안내는 영수증보다 들은 설명에 있을 때가 많습니다.",

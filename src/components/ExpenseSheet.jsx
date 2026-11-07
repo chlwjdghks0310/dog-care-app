@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { getRecords, saveRecord } from "../services/records";
-import { addExpense, updateExpense, deleteExpense, quickItems, categoryIco, isMedical, VET_ITEMS, CLAIMS, saveFixedExpense, deleteFixedExpense } from "../services/expenses";
+import { addExpense, updateExpense, deleteExpense, quickItems, categoryIco, isMedical, VET_ITEMS, CLAIMS, CLAIM_DOCS, saveFixedExpense, deleteFixedExpense } from "../services/expenses";
 
 const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 const commas = (text) => {
@@ -23,6 +23,7 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
   // 병원·예방 지출만: 세부 항목, 보험 청구 상태, 받은 보험금
   const [items, setItems] = useState(initial.items || []);
   const [claim, setClaim] = useState(initial.claim || "");
+  const [docs, setDocs] = useState(initial.claimDocs || []); // 챙긴 청구 서류
   const [claimPaidText, setClaimPaidText] = useState(initial.claimPaid ? commas(initial.claimPaid) : "");
   const medical = isMedical(categoryId);
   const [error, setError] = useState("");
@@ -53,6 +54,7 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
     const fields = {
       title: title.trim(), amount, categoryId, date, memo: memo.trim(),
       items: medical ? items : [], claim: medical ? claim : "", claimPaid: medical && claim === "paid" ? Number(claimPaidText.replace(/\D/g, "")) || null : null,
+      claimDocs: medical && claim ? docs : [],
     };
     const list = editing ? updateExpense(dog.id, initial.id, fields) : addExpense(dog.id, fields);
     syncVetRecord(amount);
@@ -146,7 +148,19 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
                   <span>원</span>
                 </div>
               )}
-              {claim && <p className="faint" style={{ marginTop: 0 }}>영수증·진료비 세부내역서는 보험사마다 필요한 서류가 달라요. 받아 두면 청구할 때 편해요.</p>}
+              {claim && (
+                <>
+                  <div className="xs-label" style={{ marginTop: 4 }}>챙긴 서류</div>
+                  <div className="chip-wrap">
+                    {CLAIM_DOCS.map((d) => (
+                      <button key={d} type="button" className={`seg${docs.includes(d) ? " on" : ""}`} aria-pressed={docs.includes(d)} onClick={() => setDocs((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d]))}>
+                        {docs.includes(d) ? "✓ " : ""}{d}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="faint" style={{ marginTop: 6 }}>보험사마다 필요한 서류가 달라요. 가입한 보험사 안내를 확인해 주세요.</p>
+                </>
+              )}
             </>
           )}
           {error && <p className="error-text" role="alert">{error}</p>}

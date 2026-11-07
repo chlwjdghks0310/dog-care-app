@@ -108,7 +108,10 @@ R.deleteRecord("a", "rec-t");
 R.saveRecord("a", { id: "rec-v2", type: "vet", at: at(-4), data: { hospital: "행복병원", reason: "구토", tests: "혈액검사 정상" }, memo: "", photos: [] });
 R.saveRecord("a", { id: "rec-p", type: "potty", at: at(-2), data: { stool: "무름" }, memo: "산책 후", photos: [] });
 const dog = { id: "a", name: "콩이", breed: "말티즈", gender: "female", birthDate: "2020-01-01", illnesses: "슬개골 수술" };
-const s = V.buildVetSummary(dog, V.getVetNote("a"), today);
+const s = V.buildVetSummary(dog, { ...V.getVetNote("a"), period: 30 }, today);
+// 기본 기간 = 지난 진료 이후(4일 전 진료 → 최소 7일), 제목에 날짜
+assert.equal(V.getVetNote("zz").period, "since");
+assert.match(V.buildVetSummary(dog, V.getVetNote("a"), today).find((x) => x.key === "observe")?.title || "", /지난 진료\(\d+\/\d+\) 이후/);
 const get = (k) => s.find((x) => x.key === k)?.lines.join("\n") || "";
 assert.match(get("basic"), /과거 질환·수술: 슬개골 수술/);
 assert.match(get("symptoms"), /구토 \(가끔\) · 메모: 노란 토/);

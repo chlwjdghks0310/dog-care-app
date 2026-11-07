@@ -23,6 +23,13 @@ export const ITEMS = [
     { label: "피·검은 변", red: true, rec: ["potty", { stool: "피 섞임" }] },
     { label: "이상한 게 섞임", warn: "삼킨 것이 보이면 병원에 물어보세요.", rec: ["potty", {}] },
   ] },
+  // 수의사가 꼭 묻는 토·기침은 따로(제안 분석 11/7)
+  { id: "vomit", label: "토·기침", ico: "alert", options: [
+    { label: "토함", warn: "하루에 여러 번 토하거나 기운이 없으면 병원에 물어보세요.", rec: ["symptom", { kinds: ["구토"] }] },
+    { label: "여러 번 토함", red: true, rec: ["symptom", { kinds: ["구토"], repeat: "자주" }] },
+    { label: "기침·재채기", rec: ["symptom", { kinds: ["기침"] }] },
+    { label: "숨이 가쁨", red: true, rec: ["symptom", { kinds: ["숨이 가쁨"] }] },
+  ] },
   { id: "urine", label: "소변", ico: "droplet", options: [
     { label: "자주 조금씩", rec: ["potty", { urine: "잦음" }] },
     { label: "힘줘도 안 나옴", red: true, rec: ["potty", { urine: "적음" }] },
@@ -45,10 +52,13 @@ export const ITEMS = [
     { label: "짧게만" },
     { label: "절뚝거림", warn: "절뚝거림이 이어지면 병원에 물어보세요.", rec: ["symptom", { kinds: ["절뚝거림"] }] },
   ] },
-  { id: "etc", label: "그 밖에", ico: "alert", options: [
-    { label: "토함", warn: "하루에 여러 번 토하거나 기운이 없으면 병원에 물어보세요.", rec: ["symptom", { kinds: ["구토"] }] },
-    { label: "기침·재채기", rec: ["symptom", { kinds: ["기침"] }] },
+  { id: "etc", label: "그 밖에", ico: "pin", options: [
     { label: "긁음·핥음", rec: ["symptom", { kinds: ["가려움·긁음"] }] },
+    { label: "눈·귀 이상", rec: ["symptom", { kinds: ["눈 이상"] }] },
+    { label: "피부 이상", rec: ["symptom", { kinds: ["피부 이상"] }] },
+    // 예전에 '그 밖에'로 골랐던 토함·기침도 읽히게(고르는 칩에는 안 보임)
+    { label: "토함", hidden: true, rec: ["symptom", { kinds: ["구토"] }] },
+    { label: "기침·재채기", hidden: true, rec: ["symptom", { kinds: ["기침"] }] },
   ] },
 ];
 const option = (itemId, label) => ITEMS.find((i) => i.id === itemId)?.options.find((o) => o.label === label);

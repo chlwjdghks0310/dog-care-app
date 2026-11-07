@@ -5,7 +5,9 @@ import { getOccurrences } from "./calendarEvents";
 import { getExpenses, resolveCategoryId, addExpense, updateExpense } from "./expenses";
 
 const VISIT_WORDS = /병원|진료|검진|검사|접종|수술|처방|입원|재진/; // 종류가 없는 예전 일정만 제목으로 판단("약"은 약 일정과 헷갈려 뺌)
-export const isVisitEvent = (e) => (e.kind ? e.kind === "vet" || e.kind === "vaccine" : VISIT_WORDS.test(e.title || ""));
+// 병원에 가는 일정(재검·정기검진·스케일링 포함). 구충·심장사상충·약은 집에서 먹이는 일정이라 뺀다
+export const VISIT_KINDS = ["vet", "vaccine", "recheck", "checkup", "scaling"];
+export const isVisitEvent = (e) => (e.kind ? VISIT_KINDS.includes(e.kind) : VISIT_WORDS.test(e.title || ""));
 const MEDICAL = new Set(["medical", "prevent"]); // 가계부 병원·치료, 예방(접종·구충)
 export const isVisitRecord = (r) => r.type === "vet" || (r.type === "life" && ["예방접종", "질환·수술"].includes(r.data?.kind));
 

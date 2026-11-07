@@ -4,7 +4,7 @@ import { addDays, toDateKey, todayKey } from "../utils/date";
 import { getWeightRecords } from "./weightLog";
 import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getOccurrences } from "./calendarEvents";
-import { visitsByDate, isVisitEvent, eventTitle } from "./vetVisits";
+import { visitsByDate, isVisitEvent, eventTitle, isVisitRecord } from "./vetVisits";
 import { getChatMemory } from "./chatMemory";
 import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily, stoolCheckText, checkText } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
@@ -29,9 +29,9 @@ export const SECTIONS = [
   { key: "memos", label: "보호자 기록 메모" },
   { key: "chat", label: "최근 상담 질문" },
 ];
-export const PERIODS = [7, 30, 90];
+export const PERIODS = ["since", 7, 30, 90]; // "since" = 지난 진료 이후(기본, 제안 분석 11/7)
 
-const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, signals: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, vitals: true, visits: true, memos: true, chat: false } };
+const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: "since", sections: { note: true, signals: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, vitals: true, visits: true, memos: true, chat: false } };
 
 export function getVetNote(dogId) {
   const saved = readJSON(KEY, {})[dogId] || {};
@@ -49,7 +49,12 @@ const md = (dateKey) => `${Number(dateKey.slice(5, 7))}/${Number(dateKey.slice(8
 
 // 반환: [{ key, title, lines: [string] }] — 화면·공유·읽어주기가 같은 내용을 쓴다
 export function buildVetSummary(dog, note, today = todayKey()) {
-  const from = toDateKey(addDays(new Date(`${today}T00:00:00`), -note.period));
+  // 기간: "지난 진료 이후"면 오늘 전 마지막 병원 기록 날부터(없으면 30일, 7~180일 안으로)
+  const lastVisit = getRecords(dog.id).filter((r) => isVisitRecord(r) && r.at.slice(0, 10) < today).map((r) => r.at.slice(0, 10)).sort().at(-1);
+  const days = note.period === "since" ? (lastVisit ? Math.min(180, Math.max(7, Math.round((new Date(`${today}T00:00:00`) - new Date(`${lastVisit}T00:00:00`)) / 86400000))) : 30) : Number(note.period) || 30;
+  const periodLabel = note.period === "since" && lastVisit ? `지난 진료(${md(lastVisit)}) 이후` : `최근 ${days}일`;
+  note = { ...note, period: days };
+  const from = toDateKey(addDays(new Date(`${today}T00:00:00`), -days));
   const sections = [];
   const add = (key, title, lines) => note.sections[key] && sections.push({ key, title, lines: lines.length ? lines : ["기록 없음"] });
 
@@ -58,6 +63,8 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   if (note.since) noteLines.push(`시작: ${md(note.since)}부터 (${Math.max(0, Math.round((new Date(today) - new Date(note.since)) / 86400000))}일째)`);
   if (note.text.trim()) noteLines.push(`상태 설명: ${note.text.trim()}`);
   if (note.questions.trim()) noteLines.push(`여쭤보고 싶은 것: ${note.questions.trim()}`);
+  // 기록 메모에 '병원에 물어볼 것'으로 표시한 것(지난 진료 이후)
+  for (const r of getRecords(dog.id).filter((r) => r.data?.ask && r.memo?.trim() && r.at.slice(0, 10) >= from && r.at.slice(0, 10) <= today)) noteLines.push(`물어볼 것(${md(r.at.slice(0, 10))} 기록): ${r.memo.trim()}`);
   add("note", "보호자 메모", noteLines);
   // 이상 신호(규칙 기반, 판단 없이) — 진료실에서 "요즘 달라진 것"을 먼저 보게
   const sig = getSignals(dog, today);
@@ -79,7 +86,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   const recs = filterTimeline(getRecords(dog.id), { days: note.period, order: "old" }, today);
   add(
     "symptoms",
-    `증상 기록 (최근 ${note.period}일)`,
+    `증상 기록 (${periodLabel})`,
     recs.filter((r) => r.type === "symptom").map((r) => `${mdKey(r.at.slice(0, 10))} ${r.at.slice(11, 16)} ${r.data.kinds.join(", ")}${r.data.repeat ? ` (${r.data.repeat})` : ""}${r.data.since ? ` · ${mdKey(r.data.since)}부터` : ""}${r.data.observed ? ` — ${r.data.observed}` : ""}${r.memo ? ` · 메모: ${r.memo}` : ""}`)
   );
   const observeLines = [];
@@ -98,7 +105,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   for (const r of recs.filter((r) => r.type === "condition" && (checkText(r.data.check) || r.data.videoTaken))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 컨디션 체크: ${[checkText(r.data.check), r.data.videoTaken && "영상 찍어 둠(보호자 휴대폰)"].filter(Boolean).join(" · ")}`);
   for (const r of recs.filter((r) => r.type === "potty" && r.data.photoNote)) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} 변 사진(참고): ${r.data.photoNote}${r.data.photoFlags?.length ? ` / ⚠ ${r.data.photoFlags.join(", ")}` : ""}`);
   for (const r of recs.filter((r) => r.type === "condition" && (r.data.body || r.data.oral))) observeLines.push(`  ${mdKey(r.at.slice(0, 10))} ${[r.data.body, r.data.oral].filter(Boolean).join(" / ")}`);
-  add("observe", `식사·배변·컨디션 (보호자 관찰, 최근 ${note.period}일)`, observeLines);
+  add("observe", `식사·배변·컨디션 (보호자 관찰, ${periodLabel})`, observeLines);
 
   // 약: 지금 먹는 약 + 기간 안에 끝난 약, 기간 동안 기록한 대로의 복용 현황
   const medLines = [];
@@ -125,7 +132,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     for (const v of versions.slice(0, -1)) medLines.push(`  처방 변경 전: ${md(v.startDate)}~${md(v.endDate)} 1회 ${v.dose}, ${v.times.join("·")}`);
     const t = tally[seriesId];
     if (t?.total) {
-      medLines.push(`  최근 ${note.period}일 복용 기록: ${t.total}번 중 ${t.done}번 먹임${t.skipped ? `, ${t.skipped}번 건너뜀` : ""}${t.missing.length ? `, ${t.missing.length}번 기록 없음` : ""}`);
+      medLines.push(`  ${periodLabel} 복용 기록: ${t.total}번 중 ${t.done}번 먹임${t.skipped ? `, ${t.skipped}번 건너뜀` : ""}${t.missing.length ? `, ${t.missing.length}번 기록 없음` : ""}`);
       if (t.missing.length) medLines.push(`  기록 없는 때: ${t.missing.slice(-5).join(", ")}${t.missing.length > 5 ? " 등" : ""}`);
     }
     const stock = !ended && getStockInfo(dog.id, cur);
@@ -145,7 +152,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
       const diff = latest.weightKg - base.weightKg;
       weightLines.push(`변화: ${md(base.measuredAt.slice(0, 10))} ${base.weightKg}kg → ${latest.weightKg}kg (${diff >= 0 ? "+" : ""}${Math.round(diff * 100) / 100}kg, ${diff >= 0 ? "+" : ""}${Math.round((diff / base.weightKg) * 1000) / 10}%)`);
     }
-    if (inPeriod.length > 1) weightLines.push(`최근 ${note.period}일 기록: ${inPeriod.slice(-8).map((r) => `${md(r.measuredAt.slice(0, 10))} ${r.weightKg}`).join(", ")}`);
+    if (inPeriod.length > 1) weightLines.push(`${periodLabel} 기록: ${inPeriod.slice(-8).map((r) => `${md(r.measuredAt.slice(0, 10))} ${r.weightKg}`).join(", ")}`);
   } else if (dog.weight) {
     weightLines.push(`프로필 체중: ${dog.weight}kg (측정 기록 없음)`);
   }
@@ -167,7 +174,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
       vitalLines.push(`${v.label}: 기록한 ${daily.length}일 하루 평균 ${fmtValue(v.id, avg)}${v.unit}, 최근 ${mdKey(daily.at(-1).date)} ${fmtValue(v.id, daily.at(-1).value)}${v.unit}`);
     }
   }
-  add("vitals", `건강 수치 (보호자 측정, 최근 ${note.period}일)`, vitalLines);
+  add("vitals", `건강 수치 (보호자 측정, ${periodLabel})`, vitalLines);
 
   // 최근 병원 기록(90일): 하루 한 묶음 — 진료 기록이 있으면 그것만(내용까지), 없으면 그날 병원 일정·지출 제목. 진료비는 그날 병원·예방 지출 합계
   const visitFrom = toDateKey(addDays(new Date(`${today}T00:00:00`), -90));
@@ -198,7 +205,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   // 그 밖의 기록에 남긴 메모(최근 6개)
   add(
     "memos",
-    `보호자 기록 메모 (최근 ${note.period}일)`,
+    `보호자 기록 메모 (${periodLabel})`,
     recs.filter((r) => r.memo && r.type !== "vet" && r.type !== "symptom").slice(-6).map((r) => `${mdKey(r.at.slice(0, 10))} ${r.memo}`)
   );
 
@@ -206,7 +213,8 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   const asked = getChatMemory(dog.id).filter((m) => m.role === "user").slice(-5).map((m) => `"${m.text.slice(0, 80)}${m.text.length > 80 ? "…" : ""}"`);
   add("chat", "최근 상담 질문 (보호자 원문)", asked);
 
-  return sections;
+  const ORDER = ["note", "signals", "symptoms", "weight", "meds", "observe", "vitals", "visits", "memos", "basic", "chat"];
+  return sections.sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
 }
 
 export function summaryToText(dog, sections, today = todayKey()) {

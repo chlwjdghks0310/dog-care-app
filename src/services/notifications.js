@@ -19,6 +19,27 @@ import { REPORT_DAY, REPORT_TIME } from "./weeklyReport";
 import { getOccurrences } from "./calendarEvents";
 import { isVisitEvent } from "./vetVisits";
 import { getSignals } from "./signals";
+import { getWeightRecords } from "./weightLog";
+import { readJSON as readStore, writeJSON as writeStore } from "./storage";
+
+// 알림 쉬기: key마다 처음 알린 날을 적어 두고, 오늘이거나 days일이 지났으면 다시 보낸다
+const COOL_KEY = "dogcare-alarm-cool-v1"; // { [dogId]: { [key]: "YYYY-MM-DD" } }
+function cooled(dogId, key, days, group) {
+  const all = readStore(COOL_KEY, {});
+  const mine = all[dogId] || {};
+  const today = todayKey();
+  if (group) for (const k of Object.keys(mine)) if (k.startsWith(`${group}:`) && k !== key) delete mine[k]; // 신호가 바뀌면 새로 알림
+  const at = mine[key];
+  const ok = !at || at === today || at <= toDateKey(addDays(new Date(`${today}T00:00:00`), -days));
+  if (ok && at !== today) (mine[key] = today), (all[dogId] = mine), writeStore(COOL_KEY, all);
+  return ok;
+}
+function uncool(dogId, group) {
+  const all = readStore(COOL_KEY, {});
+  if (!all[dogId]) return;
+  for (const k of Object.keys(all[dogId])) if (k.startsWith(`${group}:`)) delete all[dogId][k];
+  writeStore(COOL_KEY, all);
+}
 
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
@@ -199,7 +220,13 @@ export function buildPushAlarms() {
       if (alarm.enabled && !(alarm.date && alarm.date < todayKey())) alarms.push({ cat: "custom", time: alarm.time, ...customAlarmMessage(dog, alarm), onlyDate: alarm.date });
     }
     // 이상 신호: 하루 1번 저녁 7시에 모아서. 잠금화면엔 증상을 쓰지 않는다(자세한 건 앱 안에서)
-    if (getSignals(dog).some((x) => x.level === "vet")) alarms.push({ cat: "signal", time: "19:00", onlyDate: todayKey(), title: `🐾 ${dog.name} 기록에서 확인할 게 있어요`, body: "눌러서 오늘 요약을 확인해 보세요.", url: "/?checkin=1" });
+    // 같은 신호는 한 번 알린 뒤 3일 쉬고, 신호가 없어지면(평소가 이어지면) 풀린다 — 알림 피로 막기(제안 분석 11/7)
+    const vetSig = getSignals(dog).filter((x) => x.level === "vet").map((x) => x.id).sort().join(",");
+    if (vetSig && cooled(dog.id, `signal:${vetSig}`, 3, "signal")) alarms.push({ cat: "signal", time: "19:00", onlyDate: todayKey(), title: `🐾 ${dog.name} 기록에서 확인할 게 있어요`, body: "눌러서 오늘 요약을 확인해 보세요.", url: "/?checkin=1" });
+    if (!vetSig) uncool(dog.id, "signal");
+    // 몸무게: 마지막으로 잰 지 30일이 지나면 한 달에 한 번(일주일 쉬고) — 몸무게 변화 신호가 작동하려면 쌓여야 해서
+    const lastW = getWeightRecords(dog.id).map((w) => w.measuredAt.slice(0, 10)).sort().at(-1);
+    if (lastW && lastW < toDateKey(addDays(new Date(), -30)) && cooled(dog.id, "weight", 7)) alarms.push({ cat: "care", time: "10:00", onlyDate: todayKey(), title: `⚖️ ${dog.name} 몸무게 잴 때예요`, body: "한 달에 한 번 재 두면 병원에서 변화를 바로 보여 줄 수 있어요." });
     // 병원 가기 전날 저녁 8시: "보여 줄 기록 한 장" / 다녀온 뒤(예약 2시간 뒤, 시각 없으면 오후 3시): "영수증 사진 한 장이면 정리"
     // 잠금화면에 보이므로 병명·증상·일정 제목은 넣지 않는다(Apple HIG — ../자료용/자료/2026-11-07-2단계-병원루프-조사.md ②)
     const seenVisit = new Set();
@@ -218,6 +245,11 @@ export function buildPushAlarms() {
     const today = todayKey();
     const recordedToday = new Set(getDosesForDate(dog.id, today).filter((d) => d.record && d.record.status !== "none").map((d) => `${d.med.id}|${d.time}`));
     for (const med of getMeds(dog.id)) {
+      // 약이 끝나기 이틀 전 저녁: 다시 병원에 가야 하는지 확인(제안 분석 11/7)
+      if (med.endDate && med.endDate >= today) {
+        const before = toDateKey(addDays(new Date(`${med.endDate}T00:00:00`), -2));
+        if (before >= today) alarms.push({ cat: "med", time: "19:00", onlyDate: before, title: `💊 ${dog.name} 약이 이틀 뒤 끝나요`, body: "다시 진료가 필요한지, 약을 더 받아야 하는지 확인해 보세요." });
+      }
       if (!med.remind || (med.endDate && med.endDate < today)) continue;
       for (const time of med.times) {
         alarms.push({

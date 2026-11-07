@@ -117,10 +117,10 @@ export default function VetSummary({ dog, onBack, backLabel = "← 병원으로"
             </button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {PERIODS.map((p) => (
             <button key={p} type="button" className={`seg${note.period === p ? " on" : ""}`} onClick={() => update({ period: p })}>
-              최근 {p}일
+              {p === "since" ? "지난 진료 이후" : `최근 ${p}일`}
             </button>
           ))}
         </div>
