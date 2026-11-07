@@ -72,7 +72,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack }) {
   const [id] = useState(() => initial?.id || newRecordId()); // 같은 id로 저장해 두 번 눌러도 기록은 하나
   const [at, setAt] = useState(initial?.at || prefill?.at || localNow());
   const [data, setData] = useState(() => ({ ...defaults(type, dog), ...prefill?.data, ...initial?.data }));
-  const [memo, setMemo] = useState(initial?.memo || "");
+  const [memo, setMemo] = useState(initial?.memo || prefill?.memo || "");
   const [photos, setPhotos] = useState(initial?.photos || []);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);

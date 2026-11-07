@@ -153,3 +153,12 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+
+// 진료 정리: 병원 서류 사진(base64 최대 3장)·들은 설명 → 진료 기록 칸. 반환: doc(서버 vet_doc)
+export async function readVetDoc({ images = [], text = "" }, signal) {
+  await ensureAIConsent();
+  const res = await fetch(`${API_BASE}/api/vet-doc`, { method: "POST", headers: { "Content-Type": "application/json", ...trackHeaders() }, body: JSON.stringify({ images, text, today: new Date().toISOString().slice(0, 10) }), signal });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "정리하지 못했어요. 다시 시도해 주세요.");
+  return data.doc;
+}

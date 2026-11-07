@@ -1205,3 +1205,19 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .rc-day { display: flex; align-items: center; gap: 10px; justify-content: space-between; font-weight: 600; }
 .rc-recs { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 10px; }
 .rc-rec { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+
+/* 진료 정리(VetDocSheet) */
+.vd-photos { display: flex; gap: 8px; flex-wrap: wrap; }
+.vd-thumb, .vd-add { width: 88px; height: 88px; border-radius: 14px; position: relative; overflow: hidden; }
+.vd-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.vd-thumb button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.55); color: #fff; font-size: 12px; }
+.vd-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1.5px dashed var(--border); color: var(--accent-strong); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.vd-list { margin: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.vd-list > div { display: flex; gap: 10px; font-size: 14px; padding: 8px 10px; border-radius: 10px; background: #fff7d6; }
+.vd-list > div.empty { background: var(--surface); color: var(--text-faint); }
+:root[data-theme="dark"] .vd-list > div { background: #3a3420; }
+.vd-list dt { width: 76px; flex-shrink: 0; font-weight: 700; }
+.vd-list dd { margin: 0; flex: 1; min-width: 0; white-space: pre-line; }
+.vd-items { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 10px; }
+.vd-items td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
+.vd-total td { font-weight: 800; border-bottom: none; }

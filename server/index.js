@@ -147,12 +147,13 @@ app.use(Object.keys(AI_ROUTES), (req, res, next) => {
 // 기기별 하루 사용 한도(무료로 쓰는 AI 비용의 상한). 기기 번호(X-MC-V) 해시로 세고, 없으면 IP로 센다.
 // check = 변 사진·영상 AI 상태 확인(합쳐서), record = 말로 기록하기, voice = 서버 받아쓰기, food = 사료 정보·라벨 읽기
 // ponytail: 서버 메모리에 세서 재시작(배포·잠듦)하면 초기화 — 정확한 한도가 필요해지면 Supabase에 하루 카운트 저장
-const DAILY_LIMITS = { check: 2, record: 60, voice: 20, food: 5 };
+const DAILY_LIMITS = { check: 2, record: 60, voice: 20, food: 5, vetdoc: 3 };
 const LIMIT_MESSAGES = {
   check: "AI 상태 확인은 하루 2번까지예요. 내일 다시 써 주세요. 직접 고르는 기록은 언제든 할 수 있어요.",
   record: "오늘은 말로 기록하기를 많이 썼어요. 내일 다시 써 주세요. 기록하기 화면에서 직접 적을 수 있어요.",
   voice: "오늘은 음성 받아쓰기를 많이 썼어요. 글자로 적어 주세요.",
   food: "사료 정보 찾기는 하루 5번까지예요. 내일 다시 해 주세요.",
+  vetdoc: "진료 정리는 하루 3번까지예요. 내일 다시 해 주세요. 진료 기록은 직접 적을 수 있어요.",
 };
 const dailyUse = new Map();
 setInterval(() => {
@@ -166,7 +167,7 @@ function overDailyLimit(req, bucket, who = visitorHash(req.get("x-mc-v")) || req
   dailyUse.set(key, n);
   return false;
 }
-const LIMITED = { "/api/analyze-photo": "check", "/api/quick-stool": "check", "/api/analyze-behavior": "check", "/api/record": "record", "/api/transcribe": "voice", "/api/food-info": "food", "/api/food-label": "food" };
+const LIMITED = { "/api/analyze-photo": "check", "/api/quick-stool": "check", "/api/analyze-behavior": "check", "/api/record": "record", "/api/transcribe": "voice", "/api/food-info": "food", "/api/food-label": "food", "/api/vet-doc": "vetdoc" };
 app.use(Object.keys(LIMITED), (req, res, next) => {
   if (req.method === "POST" && overDailyLimit(req, LIMITED[req.baseUrl])) return res.status(429).json({ error: LIMIT_MESSAGES[LIMITED[req.baseUrl]] });
   next();
@@ -909,6 +910,62 @@ app.post("/api/food-label", async (req, res) => {
     res.json({ label: out });
   } catch (err) {
     console.error("[server] food-label error:", err.message);
+    res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
+  }
+});
+
+// 진료 정리: 동물병원 영수증·진료비 세부내역·처방전 사진(최대 3장) 또는 들은 설명(글) → 진료 기록 칸 채우기.
+// 적힌·말한 것만 옮긴다(추측·진단·용량 변경 금지). 보호자 이름·전화·주소·카드번호는 옮기지 않는다. 사진은 저장하지 않는다.
+// 결과는 앱이 "맞는지 확인" 화면에 보여 주고, 보호자가 고친 뒤 기존 진료 기록(가계부·다음 진료 알림 연결)으로 저장한다.
+const VET_DOC_TOOL = {
+  name: "vet_doc",
+  description: "동물병원 서류 사진·설명에서 진료 기록 칸을 채운다. 적힌 그대로, 모르면 빈 값.",
+  input_schema: {
+    type: "object",
+    properties: {
+      is_doc: { type: "boolean", description: "동물병원 영수증·세부내역·처방전·진료 설명이면 true" },
+      retake: { type: "string", description: "읽을 수 없으면 다시 찍는 요령 한 문장, 아니면 빈 문자열" },
+      visit_date: { type: "string", description: "진료 날짜 YYYY-MM-DD, 없으면 빈 문자열" },
+      hospital: { type: "string", description: "병원 이름" },
+      reason: { type: "string", description: "진료 사유·진단명으로 적힌 것(짧게). 없으면 빈 문자열" },
+      explanation: { type: "string", description: "수의사 설명·주의사항으로 적히거나 말한 것" },
+      tests: { type: "string", description: "검사 이름과 적힌 결과" },
+      prescription: { type: "string", description: "약 이름·용량·횟수·일수를 적힌 그대로. 바꾸거나 계산하지 않음" },
+      items: { type: "array", items: { type: "object", properties: { name: { type: "string", description: "영수증에 적힌 이름 그대로" }, kind: { type: "string", enum: ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약", "미용", "기타"], description: "분류(주사·처방식은 처치·약, 마취는 수술)" }, amount: { type: "integer" } }, required: ["name", "kind", "amount"], additionalProperties: false }, description: "진료비 항목과 금액(원). 소계·합계·부가세 줄은 넣지 않음" },
+      total: { type: "integer", description: "총 결제·청구 금액(원), 없으면 0" },
+      next_date: { type: "string", description: "재진·재검·다음 접종 날짜 YYYY-MM-DD, 없으면 빈 문자열" },
+    },
+    required: ["is_doc", "retake", "visit_date", "hospital", "reason", "explanation", "tests", "prescription", "items", "total", "next_date"],
+    additionalProperties: false,
+  },
+};
+
+app.post("/api/vet-doc", async (req, res) => {
+  const { images, text, today } = req.body || {};
+  const imgs = (Array.isArray(images) ? images : []).filter((x) => typeof x === "string" && x.length < 8_000_000).slice(0, 3);
+  const said = typeof text === "string" ? text.slice(0, 2000).trim() : "";
+  if (!imgs.length && !said) return res.status(400).json({ error: "사진이나 들은 설명이 필요해요." });
+  try {
+    const response = await client.beta.messages.create({
+      ...FAST_MODEL,
+      max_tokens: 2500,
+      output_config: { effort: "low" },
+      system: [
+        "보호자가 동물병원에서 받은 영수증·진료비 세부내역·처방전 사진이나, 들은 설명을 보냈습니다. 반드시 vet_doc 도구를 한 번 호출해 적히거나 말한 것만 옮기세요. 도구 밖에 다른 글은 쓰지 않습니다.",
+        "추측하지 않습니다. 흐리거나 잘린 글자·숫자는 빈 값(또는 0)으로 둡니다. 진단을 새로 붙이지 않고, 약 용량·횟수를 바꾸거나 계산하지 않습니다.",
+        "보호자 이름·전화번호·주소·카드번호·승인번호는 어떤 칸에도 옮기지 않습니다.",
+        "영수증의 과세공급가액·부가세·비과세 줄은 항목이 아니라 합계 확인용입니다. total은 최종 청구·결제 금액입니다. 재진 안내는 영수증보다 들은 설명에 있을 때가 많습니다.",
+        "금액은 원 단위 정수. 날짜는 YYYY-MM-DD(연도가 없으면 오늘 날짜의 연도). 칸 글은 짧은 한국어로.",
+        `오늘 날짜: ${typeof today === "string" ? today.slice(0, 10) : kstDay()}`,
+      ].join("\n"),
+      tools: [VET_DOC_TOOL],
+      messages: [{ role: "user", content: [...imgs.map((data) => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } })), { type: "text", text: said ? `들은 설명: ${said}` : "이 서류를 진료 기록으로 정리해 주세요." }] }],
+    });
+    const out = response.content.find((b) => b.type === "tool_use" && b.name === "vet_doc")?.input;
+    if (!out || response.stop_reason === "refusal") return res.json({ doc: { is_doc: false, retake: "영수증이나 세부내역이 화면에 꽉 차게, 밝은 곳에서 다시 찍어 주세요." } });
+    res.json({ doc: out });
+  } catch (err) {
+    console.error("[server] vet-doc error:", err.message);
     res.status(502).json({ error: "AI 서버 호출에 실패했어요." });
   }
 });

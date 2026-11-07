@@ -8,6 +8,7 @@ import { isVisitEvent, isVisitRecord } from "../services/vetVisits";
 import { HOLIDAYS } from "../data/holidays";
 import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
+import VetDocSheet from "../components/VetDocSheet";
 
 const MEDICAL = ["vet", "vaccine", "med"];
 const colorOf = (e) => kindOf(e)?.color || e.color || EVENT_COLORS[0];
@@ -21,7 +22,8 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(today);
   const [events, setEvents] = useState(() => getEventsByDog(dog.id));
-  const [sheet, setSheet] = useState(null); // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
+  const [sheet, setSheet] = useState(null);
+  const [docOpen, setDocOpen] = useState(false); // 진료 정리(사진·말) // { start, event?, date? } — 일정 추가·고치기 시트(date = 누른 회차)
   // 지난 병원 진료·접종 기록도 달력에 보여 준다(일정이 아니라 기록 — 빈 동그라미, 날짜를 누르면 아래에 내용)
   // 같은 날 병원 일정이 있으면 그 일정 카드 안에 붙여 하나로 보여 준다
   const vetByDate = useMemo(() => {
@@ -71,6 +73,10 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }
         <button type="button" className="btn-primary small" onClick={() => setSheet({ start: selectedDateKey < today ? today : selectedDateKey })}>＋ 일정</button>
       </div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
+        <button className="quick-tile tone-rose filled" onClick={() => setDocOpen(true)}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="camera" size={24} /></span>
+          <span className="quick-tile-label">진료 정리</span>
+        </button>
         <button className="quick-tile tone-blue filled" onClick={onOpenVet}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="note" size={24} /></span>
           <span className="quick-tile-label">병원용 기록</span>
@@ -187,6 +193,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget }
       </div>
 
 
+      {docOpen && <VetDocSheet onClose={() => setDocOpen(false)} onUse={(prefill) => (setDocOpen(false), onRecordVisit?.(prefill))} />}
       {sheet && (
         <EventSheet
           dog={dog}
