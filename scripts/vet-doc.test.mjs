@@ -12,4 +12,6 @@ assert.equal(q.at.slice(0, 10), "2026-11-07");
 assert.equal(q.data.reason, "진료");
 assert.equal(q.data.nextDate, undefined);
 assert.match(q.memo, /항목 합 9,000원, 영수증 합계 10,000원/);
+assert.equal(docToPrefill({ total: 1000 }, now, { claim: true }).data.claimTodo, true);
+assert.equal(docToPrefill({ total: 1000 }, now).data.claimTodo, undefined);
 console.log("진료 정리 OK");

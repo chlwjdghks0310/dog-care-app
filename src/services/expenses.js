@@ -117,7 +117,7 @@ export const MEDICAL_IDS = ["medical", "prevent"];
 export const isMedical = (categoryId) => MEDICAL_IDS.includes(resolveCategoryId(categoryId));
 // 동물병원 진료비 게시 항목(수의사법 시행규칙)을 묶은 것 — ../자료용/자료/2026-10-23-반려동물-가계부-조사.md
 export const VET_ITEMS = ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약"];
-export const CLAIMS = [["", "안 함"], ["todo", "청구 전"], ["sent", "청구함"], ["paid", "받음"]];
+export const CLAIMS = [["", "안 함"], ["todo", "청구 전"], ["sent", "청구함"], ["paid", "받음"], ["denied", "거절"]];
 const OPTIONAL = ["memo", "items", "claim", "claimPaid", "recordId"];
 const pickOptional = (o) => Object.fromEntries(OPTIONAL.filter((k) => o[k] != null && o[k] !== "" && !(Array.isArray(o[k]) && !o[k].length)).map((k) => [k, o[k]]));
 export function getExpenses(dogId) {

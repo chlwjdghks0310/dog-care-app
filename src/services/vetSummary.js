@@ -9,6 +9,7 @@ import { getChatMemory } from "./chatMemory";
 import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily, stoolCheckText, checkText } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
 import { periodSummary } from "./dailyCheck";
+import { getSignals } from "./signals";
 
 // 병원용 기록 — 앱에 쌓인 기록 + 보호자가 이번 진료를 위해 적은 메모를 수의사가 한눈에 읽게 정리한다.
 // 기록에 있는 사실만 옮기고, 추정·진단 문구는 넣지 않는다(빈 곳은 "기록 없음").
@@ -17,6 +18,7 @@ const KEY = "dogcare-vet-note-v1";
 export const SYMPTOMS = ["식욕 줄었음", "물 많이 마심", "구토", "설사", "변비", "기침", "숨이 가쁨", "기운 없음", "절뚝거림", "가려움·긁음", "대소변 실수", "체중 변화"];
 export const SECTIONS = [
   { key: "note", label: "보호자 메모" },
+  { key: "signals", label: "기록에서 확인된 것" },
   { key: "basic", label: "기본 정보" },
   { key: "symptoms", label: "증상 기록" },
   { key: "observe", label: "식사·배변·컨디션" },
@@ -29,7 +31,7 @@ export const SECTIONS = [
 ];
 export const PERIODS = [7, 30, 90];
 
-const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, vitals: true, visits: true, memos: true, chat: false } };
+const DEFAULT_NOTE = { symptoms: [], since: "", text: "", questions: "", period: 30, sections: { note: true, signals: true, basic: true, symptoms: true, observe: true, meds: true, weight: true, vitals: true, visits: true, memos: true, chat: false } };
 
 export function getVetNote(dogId) {
   const saved = readJSON(KEY, {})[dogId] || {};
@@ -57,6 +59,9 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   if (note.text.trim()) noteLines.push(`상태 설명: ${note.text.trim()}`);
   if (note.questions.trim()) noteLines.push(`여쭤보고 싶은 것: ${note.questions.trim()}`);
   add("note", "보호자 메모", noteLines);
+  // 이상 신호(규칙 기반, 판단 없이) — 진료실에서 "요즘 달라진 것"을 먼저 보게
+  const sig = getSignals(dog, today);
+  if (sig.length) add("signals", "기록에서 확인된 것", sig.map((x) => x.text));
 
   const age = dog.birthDate ? formatAge(calculateAge(dog.birthDate, new Date(today))) : "";
   add("basic", "기본 정보", [

@@ -4,7 +4,7 @@ import { VET_ITEMS } from "./expenses";
 const won = (n) => `${Number(n).toLocaleString("ko-KR")}원`;
 const okDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d || "");
 
-export function docToPrefill(doc, now = new Date()) {
+export function docToPrefill(doc, now = new Date(), { claim = false } = {}) {
   const today = now.toISOString().slice(0, 10);
   const date = okDate(doc.visit_date) && doc.visit_date <= today ? doc.visit_date : today;
   const items = (doc.items || []).filter((i) => i.name && i.amount > 0);
@@ -19,6 +19,7 @@ export function docToPrefill(doc, now = new Date()) {
       ...(doc.tests && { tests: doc.tests }),
       ...(doc.prescription && { prescription: doc.prescription }),
       ...(total > 0 && { cost: String(total) }),
+      ...(total > 0 && claim && { claimTodo: true }), // 가계부에 "보험 청구 전"으로
       ...(items.length && { costItems: [...new Set(items.map((i) => i.kind).filter((k) => VET_ITEMS.includes(k)))] }), // 가계부 병원비 항목
       ...(okDate(doc.next_date) && doc.next_date > today && { nextDate: doc.next_date, nextAlarm: true }),
     },

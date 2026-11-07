@@ -16,6 +16,7 @@ export default function VetDocSheet({ onClose, onUse }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [doc, setDoc] = useState(null);
+  const [claim, setClaim] = useState(false); // 보험 청구할 병원비
 
   function addFiles(list) {
     const next = [...files, ...[...list].map((file) => ({ file, url: URL.createObjectURL(file) }))].slice(0, 3);
@@ -95,7 +96,13 @@ export default function VetDocSheet({ onClose, onUse }) {
               )}
               {mismatch && <p className="dc-warn"><b>합계가 안 맞아요</b> · 항목 합 {won(sum)}, 영수증 합계 {won(doc.total)}. 빠진 항목이 있는지 사진을 확인해 주세요.</p>}
               {doc.prescription && <p className="faint" style={{ fontSize: 12.5 }}>약은 적힌 그대로 옮겼어요. 매일 먹일 약은 약 관리에 등록하면 알림이 와요.</p>}
-              <button type="button" className="btn-primary" onClick={() => onUse(docToPrefill(doc))}>진료 기록으로 열기</button>
+              {(doc.total > 0 || sum > 0) && (
+                <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 15, margin: "4px 0 12px" }}>
+                  <input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} />
+                  보험 청구할 병원비예요 (가계부에 "청구 전"으로)
+                </label>
+              )}
+              <button type="button" className="btn-primary" onClick={() => onUse(docToPrefill(doc, new Date(), { claim }))}>진료 기록으로 열기</button>
               <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => setDoc(null)}>다시 정리하기</button>
             </>
           )}

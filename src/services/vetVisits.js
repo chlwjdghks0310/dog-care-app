@@ -40,5 +40,5 @@ export function linkVetExpense(dogId, rec) {
     updateExpense(dogId, linked.id, fields);
     return linked.id;
   }
-  return addExpense(dogId, { ...fields, categoryId: "medical", items: d.costItems?.length ? d.costItems : ["진찰"] }).at(-1).id; // 진료 정리로 읽은 항목이 있으면 그 분류
+  return addExpense(dogId, { ...fields, categoryId: "medical", items: d.costItems?.length ? d.costItems : ["진찰"], ...(d.claimTodo && { claim: "todo" }) }).at(-1).id; // 진료 정리로 읽은 항목이 있으면 그 분류
 }

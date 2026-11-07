@@ -1248,3 +1248,5 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 
 .ask-out { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; margin-top: 10px; font-size: 12px; }
 .ask-out a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+
+.bud-claim-badge.denied { background: var(--danger-bg, #fdecea); color: var(--danger, #c0392b); }
