@@ -9,7 +9,7 @@ R.saveRecord("a", { type: "symptom", at: "2026-11-01T08:10", data: { kinds: ["�
 store["dogcare-theme-v1"] = "dark";
 store["dogcare-invite-v1"] = JSON.stringify({ code: "ABC123" });
 store["sb-xyz-auth-token"] = JSON.stringify({ access_token: "secret" });
-const backup = JSON.parse(E.backupJson());
+const backup = JSON.parse(await E.backupJson());
 assert.ok(backup.data["dogcare-records-v1"], "기록이 들어감");
 assert.ok(!JSON.stringify(backup).includes("secret"), "로그인 정보는 빠짐");
 assert.equal(backup.data["dogcare-theme-v1"], "dark", "글자 그대로 저장된 값도");

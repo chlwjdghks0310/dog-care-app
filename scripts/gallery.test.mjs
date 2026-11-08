@@ -33,3 +33,11 @@ assert.equal(parseExifDate(jpeg("2026:11:06 14:22:05")), "2026-11-06T14:22", "�
 assert.equal(parseExifDate(jpeg("2025:05:01 09:00:00", false)), "2025-05-01T09:00", "빅엔디언(아이폰)");
 assert.equal(parseExifDate(new Uint8Array([0x89, 0x50, 0x4e, 0x47]).buffer), null, "JPEG 아니면 없음");
 console.log("갤러리 날짜 OK");
+// 사진 저장소(11/8): 같은 사진은 글자(data:)로 있든 저장소 번호(idb:)로 있든 서버 맞추기에서 같은 값으로 본다
+const P = await import("../src/services/photoStore.js");
+const pic = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD" + "A".repeat(500);
+assert.equal(P.photoId(pic), P.photoId(pic), "같은 사진 같은 번호");
+assert.notEqual(P.photoId(pic), P.photoId(pic + "B"), "다른 사진 다른 번호");
+assert.deepEqual(P.normalize({ photos: [pic], memo: "a" }), P.normalize({ photos: ["idb:" + P.photoId(pic)], memo: "a" }), "글자와 번호가 같은 사진으로 보임");
+assert.equal(await P.expand({ photos: [pic] }).then((v) => v.photos[0]), pic, "저장소가 없으면 그대로");
+console.log("사진 저장소 OK");

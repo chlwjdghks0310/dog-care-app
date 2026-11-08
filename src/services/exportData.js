@@ -2,18 +2,20 @@
 // ① 전체 백업(JSON): 이 기기의 멍케어 데이터 전부(dogcare-*). 로그인 정보는 넣지 않는다.
 // ② 기록 표(CSV): 강아지 한 마리의 기록을 엑셀에서 열 수 있게(사진은 빼고 "사진 n장"만)
 import { TYPES, summarize, getTimeline } from "./records";
+import { expand } from "./photoStore";
 
 // 가족 초대 코드(비밀번호처럼 쓰임)·동기화 상태·알림 보낸 기록·등록 진행 상태는 넣지 않는다
 const EXCLUDE = ["dogcare-invite", "dogcare-sync", "dogcare-notified", "dogcare-onboarding"];
 
-export function backupJson(storage = localStorage) {
+// 사진은 사진 저장소에서 꺼내 파일 안에 그대로 넣는다(다른 곳에서도 열리게)
+export async function backupJson(storage = localStorage) {
   const data = {};
   for (let i = 0; i < storage.length; i++) {
     const k = storage.key(i);
     if (!k.startsWith("dogcare-") || EXCLUDE.some((x) => k.startsWith(x))) continue;
     const v = storage.getItem(k);
     try {
-      data[k] = JSON.parse(v);
+      data[k] = await expand(JSON.parse(v));
     } catch {
       data[k] = v; // 테마처럼 글자 그대로 저장된 값("dark")
     }

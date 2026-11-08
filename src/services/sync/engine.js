@@ -8,6 +8,7 @@
 //   remote.push(rows)                          같은 모양으로 올리기(서버가 updated_at을 찍음)
 import { readJSON, writeJSON } from "../storage";
 import { flatten, unflatten } from "./items";
+import { normalize, expand, ingest } from "../photoStore";
 
 // 강아지별로 저장되는 키({ [dogId]: 값 }) 중 서버에 올리는 것. 테마·채팅 모드·AI 대화 기억·알림 기록 같은 개인 설정은 폰에만.
 export const SYNCED_KEYS = [
@@ -47,7 +48,8 @@ function fingerprint(str) {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
-const fp = (value) => fingerprint(JSON.stringify(value));
+// 사진은 글자(data:)든 저장소 번호(idb:)든 화면용 주소(blob:)든 같은 사진이면 같은 지문(11/8 사진 저장소)
+const fp = (value) => fingerprint(JSON.stringify(normalize(value)));
 
 function loadState() {
   const s = readJSON(STATE_KEY, null);
@@ -185,6 +187,7 @@ export async function syncOnce(remote) {
   const known = petIds.filter((id) => !fresh.includes(id));
   const since = state.cursor ? new Date(new Date(state.cursor).getTime() - OVERLAP_MS).toISOString() : null;
   const rows = [...(fresh.length ? await remote.pull(fresh, null) : []), ...(known.length ? await remote.pull(known, since) : [])];
+  for (const r of rows) if (r.value != null && !r.deleted) r.value = await ingest(r.value); // 받은 사진은 사진 저장소로
   const changed = applyRows(rows, state) + removed.length;
   // 커서는 서버가 찍은 시각만 쓴다(폰 시계가 틀려도 놓치지 않게)
   const cursor = rows.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), state.cursor || "") || null;
@@ -192,6 +195,7 @@ export async function syncOnce(remote) {
 
   const { rows: out, commits } = collectChanges(petIds, state);
   if (out.length) {
+    for (const r of out) if (r.value != null) r.value = await expand(r.value); // 서버엔 지금처럼 사진 글자로
     await remote.push(out);
     for (const c of commits) {
       const base = ((state.base[c.petId] ||= {})[c.key] ||= {});

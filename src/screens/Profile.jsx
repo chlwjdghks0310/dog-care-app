@@ -760,6 +760,7 @@ function LinksCard() {
 // 기록 내보내기(무료): 병원용 한 장 · 기록 표(엑셀) · 전체 백업 파일
 function ExportCard({ dog, onOpenVet }) {
   const [msg, setMsg] = useState("");
+  const [backup, setBackup] = useState(null); // 사진을 모으느라 시간이 걸려 공유 창이 막히면(아이폰) 준비된 파일을 한 번 더 눌러 공유
   const day = toDateKey(new Date());
   async function run(make) {
     setMsg("");
@@ -769,6 +770,17 @@ function ExportCard({ dog, onOpenVet }) {
       if (err.name !== "AbortError") setMsg("내보내지 못했어요. 다시 시도해 주세요.");
     }
   }
+  async function runBackup() {
+    setMsg("");
+    const text = await backupJson().catch(() => null);
+    if (!text) return setMsg("내보내지 못했어요. 다시 시도해 주세요.");
+    try {
+      await shareFile(text, `멍케어-백업-${day}.json`, "application/json");
+    } catch (err) {
+      if (err.name === "NotAllowedError") setBackup(text);
+      else if (err.name !== "AbortError") setMsg("내보내지 못했어요. 다시 시도해 주세요.");
+    }
+  }
   return (
     <div className="card" style={{ marginTop: 14 }}>
       <div className="h2">기록 내보내기</div>
@@ -776,7 +788,11 @@ function ExportCard({ dog, onOpenVet }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <button type="button" className="btn-ghost" onClick={onOpenVet}>병원용 기록 한 장(PDF·공유)</button>
         <button type="button" className="btn-ghost" onClick={() => run(() => shareFile(recordsCsv(dog.id), `${dog.name}-기록-${day}.csv`, "text/csv"))}>{dog.name} 기록 표(엑셀용 CSV)</button>
-        <button type="button" className="btn-ghost" onClick={() => run(() => shareFile(backupJson(), `멍케어-백업-${day}.json`, "application/json"))}>전체 백업 파일(JSON)</button>
+        {backup ? (
+          <button type="button" className="btn-primary" onClick={() => run(() => shareFile(backup, `멍케어-백업-${day}.json`, "application/json")).then(() => setBackup(null))}>백업 파일 준비됐어요 · 보내기</button>
+        ) : (
+          <button type="button" className="btn-ghost" onClick={runBackup}>전체 백업 파일(JSON)</button>
+        )}
       </div>
       <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>백업 파일엔 사진과 모든 강아지 기록이 들어 있어요. 믿을 수 있는 곳에만 보관해 주세요. 로그인 정보는 들어가지 않아요.</p>
       {msg && <p className="error-text">{msg}</p>}

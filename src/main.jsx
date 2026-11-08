@@ -6,6 +6,7 @@ import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contact from './screens/Contact.jsx'
 import Terms from './components/Terms.jsx'
 import { trackAppStart } from './services/analytics'
+import { initPhotos } from './services/photoStore'
 
 const StatsPage = lazy(() => import('./components/StatsDashboard.jsx').then((m) => ({ default: m.StatsPage })))
 
@@ -27,12 +28,13 @@ if (vv) {
   fit()
 }
 
-createRoot(document.getElementById('root')).render(
+// 사진 저장소(IndexedDB)를 먼저 연다 — 기록 속 사진 번호를 화면용 주소로 바꿀 수 있게(최대 3초, 못 열면 예전 방식으로)
+initPhotos().finally(() => createRoot(document.getElementById('root')).render(
   <StrictMode>
     {/* 스토어 제출용 공개 주소: ?privacy(개인정보 처리방침), ?terms(이용약관), ?support(문의) — 설치 안 한 사람도 브라우저로 본다. ?stats는 운영자 이용 통계(로그인 필요) */}
     {page.has('stats') ? <Suspense fallback={null}><StatsPage /></Suspense> : page.has('privacy') ? <PrivacyPolicy /> : page.has('terms') ? <Terms /> : page.has('support') ? <Contact /> : <App />}
   </StrictMode>,
-)
+))
 
 // 스플래시(index.html)는 앱이 준비된 뒤에도 1초 더 보여 주고 서서히 사라진다(로딩이 길어도 바로 끊기지 않게)
 const splash = document.getElementById('splash')
