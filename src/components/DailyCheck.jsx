@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { ITEMS, getDay, saveUsual, saveUnknown, saveDiff, signalsOf, daysThisMonth, runsOf, missedYesterday } from "../services/dailyCheck";
+import { ITEMS, getDay, saveUsual, saveUnknown, saveDiff, signalsOf, daysThisMonth, daysInRange, runsOf, missedYesterday } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 import { trackAct } from "../services/analytics";
@@ -37,7 +37,8 @@ export default function DailyCheck({ dog, onChange, onSheetChange }) {
           {isYesterday ? (
             <button type="button" className="link-btn summary-more" onClick={() => (saveUnknown(dog.id, date), changed(date))}>기억 안 나요</button>
           ) : (
-            <span className="summary-more">평소와 같으면 한 번만 누르면 끝이야</span>
+            // 처음 며칠은 "왜 매일 누르는지"를 말해 준다(11/8 첫 화면 한 문장) — 5번 넘게 한 뒤엔 짧게
+            <span className="summary-more">{daysInRange(dog.id, "0000", "9999") < 5 ? "매일 남기면 병원 갈 때 한 장으로 정리돼" : "평소와 같으면 한 번만 누르면 끝이야"}</span>
           )}
         </span>
       )}
