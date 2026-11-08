@@ -4,6 +4,7 @@ import Ico from "./Ico";
 import { ITEMS, getDay, saveUsual, saveUnknown, saveDiff, signalsOf, daysThisMonth, runsOf, missedYesterday } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
+import { trackAct } from "../services/analytics";
 import { EMERGENCY } from "../data/emergency";
 import { todayKey } from "../utils/date";
 import { saveDog } from "../services/dogRepository";
@@ -19,7 +20,7 @@ export default function DailyCheck({ dog, onChange, onSheetChange }) {
   const setSheet = (d) => (setSheetState(d), onSheetChange?.(Boolean(d)));
   const date = dailyPending(dog.id, today);
   const isYesterday = date && date !== today;
-  const mark = (d) => d === today && (markCheckedIn(dog.id), syncPushAlarms()); // 오늘 했으면 오늘 체크 알림은 건너뛰게
+  const mark = (d) => (trackAct("check"), d === today && (markCheckedIn(dog.id), syncPushAlarms())); // 오늘 했으면 오늘 체크 알림은 건너뛰게
   const changed = (d) => (mark(d), onChange?.());
   return (
     <>
@@ -50,8 +51,8 @@ export function BackCheckSheet({ dog, alone, onClose }) {
   const today = todayKey();
   const [diff, setDiff] = useState(false);
   const day = getDay(dog.id, today); // 이미 체크했으면 결과를 보여 주고 고칠 수 있게(사용자 요청 11/7 — [왔어]는 늘 하루 체크로)
-  const done = () => (markCheckedIn(dog.id), syncPushAlarms(), onClose());
-  if (diff) return <DiffSheet dog={dog} date={today} initial={day?.picks} onClose={onClose} onSaved={() => (markCheckedIn(dog.id), syncPushAlarms())} />;
+  const done = () => (trackAct("check"), markCheckedIn(dog.id), syncPushAlarms(), onClose());
+  if (diff) return <DiffSheet dog={dog} date={today} initial={day?.picks} onClose={onClose} onSaved={() => (trackAct("check"), markCheckedIn(dog.id), syncPushAlarms())} />;
   return createPortal(
     <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="es-sheet" role="dialog" aria-label="다녀와서 체크">

@@ -127,6 +127,7 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
   else if (b.e === "cta") track("cta_app", s, v, ["web"]);
   else if (b.e === "download") track("guide_download", s, v, ["web"]);
   else if (b.e === "first_open") track(b.i ? "app_first_open_installed" : "app_first_open", s, null, null);
+  else if (b.e === "act" && ["check", "task"].includes(b.a)) track(`act:${b.a}`, "", v, [`act_${b.a}`]); // 핵심 행동(하루 체크·100일 과제)
   else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : [])]);
 });
 

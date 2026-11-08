@@ -36,14 +36,17 @@ await t({ e: "page", p: "guide", s: "Threads!", v: "abcdefgh-1234" });
 await t({ e: "first_open", s: "blog", i: true, v: "abcdefgh-1234" });
 await t({ e: "open", l: false, i: true, d: true, v: "abcdefgh-1234" });
 await t({ e: "page", v: "abcdefgh-1234" }, "Googlebot/2.1"); // 봇은 안 셈
+await t({ e: "act", a: "check", v: "abcdefgh-1234" }); // 하루 체크 끝냄(핵심 행동)
+await t({ e: "act", a: "drop-table", v: "abcdefgh-1234" }); // 모르는 행동은 안 셈
 await t({ e: "hack", v: "abcdefgh-1234" }); // 모르는 사건은 안 셈
 await fetch(`http://localhost:${PORT}/api/record`, { method: "POST", headers: { "Content-Type": "application/json", "X-MC-V": "abcdefgh-1234", "X-MC-L": "0" }, body: JSON.stringify({}) }); // 내용이 없어 400이어도 요청은 센다
 await new Promise((r) => setTimeout(r, 300));
 srv.kill();
 fake.close();
 
-assert.equal(calls.length, 4, JSON.stringify(calls));
-const [page, first, open, ai] = calls;
+assert.equal(calls.length, 5, JSON.stringify(calls));
+const [page, first, open, act, ai] = calls;
+assert.deepEqual([act.p_metric, act.p_kinds], ["act:check", ["act_check"]]);
 assert.deepEqual([page.p_metric, page.p_source, page.p_kinds], ["page:guide", "threads", ["web"]]);
 assert.match(page.p_visitor, /^[0-9a-f]{24}$/, "기기 번호는 해시로만");
 assert.deepEqual([first.p_metric, first.p_source, first.p_visitor], ["app_first_open_installed", "blog", null]);

@@ -14,7 +14,7 @@ create table if not exists public.analytics_daily (
 );
 
 -- 날짜별 "누가 한 번이라도 했나" — 사람 수를 세는 용도(같은 날 여러 번 와도 1명)
--- kind: web(홈페이지) app(앱) app_login app_anon app_installed(홈 화면 앱) app_dog(강아지 등록함) ai ai_login ai_anon
+-- kind: web(홈페이지) app(앱) app_login app_anon app_installed(홈 화면 앱) app_dog(강아지 등록함) ai ai_login ai_anon act_check(하루 체크 끝냄) act_task(100일 과제)
 create table if not exists public.analytics_seen (
   day date not null,
   kind text not null,
@@ -128,7 +128,11 @@ select
   count(*) as "사용자(명)",
   count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day = f.d0 + 1)) as "다음 날 다시(명)",
   count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 2 and f.d0 + 7)) as "2~7일 안에 다시(명)",
-  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 8 and f.d0 + 30)) as "8~30일 안에 다시(명)"
+  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 8 and f.d0 + 30)) as "8~30일 안에 다시(명)",
+  -- 11/8 추가: 30일 유지의 표준 칸(4~5주째에도 쓰나) + 핵심 행동(하루 체크를 끝낸 사람)
+  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 28 and f.d0 + 35)) as "28~35일 다시(명)",
+  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'act_check' and s.visitor = f.visitor and s.day between f.d0 and f.d0 + 6)) as "첫 7일 하루 체크(명)",
+  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'act_check' and s.visitor = f.visitor and s.day between f.d0 + 28 and f.d0 + 35)) as "28~35일 하루 체크(명)"
 from f group by f.d0
 order by f.d0 desc;
 

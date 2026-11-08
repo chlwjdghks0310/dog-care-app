@@ -70,6 +70,16 @@ async function open() {
   send({ e: "open", l: Boolean(session), i: isInstalled(), d: (readJSON("dogcare-dogs-v1", []) || []).length > 0 });
 }
 
+// 핵심 행동(11/8): 앱을 "열기만" 한 사람과 "쓴" 사람을 나눠 센다. 하루에 행동마다 한 번만 보낸다.
+// a: "check"(하루 체크 끝냄) — 퍼피 100일이 생기면 "task"(오늘 과제 끝냄)를 같은 자리에
+export function trackAct(a) {
+  const k = `mc-act-${a}`;
+  const today = new Date().toDateString();
+  if (ls.get(k) === today) return;
+  ls.set(k, today);
+  send({ e: "act", a });
+}
+
 // 앱을 켤 때 한 번(main.jsx) + 다음 날 다시 앞으로 가져왔을 때
 export function trackAppStart() {
   if (!ls.get(SEEN)) {

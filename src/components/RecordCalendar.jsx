@@ -4,6 +4,7 @@ import Ico from "./Ico";
 import { DiffSheet } from "./DailyCheck";
 import { ITEMS, getDay, saveUsual, saveUnknown, clearDay } from "../services/dailyCheck";
 import { syncPushAlarms } from "../services/notifications";
+import { trackAct } from "../services/analytics";
 import { markCheckedIn } from "../services/routine";
 import { TYPES, summarize } from "../services/records";
 import { isVisitRecord } from "../services/vetVisits";
@@ -24,7 +25,7 @@ export default function RecordCalendar({ dog, items, onChanged }) {
   const [only, setOnly] = useState(""); // 이 항목이 다른 날만
   const [sheet, setSheet] = useState(null);
   const [, refresh] = useState(0);
-  const changed = (d) => (d === today && (markCheckedIn(dog.id), syncPushAlarms()), refresh((n) => n + 1), onChanged?.());
+  const changed = (d) => (trackAct("check"), d === today && (markCheckedIn(dog.id), syncPushAlarms()), refresh((n) => n + 1), onChanged?.());
 
   const vetDays = useMemo(() => new Set(items.filter(isVisitRecord).map((r) => r.at.slice(0, 10))), [items]);
   const dayOf = (k) => {

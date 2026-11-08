@@ -10,6 +10,17 @@ const n = (v) => Number(v) || 0;
 const sum = (rows, k) => rows.reduce((a, r) => a + n(r[k]), 0);
 const SOURCE_NAME = { "": "바로 들어옴", "바로 들어옴": "바로 들어옴", blog: "블로그", naver: "네이버", threads: "스레드", instagram: "인스타그램", insta: "인스타그램", qr: "QR", google: "구글", kakao: "카카오", daum: "다음", littly: "프로필 링크(litt.ly)" };
 const md = (d) => String(d).slice(5, 10).replace("-", "/");
+// "3 (25%)" — 칸이 없으면(서버 SQL을 아직 다시 안 돌림) "—"
+const pct = (v, all) => (v == null ? "—" : `${n(v)}${n(all) ? ` (${Math.round((n(v) / n(all)) * 100)}%)` : ""}`);
+// 지원사업·회사에 보여 줄 한 줄: 기간이 다 지난 사람만 모아 7일·30일 유지율(아직 안 지난 날짜는 빼야 숫자가 정직)
+function retentionSummary(rows, today = new Date()) {
+  const age = (d) => Math.floor((today - new Date(`${d}T00:00:00+09:00`)) / 86400000);
+  const sum = (list, col) => list.reduce((t, r) => t + n(r[col]), 0);
+  const d7 = rows.filter((r) => age(r["처음 쓴 날"]) >= 8);
+  const d30 = rows.filter((r) => age(r["처음 쓴 날"]) >= 36 && r["28~35일 다시(명)"] != null);
+  const rate = (list, col) => (sum(list, "사용자(명)") ? `${Math.round((sum(list, col) / sum(list, "사용자(명)")) * 100)}% (${sum(list, "사용자(명)")}명 중)` : "아직 기간이 안 지남");
+  return { d7: rate(d7, "2~7일 안에 다시(명)"), d30: rate(d30, "28~35일 다시(명)") };
+}
 
 function toCSV(rows) {
   if (!rows.length) return "";
@@ -187,6 +198,10 @@ export default function StatsDashboard({ onClose }) {
 
           <div className="card" style={{ marginTop: 12 }}>
             <div className="h2">다시 왔나</div>
+            {data.retention?.length > 0 && (() => {
+              const r = retentionSummary(data.retention);
+              return <p className="subtle" style={{ margin: "0 0 8px" }}>7일 안에 다시: <b>{r.d7}</b> · 4~5주째에도: <b>{r.d30}</b></p>;
+            })()}
             {data.retention?.length ? (
               <Table
                 cols={[
@@ -195,6 +210,9 @@ export default function StatsDashboard({ onClose }) {
                   ["다음 날", (r) => n(r["다음 날 다시(명)"])],
                   ["2~7일", (r) => n(r["2~7일 안에 다시(명)"])],
                   ["8~30일", (r) => n(r["8~30일 안에 다시(명)"])],
+                  ["28~35일", (r) => pct(r["28~35일 다시(명)"], r["사용자(명)"])],
+                  ["첫주 체크", (r) => pct(r["첫 7일 하루 체크(명)"], r["사용자(명)"])],
+                  ["5주째 체크", (r) => pct(r["28~35일 하루 체크(명)"], r["사용자(명)"])],
                 ]}
                 rows={data.retention.filter((r) => r["처음 쓴 날"] >= since)}
               />
