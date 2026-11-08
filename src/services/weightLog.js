@@ -4,7 +4,7 @@ import { toDateKey } from "../utils/date";
 const KEY = "dogcare-weight-log-v1";
 
 function nextId() {
-  return `wt-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  return `wt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 // 구조: { [dogId]: WeightRecord[] }

@@ -45,7 +45,7 @@ const RENAMED = { cookie: "bone", utensils: "bowl", shield: "syringe", sparkles:
 export const categoryIco = (cat) => (cat?.ico && (RENAMED[cat.ico] || cat.ico)) || EMOJI_ICO[cat?.emoji] || EMOJI_ICO[`${cat?.emoji}\uFE0F`] || "wallet";
 
 function newId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 // 카테고리는 모든 강아지가 같이 쓴다. 구조: [{ id, name, emoji, ico? }]

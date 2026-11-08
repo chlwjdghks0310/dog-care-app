@@ -3,7 +3,7 @@ import { readJSON, writeJSON } from "./storage";
 const KEY = "dogcare-custom-schedules-v1";
 
 function nextId() {
-  return `alarm-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  return `alarm-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 // 구조: { [dogId]: Alarm[] }, Alarm = { id, title, time: "HH:MM", enabled, date? }

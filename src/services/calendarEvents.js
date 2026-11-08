@@ -8,7 +8,7 @@ const KEY = "dogcare-calendar-events-v1";
 export const EVENT_COLORS = ["#e05f5f", "#3f8fe0", "#3fa578", "#dba329", "#9350b8"];
 
 function nextId() {
-  return `evt-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 // 구조: { [dogId]: { [dateKey]: { id, title, color }[] } } — 사용자가 직접 기록하는 날짜별 메모/일정.

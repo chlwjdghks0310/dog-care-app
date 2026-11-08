@@ -15,7 +15,7 @@ const LOW_STOCK_DAYS = 3;
 //         days[0~6](빈 배열이면 매일), stock?{ base, perDose, setAt }, remind, createdAt, updatedAt }
 // DoseRecord = { key, medId, seriesId, date, time, name, dose, status("done"|"skipped"|"none"), doneAt?(실제 먹인 로컬 시각), units,
 //               countedAt(수량 계산용), markedAt(마지막으로 누른 시각), edits[{ at, note }] }
-const newId = (p) => `${p}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const newId = (p) => `${p}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 const localNow = () => {
   const d = new Date();
   return `${toDateKey(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:00`;

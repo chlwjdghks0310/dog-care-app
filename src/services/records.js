@@ -65,7 +65,8 @@ export function checkText(check) {
 export const DAILY_KINDS = ["산책", "간식", "미용·목욕", "양치", "놀이", "기타"];
 export const LIFE_KINDS = ["예방접종", "질환·수술", "기념일", "특별한 일", "추억"];
 
-const newId = () => `rec-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+// 번호 끝 8자리 무작위(11/8: 예전 0~9999는 같은 순간 여러 개를 만들면 겹쳐 덮어쓸 수 있었음)
+const newId = () => `rec-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 export const localNow = () => {
   const d = new Date();
   return `${toDateKey(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
