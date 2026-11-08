@@ -163,7 +163,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
               ) : (
                 <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditing(true)}>✏️ 이날의 문구·추억 쓰기</button>
               )}
-              {dayLine(dog.id, at) && <p className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, at)}</p>}
+              {dayLine(dog.id, at) && <div className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, at)}</div>}
               <span className="faint post-date">{agoLabel(at)}</span>
             </div>
           ) : (

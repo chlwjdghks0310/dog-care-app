@@ -91,7 +91,7 @@ export default function VetSummary({ dog, onBack, backLabel = "← 병원으로"
         </div>
         <div className="field">
           <label>언제부터</label>
-          <input type="date" value={note.since} max={todayKey()} onChange={(e) => update({ since: e.target.value })} />
+          <input type="date" value={note.since} max={todayKey()} aria-label="증상이 언제부터인지" onChange={(e) => update({ since: e.target.value })} />
         </div>
         <div className="field">
           <label>상태 설명</label>

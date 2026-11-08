@@ -523,7 +523,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}>건강 수치</div>
-        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditingPins((e) => !e)}>{editingPins ? "완료" : "편집"}</button>
+        <button type="button" className="link-btn" style={{ margin: 0, minWidth: 44 }} onClick={() => setEditingPins((e) => !e)}>{editingPins ? "완료" : "편집"}</button>
       </div>
       {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요(투약은 끄면 숨겨져요).</p>}
       <div className="vt-grid">

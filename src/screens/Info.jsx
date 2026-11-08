@@ -40,8 +40,10 @@ export default function Info({ dog, onBack }) {
         return (
           <div key={rule.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 10 }}>
             <button
+              type="button"
+              aria-expanded={isOpen}
               onClick={() => setOpenId(isOpen ? null : rule.id)}
-              style={{ background: "none", border: "none", padding: 0, width: "100%", textAlign: "left" }}
+              style={{ background: "none", border: "none", padding: "4px 0", minHeight: 44, width: "100%", textAlign: "left" }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                 <span style={{ fontWeight: 600, color: isActive ? "var(--text)" : "var(--text-faint)" }}>

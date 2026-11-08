@@ -140,7 +140,7 @@ export default function AlarmSettings({ dog, onBack }) {
           </div>
           <div className="field">
             <label>시각</label>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <input type="time" value={time} aria-label="알람 시각" onChange={(e) => setTime(e.target.value)} />
           </div>
           <div className="field">
             <label>반복</label>
@@ -192,7 +192,7 @@ export default function AlarmSettings({ dog, onBack }) {
                   {alarm.date ? `${alarm.date.slice(5).replace("-", "/")} 하루만${alarm.date < todayKey() ? " (지남)" : ""}` : "매일"}
                 </div>
               </div>
-              <input type="checkbox" checked={alarm.enabled} onChange={() => toggleEnabled(alarm)} style={{ width: 20, height: 20 }} />
+              <input type="checkbox" checked={alarm.enabled} onChange={() => toggleEnabled(alarm)} aria-label={`${alarm.title} 알람 켜기`} style={{ width: 24, height: 24 }} />
               <button className="btn-ghost" style={{ padding: "6px 10px" }} onClick={() => handleDelete(alarm.id)}>
                 삭제
               </button>

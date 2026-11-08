@@ -22,7 +22,7 @@
   --accent-strong: #255a9c; /* 연한 파랑 칩 위 글자 대비 5.7:1(예전 #2f6fbd) */
   --success: #4c8c5b;
   --success-bg: #e7f3ea;
-  --danger: #c15b4a;
+  --danger: #b04a3a; /* 11/8: #c15b4a는 밝은 바탕에서 대비 4.3:1 → 4.5:1 넘게 */
   --danger-bg: #fbeae6;
   --warning: #c98a2e;
   --warning-bg: #faf0dd;
@@ -953,7 +953,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .cal-dot.rec { background: transparent !important; border: 1.5px solid var(--text-faint); width: 6px; height: 6px; }
 .day-rec { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; margin-bottom: 8px; border-radius: 12px; background: var(--field); border: 1px dashed var(--border); font-size: 14px; line-height: 1.45; }
 .day-rec .ico { margin-top: 3px; }
-.hide-btn { flex-shrink: 0; background: none; border: none; color: var(--text-faint); font-size: 12.5px; padding: 2px 4px; }
+.hide-btn { flex-shrink: 0; background: none; border: none; color: var(--text-faint); font-size: 12.5px; padding: 2px 6px; min-height: 36px; min-width: 44px; } /* 11/8 누르기 쉽게 */
 .hidden-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); }
 /* 처음 쓰는 사람 "첫 걸음 3가지"(비서 말풍선) */
 .first-step { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--field); color: var(--text); font-size: 14.5px; font-weight: 600; text-align: left; }
