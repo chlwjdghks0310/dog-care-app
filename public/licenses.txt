@@ -158,3 +158,4 @@ SOFTWARE
 - 연성(Yeon Sung): Copyright 2018 The BM YEONSUNG Project Authors
 - 싱글데이(Single Day): Copyright 2015 DXKorea Inc.
 - 동글(Dongle): Copyright 2021 The Dongle Project Authors
+- 베이글 팻 원(Bagel Fat One, 화면 제목 글씨체): Copyright 2022 The Bagel Fat Project Authors (https://github.com/JAMO-TYPEFACE/BagelFat)

@@ -276,6 +276,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           </div>,
           document.body
         )}
+      {/* 퍼피 첫 100일 "오늘의 5분" 띠 — 말풍선 위(사용자 결정 11/9: 말풍선과 자리 바꿈) */}
+      {!isChat && <PuppyCard dog={dog} onOpen={onOpenPuppy} />}
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
           {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
@@ -306,8 +308,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           )}
         </div>
       )}
-      {/* 퍼피 첫 100일 "오늘의 5분" — 하루 체크 바로 밑(11/9, 작업 순서 ⑥) */}
-      {!isChat && <PuppyCard dog={dog} onOpen={onOpenPuppy} />}
+
 
       <div
         onClick={() => isChat && goHome()}

@@ -7,6 +7,7 @@
 @font-face { font-family: "Poor Story"; src: url("/fonts/poorstory-regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Yeon Sung"; src: url("/fonts/yeonsung-regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Single Day"; src: url("/fonts/singleday-regular.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Bagel Fat One"; src: url("/fonts/bagelfatone-subset.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Dongle"; src: url("/fonts/dongle-bold.woff2") format("woff2"); font-display: swap; }
 /* 기본(밝은 화면): 아이콘 소프트블루. 흐린 글자(--text-faint)는 흰 바탕 대비 4.5:1 이상으로 맞춘 값. */
 :root {
@@ -1542,12 +1543,12 @@ button.seg, button.chip { min-height: 36px; }
 .pp-log span { flex: 1; min-width: 0; color: var(--text-soft); }
 
 /* ── 디자인 규칙(11/9, 계획표 3장) ──
-   2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목에만 Dongle(동글). 본문은 고딕 그대로. Dongle은 같은 px에서 작게 보여 1.35배 */
-.h1, .pc100-title, .es-title, .summary-open, .onb-title { font-family: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 700; letter-spacing: 0; }
-.h1 { font-size: 34px; line-height: 1.1; }
-.pc100-title { font-size: 25px; line-height: 1.2; }
-.es-title { font-size: 23px; }
-.summary-open { font-size: 25px; line-height: 1.15; }
+   2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목·창 제목에만 Bagel Fat One(굵고 둥근 제목체, OFL, 자료용 1순위 11/9). 본문은 고딕 그대로 */
+.h1, .pc100-title, .es-title, .summary-open, .onb-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+.h1 { font-size: 27px; line-height: 1.15; }
+.pc100-title { font-size: 20px; line-height: 1.3; }
+.es-title { font-size: 17px; }
+.summary-open { font-size: 19px; line-height: 1.25; }
 .summary-open .summary-role { font-family: "Apple SD Gothic Neo", "Pretendard", sans-serif; }
 /* 1) 고유 표식 = 발도장(살구): 완료·띠·달력·빈 화면·모션에 같은 모양 */
 .paw-mark { color: var(--warm); display: inline-flex; vertical-align: -0.15em; }
