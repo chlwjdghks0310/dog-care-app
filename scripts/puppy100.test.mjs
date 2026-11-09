@@ -72,6 +72,15 @@ assert.equal(P.state("p", day(11)).doneToday, true);
 assert.equal(P.state("p", day(12)).step.id, "w2-1", "통과 → 2주차");
 assert.equal(P.passLine(STEPS.find((s) => s.id === "w14-test")), 8);
 
+// 어제 했어요(나중에 찍기): 어제 날짜로 찍히고, 오늘은 다음 과제가 그대로 나온다 / 달력에 발도장
+P.mark("p", "w2-1", "done", day(14));
+st = P.state("p", day(15));
+assert.equal(st.step.id, "w2-2");
+assert.equal(st.doneToday, false, "어제 몫이라 오늘은 아직");
+assert.deepEqual(P.stampsOn("p", day(14)), ["앉아"]);
+assert.deepEqual(P.stampsOn("p", day(11)), ["1주차 체크 통과"]);
+assert.deepEqual(P.stampsOn("p", day(2)), [], "건너뛴 건 발도장 아님");
+
 // 다 끝나면 finished, 알림 없음
 for (const s of STEPS) if (s.kind === "task") P.mark("p", s.id, "skip", day(20)); else P.finishTest("p", s.id, 3, day(20));
 assert.equal(P.state("p", day(21)).finished, true);

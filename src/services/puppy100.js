@@ -69,6 +69,12 @@ export function retryWeek(dogId, week, today = todayKey()) {
   save(dogId, p);
 }
 
+// 그날 찍은 발도장(기록 탭 달력에 보이게 — 보강 조사 11/9: 과제와 기록이 한곳에 있는 게 계속 쓰는 이유)
+export function stampsOn(dogId, date) {
+  const p = getProgress(dogId);
+  return STEPS.filter((s) => p[s.id]?.d === date && FINISHED.has(p[s.id].s) && p[s.id].s !== "skip").map((s) => (s.kind === "test" ? `${s.week}주차 체크 통과` : s.t));
+}
+
 export function setHidden(dogId, hidden) {
   const { hidden: _, ...rest } = getProgress(dogId);
   save(dogId, hidden ? { ...rest, hidden: true } : rest);

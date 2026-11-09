@@ -349,7 +349,13 @@ function Setup({ onRegistered, restore }) {
                     {b}
                   </button>
                 ))}
-                {filteredBreeds.length === 0 && <span className="faint">목록에 없으면 "믹스견"을 골라 주세요.</span>}
+                {/* 목록에 없어도 막히지 않게: 적은 그대로 쓰기 · 잘 몰라요(보강 조사 11/9 — 견종 검색에서 막혀 시작을 못 한 불만) */}
+                {breedQuery.trim() && !BREEDS.includes(breedQuery.trim()) && (
+                  <button type="button" className="chip" style={chip(form.breed === breedQuery.trim())} onClick={() => update("breed", breedQuery.trim().slice(0, 30))}>
+                    “{breedQuery.trim().slice(0, 30)}”(으)로 할게요
+                  </button>
+                )}
+                <button type="button" className="chip" style={chip(form.breed === "견종 모름")} onClick={() => update("breed", "견종 모름")}>잘 몰라요</button>
               </div>
             </>
           )}

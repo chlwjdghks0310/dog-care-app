@@ -6,7 +6,7 @@ import { eligible, state, mark, finishTest, retryWeek, passLine, setHidden } fro
 import { togetherDays } from "../services/shareCard";
 import { trackAct } from "../services/analytics";
 import { syncPushAlarms } from "../services/notifications";
-import { todayKey } from "../utils/date";
+import { todayKey, toDateKey, addDays } from "../utils/date";
 
 // 오늘 탭 "오늘의 5분"(퍼피 첫 100일). 하루 체크 바로 밑에 1장 — 하고 나면 한 줄로 접힌다.
 // 급한 고민(짖음·물기·배변 실수)은 100일 순서와 상관없이 늘 열 수 있다.
@@ -14,10 +14,12 @@ export default function PuppyCard({ dog, onChanged }) {
   const [, refresh] = useState(0);
   const [urgent, setUrgent] = useState(null);
   const [notice, setNotice] = useState("");
+  const [more, setMore] = useState(false); // 오늘 몫을 했어도 다음 과제를 막지 않는다(보강 조사 11/9: 하루 분량 잠금 불만)
   const today = todayKey();
   if (!eligible(dog, today)) return notice ? <p className="subtle" role="status" style={{ margin: "0 0 14px" }}>{notice}</p> : null;
   const st = state(dog.id, today);
-  const changed = () => (syncPushAlarms(), refresh((n) => n + 1), onChanged?.());
+  const changed = () => (setMore(false), syncPushAlarms(), refresh((n) => n + 1), onChanged?.());
+  const yesterday = toDateKey(addDays(new Date(`${today}T00:00:00`), -1));
   const days = togetherDays(dog);
 
   return (
@@ -32,20 +34,30 @@ export default function PuppyCard({ dog, onChanged }) {
           <div className="pc100-title">100일 과정을 다 마쳤어요 🎓</div>
           <p className="subtle" style={{ margin: "4px 0 0" }}>배운 동작은 일주일에 몇 번씩 해 주면 오래 기억해요.</p>
         </>
-      ) : st.doneToday ? (
-        <p className="pc100-done">
-          {st.againToday ? <>🔁 내일 한 번 더 해요 · <b>{st.step.kind === "test" ? `${st.step.week}주차 체크` : st.step.t}</b></> : <>🐾 오늘의 5분 끝! 내일은 <b>{st.step.kind === "test" ? `${st.step.week}주차 체크` : st.step.t}</b></>}
-        </p>
+      ) : st.doneToday && !more ? (
+        <>
+          <p className="pc100-done">
+            {st.againToday ? <>🔁 내일 한 번 더 해요 · <b>{st.step.kind === "test" ? `${st.step.week}주차 체크` : st.step.t}</b></> : <>🐾 오늘의 5분 끝! 내일은 <b>{st.step.kind === "test" ? `${st.step.week}주차 체크` : st.step.t}</b></>}
+          </p>
+          <button type="button" className="link-btn" style={{ margin: "6px 0 0" }} onClick={() => setMore(true)}>{st.againToday ? "지금 한 번 더 하기 ›" : "더 하고 싶으면 지금 하기 ›"}</button>
+        </>
       ) : st.step.kind === "test" ? (
         <WeekTest key={st.step.id} dog={dog} step={st.step} onDone={changed} />
       ) : (
-        <Task step={st.step} onDone={() => (mark(dog.id, st.step.id, "done", today), trackAct("task"), changed())} onAgain={() => (mark(dog.id, st.step.id, "again", today), changed())} onSkip={() => (mark(dog.id, st.step.id, "skip", today), changed())} />
+        <Task
+          step={st.step}
+          onDone={() => (mark(dog.id, st.step.id, "done", today), trackAct("task"), changed())}
+          onAgain={() => (mark(dog.id, st.step.id, "again", today), changed())}
+          onSkip={() => (mark(dog.id, st.step.id, "skip", today), changed())}
+          // 놓친 날 나중에 찍기(보강 조사 11/9: 앱 밖에서 하고 바로 못 적으면 끊기는 스트릭 불만) — 어제 찍은 게 없을 때만
+          onYesterday={st.started && st.idleDays >= 2 && !st.doneToday ? () => (mark(dog.id, st.step.id, "done", yesterday), trackAct("task"), changed()) : null}
+        />
       )}
 
       {!st.finished && (
         <div className="pc100-paws" aria-label={`이번 주 ${st.weekPaws.filter(Boolean).length}/6`}>
           {st.weekPaws.map((on, i) => <span key={i} className={on ? "on" : ""} aria-hidden="true">🐾</span>)}
-          <span className="faint">이번 주 {st.weekPaws.filter(Boolean).length}/6</span>
+          <span className="faint">이번 주 과제 {st.weekPaws.filter(Boolean).length}/6 · 끊기는 날 없이 이어져요</span>
         </div>
       )}
 
@@ -59,18 +71,22 @@ export default function PuppyCard({ dog, onChanged }) {
   );
 }
 
-function Task({ step, onDone, onAgain, onSkip }) {
+function Task({ step, onDone, onAgain, onSkip, onYesterday }) {
   return (
     <>
       <div className="pc100-title">오늘의 5분 · {step.t}</div>
       <p className="pc100-why">{step.why}</p>
       <ol className="pc100-steps">{step.s.map((x) => <li key={x}>{x}</li>)}</ol>
+      <p className="pc100-time"><Ico name="timer" size={14} /> 한 번에 1~2분 · 성공하면 바로 끝 · 다 해서 5분이 넘지 않게</p>
       {step.out && <p className="pc100-out"><Ico name="alert" size={14} /> {OUT_NOTE}</p>}
       <div className="dc-btns" style={{ marginTop: 10 }}>
         <button type="button" className="dc-usual" onClick={onDone}>🐾 했어요</button>
         <button type="button" className="dc-diff" onClick={onAgain}>🔁 한 번 더</button>
       </div>
-      <button type="button" className="link-btn" style={{ margin: "8px 0 0" }} onClick={onSkip}>이미 잘해요 → 다음 과제 보기</button>
+      <div className="pc100-links">
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onSkip}>이미 잘해요 → 다음 과제</button>
+        {onYesterday && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onYesterday}>어제 했는데 못 눌렀어요</button>}
+      </div>
     </>
   );
 }

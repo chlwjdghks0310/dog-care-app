@@ -1492,3 +1492,6 @@ button.seg, button.chip { min-height: 36px; }
 .pc100-q.on .pc100-box { background: var(--accent-btn); border-color: var(--accent-btn); }
 .pc100-vet { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--warning-bg); line-height: 1.5; font-size: 14px; }
 .pc100-vet b { display: flex; align-items: center; gap: 6px; }
+.pc100-time { display: flex; align-items: center; gap: 5px; margin: 8px 0 0; font-size: 12.5px; color: var(--text-soft); }
+.pc100-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
+.rc-puppy { display: flex; gap: 6px; align-items: baseline; font-size: 14px; }

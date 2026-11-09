@@ -9,6 +9,7 @@ import { trackAct } from "../services/analytics";
 import { markCheckedIn } from "../services/routine";
 import { TYPES, summarize } from "../services/records";
 import { VITAL } from "../data/vitals";
+import { stampsOn } from "../services/puppy100";
 import { isVisitRecord } from "../services/vetVisits";
 import { HOLIDAYS } from "../data/holidays";
 import { formatKoreanDate, todayKey, toDateKey } from "../utils/date";
@@ -116,8 +117,11 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
         ) : (
           <p className="subtle" style={{ margin: 0 }}>아직 오지 않은 날이에요.</p>
         )}
-        {selRecords.length > 0 && (
+        {(selRecords.length > 0 || stampsOn(dog.id, selected).length > 0) && (
           <div className="rc-recs">
+            {stampsOn(dog.id, selected).map((t) => (
+              <div key={t} className="rc-rec rc-puppy"><span aria-hidden="true">🐾</span><span className="faint">퍼피 100일</span><span style={{ flex: 1, minWidth: 0 }}>{t}</span></div>
+            ))}
             {selRecords.map((r) => (
               <div key={`${r.source}-${r.id}`} className="rc-rec">
                 <Ico name={(r.type === "vital" && VITAL[r.data?.metric]?.ico) || TYPES[r.type].ico} size={15} className={`cat-ico tone-${(r.type === "vital" && VITAL[r.data?.metric]?.tone) || TYPES[r.type].tone}`} />
