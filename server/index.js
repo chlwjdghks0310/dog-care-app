@@ -34,20 +34,23 @@ const pushDevices = new Map();
 // 가족 공유: 강아지 id → 그 강아지 알람 목록(가족 중 마지막으로 보낸 기기 기준). 같은 강아지의 가족 기기 모두가 이 목록으로 울린다
 const petAlarms = new Map();
 // 가족 확인용 Supabase(공개 주소·공개 키). 없으면 가족 공유 알람은 꺼지고 기기별 알람만 동작한다
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+// 앞뒤 빈칸·줄바꿈·따옴표는 붙여 넣다 섞이기 쉬워 떼고 쓴다(11/9)
+const envVal = (v) => (v || "").trim().replace(/^["'](.*)["']$/, "$1").trim();
+const SUPABASE_URL = envVal(process.env.SUPABASE_URL).replace(/\/+$/, "");
+const SUPABASE_ANON_KEY = envVal(process.env.SUPABASE_ANON_KEY);
 // 서버 전용 키(Render 환경 변수에만, 출력·전송 금지) — 푸시 표는 RLS로 막혀 있어 이 키로만 읽고 쓴다
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-// 환경 변수 점검(11/9: 키 자리에 한글이 들어가 모든 DB 요청이 "ByteString" 오류로 막혔던 일) — 값은 절대 출력하지 않고 상태만
-// 키는 영어·숫자·기호만, 주소는 https://…(끝에 /rest/v1 붙이면 안 됨)
-const envState = (v, ok) => (!v ? "missing" : ok(v.trim()) && v === v.trim() ? "ok" : "invalid");
-const asciiKey = (v) => /^[\x21-\x7e]+$/.test(v);
-const ENV_CHECK = {
-  url: envState(SUPABASE_URL, (v) => /^https?:\/\/[\x21-\x7e]+$/.test(v) && !/\/rest\/v1\/?$/.test(v)),
-  anon: envState(SUPABASE_ANON_KEY, asciiKey),
-  service: envState(SUPABASE_SERVICE_KEY, asciiKey),
-};
-for (const [k, v] of Object.entries(ENV_CHECK)) if (v === "invalid") console.error(`[server] 환경 변수 확인 필요: ${{ url: "SUPABASE_URL", anon: "SUPABASE_ANON_KEY", service: "SUPABASE_SERVICE_ROLE_KEY" }[k]} 값이 형식에 안 맞아요(한글·빈칸·따옴표가 섞였는지 확인)`);
+const SUPABASE_SERVICE_KEY = envVal(process.env.SUPABASE_SERVICE_ROLE_KEY);
+// 환경 변수 점검(11/9: 키 자리에 한글이 들어가 모든 DB 요청이 "ByteString" 오류로 막혔던 일) — 값은 절대 출력하지 않고 무엇이 문제인지만
+const envState = (v, isUrl) =>
+  !v ? "missing"
+  : /[^\x00-\x7f]/.test(v) ? "invalid:한글 등 영어 아닌 글자"
+  : /\s/.test(v) ? "invalid:중간에 빈칸·줄바꿈"
+  : isUrl && !/^https?:\/\//.test(v) ? "invalid:https://로 시작 안 함"
+  : isUrl && /\/rest\/v1$/.test(v) ? "invalid:끝에 /rest/v1"
+  : "ok";
+const ENV_CHECK = { url: envState(SUPABASE_URL, true), anon: envState(SUPABASE_ANON_KEY), service: envState(SUPABASE_SERVICE_KEY) };
+const ENV_NAME = { url: "SUPABASE_URL", anon: "SUPABASE_ANON_KEY", service: "SUPABASE_SERVICE_ROLE_KEY" };
+for (const [k, v] of Object.entries(ENV_CHECK)) if (v.startsWith("invalid")) console.error(`[server] 환경 변수 확인 필요: ${ENV_NAME[k]} — ${v.slice(8)}`);
 const pushDb = ENV_CHECK.url === "ok" && ENV_CHECK.service === "ok";
 async function db(path, { method = "GET", body, prefer } = {}) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
