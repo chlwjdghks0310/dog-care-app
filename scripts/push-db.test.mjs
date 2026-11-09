@@ -43,7 +43,11 @@ srv.kill();
 await new Promise((r) => srv.on("exit", r));
 
 srv = await boot();
-assert.deepEqual(await tick(), { ok: true, devices: 1, db: true, cron: null }, "다시 켜도 기기가 남음");
+{
+  const t = await tick();
+  assert.deepEqual({ ...t, env: undefined }, { ok: true, devices: 1, db: true, env: undefined, cron: null }, "다시 켜도 기기가 남음");
+  assert.deepEqual([t.env.url, t.env.service], ["ok", "ok"], "환경 변수 상태는 값 없이 ok/invalid/missing만");
+}
 srv.kill();
 fake.close();
 console.log("push-db ok");
