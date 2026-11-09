@@ -18,7 +18,7 @@ export default function PuppyCard({ dog, onOpen }) {
       <span className="pc100-strip-ico" aria-hidden="true">{dog.photo ? <img className="pc100-strip-face" src={dog.photo} alt="" /> : <Ico name="paw" size={20} />}</span>
       <span className="pc100-strip-body">
         <span className="pc100-strip-sub">퍼피 100일{st.step ? ` · ${st.step.week}주차` : ""}{st.finished ? "" : ` · 이번 주 ${st.weekPaws.filter(Boolean).length}/6`}</span>
-        <span className="pc100-strip-title">
+        <span className="pc100-strip-title pop-in" key={st.finished ? "fin" : st.doneToday ? `done-${st.step.id}` : st.step.id}>
           {st.finished ? <><Ico name="graduation" size={16} className="paw-mark" /> 100일 과정을 다 마쳤어요</> : st.doneToday ? (st.againToday ? `내일 한 번 더 · ${stepLabel(st.step)}` : <><Ico name="paw" size={15} className="paw-mark" /> 오늘 끝! 내일은 {stepLabel(st.step)}</>) : st.step.kind === "test" ? `${stepLabel(st.step)} · ${st.step.qs.length}문항` : `오늘의 5분 · ${st.step.t}`}
         </span>
       </span>

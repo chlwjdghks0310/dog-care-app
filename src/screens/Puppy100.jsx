@@ -53,7 +53,7 @@ export default function Puppy100({ dog, onBack }) {
             <button type="button" className="btn-ghost" style={{ marginTop: 10 }} onClick={() => setMore(true)}>{st.againToday ? "지금 한 번 더 하기" : "더 하고 싶으면 지금 하기"}</button>
           </>
         ) : st.step.kind === "test" ? (
-          <WeekTest key={st.step.id} dog={dog} step={st.step} onDone={changed} />
+          <WeekTest key={st.step.id} dog={dog} step={st.step} onDone={stamped} />
         ) : (
           <Task
             key={st.step.id}

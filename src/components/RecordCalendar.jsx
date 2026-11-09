@@ -95,7 +95,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
         {legendText}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }} ref={dayRef}>
+      <div className="card rise-in" style={{ marginBottom: 14 }} ref={dayRef} key={selected}>
         <div className="h2" style={{ marginBottom: 8 }}>{formatKoreanDate(selected)}</div>
         {sel && sel.status !== "unknown" ? (
           <div className="rc-day">

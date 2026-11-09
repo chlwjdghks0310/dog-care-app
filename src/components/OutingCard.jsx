@@ -40,7 +40,7 @@ export default function OutingChip({ dog, onChecked }) {
   }
   return (
     <>
-      <button type="button" className={`home-chip${s.state === "away" ? " on" : ""}`} onClick={run} aria-label={s.state === "away" ? `${dog.name} ${label}` : `외출: ${label}`}>
+      <button type="button" key={s.state} className={`home-chip pop-in${s.state === "away" ? " on" : ""}`} onClick={run} aria-label={s.state === "away" ? `${dog.name} ${label}` : `외출: ${label}`}>
         <Ico name={ico} size={16} /> {label}
       </button>
       {sheet === "back-check" && <BackCheckSheet dog={dog} alone={outingState().minutes >= 1 ? durationLabel(outingState().minutes) : ""} onClose={() => (setSheet(null), onChecked?.())} />}

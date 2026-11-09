@@ -46,6 +46,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false); // 입력창에 포커스 — 예시 문장을 이때만 펼친다(11/9)
+  const [hop, setHop] = useState(false); // 하루 체크를 끝내면 강아지가 폴짝(모션 6곳 중 하나, 11/9)
+  const hopNow = () => (setHop(true), setTimeout(() => setHop(false), 1100));
   const inputRef = useRef("");
   const inputElRef = useRef(null);
   // 입력칸은 글이 길어지면 5줄까지 늘어난다
@@ -282,15 +284,15 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
         <div style={{ marginBottom: 16 }}>
           {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
           {dailyPending(dog.id) || dcOpen ? (
-            <SpeechBubble>
-              <DailyCheck dog={dog} onChange={() => refresh((n) => n + 1)} onSheetChange={setDcOpen} />
+            <SpeechBubble key="check">
+              <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && hopNow())} onSheetChange={setDcOpen} />
             </SpeechBubble>
           ) : notifyAskPending(dog.id) ? (
-            <SpeechBubble>
+            <SpeechBubble key="notify">
               <NotifyAsk dog={dog} onDone={() => refresh((n) => n + 1)} />
             </SpeechBubble>
           ) : getFirstSteps(dog.id).show ? (
-            <SpeechBubble>
+            <SpeechBubble key="first">
               <FirstSteps
                 dog={dog}
                 onWeight={onOpenWeight}
@@ -300,7 +302,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
               />
             </SpeechBubble>
           ) : (
-            <button type="button" className="summary-bubble" onClick={onOpenToday}>
+            <button type="button" className="summary-bubble" onClick={onOpenToday} key="summary">
               <SpeechBubble>
                 <TodaySummary dog={dog} />
               </SpeechBubble>
@@ -311,7 +313,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 
 
       <div
-        className="home-dog"
+        className={`home-dog${hop ? " hop" : ""}`}
         onClick={() => isChat && goHome()}
         style={{
           position: isChat ? "absolute" : "relative",

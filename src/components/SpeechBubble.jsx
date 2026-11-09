@@ -1,8 +1,8 @@
 // 강아지가 직접 말하는 듯한 문구를 담는 말풍선. 아래쪽에 꼬리(삼각형)가 있어서
 // 바로 아래에 있는 캐릭터가 말하고 있다는 느낌을 준다.
-export default function SpeechBubble({ children }) {
+export default function SpeechBubble({ children, className = "rise-in" }) {
   return (
-    <div style={{ position: "relative", maxWidth: 320, margin: "0 auto" }}>
+    <div className={className} style={{ position: "relative", maxWidth: 320, margin: "0 auto" }}>
       <div
         style={{
           background: "var(--surface)",
