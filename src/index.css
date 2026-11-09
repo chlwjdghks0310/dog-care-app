@@ -1544,11 +1544,14 @@ button.seg, button.chip { min-height: 36px; }
 
 /* ── 디자인 규칙(11/9, 계획표 3장) ──
    2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목·창 제목에만 Bagel Fat One(굵고 둥근 제목체, OFL, 자료용 1순위 11/9). 본문은 고딕 그대로 */
-.h1, .pc100-title, .es-title, .summary-open, .onb-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+.h1, .pc100-title, .es-title, .onb-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 400; letter-spacing: 0.01em; }
 .h1 { font-size: 27px; line-height: 1.15; }
 .pc100-title { font-size: 20px; line-height: 1.3; }
 .es-title { font-size: 17px; }
-.summary-open { font-size: 19px; line-height: 1.25; }
+/* 강아지가 말하는 글(말풍선)은 손글씨 개구체(Gaegu) — 사용자 11/10: 말풍선 글씨체 바꾸기. 자료용 추천 "말풍선용" */
+.summary-open, .dc-q b, .onb-speech { font-family: "Gaegu", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 700; }
+.summary-open { font-size: 22px; line-height: 1.2; }
+.dc-q b { font-size: 21px; }
 .summary-open .summary-role { font-family: "Apple SD Gothic Neo", "Pretendard", sans-serif; }
 /* 1) 고유 표식 = 발도장(살구): 완료·띠·달력·빈 화면·모션에 같은 모양 */
 .paw-mark { color: var(--warm); display: inline-flex; vertical-align: -0.15em; }
@@ -1590,3 +1593,28 @@ button.seg, button.chip { min-height: 36px; }
 .rec-list > div:last-child .card.rec-item { border-bottom: 0; }
 .rec-list .rec-item-row { padding: 12px 6px; }
 .rec-list .rec-detail { padding: 0 6px 12px; }
+
+/* 밥·물 기록 칸(11/10): 한 번에 한 종류, 큰 숫자, 자주 쓰는 양 버튼 */
+.meal-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.meal-seg-btn { min-height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-soft); font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+.meal-seg-btn.on { border-color: var(--warm); background: var(--warm-bg); color: var(--warm-strong); }
+input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; padding: 10px 12px; }
+.meal-quick { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 14px; }
+.meal-quick .seg { min-height: 40px; font-size: 15px; }
+.meal-tip { margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 13.5px; line-height: 1.5; }
+.meal-tip b { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; color: var(--accent-strong); }
+.meal-tip ul { margin: 0; padding-left: 18px; }
+.rc-food { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 14px; font-weight: 600; }
+.rec-date-sum { font-weight: 500; }
+/* 변화 보기 밥·물 막대 */
+.fc { display: flex; align-items: flex-end; gap: 2px; height: 120px; padding-bottom: 18px; position: relative; }
+.fc-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
+.fc-bars { display: flex; align-items: flex-end; gap: 1px; height: 100%; }
+.fc-bar { flex: 1; min-width: 0; border-radius: 3px 3px 0 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+.fc-bar.food { background: var(--warm); }
+.fc-bar.water { background: var(--accent); }
+.fc-wet { background: var(--c-rose); width: 100%; }
+.fc-x { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10.5px; color: var(--text-soft); white-space: nowrap; }
+.fc-legend { display: flex; gap: 12px; margin-top: 6px; font-size: 12.5px; color: var(--text-soft); }
+.fc-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+.fc-legend i.food { background: var(--warm); } .fc-legend i.wet { background: var(--c-rose); } .fc-legend i.water { background: var(--accent); }

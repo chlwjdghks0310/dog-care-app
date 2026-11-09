@@ -216,7 +216,7 @@ console.log("통합 기록 확인 통과");
   const dry = A.applyAppActions(dogA, [{ type: "add_health_value", metric: "dry", value: 50, date: day(0), time: "00:00" }]);
   assert.equal(dry.done.length, 1, JSON.stringify(dry));
   const meal = R.getRecords("ai").find((r) => r.type === "meal");
-  assert.deepEqual([meal.data.foodType, meal.data.grams], [["건식"], "50"]);
+  assert.deepEqual([meal.data.kind, meal.data.amount], ["dry", "50"], "밥·물 한 종류 모양(11/10)");
   R.deleteRecord("ai", meal.id);
   const id = R.getRecords("ai")[0].id;
   // 고치기·지우기는 버튼 확인 후 — 먼저 confirm 목록으로

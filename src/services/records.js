@@ -14,11 +14,18 @@ const KEY = "dogcare-records-v1";
 
 export const LEVELS = ["평소보다 적음", "평소", "평소보다 많음"];
 // 식사 기록 하나에 사료 종류·먹은 양(g)까지(11/9 컴플레인: 건강 수치 건식·습식 칸과 이중 기록 → 식사로 합침)
-export const FOOD_TYPES = ["건식", "습식", "화식·생식"];
+export const FOOD_TYPES = ["건식", "습식", "화식·생식"]; // 예전(11/9 낮) 기록 읽기용
+// 밥·물(11/10): 한 번에 한 종류씩 — 건식 g, 습식 g, 물 ml. 식욕·마신 느낌은 LEVELS. 예전 식사 기록(foodType·grams·appetite·water)과 예전 건강 수치(dry·wet·water)도 같이 읽는다
+export const MEAL_KINDS = [
+  { id: "dry", label: "건식", unit: "g", max: 3000, quick: [20, 40, 60, 80, 100], ico: "bowl" },
+  { id: "wet", label: "습식", unit: "g", max: 3000, quick: [50, 80, 100, 150], ico: "droplets" },
+  { id: "water", label: "물", unit: "ml", max: 5000, quick: [50, 100, 150, 200, 300], ico: "droplet" },
+];
+export const MEAL_KIND = Object.fromEntries(MEAL_KINDS.map((k) => [k.id, k]));
 export const TYPES = {
   weight: { label: "체중", icon: "⚖️", ico: "scales", tone: "blue" },
   symptom: { label: "증상", icon: "🤒", ico: "bandaid", tone: "blue" },
-  meal: { label: "식사", icon: "🍚", ico: "bowl", tone: "rose" },
+  meal: { label: "밥·물", icon: "🍚", ico: "bowl", tone: "rose" }, // 11/10: 식사 + 음수량 한 종류(건식·습식·물)
   potty: { label: "배변·배뇨", icon: "💩", ico: "toilet", tone: "teal" },
   med: { label: "복약", icon: "💊", ico: "pill", tone: "teal" },
   vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope", tone: "blue" },
@@ -30,7 +37,7 @@ export const TYPES = {
 };
 // tone: 아이콘 색(blue=대표 소프트블루·몸 상태, teal=물·약, violet=산책·활동, rose=식사·추억) — index.css .tone-*
 // 새 기록 추가에서 고르는 순서
-export const ADD_ORDER = ["weight", "symptom", "meal", "potty", "med", "vet", "media", "daily", "condition"]; // 성장 추억(media)은 갤러리로 연다 — 예전 '성장·추억'(life) 기록은 목록·필터에만(11/7)
+export const ADD_ORDER = ["weight", "meal", "potty", "symptom", "vital", "med", "vet", "media", "daily", "condition"]; // 11/10: 밥·물을 앞으로, 수치(호흡·체온 등)는 기록 창에서만 적는다 // 성장 추억(media)은 갤러리로 연다 — 예전 '성장·추억'(life) 기록은 목록·필터에만(11/7)
 // 전체 기록 필터에 쓰는 종류(건강 수치는 프로필의 수치 칸에서 적는다)
 export const FILTER_ORDER = [...ADD_ORDER, "life", "vital"];
 
@@ -101,6 +108,11 @@ export function validateRecord(r, now = localNow()) {
     const v = Number(d.value);
     if (!def || def.external) return "어떤 수치인지 골라 주세요.";
     if (!(v >= def.min && v <= def.max)) return `${def.label}은 ${def.min}~${def.max}${def.unit} 사이로 적어 주세요.`;
+  }
+  if (r.type === "meal" && d.kind) {
+    const k = MEAL_KIND[d.kind];
+    if (!k) return "건식·습식·물 중 하나를 골라 주세요.";
+    if (!(Number(d.amount) >= 1 && Number(d.amount) <= k.max)) return `${k.label} 양을 1~${k.max.toLocaleString("ko-KR")}${k.unit} 사이로 적어 주세요.`;
   }
   if (r.type === "meal" && d.grams && !(Number(d.grams) >= 1 && Number(d.grams) <= 3000)) return "먹은 양을 1~3000g 사이로 적어 주세요.";
   if (r.type === "meal" && d.foodType?.some((x) => !FOOD_TYPES.includes(x))) return "사료 종류를 다시 골라 주세요.";
@@ -186,7 +198,8 @@ export function summarize(rec) {
       parts.push(d.kinds.join(", "), d.repeat && d.repeat !== "처음" ? d.repeat : "", d.since ? `${md(d.since)}부터` : "", d.observed);
       break;
     case "meal":
-      parts.push(d.foodType?.join("·"), Number(d.grams) > 0 && `${d.grams}g`, d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount, d.treats && `간식 ${d.treats}`);
+      if (d.kind && MEAL_KIND[d.kind]) parts.push(`${MEAL_KIND[d.kind].label} ${Number(d.amount) > 0 ? `${Number(d.amount).toLocaleString("ko-KR")}${MEAL_KIND[d.kind].unit}` : ""}`.trim(), d.kind === "water" ? d.water && `마신 느낌 ${d.water}` : d.appetite && `식욕 ${d.appetite}`, d.food, d.treats && `간식 ${d.treats}`);
+      else parts.push(d.foodType?.join("·"), Number(d.grams) > 0 && `${d.grams}g`, d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount, d.treats && `간식 ${d.treats}`);
       break;
     case "potty":
       parts.push(d.stool && `대변 ${d.stool}`, stoolCheckText(d), d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
@@ -309,20 +322,33 @@ export function getVitalEntries(dogId, metric) {
   const out = recs.filter((r) => r.type === "vital" && r.data?.metric === metric).map((r) => ({ id: r.id, at: r.at, value: Number(r.data.value), memo: r.memo || "", source: "vital" }));
   if (metric === "walk")
     for (const r of recs) if (r.type === "daily" && r.data?.kind === "산책" && Number(r.data.minutes) > 0) out.push({ id: r.id, at: r.at, value: Number(r.data.minutes), memo: r.memo || "", source: "daily" });
+  // 건식·습식·물은 밥·물 기록(11/10)에서 — 예전 식사 기록의 g(건식으로, 습식만 골랐으면 습식)도 합친다
+  if (metric === "dry" || metric === "wet" || metric === "water")
+    for (const r of recs) {
+      if (r.type !== "meal") continue;
+      if (r.data?.kind === metric && Number(r.data.amount) > 0) out.push({ id: r.id, at: r.at, value: Number(r.data.amount), memo: r.memo || "", source: "meal" });
+      else if (!r.data?.kind && Number(r.data?.grams) > 0 && metric !== "water") {
+        const wetOnly = Array.isArray(r.data.foodType) && r.data.foodType.length > 0 && r.data.foodType.every((t) => t === "습식");
+        if ((metric === "wet") === wetOnly) out.push({ id: r.id, at: r.at, value: Number(r.data.grams), memo: r.memo || "", source: "meal" });
+      }
+    }
   if (metric === "weight")
     for (const w of getWeightRecords(dogId)) out.push({ id: w.id, at: w.measuredAt.slice(0, 16), value: w.weightKg, memo: w.note || "", source: "weight" });
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
 
-// 먹은 양(g): 식사 기록의 g + 예전 건강 수치 건식·습식 칸 — 병원용 기록의 하루 평균에 쓴다. 반환: [{ at, value }] 시간순
+// 먹은 양(g) = 건식 + 습식(밥·물 기록·예전 식사 g·예전 건강 수치 칸) — 병원용 기록의 하루 평균에 쓴다. 반환: [{ at, value }] 시간순
 export function getFoodGrams(dogId) {
-  const out = [];
-  for (const r of getRecords(dogId)) {
-    if (r.type === "meal" && Number(r.data?.grams) > 0) out.push({ at: r.at, value: Number(r.data.grams) });
-    if (r.type === "vital" && ["dry", "wet"].includes(r.data?.metric)) out.push({ at: r.at, value: Number(r.data.value) });
-  }
-  return out.sort((a, b) => a.at.localeCompare(b.at));
+  return [...getVitalEntries(dogId, "dry"), ...getVitalEntries(dogId, "wet")].map(({ at, value }) => ({ at, value })).sort((a, b) => a.at.localeCompare(b.at));
 }
+
+// 하루 밥·물 합계: { dry, wet, water }(없는 건 0) — 달력 그날 줄·목록 날짜 제목·변화 보기 그래프에 "통계로 합쳐" 보여 준다(11/10)
+export function foodTotals(dogId, date) {
+  const t = { dry: 0, wet: 0, water: 0 };
+  for (const k of Object.keys(t)) for (const e of getVitalEntries(dogId, k)) if (e.at.slice(0, 10) === date) t[k] += e.value;
+  return t;
+}
+export const foodTotalsText = (t) => [t.dry > 0 && `건식 ${Math.round(t.dry)}g`, t.wet > 0 && `습식 ${Math.round(t.wet)}g`, t.water > 0 && `물 ${Math.round(t.water)}ml`].filter(Boolean).join(" · ");
 
 // 날짜별로 묶기: sum 수치는 하루 합계, point 수치는 그날 마지막 값. 기록 없는 날은 만들지 않는다.
 export function vitalDaily(entries, kind) {

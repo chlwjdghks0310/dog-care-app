@@ -4,21 +4,16 @@ import { VITAL, fmtValue, outOfRange } from "../data/vitals";
 import { VITAL_TIPS } from "../data/vitalTips";
 import InfoAccordionItem from "../components/InfoAccordion";
 import Ico from "../components/Ico";
-import { getVitalEntries, vitalDaily, saveRecord, deleteRecord, getRecords, localNow, newRecordId, validateRecord, md } from "../services/records";
+import { getVitalEntries, vitalDaily, md } from "../services/records";
 
 const PERIODS = [7, 30, 90];
 
 // 건강 수치 하나: 맨 위 측정법 요약 → 오늘/최근 값 → 바로 적기(호흡·심박은 탭해서 세기) → 기간 그래프 → 날짜별 기록(고치기·지우기) → 맨 아래 자세한 팁(눌러서 펼침)
-export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
+// 11/10: 여기서는 보여 주기만 — 적는 건 기록 탭(밥·물 / 수치). 건식·습식·물은 밥·물 기록에서, 호흡·심박·체온·수액·산책은 수치 기록에서 넘어온다
+export default function VitalDetail({ dog, metric, onBack, onOpenWeight, onRecord }) {
   const def = VITAL[metric];
   const [entries, setEntries] = useState(() => getVitalEntries(dog.id, metric));
   const [days, setDays] = useState(7);
-  const [value, setValue] = useState("");
-  const [at, setAt] = useState(localNow());
-  const [memo, setMemo] = useState("");
-  const [editId, setEditId] = useState(null); // 고치는 중이면 그 기록 id
-  const [msg, setMsg] = useState("");
-  const [error, setError] = useState("");
   const reload = () => setEntries(getVitalEntries(dog.id, metric));
 
   const today = todayKey();
@@ -31,50 +26,6 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
   const avg7 = recent7.length ? recent7.reduce((s, d) => s + d.value, 0) / recent7.length : null;
   const unit = def.unit;
   const tips = VITAL_TIPS[metric];
-
-  function resetForm() {
-    setValue("");
-    setMemo("");
-    setAt(localNow());
-    setEditId(null);
-  }
-
-  function save() {
-    setError("");
-    const rec = { id: editId || newRecordId(), type: "vital", at, data: { metric, value: Number(value) }, memo: memo.trim(), photos: [] };
-    const problem = value === "" ? `${def.label}을 숫자로 적어 주세요.` : validateRecord(rec);
-    if (problem) return setError(problem);
-    try {
-      saveRecord(dog.id, editId ? { ...getRecords(dog.id).find((r) => r.id === editId), ...rec } : rec);
-      reload();
-      setMsg(`${editId ? "고쳤어요" : "적었어요"}: ${md(at.slice(0, 10))} ${at.slice(11)} ${fmtValue(metric, value)}${unit}`);
-      resetForm();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  function startEdit(e) {
-    setEditId(e.id);
-    setValue(String(e.value));
-    setAt(e.at);
-    setMemo(e.memo);
-    setMsg("");
-    window.scrollTo?.({ top: 0, behavior: "smooth" });
-    document.querySelector(".vd-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
-  function remove(e) {
-    if (!confirm(`${md(e.at.slice(0, 10))} ${e.at.slice(11)} ${fmtValue(metric, e.value)}${unit} 기록을 지울까요?`)) return;
-    try {
-      deleteRecord(dog.id, e.id);
-      reload();
-      if (editId === e.id) resetForm();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
   const headline = def.kind === "sum" ? todayRow?.value : latest?.value;
   const flag = def.kind === "point" && latest ? outOfRange(metric, latest.value) : null;
 
@@ -111,46 +62,17 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
           <div className="vd-none">{def.kind === "sum" ? "오늘은 아직 기록이 없어요" : "아직 기록이 없어요"}</div>
         )}
         {def.kind === "sum" && <div className="subtle">{avg7 != null ? `최근 7일 기록한 날 평균 ${fmtValue(metric, avg7)}${unit} (${recent7.length}일)` : "최근 7일 기록이 없어요"}</div>}
+        {onRecord && (
+          <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 10 }} onClick={() => onRecord(def.inMeal ? "meal" : "vital")}>
+            <Ico name="pencil" size={16} /> 기록 탭에서 {def.inMeal ? "밥·물" : "수치"} 적기
+          </button>
+        )}
         {def.range && (
           <div className={`vd-range${flag ? " out" : ""}`}>
             {flag && <b>{flag === "above" ? "참고 범위보다 높아요 · " : "참고 범위보다 낮아요 · "}</b>}
             참고 범위 {def.range[0]}~{def.range[1]}{unit}. {def.note}
           </div>
         )}
-      </div>
-
-      <div className="card vd-form">
-        <div className="h2">{editId ? "기록 고치기" : "지금 적기"}</div>
-        {def.counter && !editId && <TapCounter seconds={def.counter} how={def.how} onResult={(v) => setValue(String(v))} />}
-        <div className="vd-input-row">
-          <input
-            type="number"
-            inputMode="decimal"
-            step={def.step}
-            min={def.min}
-            max={def.max}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="0"
-            aria-label={`${def.label} (${unit})`}
-            className="vd-input"
-          />
-          <span className="vd-input-unit">{unit}</span>
-        </div>
-        <div className="field">
-          <label>날짜·시각</label>
-          <input type="datetime-local" value={at} max={localNow()} onChange={(e) => setAt(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>메모 (선택)</label>
-          <input value={memo} maxLength={200} onChange={(e) => setMemo(e.target.value)} placeholder={metric === "fluid" ? "예: 왼쪽 어깨, 수액 종류" : "예: 산책 후"} />
-        </div>
-        {error && <p className="error-text" role="alert">{error}</p>}
-        <div style={{ display: "flex", gap: 8 }}>
-          {editId && <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={resetForm}>취소</button>}
-          <button type="button" className="btn-primary" style={{ flex: 2 }} onClick={save}>{editId ? "고친 내용 저장" : "저장"}</button>
-        </div>
-        {msg && <p className="subtle" role="status" style={{ margin: "8px 0 0" }}>✓ {msg}</p>}
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
@@ -175,7 +97,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
       <div className="card">
         <div className="h2">기록</div>
         {entries.length === 0 ? (
-          <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요. 위에서 첫 기록을 적어 보세요.</p>
+          <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요. 기록 탭에서 적으면 여기에 모여요.</p>
         ) : (
           [...daily].reverse().slice(0, 30).map((d) => (
             <div key={d.date} className="vd-day">
@@ -192,14 +114,8 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight }) {
                     {e.memo && <span className="faint"> · {e.memo}</span>}
                     {e.source === "daily" && <span className="faint"> · 일상 기록</span>}
                   </span>
-                  {e.source === "vital" ? (
-                    <>
-                      <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => startEdit(e)}>고치기</button>
-                      <button type="button" className="link-btn" style={{ margin: "0 0 0 10px", color: "var(--danger)" }} onClick={() => remove(e)}>삭제</button>
-                    </>
-                  ) : e.source === "weight" ? (
-                    <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenWeight}>체중 관리</button>
-                  ) : null}
+                  {e.source === "weight" && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenWeight}>체중 관리</button>}
+                  {e.source === "meal" && <span className="faint">밥·물 기록</span>}
                 </div>
               ))}
             </div>

@@ -7,12 +7,13 @@ import { syncPushAlarms } from "../services/notifications";
 import { quickStoolCheck } from "../services/aiClient";
 import { normalizeStoolResult } from "../services/photoCheck";
 import { VITALS, VITAL } from "../data/vitals";
+import { VITAL_TIPS } from "../data/vitalTips";
 import Ico from "../components/Ico";
 import { linkVetExpense } from "../services/vetVisits";
 import { stoolFlags, conditionFlags } from "../services/healthRules";
 import { StoolCheck, ConditionCheck } from "../components/HealthChecks";
 import {
-  TYPES, ADD_ORDER, LEVELS, FOOD_TYPES, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
+  TYPES, ADD_ORDER, LEVELS, MEAL_KINDS, MEAL_KIND, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule, getRecords,
 } from "../services/records";
 
@@ -154,7 +155,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
           <Field label="어떤 수치">
             <select value={data.metric || ""} onChange={set("metric")} disabled={Boolean(initial)}>
               <option value="" disabled>골라 주세요</option>
-              {VITALS.filter((v) => !v.external && (!v.old || v.id === initial?.data?.metric)).map((v) => <option key={v.id} value={v.id}>{v.label} ({v.unit})</option>)}
+              {VITALS.filter((v) => !v.external && ((!v.old && !v.inMeal) || v.id === initial?.data?.metric)).map((v) => <option key={v.id} value={v.id}>{v.label} ({v.unit})</option>)}
             </select>
           </Field>
           {data.metric && <Field label={`${VITAL[data.metric].label} (${VITAL[data.metric].unit})`}>{input("value", { type: "number", inputMode: "decimal", step: VITAL[data.metric].step })}</Field>}
@@ -172,20 +173,18 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
         </>
       )}
 
-      {type === "meal" && (
+      {type === "meal" && !initial?.data?.foodType && !initial?.data?.grams && (
+        /* 밥·물(11/10): 위에서 건식·습식·물 중 하나 → 양은 큰 숫자 + 자주 쓰는 양 버튼 → 느낌 → 짧은 "이렇게 재요". 한 번에 한 종류라 창이 짧다 */
+        <MealFields data={data} set={set} patch={patch} input={input} onOpenFeeding={onOpenFeeding} />
+      )}
+      {type === "meal" && (initial?.data?.foodType || initial?.data?.grams) && (
+        /* 11/9 낮에 적은 예전 식사 기록 고치기 — 그때 모양 그대로 */
         <>
-          <Field label="무엇을 먹었나요 (여러 개 가능)"><Pick multi options={FOOD_TYPES} value={data.foodType || []} onChange={set("foodType")} /></Field>
-          <Field label="먹은 양 (g, 숫자로 적으면 병원용 기록에 하루 평균이 나와요)">{input("grams", { type: "number", inputMode: "numeric", min: "1", max: "3000", placeholder: "예: 40" })}</Field>
-          {initial?.data?.amount && <Field label="급여량 (예전에 적은 글)">{input("amount", {})}</Field>}
+          <Field label="먹은 양 (g)">{input("grams", { type: "number", inputMode: "numeric", min: "1", max: "3000" })}</Field>
           <Field label="식욕"><Pick options={LEVELS} value={data.appetite} onChange={set("appetite")} /></Field>
           <Field label="물 마시는 양"><Pick options={LEVELS} value={data.water} onChange={set("water")} /></Field>
-          <Field label="사료 이름">{input("food", { placeholder: "예: 로얄캐닌 미니" })}</Field>
-          {onOpenFeeding && (
-            <button type="button" className="link-btn" style={{ margin: "-4px 0 12px" }} onClick={onOpenFeeding}>
-              <Ico name="bowl" size={15} /> 하루에 얼마나 줘야 할지 사료 계산기로 보기 ›
-            </button>
-          )}
-          <Field label="간식">{input("treats", { placeholder: "예: 닭가슴살 육포 2개" })}</Field>
+          <Field label="사료 이름">{input("food", {})}</Field>
+          <Field label="간식">{input("treats", {})}</Field>
         </>
       )}
 
@@ -381,7 +380,7 @@ function NextDate({ data, set, label }) {
 function defaults(type, dog) {
   if (type === "symptom") return { kinds: [], repeat: "", since: "", observed: "" };
   if (type === "vet") return { hospital: dog.hospital || "", reason: "" };
-  if (type === "meal") return { food: dog.food || "" };
+  if (type === "meal") return { kind: "dry", food: dog.food || "" };
   return {};
 }
 
@@ -391,5 +390,62 @@ function clean(data) {
     Object.entries(data)
       .map(([k, v]) => [k, typeof v === "string" ? v.trim() : v])
       .filter(([, v]) => (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : v !== "" && v != null && v !== false))
+  );
+}
+
+// 밥·물 칸: 7살 아이나 어르신도 바로 쓰게 — 큰 글자·큰 버튼·한 번에 한 종류. 자주 쓰는 양은 버튼으로(누르면 채워짐), 더 정확히는 숫자 칸에.
+const LEVEL_LABEL = { dry: ["조금 남겼어요", "다 먹었어요", "더 달라고 했어요"], wet: ["조금 남겼어요", "다 먹었어요", "더 달라고 했어요"], water: ["평소보다 적게", "평소만큼", "평소보다 많이"] };
+function MealFields({ data, set, patch, input, onOpenFeeding }) {
+  const kind = MEAL_KIND[data.kind] ? data.kind : "dry";
+  const k = MEAL_KIND[kind];
+  const levelKey = kind === "water" ? "water" : "appetite"; // 저장 이름은 예전과 같게(병원용 기록·이상 신호가 읽는다)
+  const tips = VITAL_TIPS[kind]?.how?.slice(0, 2) || [];
+  return (
+    <>
+      <div className="field">
+        <label>무엇을 적을까요?</label>
+        <div className="meal-seg" role="tablist" aria-label="밥·물 종류">
+          {MEAL_KINDS.map((m) => (
+            <button key={m.id} type="button" role="tab" aria-selected={kind === m.id} className={`meal-seg-btn${kind === m.id ? " on" : ""}`} onClick={() => patch({ kind: m.id, amount: "", [levelKey]: "" })}>
+              <Ico name={m.ico} size={20} /> {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Field label={`${k.label} 얼마나 ${kind === "water" ? "마셨나요" : "먹었나요"}? (${k.unit})`}>
+        {input("amount", { type: "number", inputMode: "numeric", min: "1", max: String(k.max), placeholder: "0", className: "meal-amount", "aria-describedby": "meal-quick" })}
+      </Field>
+      <div className="meal-quick" id="meal-quick">
+        {k.quick.map((q) => (
+          <button key={q} type="button" className={`seg${String(data.amount) === String(q) ? " on" : ""}`} onClick={() => set("amount")(String(q))}>{q}{k.unit}</button>
+        ))}
+      </div>
+      <Field label={kind === "water" ? "평소와 비교하면?" : "밥그릇은 어땠나요?"}>
+        <div className="chip-wrap">
+          {LEVELS.map((l, i) => (
+            <button key={l} type="button" className={`seg${data[levelKey] === l ? " on" : ""}`} aria-pressed={data[levelKey] === l} onClick={() => set(levelKey)(data[levelKey] === l ? "" : l)}>
+              {LEVEL_LABEL[kind][i]}
+            </button>
+          ))}
+        </div>
+      </Field>
+      {tips.length > 0 && (
+        <div className="meal-tip">
+          <b><Ico name="ruler" size={14} /> 이렇게 재요</b>
+          <ul>{tips.map((t) => <li key={t}>{t}</li>)}</ul>
+        </div>
+      )}
+      {kind !== "water" && (
+        <>
+          <Field label="사료 이름 (선택)">{input("food", { placeholder: "예: 로얄캐닌 미니" })}</Field>
+          {onOpenFeeding && (
+            <button type="button" className="link-btn" style={{ margin: "-4px 0 12px" }} onClick={onOpenFeeding}>
+              <Ico name="bowl" size={15} /> 하루에 얼마나 줘야 할지 사료 계산기로 보기 ›
+            </button>
+          )}
+          <Field label="간식 (선택)">{input("treats", { placeholder: "예: 닭가슴살 육포 2개" })}</Field>
+        </>
+      )}
+    </>
   );
 }

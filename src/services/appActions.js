@@ -80,10 +80,11 @@ function run(dog, a) {
       } else if (t === "meal") {
         put("appetite", oneOf(LEVELS, a.appetite));
         put("water", oneOf(LEVELS, a.water));
-        put("foodType", (Array.isArray(a.food_type) ? a.food_type : []).filter((x) => FOOD_TYPES.includes(x)));
-        put("grams", Number(a.grams) > 0 ? String(Math.round(Number(a.grams))) : "");
+        // 11/10 밥·물: 한 종류씩(kind·amount). AI가 보낸 food_type(건식/습식)·grams 또는 water_ml을 그 모양으로
+        const types = (Array.isArray(a.food_type) ? a.food_type : []).filter((x) => FOOD_TYPES.includes(x));
+        if (Number(a.water_ml) > 0) (put("kind", "water"), put("amount", String(Math.round(Number(a.water_ml)))));
+        else if (Number(a.grams) > 0) (put("kind", types.includes("습식") && !types.includes("건식") ? "wet" : "dry"), put("amount", String(Math.round(Number(a.grams)))));
         put("food", text(a.food));
-        put("amount", text(a.amount));
         put("treats", text(a.treats));
       } else if (t === "potty") {
         put("stool", oneOf(STOOL, a.stool));

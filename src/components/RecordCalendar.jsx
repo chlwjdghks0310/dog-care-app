@@ -7,7 +7,7 @@ import { ITEMS, getDay, saveUsual, saveUnknown, clearDay } from "../services/dai
 import { syncPushAlarms } from "../services/notifications";
 import { trackAct } from "../services/analytics";
 import { markCheckedIn } from "../services/routine";
-import { TYPES, summarize } from "../services/records";
+import { TYPES, summarize, foodTotals, foodTotalsText } from "../services/records";
 import { VITAL } from "../data/vitals";
 import { stampsOn } from "../services/puppy100";
 import { isVisitRecord } from "../services/vetVisits";
@@ -100,10 +100,13 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
         {sel && sel.status !== "unknown" ? (
           <div className="rc-day">
             <span>{sel.status === "usual" ? "평소와 같았어요" : `다른 점: ${Object.entries(sel.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}`}</span>
-            <span style={{ display: "flex", gap: 12 }}>
-              {sel.status === "diff" && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, selected), saveUsual(dog.id, selected), changed(selected))}>평소였어요</button>}
-              <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setSheet(selected)}>고치기</button>
-            </span>
+          </div>
+        ) : null}
+        {sel && sel.status !== "unknown" ? (
+          /* 11/10: 작은 "고치기" 글자 대신 버튼 — 평소였으면 [다른 게 있었어요], 달랐으면 [평소였어요] [다른 점 고치기] */
+          <div className="dc-btns" style={{ marginTop: 8 }}>
+            {sel.status === "diff" && <button type="button" className="dc-diff" onClick={() => (clearDay(dog.id, selected), saveUsual(dog.id, selected), changed(selected))}>평소였어요</button>}
+            <button type="button" className={sel.status === "diff" ? "dc-diff" : "dc-usual"} onClick={() => setSheet(selected)}>{sel.status === "diff" ? "다른 점 고치기" : "다른 게 있었어요"}</button>
           </div>
         ) : selected <= today ? (
           <>
@@ -117,6 +120,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
         ) : (
           <p className="subtle" style={{ margin: 0 }}>아직 오지 않은 날이에요.</p>
         )}
+        {foodTotalsText(foodTotals(dog.id, selected)) && <p className="rc-food"><Ico name="bowl" size={14} className="cat-ico tone-rose" /> 이날 먹고 마신 것 · {foodTotalsText(foodTotals(dog.id, selected))}</p>}
         {(selRecords.length > 0 || stampsOn(dog.id, selected).length > 0) && (
           <div className="rc-recs">
             {stampsOn(dog.id, selected).map((t) => (

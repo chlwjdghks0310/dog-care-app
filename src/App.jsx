@@ -79,12 +79,46 @@ export default function App() {
   const [dog, setDog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [route, setRoute] = useState("onboarding");
-  const [tab, setTab] = useState("main"); // 앱을 열면 비서부터(말풍선에 오늘 요약, 누르면 프로필)
+  const [tab, _setTab] = useState("main"); // 앱을 열면 비서부터(말풍선에 오늘 요약, 누르면 프로필)
   const [mainResetSignal, setMainResetSignal] = useState(0);
   const [chatReading, setChatReading] = useState(false); // 비서 답변을 읽느라 아래로 스크롤하면 하단 탭을 내려 화면을 넓게
   const [dogSwitcherOpen, setDogSwitcherOpen] = useState(false);
   const [medFocus, setMedFocus] = useState(null);
   const [recordsOpts, setRecordsOpts] = useState({}); // 전체 기록을 열 때 고른 종류 / 바로 적을 종류
+  // 뒤로 가면 보던 자리로(11/10): 세부 화면을 열면 탭 화면이 사라져 스크롤이 0으로 돌아가므로, 스크롤할 때마다 위치를 기억해 두고 돌아오면 되돌린다
+  const scrollPosRef = useRef({});
+  // 화면을 바꾸기 직전(아직 DOM이 그대로일 때) 모든 탭 페이지의 스크롤 위치를 저장한다
+  const setTab = useCallback((next) => {
+    // 실제로 스크롤되는 건 페이지 안의 .screen(탭 화면)이라 그것부터 본다
+    for (const pg of document.querySelectorAll(".pager-page")) {
+      const el = [...pg.querySelectorAll(".screen"), pg].find((x) => x.scrollTop > 0);
+      if (el) scrollPosRef.current[pg.dataset.tab] = el.scrollTop;
+    }
+    _setTab(next);
+  }, []);
+  useLayoutEffect(() => {
+    if (PARENT_TAB[tab]) return;
+    const pg = pagerRef.current?.querySelector(`.pager-page[data-tab="${tab}"]`);
+    const y = scrollPosRef.current[tab];
+    if (!pg || !(y > 0)) return;
+    // 화면이 처음엔 짧게 그려졌다가(사진·달력이 뒤늦게 자리 잡음) 길어지므로, 높이가 바뀔 때마다 다시 맞추고 한 번 맞으면 그만둔다(최대 1.5초)
+    let done = false;
+    const apply = () => {
+      if (done) return;
+      const el = pg.querySelector(".screen") || pg;
+      el.scrollTop = y;
+      if (Math.abs(el.scrollTop - y) < 2) done = true;
+    };
+    apply();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
+    const watch = () => { const el = pg.querySelector(".screen"); if (ro && el) { ro.disconnect(); ro.observe(el); for (const c of el.children) ro.observe(c); } };
+    watch();
+    const mo = new MutationObserver(() => (watch(), apply()));
+    mo.observe(pg, { childList: true, subtree: true });
+    const timers = [60, 200, 500, 900].map((ms) => setTimeout(apply, ms));
+    const stop = setTimeout(() => (done = true, ro?.disconnect(), mo.disconnect()), 1500);
+    return () => (done = true, ro?.disconnect(), mo.disconnect(), timers.forEach(clearTimeout), clearTimeout(stop));
+  }, [tab]);
   const [vitalMetric, setVitalMetric] = useState(null);
   const [vetDocSignal, setVetDocSignal] = useState(0);
   // 인터넷 연결(비행기 모드 등) — 끊기면 위에 한 줄 안내. 기록은 원래 폰에 저장돼서 그대로 쓴다
@@ -438,13 +472,13 @@ export default function App() {
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("report")} />,
-    vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} />,
+    vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} onRecord={(type) => (setRecordsOpts({ type, back: "vital" }), setTab("records-new"))} />,
   };
   // 새 기록: 종류 고르기에서 고른 기록이면 뒤로 = 종류 고르기로(복약·성장 추억과 같게, 11/7)
   const recordsBack = () => (recordsOpts.picked ? setRecordsOpts((o) => ({ ...o, type: undefined, picked: false })) : recordsOpts.back ? handleTabChange(recordsOpts.back) : setTab("records"));
   const recordScreens = {
     records: () => <Records key={`list-${recordsOpts.types?.join() || ""}`} dog={dog} initialTypes={recordsOpts.types} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records" })), setTab("records-meds"))} onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))} onNew={(date) => (setRecordsOpts(date ? { prefill: { at: dateAt(date) } } : {}), setTab("records-new"))} onQuickAdd={quickAdd} onOpenGallery={() => (setRecordsOpts((o) => ({ ...o, galleryFrom: "records" })), setTab("records-gallery"))} />,
-    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.picked ? "← 종류 고르기로" : recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : "← 기록으로"} onBack={recordsBack} onPickType={(t) => setRecordsOpts((o) => ({ ...o, type: t, picked: true }))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} onOpenGallery={() => (setRecordsOpts((o) => ({ ...o, galleryFrom: "records-new" })), setTab("records-gallery"))} />,
+    "records-new": () => <Records key={`new-${recordsOpts.type || ""}`} dog={dog} startNew startType={recordsOpts.type} prefill={recordsOpts.prefill} backLabel={recordsOpts.picked ? "← 종류 고르기로" : recordsOpts.back === "hospital" ? "← 병원으로" : recordsOpts.back === "profile" ? "← 우리 아이로" : recordsOpts.back === "vital" ? "← 건강 수치로" : "← 기록으로"} onBack={recordsBack} onPickType={(t) => setRecordsOpts((o) => ({ ...o, type: t, picked: true }))} onOpenMeds={() => (setRecordsOpts((o) => ({ ...o, medsFrom: "records-new" })), setTab("records-meds"))} onOpenFeeding={() => (setRecordsOpts((o) => ({ ...o, type: "meal" })), setTab("records-feeding"))} onOpenGallery={() => (setRecordsOpts((o) => ({ ...o, galleryFrom: "records-new" })), setTab("records-gallery"))} />,
     "records-feeding": () => <FeedingPlan dog={dog} backLabel="← 식사 기록으로" onBack={() => setTab("records-new")} />,
     "records-gallery": () => <Gallery dog={dog} onUpdateDog={setActiveDog} backLabel={recordsOpts.galleryFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.galleryFrom || "records-new")} />,
     "records-meds": () => <Medications dog={dog} backLabel={recordsOpts.medsFrom === "records" ? "← 기록으로" : "← 종류 고르기로"} onBack={() => setTab(recordsOpts.medsFrom || "records-new")} />,

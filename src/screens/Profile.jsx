@@ -1,4 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import RecordsBrowser from "../components/RecordsBrowser";
+import { getTimeline } from "../services/records";
+import { useHelpTip } from "../components/HelpTip";
 import { getProgress as getPuppyProgress, setHidden as setPuppyHidden } from "../services/puppy100";
 import { timeLabel } from "../components/EventSheet";
 import { createPortal } from "react-dom";
@@ -222,7 +225,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
       <GalleryStrip dog={dog} onOpen={onOpenGallery} />
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
-      <HealthServices dog={dog} onOpenRecords={onOpenRecords} onNewRecord={onNewRecord} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} />
+      <HealthServices dog={dog} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} onOpenVital={onOpenVital} />
 
       <QuickAddFab onPick={onQuickAdd} />
 
@@ -623,8 +626,10 @@ const SERVICES = [
   { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
 const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
-function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet, onOpenReport }) {
+function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital }) {
   const [more, setMore] = useState(false);
+  const [browse, setBrowse] = useState(null); // 보기 편한 기록 창(11/10: 기록 탭으로 넘어가지 않고 여기서 보기만)
+  const [tip, help] = useHelpTip("건강 기록", "종류마다 마지막 기록이 한 줄로 보여요. 누르면 그 종류만 모아 볼 수 있어요. 새로 적거나 고치는 건 기록 탭에서 해요.");
   const recs = getRecords(dog.id);
   const meds = getMeds(dog.id).filter((m) => !isEnded(m));
   const doses = getDosesForDate(dog.id, todayKey());
@@ -639,15 +644,16 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
   return (
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="rec-head">
-        <div className="h2" style={{ margin: 0 }}>건강 기록</div>
-        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => onOpenRecords()}>전체 보기 ›</button>
+        <div className="h2" style={{ margin: 0 }}>건강 기록{tip}</div>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setBrowse({})}>전체 보기 ›</button>
       </div>
+      {help}
       {recs.length === 0 && meds.length === 0 && (
-        <p className="first-hint">＋를 누르거나, 홈 화면에서 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
+        <p className="first-hint">기록 탭 [＋ 새 기록]에서 적거나, 오늘 화면에서 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
       )}
       {SERVICES.filter((svc) => svc.key !== "report" && (more || MAIN_SERVICES.includes(svc.key))).map((svc) => (
         <div key={svc.key} className="sv-row">
-          <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : onOpenRecords(svc.types))}>
+          <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : setBrowse({ types: svc.types }))}>
             <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span className="sv-label">{svc.label}</span>
@@ -655,11 +661,9 @@ function HealthServices({ dog, onOpenRecords, onNewRecord, onOpenMeds, onOpenVet
             </span>
             <span className="faint" aria-hidden="true">›</span>
           </button>
-          {svc.types && (
-            <button type="button" className="sv-add" aria-label={`${svc.label} 기록 추가`} onClick={() => onNewRecord(svc.add || svc.types[0])}>＋</button>
-          )}
         </div>
       ))}
+      {browse && <RecordsBrowser dog={dog} items={getTimeline(dog.id)} initialTypes={browse.types || []} title={`${dog.name} 기록`} backLabel="← 우리 아이로" readOnly onClose={() => setBrowse(null)} onOpenMeds={onOpenMeds} onOpenVital={onOpenVital} />}
       <button type="button" className="link-btn" style={{ display: "block", margin: "6px auto 0" }} aria-expanded={more} onClick={() => setMore((v) => !v)}>
         {more ? "접기 ▴" : "컨디션·산책·사진 기록 더 보기 ▾"}
       </button>
