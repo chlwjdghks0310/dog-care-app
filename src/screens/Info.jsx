@@ -32,7 +32,7 @@ export default function Info({ dog, onBack }) {
   const [showOther, setShowOther] = useState(false);
 
   const renderCategory = ([category, rules]) => (
-    <div key={category} className="card" style={{ marginBottom: 12 }}>
+    <div key={category} className="section">
       <div className="h2">{category}</div>
       {rules.map((rule) => {
         const isActive = activeIds.has(rule.id);

@@ -60,7 +60,7 @@ export function AIConsentCard() {
     setAgreed(!agreed);
   };
   return (
-    <div className="card" style={{ marginTop: 14 }}>
+    <div className="section">
       <div className="h2">AI 정보 전송</div>
       <p className="subtle" style={{ margin: "0 0 10px" }}>
         {agreed ? "동의함 — AI를 쓸 때 질문·사진·영상·음성과 강아지 정보가 Anthropic·Google로 전송돼요." : "동의 안 함 — AI 기능을 처음 쓸 때 다시 물어볼게요."}

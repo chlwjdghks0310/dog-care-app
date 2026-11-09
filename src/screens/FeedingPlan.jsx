@@ -85,7 +85,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 �
         {josa(dog.name, "은", "는")} 지금 {formatAge(age)}예요. 급여 시각을 정하면, 그 30분 전에 "사료 불리기" 알림을 보내드려요.
       </p>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="section">
         <div className="h2">급여 시각</div>
         {settings.times.length === 0 && <p className="subtle">아직 설정한 급여 시각이 없어요.</p>}
         {settings.times.map((t, i) => (
@@ -105,7 +105,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 �
         {nothingToSave && <p className="faint" style={{ margin: "6px 0 0", textAlign: "center" }}>시각을 하나 이상 추가하면 저장할 수 있어요.</p>}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="section">
         <div className="h2">배변 상태 (선택)</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {STOOL_OPTIONS.map((opt) => (
@@ -129,7 +129,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 �
 
       <FoodCard dog={dog} settings={settings} onUse={(patch) => saveNow(patch)} />
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="section">
         <div className="h2">사료 열량 (선택)</div>
         <p className="faint" style={{ marginBottom: 8 }}>
           사료 봉투에 kcal/100g이 적혀 있으면 입력해 주세요. 안 넣으면 일반적인 평균치(kcal/100g {plan.kcalPer100g})로 계산해요.
@@ -162,7 +162,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 �
         </p>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="section">
         <div className="h2"><Ico name="bowl" size={18} /> 사료 남은 양</div>
         {stock ? (
           <p style={{ margin: "4px 0 6px", fontSize: 16 }}>
@@ -183,7 +183,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 �
         <p className="faint" style={{ marginTop: 6 }}>간식·흘린 양은 빼고 계산한 어림이에요. 급여량을 바꾸면 남은 날도 다시 계산돼요.</p>
       </div>
 
-      <div className="card">
+      <div className="section">
         <div className="h2">사료 불리기 — {soakLabel}</div>
         <p className="subtle">{plan.soak.label}</p>
         <p className="faint" style={{ marginBottom: 8 }}>{plan.soak.reason}</p>

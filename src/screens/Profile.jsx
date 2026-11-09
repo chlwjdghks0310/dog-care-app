@@ -737,7 +737,7 @@ function LinksCard() {
     return onSyncStatus(check);
   }, []);
   return (
-    <div className="card" style={{ marginTop: 14 }}>
+    <div className="section">
       <div className="h2">멍케어 소식·자료</div>
       {LINKS.map(([ico, label, sub, href], i) => (
         <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: i ? "1px solid var(--border)" : "none" }}>
@@ -839,7 +839,7 @@ function GalleryStrip({ dog, onOpen }) {
 function PuppyToggle({ dog }) {
   const [on, setOn] = useState(() => !getPuppyProgress(dog.id).hidden);
   return (
-    <div className="card" style={{ marginBottom: 14 }}>
+    <div className="section">
       <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
         <span>
           <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
