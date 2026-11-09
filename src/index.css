@@ -1214,7 +1214,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 /* 기록 달력: 평소 ● · 다른 날 배지(코랄 칸) · 병원 ＋ — 색 + 모양 */
 .rc-mark { display: inline-flex; gap: 2px; align-items: center; min-height: 16px; font-size: 11px; line-height: 1; }
 .rc-dot { color: var(--text-faint); font-size: 8px; }
-.rc-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: #d9534f; color: #fff; font-size: 10.5px; font-weight: 800; }
+.rc-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: #c0392b; color: #fff; font-size: 10.5px; font-weight: 800; }
 .rc-vet { color: var(--accent-strong); font-weight: 900; font-size: 13px; }
 .mg-grid .rc-diff { background: #fdecea; }
 :root[data-theme="dark"] .mg-grid .rc-diff { background: #4a2a2a; }
