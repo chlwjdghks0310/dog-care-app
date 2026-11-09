@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import { getSignals } from "../services/signals";
 import { isMilestone, togetherDays } from "../services/shareCard";
-import OutingCard from "../components/OutingCard";
+import OutingChip from "../components/OutingCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
 import { josa } from "../utils/text";
 import { applyAppActions, applyConfirmedAction, saveAskedExpense } from "../services/appActions";
@@ -45,6 +45,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
   const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false); // 입력창에 포커스 — 예시 문장을 이때만 펼친다(11/9)
   const inputRef = useRef("");
   const inputElRef = useRef(null);
   // 입력칸은 글이 길어지면 5줄까지 늘어난다
@@ -429,20 +430,19 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      {/* 말풍선이 첫 걸음·하루 체크를 묻는 동안엔 오늘 할 일로 가는 줄을 따로 */}
-      {!isChat && (getFirstSteps(dog.id).show || dailyPending(dog.id) || notifyAskPending(dog.id)) && <TodayTasksRow dog={dog} onOpen={onOpenToday} />}
-
-      {/* 처음 쓰는 사람(첫 걸음 말풍선)에겐 외출 카드는 첫 걸음을 마친 뒤에 — 첫 화면 칸 줄이기 */}
-      {!isChat && !getFirstSteps(dog.id).show && (
-        <div style={{ marginTop: 10, flexShrink: 0 }}>
-          <OutingCard dog={dog} onChecked={() => refresh((n) => n + 1)} />
+      {/* 오늘 화면 6→4(11/9): 할 일 줄 + 외출 카드 → 칩 한 줄. 외출 칩은 첫 걸음을 마친 뒤에(처음 쓰는 사람 화면 줄이기) */}
+      {!isChat && (
+        <div className="home-chips">
+          <TasksChip dog={dog} onOpen={onOpenToday} />
+          {!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />}
         </div>
       )}
 
-      <div className={`collapse-y${isChat && reading ? " collapsed" : ""}`}><div>
+      {/* 예시 문장은 입력창을 누를 때만(11/9) — 채팅 중엔 읽는 동안만 접힘 */}
+      <div className={`collapse-y${(isChat ? reading : !(typing || input)) ? " collapsed" : ""}`}><div>
         <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="이렇게 말해 보세요">
           {RECORD_EXAMPLES.map((q) => (
-            <button key={q} type="button" className="record-example" disabled={pending} onClick={() => (setInput(q), inputElRef.current?.focus())}>
+            <button key={q} type="button" className="record-example" disabled={pending} onMouseDown={(e) => e.preventDefault()} onClick={() => (setInput(q), inputElRef.current?.focus())}>
               <Ico name="pencil" size={14} /> {q}
             </button>
           ))}
@@ -471,6 +471,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
             }
           }}
           aria-label="기록할 내용"
+          onFocus={() => setTyping(true)}
+          onBlur={() => setTimeout(() => setTyping(false), 150)}
           placeholder="말하거나 적어 주세요 (예: 산책 30분)"
           className="rec-input"
         />
@@ -554,17 +556,13 @@ function GuideLink({ chapter, inline }) {
 }
 
 // 첫 화면 말풍선: 우리 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
-// 오늘 할 일(옛 체크리스트 탭)로 가는 한 줄 — 처음 쓰는 사람(첫 걸음 말풍선)도 늘 보이게
-function TodayTasksRow({ dog, onOpen }) {
+// 오늘 할 일로 가는 칩 — 늘 보인다(말풍선 요약에서는 할 일 줄을 뺐다, 11/9 중복 제거)
+function TasksChip({ dog, onOpen }) {
   const t = getTodaySummary(dog);
   const left = t.tasksLeft.length;
   return (
-    <button type="button" className="card today-row" onClick={onOpen}>
-      <Ico name="checklist" size={20} className="cat-ico tone-blue" />
-      <span style={{ flex: 1, textAlign: "left", fontWeight: 600 }}>
-        {left ? `오늘 할 일 ${left}개 남았어요` : t.tasksTotal ? "오늘 할 일을 다 했어요" : "오늘 할 일 보기"}
-      </span>
-      <span className="faint" aria-hidden="true">›</span>
+    <button type="button" className={`home-chip${left ? " on" : ""}`} onClick={onOpen}>
+      <Ico name="checklist" size={16} /> {left ? `오늘 할 일 ${left}개` : t.tasksTotal ? "할 일 다 했어요" : "오늘 할 일"} <span aria-hidden="true">›</span>
     </button>
   );
 }
@@ -573,8 +571,7 @@ function TodaySummary({ dog }) {
   const t = getTodaySummary(dog);
   const together = togetherDays(dog);
   const lines = [...getSignals(dog).filter((s) => !(s.id === "med" && t.checkDoses)).map((s) => ["alert", "rose", s.text]) /* 약은 아래 '약 기록 확인' 줄과 겹치면 뺌 */, ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
-  if (t.tasksLeft.length) lines.push(["checklist", "blue", `할 일 ${t.tasksLeft.length}개 남았어 · ${t.tasksLeft.slice(0, 2).join(", ")}${t.tasksLeft.length > 2 ? " 외" : ""}`]);
-  else if (t.tasksTotal) lines.push(["checklist", "blue", "오늘 할 일은 다 했어! 최고야"]);
+  // 할 일 개수는 아래 칩에 있어 말풍선에선 뺀다(11/9) — 여기엔 그날 꼭 볼 것(이상 신호·약·사료·병원 일정)만
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
   else if (t.nextDose) lines.push(["pill", "teal", `${t.nextDose.time} ${t.nextDose.name} ${t.nextDose.dose} 먹을 차례야`]);
   const food = getFoodStock(dog);
@@ -588,7 +585,7 @@ function TodaySummary({ dog }) {
       </span>
       {lines.length ? (
         // 작은 화면에서 말풍선이 길어지면 아래 입력칸이 밀려나서 4줄까지만(점검 11/7, 아이폰 SE)
-        [...lines.slice(0, 4), ...(lines.length > 4 ? [["checklist", "blue", `그 밖에 ${lines.length - 4}개 — 눌러서 오늘 할 일에서 보기`]] : [])].map(([ico, tone, text]) => (
+        [...lines.slice(0, 3), ...(lines.length > 3 ? [["checklist", "blue", `그 밖에 ${lines.length - 3}개 — 눌러서 오늘 할 일에서 보기`]] : [])].map(([ico, tone, text]) => (
           <span key={text} className="summary-line">
             <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
             <span>{text}</span>

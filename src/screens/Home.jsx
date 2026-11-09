@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
+import { RoutineSheet } from "../components/OutingCard";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
@@ -15,6 +16,7 @@ import { syncPushAlarms } from "../services/notifications";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
 export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
+  const [routineOpen, setRoutineOpen] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
 
@@ -76,7 +78,13 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
           <span className="quick-tile-label">알림·알람</span>
         </button>
+        {/* 외출 시간 설정 — 오늘 탭 외출 카드의 ⚙가 여기로(11/9 오늘 화면 줄이기) */}
+        <button className="quick-tile tone-blue filled" onClick={() => setRoutineOpen(true)}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
+          <span className="quick-tile-label">외출 시간</span>
+        </button>
       </div>
+      {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
 
       {food && food.daysLeft <= 7 && (
         <button type="button" className="food-alert" onClick={onOpenFeeding}>

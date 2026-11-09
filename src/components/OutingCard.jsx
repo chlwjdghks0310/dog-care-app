@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
-import { outingState, leaveNow, backNow, durationLabel, backTip, aloneSummary, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
+import { outingState, leaveNow, backNow, durationLabel, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 import { BackCheckSheet } from "./DailyCheck";
 import { getDay } from "../services/dailyCheck";
-import { addDays, toDateKey, todayKey } from "../utils/date";
+import { todayKey } from "../utils/date";
 
-// 오늘 탭의 외출 카드: [다녀올게] → "혼자 n시간째" [왔어]. 하루 상태 체크는 위의 하루 체크 카드(DailyCheck)가 맡는다.
-export default function OutingCard({ dog, onChecked }) {
+// 오늘 탭의 외출 칩(11/9: 카드 → 칩 한 줄, 오늘 할 일 칩 옆). [다녀올게] → "혼자 n시간째 · 왔어" → "체크 보기".
+// 평소 외출 시간 설정(RoutineSheet)은 오늘 할 일 화면으로 옮김. 하루 상태 체크는 위의 하루 체크 말풍선이 맡는다.
+export default function OutingChip({ dog, onChecked }) {
   const [, setTick] = useState(0);
-  const [sheet, setSheet] = useState(null); // "routine" | "routine-ask" | null
+  const [sheet, setSheet] = useState(null); // "back-check" | "routine-ask" | null
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 60 * 1000); // "n시간째"를 1분마다 새로
     return () => clearInterval(id);
   }, []);
-
   const s = outingState();
   const refresh = () => setTick((n) => n + 1);
   // 처음 [다녀올게]: 평소 외출 시간을 한 번만 물어본다(저녁 체크인 알림·혼자 있는 시간 어림에 필요)
@@ -24,46 +24,27 @@ export default function OutingCard({ dog, onChecked }) {
     refresh();
     if (!getRoutine() && !routineAsked()) (markRoutineAsked(), setSheet("routine-ask"));
   }
-
-  let title, sub, action;
+  let label, ico, run;
   if (s.state === "away") {
-    title = `${dog.name} 혼자 ${durationLabel(s.minutes)}째`;
-    sub = s.estimated ? `평소 나가는 시각(${s.since}) 기준이에요` : `${s.since}에 나갔어요`;
-    action = { label: "왔어", run: () => (backNow(), refresh(), setSheet("back-check")) }; // 들어오면 늘 오늘 하루 체크로(사용자 요청 11/7)
+    label = `혼자 ${durationLabel(s.minutes)}째 · 왔어`;
+    ico = "timer";
+    run = () => (backNow(), refresh(), setSheet("back-check")); // 들어오면 늘 오늘 하루 체크로(사용자 요청 11/7)
   } else if (s.state === "back") {
-    title = `오늘 ${durationLabel(s.minutes)} 혼자 있었어요`;
-    sub = backTip(s.minutes);
-    action = { label: getDay(dog.id, todayKey()) ? "체크 보기" : "하루 체크", run: () => setSheet("back-check") };
+    label = getDay(dog.id, todayKey()) ? `오늘 혼자 ${durationLabel(s.minutes)}` : "다녀왔어요 · 하루 체크";
+    ico = "house";
+    run = () => setSheet("back-check");
   } else {
-    title = "외출할 때 눌러 주세요";
-    // 최근 7일(어제까지) 평균 혼자 있던 시간 — 쌓이면 보여 준다(방향 정리 결정 4: 평균 외출 시간 + 귀가 체크)
-    const t = todayKey();
-    const avg = aloneSummary(toDateKey(addDays(new Date(`${t}T00:00:00`), -7)), toDateKey(addDays(new Date(`${t}T00:00:00`), -1)));
-    sub = avg ? `최근 7일 평균 혼자 ${durationLabel(avg.avg)} · ${avg.days}일 기록` : `${dog.name} 혼자 있는 시간을 챙겨 줄게요`;
-    action = { label: "다녀올게", run: leave };
+    label = "다녀올게";
+    ico = "house";
+    run = leave;
   }
-
   return (
     <>
-      <div className="outing-card">
-        <span className="outing-ico">
-          <Ico name={s.state === "away" ? "timer" : "house"} size={20} />
-        </span>
-        <div className="outing-text">
-          <b>{title}</b>
-          <span>{sub}</span>
-        </div>
-        {action && (
-          <button type="button" className="outing-btn" onClick={action.run}>
-            {action.label}
-          </button>
-        )}
-        <button type="button" className="outing-gear" aria-label="외출 시간·저녁 알림 설정" onClick={() => setSheet("routine")}>
-          <Ico name="settings" size={17} />
-        </button>
-      </div>
+      <button type="button" className={`home-chip${s.state === "away" ? " on" : ""}`} onClick={run} aria-label={s.state === "away" ? `${dog.name} ${label}` : `외출: ${label}`}>
+        <Ico name={ico} size={16} /> {label}
+      </button>
       {sheet === "back-check" && <BackCheckSheet dog={dog} alone={outingState().minutes >= 1 ? durationLabel(outingState().minutes) : ""} onClose={() => (setSheet(null), onChecked?.())} />}
-      {(sheet === "routine" || sheet === "routine-ask") && <RoutineSheet ask={sheet === "routine-ask"} onClose={() => setSheet(null)} />}
+      {sheet === "routine-ask" && <RoutineSheet ask onClose={() => setSheet(null)} />}
     </>
   );
 }
@@ -71,7 +52,7 @@ export default function OutingCard({ dog, onChecked }) {
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 평소 나가고 들어오는 시각 — 버튼을 깜빡해도 이 시각으로 혼자 있는 시간을 어림하고, 들어오는 시각 30분 뒤에 체크인 알림
-function RoutineSheet({ onClose, ask }) {
+export function RoutineSheet({ onClose, ask }) {
   // 처음 물어볼 때는 방금 누른 시각(10분 단위)을 나가는 시각으로 채워 둔다
   const [r, setR] = useState(() => {
     if (getRoutine()) return getRoutine();

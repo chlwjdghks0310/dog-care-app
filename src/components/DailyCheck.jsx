@@ -65,10 +65,10 @@ export function BackCheckSheet({ dog, alone, onClose }) {
         <div className="es-scroll" style={{ padding: "4px 16px 20px" }}>
           {alone && <p className="subtle" style={{ margin: "0 0 12px" }}>오늘 혼자 {alone} 있었어요. 밥·물·배변 자리를 한 번 봐 주세요.</p>}
           {day && day.status !== "unknown" && (
-            <p className="dc-row" style={{ margin: "0 0 12px" }}>
+            <div className="dc-row" style={{ margin: "0 0 12px" }}>
               <Ico name="check" size={18} className="cat-ico tone-teal" />
               <span><b>오늘 하루 체크</b> · {day.status === "usual" ? "평소와 같았어요" : Object.entries(day.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}. 달라진 게 있으면 다시 골라요.</span>
-            </p>
+            </div>
           )}
           <div className="dc-btns">
             <button type="button" className="dc-usual" onClick={() => (day?.status === "diff" ? onClose() : (saveUsual(dog.id, today), done()))}><Ico name="check" size={18} /> {day?.status === "diff" ? "그대로 둘게요" : "평소와 같아요"}</button>
