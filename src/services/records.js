@@ -30,16 +30,16 @@ export const TYPES = {
   med: { label: "복약", icon: "💊", ico: "pill", tone: "teal" },
   vet: { label: "병원 진료", icon: "🏥", ico: "stethoscope", tone: "blue" },
   condition: { label: "컨디션", icon: "🌙", ico: "smiley", tone: "violet" },
-  daily: { label: "일상", icon: "🦮", ico: "sun", tone: "violet" },
+  daily: { label: "일상", pick: "일상·컨디션", icon: "🦮", ico: "sun", tone: "violet" }, // 11/10: 새 기록 타일은 컨디션과 한 칸(8개), 기록 종류는 그대로 둘
   life: { label: "추억 기록", icon: "🎉", ico: "star", tone: "rose" },
   media: { label: "성장 추억", icon: "📷", ico: "camera", tone: "rose" },
   vital: { label: "건강 수치", icon: "📈", ico: "chartLine", tone: "blue" },
 };
 // tone: 아이콘 색(blue=대표 소프트블루·몸 상태, teal=물·약, violet=산책·활동, rose=식사·추억) — index.css .tone-*
 // 새 기록 추가에서 고르는 순서
-export const ADD_ORDER = ["weight", "meal", "potty", "symptom", "vital", "med", "vet", "media", "daily", "condition"]; // 11/10: 밥·물을 앞으로, 수치(호흡·체온 등)는 기록 창에서만 적는다 // 성장 추억(media)은 갤러리로 연다 — 예전 '성장·추억'(life) 기록은 목록·필터에만(11/7)
+export const ADD_ORDER = ["weight", "meal", "potty", "symptom", "vital", "med", "vet", "media", "daily"]; // 11/10: 밥·물을 앞으로, 수치(호흡·체온 등)는 기록 창에서만 적는다 // 성장 추억(media)은 갤러리로 연다 — 예전 '성장·추억'(life) 기록은 목록·필터에만(11/7)
 // 전체 기록 필터에 쓰는 종류(건강 수치는 프로필의 수치 칸에서 적는다)
-export const FILTER_ORDER = [...ADD_ORDER, "life", "vital"];
+export const FILTER_ORDER = [...ADD_ORDER, "condition", "life", "vital"];
 
 export const SYMPTOM_KINDS = ["구토", "설사", "기침", "식욕 없음", "기운 없음", "절뚝거림", "가려움·긁음", "눈 이상", "귀 이상", "피부 이상", "숨이 가쁨", "떨림", "물 많이 마심", "기타"];
 export const REPEAT = ["처음", "가끔", "자주", "계속"];
@@ -221,7 +221,6 @@ export function summarize(rec) {
       break;
     case "vital":
       if (d.parts) {
-        if (d.group === "meal") parts.push("먹은 양");
         for (const p of d.parts) parts.push(`${VITAL[p.metric]?.label} ${fmtValue(p.metric, p.value)}${VITAL[p.metric]?.unit}${p.count > 1 ? `(${p.count}번)` : ""}`);
         break;
       }

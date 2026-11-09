@@ -31,8 +31,9 @@ export default function PullToRefresh({ targetRef, onRefresh, isBlocked }) {
       ptr.classList.toggle("ready", pull >= TRIGGER);
     };
 
+    // 버튼 위에서 시작한 손가락은 당기기로 보지 않는다 — 맨 위 버튼(기록 탭 달력·변화 보기)을 톡 눌러도 손이 조금 흐르면 preventDefault 때문에 눌리지 않던 일(11/10)
     const onStart = (e) => {
-      if (busy.current || e.touches.length > 1 || e.target.closest("input, textarea, select")) return void (g = null);
+      if (busy.current || e.touches.length > 1 || e.target.closest("input, textarea, select, button, a, [role='button']")) return void (g = null);
       const page = e.target.closest(".swipe-back-top") || e.target.closest(".pager-page");
       if (!page || latest.current.isBlocked?.(page)) return void (g = null);
       // 손가락 아래의 스크롤 영역이 하나라도 맨 위가 아니면 평소 스크롤

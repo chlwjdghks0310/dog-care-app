@@ -24,7 +24,8 @@ const MAX_PHOTOS = 4;
 export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds, onOpenFeeding, onOpenGallery, onPickType }) {
   const [type, setType] = useState(initial?.type || startType || null);
   if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : t === "media" && onOpenGallery ? onOpenGallery() : onPickType ? onPickType(t) : setType(t))} onCancel={onCancel} />;
-  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill?.data ? onCancel : onPickType ? null : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
+  const onSwitch = !initial && (type === "daily" || type === "condition") ? setType : null; // 일상 ↔ 컨디션은 한 타일에서 고른다(11/10, 8개)
+  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onSwitch={onSwitch} onBack={initial || prefill?.data ? onCancel : onPickType ? null : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
 }
 
 function TypePicker({ onPick, onCancel }) {
@@ -38,7 +39,7 @@ function TypePicker({ onPick, onCancel }) {
         {ADD_ORDER.map((t) => (
           <button key={t} type="button" className="quick-tile" onClick={() => onPick(t)}>
             <span className={`quick-tile-icon tone-${TYPES[t].tone}`} aria-hidden="true"><Ico name={TYPES[t].ico} size={24} /></span>
-            <span className="quick-tile-label">{TYPES[t].label}</span>
+            <span className="quick-tile-label">{TYPES[t].pick || TYPES[t].label}</span>
           </button>
         ))}
       </div>
@@ -72,7 +73,7 @@ function Field({ label, children }) {
   );
 }
 
-function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
+function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding, onSwitch }) {
   const [id] = useState(() => initial?.id || newRecordId()); // 같은 id로 저장해 두 번 눌러도 기록은 하나
   const [at, setAt] = useState(initial?.at || prefill?.at || localNow());
   const [data, setData] = useState(() => ({ ...defaults(type, dog), ...prefill?.data, ...initial?.data }));
@@ -140,9 +141,18 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
   return (
     <div className="card">
       <div className="rec-head">
-        <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
+        <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {onSwitch ? TYPES.daily.pick : TYPES[type].label} {initial ? "고치기" : "기록"}</div>
         {onBack && <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill?.data ? "취소" : "← 종류"}</button>}
       </div>
+      {onSwitch && (
+        <div className="meal-seg" role="tablist" aria-label="일상 또는 컨디션" style={{ marginBottom: 12, gridTemplateColumns: "1fr 1fr" }}>
+          {["daily", "condition"].map((t) => (
+            <button key={t} type="button" role="tab" className={`meal-seg-btn${type === t ? " on" : ""}`} aria-selected={type === t} onClick={() => onSwitch(t)}>
+              <Ico name={TYPES[t].ico} size={16} /> {TYPES[t].label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <Field label={type === "vet" ? "방문 날짜·시각" : type === "symptom" ? "본 날짜·시각" : "날짜·시각"}>
         <input type="datetime-local" value={at} max={localNow()} onChange={(e) => setAt(e.target.value)} />

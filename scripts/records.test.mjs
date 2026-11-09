@@ -69,7 +69,7 @@ assert.equal(R.filterTimeline(tl, { types: ["weight"], days: 7 }).length, 1);
   const meal = R.groupVitalDays(R.filterTimeline(v2, { types: ["meal", "potty"] }), ["meal", "potty"]);
   assert.equal(meal.length, 2, "먹은 양 한 줄 + 식사 기록 한 줄");
   const day = meal.find((r) => r.source === "vday");
-  assert.equal(R.summarize(day), "먹은 양 · 건식 사료 80g(2번) · 습식 30g");
+  assert.equal(R.summarize(day), "건식 사료 80g(2번) · 습식 30g"); // 11/10: 제목이 "밥·물"이라 앞머리 뺌
   assert.equal(day.data.entries.length, 3);
   assert.equal(R.groupVitalDays(R.filterTimeline(v2, { types: ["vital"] }), ["vital"]).length, 5, "건강 수치 필터는 묶지 않음");
   assert.equal(R.groupVitalDays(v2, []).length, 6, "필터 없으면 묶지 않음");

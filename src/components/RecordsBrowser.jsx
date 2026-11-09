@@ -113,13 +113,15 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete, readOnly }) {
   if (rec.source === "vday") return <VitalDayItem rec={rec} open={open} onToggle={onToggle} onEdit={onEdit} readOnly={readOnly} />;
   const vitalDef = rec.type === "vital" && VITAL[rec.data?.metric];
   const mealKind = rec.type === "meal" && rec.data?.kind;
-  const fmt = (k, v) => (k === "status" ? (v === "done" ? "먹임" : "건너뜀") : k === "doneAt" ? v?.slice(11, 16) : k === "kind" && KIND_LABEL[v] ? KIND_LABEL[v] : k === "amount" && mealKind ? `${v}${mealKind === "water" ? "ml" : "g"}` : k === "metric" && VITAL[v] ? VITAL[v].label : Array.isArray(v) ? v.join(", ") : String(v));
+  const mealVital = vitalDef && vitalDef.inMeal; // 예전 건강 수치 칸에서 적은 건식·습식·물 → "종류 건식 · 양 30g"처럼 밥·물 기록과 같은 말로
+  const label = (k) => (mealVital && k === "metric" ? "종류" : mealVital && k === "value" ? "양" : FIELD_LABEL[k]);
+  const fmt = (k, v) => (mealVital && k === "metric" ? KIND_LABEL[v] || VITAL[v]?.label : mealVital && k === "value" ? `${v}${vitalDef.unit}` : k === "status" ? (v === "done" ? "먹임" : "건너뜀") : k === "doneAt" ? v?.slice(11, 16) : k === "kind" && KIND_LABEL[v] ? KIND_LABEL[v] : k === "amount" && mealKind ? `${v}${mealKind === "water" ? "ml" : "g"}` : k === "metric" && VITAL[v] ? VITAL[v].label : Array.isArray(v) ? v.join(", ") : String(v));
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
         <span className={`rec-icon tone-${(vitalDef && vitalDef.tone) || TYPES[rec.type].tone}`} aria-hidden="true"><Ico name={(vitalDef && vitalDef.ico) || (mealKind === "water" ? "droplet" : TYPES[rec.type].ico)} size={19} /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span className="rec-item-title">{(vitalDef && vitalDef.label) || TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
+          <span className="rec-item-title">{vitalDef ? (vitalDef.inMeal ? TYPES.meal.label : vitalDef.label) : TYPES[rec.type].label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
           <span className="rec-item-text">{summarize(rec) || "내용 없음"}</span>
         </span>
         {rec.photos?.length > 0 && <span className="faint"><Ico name="clip" size={14} />{rec.photos.length}</span>}
@@ -127,7 +129,7 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete, readOnly }) {
       {open && (
         <div className="rec-detail">
           {Object.entries(rec.data || {}).filter(([k, v]) => FIELD_LABEL[k] && k !== "nextAlarm" && v !== "" && v != null && !(Array.isArray(v) && !v.length)).map(([k, v]) => (
-            <div key={k} className="vet-line"><span className="faint">{FIELD_LABEL[k]}</span> {fmt(k, v)}</div>
+            <div key={k} className="vet-line"><span className="faint">{label(k)}</span> {fmt(k, v)}</div>
           ))}
           {rec.data?.nextAlarm && <div className="vet-line"><span className="faint">알림</span> 그날 아침 9시</div>}
           {rec.memo && <div className="vet-line"><span className="faint">메모</span> {rec.memo}</div>}
@@ -145,7 +147,7 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete, readOnly }) {
   );
 }
 
-// 예전 건강 수치 칸에서 적은 먹은 양·산책의 하루 합계 한 줄 — 펼치면 끼니별 시각·양
+// 예전 건강 수치 칸에서 적은 건식·습식·물·산책의 하루 합계 한 줄(제목은 지금 쓰는 "밥·물", 11/10) — 펼치면 끼니별 시각·양
 function VitalDayItem({ rec, open, onToggle, onEdit, readOnly }) {
   const meal = rec.data.group === "meal";
   return (
@@ -153,8 +155,8 @@ function VitalDayItem({ rec, open, onToggle, onEdit, readOnly }) {
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
         <span className={`rec-icon tone-${meal ? "rose" : "violet"}`} aria-hidden="true"><Ico name={meal ? "bowl" : "walk"} size={19} /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span className="rec-item-title">{meal ? "먹은 양" : "산책"} <span className="faint">하루 합계</span></span>
-          <span className="rec-item-text">{summarize(rec).replace(/^먹은 양 · /, "")}</span>
+          <span className="rec-item-title">{meal ? TYPES.meal.label : "산책"} <span className="faint">하루 합계</span></span>
+          <span className="rec-item-text">{summarize(rec)}</span>
         </span>
       </button>
       {open && (

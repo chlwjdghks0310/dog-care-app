@@ -1,39 +1,14 @@
-// 강아지가 직접 말하는 듯한 문구를 담는 말풍선. 아래쪽에 꼬리(삼각형)가 있어서
-// 바로 아래에 있는 캐릭터가 말하고 있다는 느낌을 준다.
+// 강아지가 직접 말하는 듯한 문구를 담는 말풍선 — 손그림 느낌(11/10 사용자 요청): 네 귀가 조금씩 다른 둥근 모서리, 잉크색 선 두 겹,
+// 종이 오려 붙인 듯한 그림자, 꼬리는 손으로 그린 곡선(SVG). 안의 버튼·글도 .sb 아래 CSS에서 같은 느낌으로 맞춘다(index.css "손그림 말풍선").
 export default function SpeechBubble({ children, className = "rise-in" }) {
   return (
-    <div className={className} style={{ position: "relative", maxWidth: 320, margin: "0 auto" }}>
-      <div
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: 18,
-          padding: "14px 18px",
-          boxShadow: "var(--shadow)",
-          fontSize: 16,
-          fontWeight: 700,
-          lineHeight: 1.5,
-          textAlign: "center",
-          whiteSpace: "pre-line",
-        }}
-      >
-        {children}
-      </div>
-      {/* 말풍선 꼬리: 정사각형을 45도 회전시켜 아래쪽 뾰족한 부분만 보이게 하는 방식 */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: -7,
-          left: "50%",
-          width: 16,
-          height: 16,
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderTop: "none",
-          borderLeft: "none",
-          transform: "translateX(-50%) rotate(45deg)",
-        }}
-      />
+    <div className={`sb ${className}`}>
+      <div className="sb-body">{children}</div>
+      <svg className="sb-tail" viewBox="0 0 32 20" width="32" height="20" aria-hidden="true">
+        {/* 몸통 테두리를 덮는 채움 → 양옆 선만 따로 그려 손선처럼 */}
+        <path d="M3 0 H30 V2.5 C 23 6.5, 18 12.5, 14.5 19 C 12 13.5, 9 8.5, 3 2.5 Z" fill="var(--surface)" />
+        <path d="M30 2 C 23 6.5, 18 12.5, 14.5 19 C 12 13.5, 9 8.5, 3 2" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 }

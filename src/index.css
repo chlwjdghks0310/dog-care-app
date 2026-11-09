@@ -113,6 +113,8 @@ body {
   word-break: keep-all;
   overflow-wrap: anywhere; /* 띄어쓰기 없는 긴 글·링크도 화면 안에서 줄바꿈(keep-all만으론 화면 밖으로 이어짐) */
   -webkit-font-smoothing: antialiased;
+  /* 빠르게 연달아 누르면 아이폰이 "두 번 눌러 확대"인지 300ms 기다리다 탭을 삼키던 문제(11/10) — 확대 제스처는 손가락 벌리기만 남긴다 */
+  touch-action: manipulation;
 }
 
 button,
@@ -543,6 +545,8 @@ button {
 
 /* 약 관리 */
 .link-btn { background: none; border: none; color: var(--accent-strong); font-size: 13.5px; font-weight: 600; padding: 6px 2px; cursor: pointer; }
+.view-tabs { display: flex; gap: 6px; margin: 10px 0 14px; }
+.view-tabs .seg { min-height: 44px; } /* 맨 위 보기 바꾸기는 손가락 크기(44px)로 — 잘 안 눌린다는 지적 11/10 */
 .seg { flex: 1; min-width: 0; padding: 9px 0; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-soft); font-size: 14px; font-weight: 600; }
 .seg.on { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent-strong); }
 .btn-primary.small, .btn-ghost.small { width: auto; min-height: 40px; padding: 9px 14px; font-size: 14px; }
@@ -837,8 +841,9 @@ button {
 @keyframes ptr-spin { to { transform: rotate(360deg); } }
 .settings-sheet, .vet-show { touch-action: pan-y; }
 /* 아이폰에서 날짜 칸·선택 칸이 다른 칸과 크기·정렬이 어긋나지 않게 */
-.field input[type="date"], .onb-answer input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; min-height: 48px; text-align: left; }
-.field input[type="date"]::-webkit-date-and-time-value, .onb-answer input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.field input[type="date"], .field input[type="datetime-local"], .onb-answer input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; min-height: 48px; text-align: left; }
+.field input[type="date"]::-webkit-date-and-time-value, .field input[type="datetime-local"]::-webkit-date-and-time-value, .onb-answer input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+/* 사파리는 날짜·시각 상자(datetime-local)에 제 너비를 고집해 칸 밖으로 삐져나온다(11/10 밥·물 날짜·시각) — 날짜 상자와 같은 처리 */
 .field select { -webkit-appearance: none; appearance: none; min-height: 48px; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2380726a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
 /* 건강 수치 화면 위쪽 "이렇게 재요" 요약 */
 .vd-how { background: var(--accent-soft); border-radius: var(--radius-md, 16px); padding: 12px 14px; margin-bottom: 14px; }
@@ -1618,3 +1623,24 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 .fc-legend { display: flex; gap: 12px; margin-top: 6px; font-size: 12.5px; color: var(--text-soft); }
 .fc-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 .fc-legend i.food { background: var(--warm); } .fc-legend i.wet { background: var(--c-rose); } .fc-legend i.water { background: var(--accent); }
+
+/* ── 손그림 말풍선(오늘 화면, 11/10) ── 모서리를 네 귀 다르게 그려 자로 그은 느낌을 뺀다. 글씨는 개구체, 버튼도 같은 모서리·잉크 선 */
+:root { --ink: #3b3129; --ink-soft: rgba(59, 49, 41, 0.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: #e8dfd3; --ink-soft: rgba(0, 0, 0, 0.55); } }
+:root[data-theme="dark"] { --ink: #e8dfd3; --ink-soft: rgba(0, 0, 0, 0.55); }
+.sb { position: relative; max-width: 320px; margin: 0 auto; }
+.sb-body { background: var(--surface); border: 2px solid var(--ink); border-radius: 24px 18px 26px 17px / 17px 26px 18px 24px; padding: 14px 18px 16px; box-shadow: 3px 3px 0 var(--ink-soft); font-size: 16px; font-weight: 700; line-height: 1.5; text-align: center; white-space: pre-line; }
+.sb-tail { position: absolute; left: 50%; bottom: -17px; transform: translateX(-62%); display: block; }
+.sb .summary-line, .sb .summary-more, .sb .first-step, .sb .link-btn, .sb .dc-usual, .sb .dc-diff, .sb .summary-go, .sb .btn-primary, .sb .btn-ghost { font-family: "Gaegu", "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+.sb .summary-line { font-size: 17.5px; font-weight: 700; line-height: 1.35; }
+.sb .summary-more { font-size: 15px; }
+.sb .first-step { font-size: 18px; border: 2px solid var(--ink); border-radius: 14px 11px 15px 12px / 12px 15px 11px 14px; background: var(--surface); box-shadow: 2px 2px 0 var(--ink-soft); }
+.sb .first-step.done { opacity: 0.55; box-shadow: none; }
+.sb .dc-usual, .sb .dc-diff, .sb .btn-primary, .sb .btn-ghost, .sb .summary-go { border: 2px solid var(--ink); border-radius: 15px 12px 16px 11px / 11px 16px 12px 15px; box-shadow: 2px 2px 0 var(--ink-soft); font-size: 17px; font-weight: 700; padding-left: 6px; padding-right: 6px; }
+.sb .dc-diff:nth-child(2), .sb .btn-ghost { border-radius: 12px 16px 11px 15px / 15px 11px 16px 12px; }
+.sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 16px; letter-spacing: -0.02em; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 — 안 들어가면 flex-wrap으로 아래 줄로 */
+.sb .dc-usual { color: #fff; }
+.sb .dc-diff, .sb .btn-ghost { background: var(--surface); color: var(--text); }
+.sb .summary-go { font-size: 17px; padding: 6px 14px; background: var(--surface); }
+.sb .dc-usual:active, .sb .dc-diff:active, .sb .first-step:active, .sb .summary-go:active, .sb .btn-primary:active, .sb .btn-ghost:active, .summary-bubble:active .summary-go { transform: translate(2px, 2px); box-shadow: none; filter: none; }
+.sb .link-btn { font-size: 16px; }

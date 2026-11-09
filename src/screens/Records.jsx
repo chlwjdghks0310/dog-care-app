@@ -56,7 +56,7 @@ export default function Records({ dog, startNew, startType, prefill, onBack, bac
       {onBack && <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>}
       <div className="h1" ref={topRef}>{dog.name}의 기록</div>
       {/* 새 기록·고치기 중엔 보기 바꾸기를 숨긴다(사용자 요청 11/7) */}
-      {!form && <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
+      {!form && <div className="view-tabs">
         <button type="button" className={`seg${view === "cal" ? " on" : ""}`} onClick={() => setView("cal")}>달력</button>
         <button type="button" className={`seg${view === "trend" ? " on" : ""}`} onClick={() => setView("trend")}>변화 보기</button>
       </div>}

@@ -106,7 +106,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
           /* 11/10: 작은 "고치기" 글자 대신 버튼 — 평소였으면 [다른 게 있었어요], 달랐으면 [평소였어요] [다른 점 고치기] */
           <div className="dc-btns" style={{ marginTop: 8 }}>
             {sel.status === "diff" && <button type="button" className="dc-diff" onClick={() => (clearDay(dog.id, selected), saveUsual(dog.id, selected), changed(selected))}>평소였어요</button>}
-            <button type="button" className={sel.status === "diff" ? "dc-diff" : "dc-usual"} onClick={() => setSheet(selected)}>{sel.status === "diff" ? "다른 점 고치기" : "다른 게 있었어요"}</button>
+            <button type="button" className="dc-diff" onClick={() => setSheet(selected)}>{sel.status === "diff" ? "다른 점 고치기" : "다른 게 있었어요"}</button>{/* 이미 체크한 날의 고치기는 테두리만(11/10: 높이 44px는 두고 무게만 줄임) */}
           </div>
         ) : selected <= today ? (
           <>
