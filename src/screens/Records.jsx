@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useSheetSwipe } from "../components/SwipeBack";
 import { formatKoreanDate } from "../utils/date";
 import { deleteWeightRecord, getWeightRecords } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
@@ -27,10 +29,10 @@ const TREND_FIELDS = [["appetite", "식욕"], ["water", "물"], ["activity", "�
 export default function Records({ dog, startNew, startType, prefill, initialTypes, onBack, backLabel = "← 기록으로", onOpenMeds, onOpenVital, onNew, onOpenFeeding, onQuickAdd, onOpenGallery, onPickType }) {
   const [view, setView] = useState(initialTypes?.length ? "list" : "cal");
   const [calDate, setCalDate] = useState(null); // 방금 적은 기록의 날짜를 달력에서 보여 주기
+  const [allOpen, setAllOpen] = useState(false); // 모든 기록 보기·찾기 = 아래에서 올라오는 창(사용자 요청 11/9)
   const topRef = useRef(null);
-  const firstView = useRef(true);
-  useEffect(() => { if (firstView.current) firstView.current = false; else if (view === "list") topRef.current?.scrollIntoView({ block: "start" }); }, [view]); // 모든 기록은 맨 위부터
   const [form, setForm] = useState(startNew ? { initial: null, type: startType } : null);
+  useEffect(() => { if (form?.initial) topRef.current?.scrollIntoView({ block: "start" }); }, [form]); // 고치기는 맨 위부터
   const [items, setItems] = useState(() => getTimeline(dog.id));
   const [types, setTypes] = useState(initialTypes || []);
   const [days, setDays] = useState(0);
@@ -46,6 +48,7 @@ export default function Records({ dog, startNew, startType, prefill, initialType
     setForm(null);
     reload();
     setView("cal");
+    setAllOpen(false);
     setCalDate((rec.at || rec.measuredAt || "").slice(0, 10) || null);
     setOpenId(rec.id);
     setNotice("");
@@ -70,32 +73,8 @@ export default function Records({ dog, startNew, startType, prefill, initialType
   const shown = groupVitalDays(filterTimeline(items, { types, days, q, order }), types);
   const filtered = types.length || days || q.trim();
 
-  return (
-    <div className="screen">
-      {onBack && <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>}
-      <div className="h1" ref={topRef}>{dog.name}의 기록</div>
-      {/* 새 기록·고치기 중엔 보기 바꾸기를 숨긴다(사용자 요청 11/7) */}
-      {!form && <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
-        <button type="button" className={`seg${view === "cal" ? " on" : ""}`} onClick={() => setView("cal")}>달력</button>
-        <button type="button" className={`seg${view === "trend" ? " on" : ""}`} onClick={() => setView("trend")}>변화 보기</button>
-      </div>}
-
-      {form ? (
-        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : form.prefill} onSaved={handleSaved} onCancel={startNew && onBack ? onBack : () => setForm(null)} onOpenMeds={onOpenMeds} onOpenFeeding={onOpenFeeding} onOpenGallery={onOpenGallery} onPickType={onPickType} />
-      ) : (
-        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (onNew ? onNew() : (setNotice(""), setReaction(null), setForm({ initial: null })))}>
-          ＋ 새 기록
-        </button>
-      )}
-      {reaction && !form && <DogReaction dog={dog} rec={reaction} onClose={() => setReaction(null)} />}
-      {notice && !form && <p className="subtle" role="status" style={{ margin: "0 0 10px" }}>{notice}</p>}
-
-      {!form && view === "list" && (
-        <>
-          <div className="rec-head" style={{ marginBottom: 8 }}>
-            <div className="h2" style={{ margin: 0 }}>모든 기록</div>
-            {!initialTypes?.length && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setView("cal")}>달력으로</button>}
-          </div>
+  const listBody = (
+    <>
           <div className="card" style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", gap: 8 }}>
               <input className="rec-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색 (예: 구토)" aria-label="기록 검색" style={{ flex: 1, minWidth: 0 }} />
@@ -140,17 +119,45 @@ export default function Records({ dog, startNew, startType, prefill, initialType
                     rec={r}
                     open={openId === r.id}
                     onToggle={() => setOpenId(openId === r.id ? null : r.id)}
-                    onEdit={() => (r.source === "med" ? onOpenMeds() : r.source === "vday" ? onOpenVital?.(r.data.parts[0].metric) : (setNotice(""), setReaction(null), setForm({ initial: r })))}
+                    onEdit={() => (r.source === "med" ? onOpenMeds() : r.source === "vday" ? onOpenVital?.(r.data.parts[0].metric) : (history.state?.allRecords && history.back(), setNotice(""), setReaction(null), setForm({ initial: r })))}
                     onDelete={() => handleDelete(r)}
                   />
                 </div>
               ))}
             </div>
           )}
+    </>
+  );
+
+  return (
+    <div className="screen">
+      {onBack && <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>}
+      <div className="h1" ref={topRef}>{dog.name}의 기록</div>
+      {/* 새 기록·고치기 중엔 보기 바꾸기를 숨긴다(사용자 요청 11/7) */}
+      {!form && <div style={{ display: "flex", gap: 6, margin: "10px 0 14px" }}>
+        <button type="button" className={`seg${view === "cal" ? " on" : ""}`} onClick={() => setView("cal")}>달력</button>
+        <button type="button" className={`seg${view === "trend" ? " on" : ""}`} onClick={() => setView("trend")}>변화 보기</button>
+      </div>}
+
+      {form ? (
+        <RecordForm dog={dog} initial={form.initial} startType={form.type} prefill={startNew ? prefill : form.prefill} onSaved={handleSaved} onCancel={startNew && onBack ? onBack : () => setForm(null)} onOpenMeds={onOpenMeds} onOpenFeeding={onOpenFeeding} onOpenGallery={onOpenGallery} onPickType={onPickType} />
+      ) : (
+        <button type="button" className="btn-primary" style={{ marginBottom: 14 }} onClick={() => (onNew ? onNew() : (setNotice(""), setReaction(null), setForm({ initial: null })))}>
+          ＋ 새 기록
+        </button>
+      )}
+      {reaction && !form && <DogReaction dog={dog} rec={reaction} onClose={() => setReaction(null)} />}
+      {notice && !form && <p className="subtle" role="status" style={{ margin: "0 0 10px" }}>{notice}</p>}
+
+      {!form && view === "list" && (
+        <>
+          <div className="h2" style={{ marginBottom: 8 }}>모든 기록</div>
+          {listBody}
         </>
       )}
+      {!form && view === "cal" && allOpen && <AllRecordsSheet onClose={() => setAllOpen(false)}>{listBody}</AllRecordsSheet>}
 
-      {!form && view === "cal" && <RecordCalendar key={calDate || ""} dog={dog} items={items} initialDate={calDate} onChanged={reload} onAdd={(date) => (onNew ? onNew(date) : setForm({ initial: null, prefill: { at: dateAt(date) } }))} onShowAll={() => setView("list")} />}
+      {!form && view === "cal" && <RecordCalendar key={calDate || ""} dog={dog} items={items} initialDate={calDate} onChanged={reload} onAdd={(date) => (onNew ? onNew(date) : setForm({ initial: null, prefill: { at: dateAt(date) } }))} onShowAll={() => setAllOpen(true)} />}
       {!form && view === "trend" && <Trends dog={dog} items={items} onPick={(t, d) => (setTypes([t]), setDays(d), setShowFilters(true), setView("list"))} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
       {!form && !startNew && <QuickAddFab onPick={onQuickAdd} />}
     </div>
@@ -319,5 +326,30 @@ function Empty({ text, onAdd }) {
       <p className="subtle">{text}</p>
       <button type="button" className="btn-ghost small" onClick={onAdd}>기록하기</button>
     </div>
+  );
+}
+
+// 모든 기록: 달력 위로 아래에서 올라오는 창. 닫기 = [← 달력으로]·바깥 누르기·오른쪽으로 밀기(다른 화면 뒤로가기와 같게)·폰 뒤로 버튼
+function AllRecordsSheet({ onClose, children }) {
+  // 폰 뒤로 버튼도 창만 닫게 기록을 하나 쌓고, 닫을 땐 그 기록을 되돌려(popstate) 닫는다
+  const close = () => (history.state?.allRecords ? history.back() : onClose());
+  const swipe = useSheetSwipe(close);
+  useEffect(() => {
+    if (!history.state?.allRecords) history.pushState({ allRecords: 1 }, "");
+    addEventListener("popstate", onClose);
+    return () => removeEventListener("popstate", onClose);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return createPortal(
+    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && close()}>
+      <div className="es-sheet all-sheet" role="dialog" aria-label="모든 기록" {...swipe}>
+        <div className="es-top">
+          <button type="button" className="btn-ghost small" onClick={close}>← 달력으로</button>
+          <div className="es-title">모든 기록</div>
+          <span style={{ width: 36 }} />
+        </div>
+        <div className="es-scroll">{children}</div>
+      </div>
+    </div>,
+    document.body
   );
 }
