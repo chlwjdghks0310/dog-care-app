@@ -1565,3 +1565,9 @@ button.seg, button.chip { min-height: 36px; }
 @keyframes paw-stamp { 0% { transform: scale(2.2) rotate(-18deg); opacity: 0; } 55% { transform: scale(0.92) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 .paw-stamp { display: inline-flex; color: var(--warm); animation: paw-stamp 0.35s cubic-bezier(.2,.9,.3,1.3) both; }
 @media (prefers-reduced-motion: reduce) { .paw-stamp { animation: none; } }
+
+/* 키 작은 폰(아이폰 SE 등, 11/9): 강아지를 더 줄이고 말풍선 아래 여백을 좁혀 입력창이 탭 바에 가리지 않게 */
+@media (max-height: 600px) {
+  .pager-page[data-tab="main"] .home-dog { min-height: 60px !important; }
+  .pager-page[data-tab="main"] .speech-bubble-wrap, .pager-page[data-tab="main"] .pc100-strip { margin-bottom: 8px; }
+}

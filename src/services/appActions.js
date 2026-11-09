@@ -40,7 +40,7 @@ function run(dog, a) {
       const cat = findCategoryByName(a.category);
       if (!cat) return { ask: { type: "expense_category", title: text(a.title), amount, date: a.date, memo: text(a.memo), extra: { items: a.items, claim: a.claim, claim_paid: a.claim_paid } } }; // 분류가 없거나 "모름" → 보호자에게 묻기
       addExpense(dog.id, { title: text(a.title), amount, date: a.date, categoryId: cat.id, memo: text(a.memo), ...claimFields(a, cat.id) });
-      return `💰 가계부: ${a.date} ${text(a.title)} ${won(amount)} (${cat.name})`;
+      return `가계부: ${a.date} ${text(a.title)} ${won(amount)} (${cat.name})`;
     }
     case "add_fixed_expense": {
       const amount = Math.round(Number(a.amount));
@@ -50,22 +50,22 @@ function run(dog, a) {
       if (!cat) return { ask: { type: "expense_category", fixed: true, title: text(a.title), amount, day, memo: text(a.memo) } };
       saveFixedExpense(dog.id, { title: text(a.title), amount, categoryId: cat.id, day, memo: text(a.memo) }, todayKey());
       applyFixedExpenses(dog.id, todayKey());
-      return `💰 매달 나가는 돈: 매달 ${day}일 ${text(a.title)} ${won(amount)} (${cat.name}) — 그날마다 가계부에 저절로 기록돼요`;
+      return `매달 나가는 돈: 매달 ${day}일 ${text(a.title)} ${won(amount)} (${cat.name}) — 그날마다 가계부에 저절로 기록돼요`;
     }
     case "add_expense_category": {
       const name = text(a.name).slice(0, 20);
       if (!name) return null;
-      if (findCategoryByName(name)) return `💰 가계부 분류 "${name}"은 이미 있어요`;
+      if (findCategoryByName(name)) return `가계부 분류 "${name}"은 이미 있어요`;
       const [ico, emoji] = CATEGORY_CHOICES.find(([, e]) => e === "📦");
       addCategory(name, emoji, ico);
-      return `💰 가계부 분류 추가: ${name} (아이콘은 분류 관리에서 바꿀 수 있어요)`;
+      return `가계부 분류 추가: ${name} (아이콘은 분류 관리에서 바꿀 수 있어요)`;
     }
     case "set_feeding_times": {
       const times = [...new Set((Array.isArray(a.times) ? a.times : []).filter(isTime))].sort();
       if (!times.length) return null;
       saveFeedingSettings(dog.id, { times });
       syncPushAlarms();
-      return `🍚 급여 시각: ${times.join(", ")}`;
+      return `급여 시각: ${times.join(", ")}`;
     }
     case "add_health_record": {
       const t = a.record_type;
@@ -110,17 +110,17 @@ function run(dog, a) {
       rec = saveRecord(dog.id, rec);
       // 화면에서 적을 때와 같게: 다음 진료·접종일은 일정표에, 진료비는 가계부에
       if (d.nextDate) {
-        const title = t === "vet" ? `🏥 ${d.hospital ? `${d.hospital} ` : ""}진료 (${d.reason})` : `💉 예방접종${d.title ? ` (${d.title})` : ""}`;
+        const title = t === "vet" ? `${d.hospital ? `${d.hospital} ` : ""}진료 (${d.reason})` : `예방접종${d.title ? ` (${d.title})` : ""}`;
         rec = saveRecord(dog.id, { ...rec, links: syncSchedule(dog.id, rec, { title, date: d.nextDate, alarm: false, kind: t === "vet" ? "vet" : "vaccine" }) });
       }
       if (t === "vet" && d.cost) rec = saveRecord(dog.id, { ...rec, expenseId: linkVetExpense(dog.id, rec) });
-      return `${TYPES[t].icon} ${TYPES[t].label}: ${a.date} ${summarize(rec)}${d.cost ? " · 가계부에도 기록" : ""}${d.nextDate ? " · 일정표에 다음 날짜" : ""}`;
+      return `${TYPES[t].label}: ${a.date} ${summarize(rec)}${d.cost ? " · 가계부에도 기록" : ""}${d.nextDate ? " · 일정표에 다음 날짜" : ""}`;
     }
     case "set_allowance": {
       const amount = Math.round(Number(a.amount));
       if (!/^\d{4}-\d{2}$/.test(a.month) || !(amount > 0)) return null;
       setAllowance(dog.id, a.month, amount);
-      return `💰 ${a.month} 용돈: ${won(amount)}`;
+      return `${a.month} 용돈: ${won(amount)}`;
     }
     case "add_calendar_event": {
       if (!isDate(a.date) || !text(a.title)) return null;
@@ -132,7 +132,7 @@ function run(dog, a) {
       saveEvent(dog.id, a.date, { title: text(a.title), kind: kind.id, color: kind.color, time, endDate, repeat, memo: text(a.memo), alarm });
       if (alarm) syncPushAlarms();
       const rep = { weekly: "매주", monthly: "매달", yearly: "매년" }[repeat];
-      return `🗓️ 일정표: ${a.date}${endDate ? `~${endDate}` : ""}${time ? ` ${time}` : ""} ${text(a.title)} (${kind.icon} ${kind.label})${rep ? ` · ${rep} 반복` : ""}${alarm ? " · 알림" : ""}`;
+      return `일정표: ${a.date}${endDate ? `~${endDate}` : ""}${time ? ` ${time}` : ""} ${text(a.title)} (${kind.label})${rep ? ` · ${rep} 반복` : ""}${alarm ? " · 알림" : ""}`;
     }
     case "add_weight_record": {
       const kg = Number(a.weight_kg);
@@ -140,7 +140,7 @@ function run(dog, a) {
       const time = isTime(a.time) ? a.time : a.date === todayKey() ? new Date().toTimeString().slice(0, 5) : "12:00";
       addWeightRecord(dog.id, { weightKg: kg, measuredAt: `${a.date}T${time}:00`, note: "채팅으로 기록" });
       syncDogWeight(dog);
-      return `⚖️ 체중 관리: ${a.date} ${kg}kg`;
+      return `체중 관리: ${a.date} ${kg}kg`;
     }
     case "set_checklist_done": {
       const today = todayKey();
@@ -148,7 +148,7 @@ function run(dog, a) {
       const item = (getScheduleForDate(dog.id, today) || []).find((it) => it.title === a.title || it.title.includes(text(a.title)) || text(a.title).includes(it.title));
       if (!item) return null;
       if (Boolean(item.completed) !== Boolean(a.done)) toggleScheduleItem(dog.id, today, item.id);
-      return `✅ 체크리스트: ${item.title} ${a.done ? "완료" : "완료 취소"}`;
+      return `체크리스트: ${item.title} ${a.done ? "완료" : "완료 취소"}`;
     }
     case "add_alarm": {
       if (!text(a.title) || !isTime(a.time) || (a.date && !isDate(a.date))) return null;
@@ -167,7 +167,7 @@ function run(dog, a) {
       const rec = { id: newRecordId(), type: "vital", at: `${a.date}T${time}`, data: { metric: a.metric, value: Number(a.value) }, memo: text(a.memo), photos: [] };
       if (validateRecord(rec)) return null; // 범위 밖·미래 시각 등은 저장하지 않음
       saveRecord(dog.id, rec);
-      return `${def.icon} 건강 수치: ${a.date} ${time} ${def.label} ${fmtValue(a.metric, rec.data.value)}${def.unit}`;
+      return `건강 수치: ${a.date} ${time} ${def.label} ${fmtValue(a.metric, rec.data.value)}${def.unit}`;
     }
     case "mark_med_dose": {
       // 기록할 수 있는 건 앱에 있는 복용 건뿐 — AI가 보낸 값은 [복용:...] 목록에서 다시 찾는다
@@ -175,22 +175,22 @@ function run(dog, a) {
       const dose = isDate(date) && getDosesForDate(dog.id, date).find((d) => d.key === a.dose);
       if (!dose || date > todayKey()) return null;
       const label = `${date === todayKey() ? "오늘" : date} ${dose.time} ${dose.med.name} ${dose.med.dose}`;
-      if (a.status === "undo") return undoDose(dog.id, dose) ? `💊 약 기록 취소: ${label}` : null;
+      if (a.status === "undo") return undoDose(dog.id, dose) ? `약 기록 취소: ${label}` : null;
       if (a.status === "skipped") {
         markDoseSkipped(dog.id, dose);
         syncPushAlarms();
-        return `💊 약: ${label} 건너뜀`;
+        return `약: ${label} 건너뜀`;
       }
       if (a.status !== "done") return null;
       const time = isTime(a.time) ? a.time : nowLabel();
       if (date === todayKey() && time > nowLabel()) return null; // 아직 오지 않은 시각에 먹였다고 기록하지 않는다
       if (dose.record?.status === "done") {
         if (isTime(a.time)) editDoneTime(dog.id, dose, a.time); // 시각을 말했을 때만 고친다
-        return `💊 약: ${label} — 이미 먹인 걸로 기록돼 있어요(먹인 시각 ${isTime(a.time) ? a.time : dose.record.doneAt.slice(11, 16)})`;
+        return `약: ${label} — 이미 먹인 걸로 기록돼 있어요(먹인 시각 ${isTime(a.time) ? a.time : dose.record.doneAt.slice(11, 16)})`;
       }
       markDoseDone(dog.id, dose, `${date}T${time}:00`);
       syncPushAlarms();
-      return `💊 약: ${label} 먹임 (${time})`;
+      return `약: ${label} 먹임 (${time})`;
     }
     default:
       return null;
@@ -240,7 +240,7 @@ export function applyConfirmedAction(dog, a) {
       deleteRecord(dog.id, a.id); // 이 기록으로 만든 일정·알림도 같이 지워짐
       syncPushAlarms();
     }
-    return `🗑️ 지웠어요: ${text(a.summary)}`;
+    return `지웠어요: ${text(a.summary)}`;
   }
   if (a.type === "update_record") {
     if (a.kind === "expense") {
@@ -291,7 +291,7 @@ export function applyConfirmedAction(dog, a) {
       if (isDate(a.date) || isTime(a.time)) next.at = `${isDate(a.date) ? a.date : rec.at.slice(0, 10)}T${isTime(a.time) ? a.time : rec.at.slice(11, 16)}`;
       if (JSON.stringify(next) === JSON.stringify(rec) || validateRecord(next)) return null;
       saveRecord(dog.id, next);
-      return `✏️ 고쳤어요: ${summarize(next)}`;
+      return `고쳤어요: ${summarize(next)}`;
     } else if (a.kind === "alarm") {
       const patch = {};
       if (text(a.title)) patch.title = text(a.title);
@@ -300,7 +300,7 @@ export function applyConfirmedAction(dog, a) {
       updateCustomSchedule(dog.id, a.id, patch);
       syncPushAlarms();
     }
-    return `✏️ 고쳤어요: ${text(a.summary)}`;
+    return `고쳤어요: ${text(a.summary)}`;
   }
   return null;
 }
@@ -336,8 +336,8 @@ export function saveAskedExpense(dog, a, categoryId) {
   if (a.fixed) {
     saveFixedExpense(dog.id, { title: a.title, amount: a.amount, categoryId, day: a.day, memo: a.memo }, todayKey());
     applyFixedExpenses(dog.id, todayKey());
-    return `💰 매달 나가는 돈: 매달 ${a.day}일 ${a.title} ${won(a.amount)} (${cat.name})`;
+    return `매달 나가는 돈: 매달 ${a.day}일 ${a.title} ${won(a.amount)} (${cat.name})`;
   }
   addExpense(dog.id, { title: a.title, amount: a.amount, date: a.date, categoryId, memo: a.memo, ...claimFields(a.extra || {}, categoryId) });
-  return `💰 가계부: ${a.date} ${a.title} ${won(a.amount)} (${cat.name})`;
+  return `가계부: ${a.date} ${a.title} ${won(a.amount)} (${cat.name})`;
 }

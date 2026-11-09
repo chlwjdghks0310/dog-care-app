@@ -240,7 +240,7 @@ console.log("통합 기록 확인 통과");
   const d = day(3);
   const res = A.applyAppActions(dogC, [{ type: "add_calendar_event", date: d, title: "미용 예약", kind: "grooming", time: "14:00" }]);
   assert.equal(res.done.length, 1);
-  assert.match(res.done[0], /14:00 미용 예약 \(✂️ 미용\)/);
+  assert.match(res.done[0], /14:00 미용 예약 \(미용\)/);
   const ev = getEventsForDate("cal", d)[0];
   assert.equal(ev.kind, "grooming");
   assert.equal(ev.time, "14:00");

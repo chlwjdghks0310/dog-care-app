@@ -80,7 +80,7 @@ export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우
       {photos.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
           <button type="button" className={`seg${view === "grid" ? " on" : ""}`} onClick={() => setView("grid")}>▦ 모아 보기</button>
-          <button type="button" className={`seg${view === "feed" ? " on" : ""}`} onClick={() => setView("feed")}>☰ 게시물로 보기</button>
+          <button type="button" className={`seg${view === "feed" ? " on" : ""}`} onClick={() => setView("feed")}><Ico name="menu" size={14} /> 게시물로 보기</button>
         </div>
       )}
       {!photos.length && (
@@ -163,7 +163,7 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
               {memo.trim() ? (
                 <p className="post-caption"><b>{dog.name}</b> {memo}</p>
               ) : (
-                <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditing(true)}>✏️ 이날의 문구·추억 쓰기</button>
+                <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setEditing(true)}><Ico name="pencil" size={15} /> 이날의 문구·추억 쓰기</button>
               )}
               {dayLine(dog.id, at) && <div className="post-day"><Ico name="check" size={14} /> 이날 하루 체크 · {dayLine(dog.id, at)}</div>}
               <span className="faint post-date">{agoLabel(at)}</span>
@@ -183,9 +183,9 @@ function PhotoSheet({ photo, isCover, onClose, onCover, onDelete, dog }) {
                 <p className="faint" style={{ fontSize: 12.5, margin: "0 0 10px" }}>{TYPES[photo.type]?.label} 기록에 붙은 사진이라 그 기록 날짜를 따라요. 날짜는 기록 탭에서 바꿔요.</p>
               )}
               <div className="post-edit">
-                <button type="button" onClick={() => setDeco(decoOf(dog.id, photo.recId, photo.idx))}><span aria-hidden="true">🎨</span>꾸미기</button>
-                <button type="button" disabled={isCover} onClick={() => (done(), onCover(src))}><span aria-hidden="true">⭐</span>{isCover ? "대표 사진" : "대표 사진으로"}</button>
-                <button type="button" className="danger" onClick={onDelete}><span aria-hidden="true">🗑</span>지우기</button>
+                <button type="button" onClick={() => setDeco(decoOf(dog.id, photo.recId, photo.idx))}><Ico name="sparkles" size={16} />꾸미기</button>
+                <button type="button" disabled={isCover} onClick={() => (done(), onCover(src))}><Ico name="image" size={16} />{isCover ? "대표 사진" : "대표 사진으로"}</button>
+                <button type="button" className="danger" onClick={onDelete}><Ico name="trash" size={16} />지우기</button>
               </div>
               {error && <p className="error-text">{error}</p>}
               <button type="button" className="btn-primary" onClick={done}>완료</button>

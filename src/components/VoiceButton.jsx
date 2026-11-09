@@ -219,7 +219,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
     if (!r.recognition) r.wantLive = true;
     if (!r.recognition && !r.ctx) {
       setState("idle");
-      return onError("이 기기에서는 음성 입력을 쓸 수 없어요. 키보드의 🎤 받아쓰기를 이용해 주세요.");
+      return onError("이 기기에서는 음성 입력을 쓸 수 없어요. 키보드의 마이크(받아쓰기)를 이용해 주세요.");
     }
     r.timer = setTimeout(stop, MAX_MS);
   }

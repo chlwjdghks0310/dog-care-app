@@ -9,7 +9,7 @@ const KEY_POINTS = [
 
 const SECTIONS = [
   {
-    category: "👆 기본 조작",
+    category: "기본 조작", ico: "tap",
     items: [
       {
         q: "탭 사이를 빨리 옮기고 싶어요.",
@@ -34,7 +34,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🐶 홈 (말로 기록하기)",
+    category: "홈 (말로 기록하기)", ico: "dog",
     items: [
       {
         q: "퍼피 100일 카드(오늘의 5분)는 뭐예요?",
@@ -43,7 +43,7 @@ const SECTIONS = [
       },
       {
         q: "홈 화면에서 뭘 할 수 있나요?",
-        a: "\"산책 30분 했어\", \"사료 3만 원 샀어\", \"몸무게 3.2kg\"처럼 말하거나 적으면 건강 기록·가계부·일정·체중에 알아서 기록해요. 🎤를 누르면 말로 입력할 수 있어요. 기록하면 우리 강아지가 한마디 해 줘요.",
+        a: "\"산책 30분 했어\", \"사료 3만 원 샀어\", \"몸무게 3.2kg\"처럼 말하거나 적으면 건강 기록·가계부·일정·체중에 알아서 기록해요. 마이크 버튼을 누르면 말로 입력할 수 있어요. 기록하면 우리 강아지가 한마디 해 줘요.",
       },
       {
         q: "궁금한 걸 물어보면요?",
@@ -61,7 +61,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "✅ 오늘 할 일",
+    category: "오늘 할 일", ico: "checklist",
     items: [
       {
         q: "\"오늘 해야 할 일\"은 어떻게 만들어지나요?",
@@ -82,7 +82,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🔎 건강 체크",
+    category: "건강 체크", ico: "stethoscope",
     items: [
       {
         q: "변 체크는 어떻게 하나요?",
@@ -100,7 +100,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🍚 사료 계산기",
+    category: "사료 계산기", ico: "bowl",
     items: [
       {
         q: "하루 사료량은 어떻게 계산되나요?",
@@ -117,7 +117,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "⏰ 알림·알람",
+    category: "알림·알람", ico: "alarm",
     items: [
       {
         q: "앱을 꺼도 알림을 받으려면요?",
@@ -134,7 +134,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🗓️ 병원 탭 · 일정표",
+    category: "병원 탭 · 일정표", ico: "calendar",
     items: [
       {
         q: "일정표에는 뭐가 보이나요?",
@@ -151,7 +151,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "💰 가계부",
+    category: "가계부", ico: "wallet",
     items: [
       {
         q: "지출은 어떻게 기록하나요?",
@@ -176,7 +176,7 @@ const SECTIONS = [
     ],
   },
   {
-    category: "🐾 프로필",
+    category: "프로필", ico: "paw",
     items: [
       {
         q: "강아지 정보나 사진을 고치고 싶어요.",
@@ -249,7 +249,7 @@ export default function Help({ onBack }) {
 
       {SECTIONS.map((section) => (
         <div key={section.category} className="card" style={{ marginBottom: 12 }}>
-          <div className="h2"><HelpTitle text={section.category} /></div>
+          <div className="h2" style={{ display: "flex", alignItems: "center", gap: 6 }}><Ico name={section.ico} size={18} /><HelpTitle text={section.category} /></div>
           {section.items.map((item, i) => {
             const id = `${section.category}-${i}`;
             const isOpen = openIds.has(id);

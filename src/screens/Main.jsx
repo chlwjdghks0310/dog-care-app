@@ -311,6 +311,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 
 
       <div
+        className="home-dog"
         onClick={() => isChat && goHome()}
         style={{
           position: isChat ? "absolute" : "relative",

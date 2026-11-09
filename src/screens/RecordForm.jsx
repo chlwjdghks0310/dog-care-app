@@ -123,7 +123,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
         }
         const next = type === "vet" ? data.nextDate : type === "life" && data.kind === "예방접종" ? data.nextDate : "";
         if (next || initial?.links) {
-          const title = type === "vet" ? `🏥 ${data.hospital ? `${data.hospital} ` : ""}진료 (${data.reason.trim()})` : `💉 예방접종${data.title ? ` (${data.title.trim()})` : ""}`;
+          const title = type === "vet" ? `${data.hospital ? `${data.hospital} ` : ""}진료 (${data.reason.trim()})` : `예방접종${data.title ? ` (${data.title.trim()})` : ""}`;
           const links = syncSchedule(dog.id, saved, { title, date: next, alarm: Boolean(data.nextAlarm), kind: type === "vet" ? "vet" : "vaccine" });
           saved = saveRecord(dog.id, { ...saved, links });
           syncPushAlarms(); // 알람이 바뀌었을 수 있다 — 실패해도 기록은 이미 저장됨
