@@ -81,6 +81,20 @@ assert.deepEqual(P.stampsOn("p", day(14)), ["앉아"]);
 assert.deepEqual(P.stampsOn("p", day(11)), ["1주차 체크 통과"]);
 assert.deepEqual(P.stampsOn("p", day(2)), [], "건너뛴 건 발도장 아님");
 
+// 14주 지도·지난 발도장(훈련 화면용)
+{
+  const ws = P.weekStatus("p", day(15));
+  assert.equal(ws[0], "done", "1주차는 끝남");
+  assert.equal(ws[1], "cur", "2주차 진행 중");
+  assert.equal(ws[2], "todo");
+  assert.equal(ws.length, 14);
+  const log = P.stampLog("p");
+  assert.equal(log[0].date, day(14), "최근 날짜가 먼저");
+  assert.deepEqual(log[0].items, ["앉아"]);
+  assert.ok(log.every((d) => d.items.length), "빈 날은 없음");
+  assert.ok(!log.some((d) => d.date === day(2)), "건너뛰기만 한 날은 없음");
+}
+
 // 다 끝나면 finished, 알림 없음
 for (const s of STEPS) if (s.kind === "task") P.mark("p", s.id, "skip", day(20)); else P.finishTest("p", s.id, 3, day(20));
 assert.equal(P.state("p", day(21)).finished, true);

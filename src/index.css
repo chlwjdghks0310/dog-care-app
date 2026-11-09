@@ -1461,7 +1461,6 @@ button.seg, button.chip { min-height: 36px; }
 .pc100-strip.done .pc100-strip-sub { color: var(--text-soft); }
 .pc100-strip-title { font-size: 15px; font-weight: 800; line-height: 1.35; word-break: keep-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pc100-strip-go { flex-shrink: 0; font-size: 13.5px; font-weight: 800; color: var(--accent-strong); white-space: nowrap; }
-.pc100-sheet .es-scroll.pc100 { display: block; padding: 4px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
 .pc100 { margin-bottom: 14px; }
 .pc100-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
 .pc100-tag { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: var(--accent-strong); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; }
@@ -1513,3 +1512,24 @@ button.seg, button.chip { min-height: 36px; }
 .home-chip { flex: 1; min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; box-shadow: var(--shadow); }
 .home-chip.on { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-strong); }
 .home-chip span[aria-hidden] { color: var(--text-soft); font-weight: 400; }
+
+/* 퍼피 100일 훈련 화면(screens/Puppy100) */
+.pp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.pp-week { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pp-week li { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 14.5px; line-height: 1.4; word-break: keep-all; color: var(--text-soft); }
+.pp-week li.done { color: var(--text); }
+.pp-week li.cur { color: var(--text); font-weight: 700; }
+.pp-week li > span:nth-child(2) { flex: 1; min-width: 0; }
+.pp-week li .faint { font-size: 12px; font-weight: 400; white-space: nowrap; }
+.pp-dot { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-soft); }
+.pp-week li.done .pp-dot { background: var(--accent-btn); border-color: var(--accent-btn); color: #fff; }
+.pp-week li.cur .pp-dot { border-color: var(--accent-btn); color: var(--accent-strong); }
+.pp-map { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.pp-wk { height: 40px; min-width: 0; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-soft); font: inherit; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pp-wk.done { background: var(--accent-btn); border-color: var(--accent-btn); color: #fff; }
+.pp-wk.cur { border: 2.5px solid var(--accent-btn); color: var(--accent-strong); background: var(--accent-soft); }
+.pp-wk.todo { opacity: 0.75; }
+.pp-log { display: flex; gap: 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 14px; line-height: 1.45; word-break: keep-all; }
+.pp-log:first-of-type { border-top: 0; }
+.pp-log b { flex: 0 0 44px; }
+.pp-log span { flex: 1; min-width: 0; color: var(--text-soft); }

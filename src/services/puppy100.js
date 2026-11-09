@@ -91,3 +91,21 @@ export function alarmLine(dogs, today = todayKey()) {
   }
   return null;
 }
+
+// 14주 지도용: 주마다 "done"(과제·체크 다 끝남) | "cur"(지금 하는 주) | "todo"
+export function weekStatus(dogId, today = todayKey()) {
+  const p = getProgress(dogId);
+  const cur = state(dogId, today).step?.week ?? null;
+  return Array.from({ length: 14 }, (_, i) => {
+    const w = i + 1;
+    if (STEPS.filter((s) => s.week === w).every((s) => FINISHED.has(p[s.id]?.s))) return "done";
+    return w === cur ? "cur" : "todo";
+  });
+}
+
+// 지난 발도장: 날짜별(최근 순) [{ date, items: [과제 이름…] }] — 건너뛴 과제는 빼고, 주간 체크 통과는 "n주차 체크 통과"
+export function stampLog(dogId) {
+  const byDate = new Map();
+  for (const d of [...new Set(STEPS.map((s) => getProgress(dogId)[s.id]?.d).filter(Boolean))]) byDate.set(d, stampsOn(dogId, d));
+  return [...byDate.entries()].filter(([, items]) => items.length).sort((a, b) => b[0].localeCompare(a[0])).map(([date, items]) => ({ date, items }));
+}

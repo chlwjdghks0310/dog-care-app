@@ -40,7 +40,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenFeeding, onOpenWeight, onOpenVet }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -307,7 +307,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
         </div>
       )}
       {/* 퍼피 첫 100일 "오늘의 5분" — 하루 체크 바로 밑(11/9, 작업 순서 ⑥) */}
-      {!isChat && <PuppyCard dog={dog} onChanged={() => refresh((n) => n + 1)} />}
+      {!isChat && <PuppyCard dog={dog} onOpen={onOpenPuppy} />}
 
       <div
         onClick={() => isChat && goHome()}

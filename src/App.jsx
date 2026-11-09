@@ -16,6 +16,7 @@ import Onboarding from "./screens/Onboarding";
 import InstallGate, { needsInstall } from "./screens/InstallGate";
 import DogRegister from "./screens/DogRegister";
 import Home from "./screens/Home";
+import Puppy100 from "./screens/Puppy100";
 import ThisWeek from "./screens/ThisWeek";
 import Calendar from "./screens/Calendar";
 import Info from "./screens/Info";
@@ -46,6 +47,7 @@ const PARENT_TAB = {
   feeding: "main",
   alarms: "main",
   info: "main",
+  puppy: "main", // 퍼피 100일 훈련 화면(11/9) — 오늘 탭 띠에서 열림
   health: "hospital", // 건강 체크(변·컨디션)는 병원 탭에서(사용자 요청 11/7)
   "health-stool": "hospital",
   "health-behavior": "hospital",
@@ -408,6 +410,7 @@ export default function App() {
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
     info: () => <Info dog={dog} onBack={() => setTab("home")} />,
+    puppy: () => <Puppy100 dog={dog} onBack={() => setTab("main")} />,
   };
   const profileScreens = {
     profile: () => (
@@ -479,7 +482,7 @@ export default function App() {
         {/* 세부 화면(오늘 할 일 등)은 오늘 화면 위에 겹쳐 그려서, 밀어서 뒤로 갈 때 아래에 오늘 화면이 보인다 */}
         <div style={{ display: "contents" }}>
           <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
+            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenPuppy={() => setTab("puppy")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} />
           </Suspense>
         </div>
         {homeScreens[tab] && <Fragment key={`${dog.id}-${pageVersion}`}>{tab === "home" ? <SwipeBack key="home" onBack={() => setTab("main")} renderUnderlay={() => null}>{homeScreens.home()}</SwipeBack> : renderStack(homeScreens, "home")}</Fragment>}
