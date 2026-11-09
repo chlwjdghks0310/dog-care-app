@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useHelpTip } from "../components/HelpTip";
 import { createPortal } from "react-dom";
 import Ico from "../components/Ico";
 import { getPhotos, addPhotos, setPhotoMemo, setPhotoDate, removePhoto, saveDecorated, decoOf } from "../services/gallery";
@@ -30,6 +31,7 @@ const agoLabel = (at) => {
 };
 
 export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우리 아이로" }) {
+  const [galTip, galHelp] = useHelpTip("성장 추억", "[＋ 사진]으로 여러 장을 한 번에 넣어요. 사진을 누르면 그날의 문구·추억을 적고 꾸밀 수 있어요. 넣은 사진은 기록 탭에도 '성장 추억'으로 남아요. 병원·증상 기록에 붙인 사진은 여기 대신 그 기록에 있어요.");
   const [photos, setPhotos] = useState(() => getPhotos(dog.id));
   const [open, setOpen] = useState(null); // 크게 보는 사진
   const [error, setError] = useState("");
@@ -66,13 +68,14 @@ export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <div className="h1" style={{ margin: 0 }}>{dog.name} 성장 추억</div>
+        <div className="h1" style={{ margin: 0 }}>{dog.name} 성장 추억{galTip}</div>
         <label className="btn-primary small" style={{ cursor: "pointer" }}>
           ＋ 사진
           <input type="file" accept="image/*" multiple hidden onChange={add} />
         </label>
       </div>
-      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장{photos.length > 0 && " · 더 넣으려면 [＋ 사진] (여러 장 한 번에)"}</p>
+      <p className="subtle" style={{ margin: "0 0 12px" }}>{togetherDays(dog) > 0 && `함께한 지 ${togetherDays(dog)}일 · `}사진 {photos.length}장</p>
+      {galHelp}
       {error && <p className="error-text">{error}</p>}
       {photos.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
@@ -111,7 +114,6 @@ export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우
           </div>
         </section>
       ))}
-      {photos.length > 0 && <p className="faint" style={{ fontSize: 12.5, margin: "16px 2px 0" }}>사진을 누르면 그날의 문구·추억을 적고 꾸밀 수 있어요. 넣은 사진은 기록 탭에도 '성장 추억'으로 남아요. 병원·증상 기록에 붙인 사진은 여기 대신 그 기록에 있어요.</p>}
       {open && (
         <PhotoSheet
           dog={dog}

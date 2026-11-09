@@ -1,4 +1,5 @@
 import { cloneElement, isValidElement, useId, useMemo, useRef, useState } from "react";
+import { useHelpTip } from "../components/HelpTip";
 import { todayKey } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { addWeightRecord, updateWeightRecord } from "../services/weightLog";
@@ -298,6 +299,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
 
 // 선택: 첫 번째 첨부 사진을 AI가 보고 위 칸을 미리 채운다(하루 2번, 참고). 보호자가 확인·고친 뒤 저장한다.
 function AiStoolCheck({ dog, photo, onFilled }) {
+  const [aiTip, aiHelp] = useHelpTip("AI로 사진 확인", "위 사진 칸에 변 사진을 넣으면 AI가 보이는 모양·색을 정리해 칸을 미리 채워 줄 수 있어요. 사진만으로는 정확하지 않을 수 있어 참고로만 써요.");
   const [state, setState] = useState({ step: "idle" });
   const abortRef = useRef(null);
 
@@ -322,10 +324,9 @@ function AiStoolCheck({ dog, photo, onFilled }) {
   const { step, obs, msg } = state;
   return (
     <div className="pc" aria-live="polite">
-      <b>AI로 사진 확인 (선택 · 참고)</b>
-      {!photo ? (
-        <p className="faint" style={{ margin: "6px 0 0" }}>위 사진 칸에 변 사진을 넣으면 AI가 보이는 모양·색을 정리해 칸을 미리 채워 줄 수 있어요.</p>
-      ) : step === "busy" ? (
+      <b>AI로 사진 확인 (선택 · 참고){aiTip}</b>
+      {aiHelp}
+      {!photo ? null : step === "busy" ? (
         <>
           <p className="subtle" style={{ margin: "10px 0" }}>첫 번째 사진을 살펴보는 중… 보통 5~10초 걸려요.</p>
           <button type="button" className="btn-ghost small" onClick={() => abortRef.current?.abort()}>취소</button>

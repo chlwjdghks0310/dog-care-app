@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useHelpTip } from "../components/HelpTip";
 import MonthGrid from "../components/MonthGrid";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import {
@@ -38,6 +39,8 @@ const won = (n) => `${n.toLocaleString("ko-KR")}원`;
 const shortWon = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1).replace(/\.0$/, "")}억` : n >= 10000 ? `${Math.round(n / 1000) / 10}만`.replace(/\.0만$/, "만") : n.toLocaleString("ko-KR"));
 
 export default function Budget({ dog, onBack }) {
+  const [fixedTip, fixedHelp] = useHelpTip("매달 나가는 돈", "보험료·정기 배송 사료처럼 매달 나가는 돈을 등록하면 그날마다 가계부에 저절로 기록돼요.");
+  const [catTip, catHelp] = useHelpTip("분류 관리", "분류를 누르면 이름·아이콘을 고칠 수 있어요. ×를 누르면 지워지고, 그 분류로 적은 기록은 '기타'로 보여요.");
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey());
   // 매달 나가는 돈(직접 등록)은 날이 되면 저절로 기록 — 가계부를 열 때 먼저 채운다
@@ -327,10 +330,10 @@ export default function Budget({ dog, onBack }) {
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <div className="h2" style={{ margin: 0 }}>매달 나가는 돈</div>
+          <div className="h2" style={{ margin: 0 }}>매달 나가는 돈{fixedTip}</div>
           <button type="button" className="chip" style={{ border: "none", cursor: "pointer", fontSize: 13, padding: "5px 11px" }} onClick={() => setFixedSheet({})}>＋ 등록</button>
         </div>
-        {registered.length === 0 && fixed.length === 0 && <p className="faint" style={{ margin: "6px 0 0" }}>보험료·정기 배송 사료처럼 매달 나가는 돈을 등록하면 그날마다 저절로 기록돼요.</p>}
+        {fixedHelp}
         {registered.map((f) => {
           const paid = regPaid(f);
           const cat = categoryById(f.categoryId);
@@ -445,7 +448,7 @@ export default function Budget({ dog, onBack }) {
       {showCategoryManager && (
         <div className="card" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-            <div className="h2" style={{ margin: 0 }}>분류 관리</div>
+            <div className="h2" style={{ margin: 0 }}>분류 관리{catTip}</div>
             <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (setShowCategoryManager(false), setEditingCat(null), setNewCatName(""))}>
               완료
             </button>
@@ -468,7 +471,7 @@ export default function Budget({ dog, onBack }) {
             ))}
           </div>
 
-          <p className="faint" style={{ marginTop: -4 }}>분류를 누르면 이름·아이콘을 고칠 수 있어요. ×를 누르면 지워지고, 그 분류로 적은 기록은 '기타'로 보여요.</p>
+          {catHelp}
           <form onSubmit={handleAddCategory}>
             <div className="faint" style={{ marginBottom: 6 }}>{editingCat ? "고치는 중 — 아이콘 고르기" : "새 분류 — 아이콘 고르기"}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4, marginBottom: 8 }}>

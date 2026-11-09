@@ -1449,4 +1449,6 @@ button.seg, button.chip { min-height: 36px; }
 .help-tip { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -11px -11px -11px -4px; padding: 0; border: 0; background: none; vertical-align: middle; flex-shrink: 0; }
 .help-tip span { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-soft); font-size: 13px; font-weight: 800; line-height: 1; }
 .help-tip.on span { background: var(--accent-btn); border-color: var(--accent-btn); color: #fff; }
-.help-tip-text { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 13.5px; line-height: 1.55; color: var(--text); }
+.help-tip-text { position: relative; margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 13.5px; line-height: 1.55; color: var(--text); font-weight: 400; text-align: left; }
+.help-tip-text b { display: block; margin-bottom: 2px; font-size: 13px; color: var(--accent-strong); }
+.help-tip-text b::before { content: "? "; }

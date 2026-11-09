@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useHelpTip } from "../components/HelpTip";
 import { todayKey } from "../utils/date";
 import {
   getCustomSchedules,
@@ -206,6 +207,7 @@ export default function AlarmSettings({ dog, onBack }) {
 
 // 하루 체크("오늘 어땠어요?") 알림: 하루 한 번, 시각은 보호자가 고른다. 체크한 날은 오지 않는다
 function CheckAlarmCard() {
+  const [checkTip, checkHelp] = useHelpTip("하루 체크 알림", "“오늘 어땠어요?” 알림을 하루 한 번 보내요. 이미 체크한 날은 오지 않아요.");
   const [plan, setPlan] = useState(() => checkAlarmPlan());
   const [time, setTime] = useState(plan?.time || "20:00");
   function save(on, t = time) {
@@ -215,8 +217,8 @@ function CheckAlarmCard() {
   }
   return (
     <div className="card" style={{ marginBottom: 14 }}>
-      <div className="h2">하루 체크 알림</div>
-      <p className="subtle" style={{ margin: "0 0 10px" }}>“오늘 어땠어요?” 알림을 하루 한 번 보내요. 이미 체크한 날은 오지 않아요.</p>
+      <div className="h2">하루 체크 알림{checkTip}</div>
+      {checkHelp}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, flex: 1 }}>
           <input type="checkbox" checked={Boolean(plan)} onChange={(e) => save(e.target.checked)} />
@@ -231,6 +233,7 @@ function CheckAlarmCard() {
 
 // 알림 종류별 켜고 끄기 + 조용한 시간(약·직접 만든 알람은 조용한 시간에도 울림)
 function NotifKindsCard() {
+  const [quietTip, quietHelp] = useHelpTip("조용한 시간", "이 시간엔 추천 알림(할 일·사료 예고·리포트)을 보내지 않아요. 약·밥 시간·직접 만든 알람은 그대로 울려요.");
   const [prefs, setPrefs] = useState(getNotifPrefs);
   function set(patch) {
     const next = { ...prefs, ...patch };
@@ -251,14 +254,14 @@ function NotifKindsCard() {
       <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 10 }}>
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15 }}>
           <input type="checkbox" checked={q.on} onChange={(e) => set({ quiet: { ...q, on: e.target.checked } })} />
-          조용한 시간
+          조용한 시간{quietTip}
         </label>
+        {quietHelp}
         <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 0 26px" }}>
           <input type="time" value={q.from} disabled={!q.on} aria-label="조용한 시간 시작" onChange={(e) => e.target.value && set({ quiet: { ...q, from: e.target.value } })} />
           <span className="faint">~</span>
           <input type="time" value={q.to} disabled={!q.on} aria-label="조용한 시간 끝" onChange={(e) => e.target.value && set({ quiet: { ...q, to: e.target.value } })} />
         </div>
-        <p className="faint" style={{ margin: "8px 0 0" }}>이 시간엔 추천 알림(할 일·사료 예고·리포트)을 보내지 않아요. 약·밥 시간·직접 만든 알람은 그대로 울려요.</p>
       </div>
     </div>
   );

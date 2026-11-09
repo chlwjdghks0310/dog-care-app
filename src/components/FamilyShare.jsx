@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useHelpTip } from "./HelpTip";
 import { acceptInvite, createInvite, leavePet, listMembers, removeMember, savedInvite } from "../services/sync/family";
 import { setActiveDogId } from "../services/dogRepository";
 import { syncNow } from "../services/sync";
@@ -165,6 +166,7 @@ export default function FamilyShare({ dog }) {
 // 초대 코드 받기: 가족에게 받은 코드를 넣으면 그 강아지가 내 강아지들 옆에 한 마리 더 생긴다(지금 강아지는 그대로).
 // 서버가 코드를 확인해 가족으로 넣고 → 그 강아지 기록 전체를 받아 오면 App이 새 강아지 화면으로 바꾼다(dogcare-synced)
 function JoinFamily() {
+  const [joinTip, joinHelp] = useHelpTip("초대 코드 받기", "가족에게 받은 코드를 넣으면 그 강아지가 추가돼요. 지금 강아지 기록은 그대로예요.");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -185,8 +187,8 @@ function JoinFamily() {
   }
   return (
     <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>초대 코드 받기</div>
-      <p className="faint" style={{ margin: "0 0 8px" }}>가족에게 받은 코드를 넣으면 그 강아지가 추가돼요. 지금 강아지 기록은 그대로예요.</p>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>초대 코드 받기{joinTip}</div>
+      {joinHelp}
       <div style={{ display: "flex", gap: 8 }}>
         <input
           className="es-input"

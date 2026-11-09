@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useHelpTip } from "./HelpTip";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { getRecords, saveRecord } from "../services/records";
@@ -13,6 +14,7 @@ const commas = (text) => {
 // 지출 추가·고치기 시트(아래에서 올라옴). initial: { id?, title?, amount?, categoryId?, date, memo? } — id가 있으면 고치기
 // 순서: 자주 쓰는 내역 → 분류 → 내용 → 금액 → 날짜 → 메모
 export default function ExpenseSheet({ dog, categories, expenses, initial, onClose, onSaved }) {
+  const [docsTip, docsHelp] = useHelpTip("챙긴 서류", "보험사마다 필요한 서류가 달라요. 가입한 보험사 안내를 확인해 주세요. 챙긴 것에 체크해 두면 청구할 때 빠뜨리지 않아요.");
   const editing = Boolean(initial.id);
   const [title, setTitle] = useState(initial.title || "");
   const [amountText, setAmountText] = useState(initial.amount ? commas(initial.amount) : "");
@@ -150,7 +152,8 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
               )}
               {claim && (
                 <>
-                  <div className="xs-label" style={{ marginTop: 4 }}>챙긴 서류</div>
+                  <div className="xs-label" style={{ marginTop: 4 }}>챙긴 서류{docsTip}</div>
+                  {docsHelp}
                   <div className="chip-wrap">
                     {CLAIM_DOCS.map((d) => (
                       <button key={d} type="button" className={`seg${docs.includes(d) ? " on" : ""}`} aria-pressed={docs.includes(d)} onClick={() => setDocs((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d]))}>
@@ -158,7 +161,6 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
                       </button>
                     ))}
                   </div>
-                  <p className="faint" style={{ marginTop: 6 }}>보험사마다 필요한 서류가 달라요. 가입한 보험사 안내를 확인해 주세요.</p>
                 </>
               )}
             </>
@@ -179,6 +181,7 @@ export default function ExpenseSheet({ dog, categories, expenses, initial, onClo
 // 매달 나가는 돈 등록·고치기 시트. initial: { id?, title?, amount?, categoryId?, day?, memo? }
 // 저장하면 날이 될 때마다 가계부에 저절로 기록된다(등록한 날 이후 회차부터)
 export function FixedSheet({ dog, categories, initial, today, onClose, onSaved }) {
+  const [fixedTip, fixedHelp] = useHelpTip("매달 나가는 돈", "보험료·정기 배송처럼 매달 나가는 돈을 등록하면, 그날이 될 때마다 가계부에 저절로 기록돼요.");
   const editing = Boolean(initial.id);
   const [title, setTitle] = useState(initial.title || "");
   const [amountText, setAmountText] = useState(initial.amount ? commas(initial.amount) : "");
@@ -206,11 +209,11 @@ export function FixedSheet({ dog, categories, initial, today, onClose, onSaved }
       <div className="es-sheet" role="dialog" aria-label={editing ? "매달 나가는 돈 고치기" : "매달 나가는 돈 등록"}>
         <div className="es-top">
           <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
-          <div className="es-title">{editing ? "매달 나가는 돈 고치기" : "매달 나가는 돈 등록"}</div>
+          <div className="es-title">{editing ? "매달 나가는 돈 고치기" : "매달 나가는 돈 등록"}{fixedTip}</div>
           <span style={{ width: 36 }} />
         </div>
         <div className="es-scroll" style={{ padding: "4px 16px 12px" }}>
-          <p className="faint" style={{ marginTop: 0 }}>보험료·정기 배송처럼 매달 나가는 돈을 등록하면, 그날이 될 때마다 가계부에 저절로 기록돼요.</p>
+          {fixedHelp}
           <div className="xs-label">분류</div>
           <div className="chip-wrap" style={{ marginBottom: 14 }}>
             {categories.map((c) => (

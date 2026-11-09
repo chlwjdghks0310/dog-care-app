@@ -28,7 +28,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
   const [only, setOnly] = useState(""); // 이 항목이 다른 날만
   const [sheet, setSheet] = useState(null);
   const dayRef = useRef(null);
-  const [legendTip, legendText] = useHelpTip("빨간 글자는 그날 하루 체크에서 평소와 달랐다고 고른 것이에요(밥·변·토·소변·기운·물·기타). 두 개 이상이면 개수가 나와요.", "달력 표시 설명 보기");
+  const [legendTip, legendText] = useHelpTip("빨간 글자(평소와 달랐던 것)", "그날 하루 체크에서 평소와 달랐다고 고른 항목의 이름이에요(밥·변·토·소변·기운·물·기타). 두 개 이상이면 개수가 나와요. 날짜를 누르면 무엇이 달랐는지 아래에 나와요.");
   useEffect(() => { if (initialDate) dayRef.current?.scrollIntoView({ block: "center" }); }, [initialDate]); // 방금 적은 날을 바로 보이게
   const [, refresh] = useState(0);
   const changed = (d) => (trackAct("check"), d === today && (markCheckedIn(dog.id), syncPushAlarms()), refresh((n) => n + 1), onChanged?.());
@@ -90,7 +90,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
             );
           }}
         />
-        <p className="faint rc-legend"><span><span className="rc-dot">●</span> 평소</span><span><span className="rc-badge">소변</span> 평소와 달랐던 것</span><span><span className="rc-vet">＋</span> 병원</span>{legendTip}</p>
+        <p className="faint rc-legend"><span><span className="rc-dot">●</span> 평소</span><span><span className="rc-badge">소변</span> 평소와 달랐던 것{legendTip}</span><span><span className="rc-vet">＋</span> 병원</span></p>
         {legendText}
       </div>
 

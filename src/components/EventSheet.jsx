@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useHelpTip } from "./HelpTip";
 import { createPortal } from "react-dom";
 import MonthGrid from "./MonthGrid";
 import { EVENT_KINDS, REPEATS, ALARMS, kindOf, saveEvent, removeEvent, skipOccurrence, endSeriesBefore } from "../services/calendarEvents";
@@ -29,6 +30,7 @@ const keyPlus = (key, n) => {
 };
 // onRecordVisit: 지난 병원 일정이면 "진료 내용 기록하기"(병원 진료 기록을 이 날짜·제목으로 채워 연다). 이미 그날 기록이 있으면 안 준다
 export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVisit, onOpenDoc }) {
+  const [alarmTip, alarmHelp] = useHelpTip("미리 알림", "알림 권한이 꺼져 있어도 일정은 저장돼요. 반복 일정은 매번 다음 회차에 맞춰 알려 드려요.");
   const ev = initial.event || {};
   const occ = initial.date || initial.start; // 누른 회차 날짜
   const [scopeAsk, setScopeAsk] = useState(null); // 반복 일정: "save" | "remove" — 범위를 고르는 중
@@ -207,7 +209,8 @@ export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVis
           </>)}
 
           {section("alarm", "알림", alarmSummary, <>
-            <div className="es-big">미리 알려 드릴까요?</div>
+            <div className="es-big">미리 알려 드릴까요?{alarmTip}</div>
+            {alarmHelp}
             <div className="es-list">
               {ALARMS.map(([id, label]) => (
                 <button key={id} type="button" className={`es-option${alarm === id ? " on" : ""}`} aria-pressed={alarm === id} disabled={id === "before1h" && !time} onClick={() => setAlarm(id)}>
@@ -217,7 +220,6 @@ export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVis
                 </button>
               ))}
             </div>
-            <p className="faint">{repeat ? "반복 일정은 매번 다음 회차에 맞춰 알려 드려요. " : ""}알림 권한이 꺼져 있어도 일정은 저장돼요.</p>
           </>)}
           {error && <p className="error-text" role="alert" style={{ padding: "0 4px" }}>{error}</p>}
         </div>

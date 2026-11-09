@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useHelpTip } from "../components/HelpTip";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
 import { josa } from "../utils/text";
@@ -227,6 +228,7 @@ function MedSummary({ med, stock, ended, onClick, onDelete }) {
 
 // 등록·수정 — 1) 꼭 필요한 것 2) 기간·요일 3) 선택 항목, 세 단계로 나눈다.
 function MedForm({ med, onSave, onCancel, onStop, onDelete }) {
+  const [stockTip, stockHelp] = useHelpTip("남은 수량 계산", "[먹였어요] 기록만큼 줄어들어요. 실제 개수와 다르면 여기서 고치면 돼요.");
   const [step, setStep] = useState(0);
   const [f, setF] = useState(() => ({
     name: med?.name || "",
@@ -366,12 +368,12 @@ function MedForm({ med, onSave, onCancel, onStop, onDelete }) {
               <textarea rows={2} value={f.purpose} onChange={(e) => set({ purpose: e.target.value })} placeholder="예: 심장 질환, 밥 먹고 30분 뒤" maxLength={200} />
             </div>
             <div className="field">
-              <label>남은 수량 계산</label>
+              <label>남은 수량 계산{stockTip}</label>
+              {stockHelp}
               <div style={{ display: "flex", gap: 6 }}>
                 <input inputMode="decimal" value={f.stockBase} onChange={(e) => set({ stockBase: e.target.value })} placeholder="지금 가진 개수" />
                 <input inputMode="decimal" value={f.perDose} onChange={(e) => set({ perDose: e.target.value })} placeholder="1회에 쓰는 개수" />
               </div>
-              <span className="faint">[먹였어요] 기록만큼 줄어들어요. 실제 개수와 다르면 여기서 고치면 돼요.</span>
             </div>
             <label className="checklist-item" style={{ borderBottom: "none", paddingBottom: 0 }}>
               <input type="checkbox" checked={f.remind} onChange={(e) => set({ remind: e.target.checked })} />
