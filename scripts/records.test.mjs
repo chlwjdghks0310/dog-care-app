@@ -180,6 +180,21 @@ console.log("통합 기록 확인 통과");
   assert.match(vl, /음수량: 기록한 2일 하루 평균 275ml/);
   assert.match(vl, /호흡수: 최근 28회\/분.*3번 잼 24~42, 참고 범위\(15~30\) 밖 1번/);
   assert.doesNotMatch(vl, /체온|심박수/, "기록 없는 수치는 안 나옴");
+  // 식사 하나로(11/9): 종류·g 검사, 먹은 양 = 식사 g + 예전 건식·습식 칸
+  assert.match(R.validateRecord({ type: "meal", at: at2(0, "00:00"), data: { grams: "5000" } }), /1~3000g/);
+  assert.match(R.validateRecord({ type: "meal", at: at2(0, "00:00"), data: { foodType: ["사료"] } }), /종류/);
+  assert.equal(R.validateRecord({ type: "meal", at: at2(0, "00:00"), data: { foodType: ["건식", "습식"], grams: "60" } }), null);
+  R.saveRecord("f", { id: "m1", type: "meal", at: at2(-1, "08:00"), data: { foodType: ["건식"], grams: "40" }, memo: "", photos: [] });
+  R.saveRecord("f", { id: "m2", type: "vital", at: at2(-1, "18:00"), data: { metric: "dry", value: 60 }, memo: "", photos: [] });
+  R.saveRecord("f", { id: "m3", type: "meal", at: at2(0, "08:00"), data: { appetite: "평소" }, memo: "", photos: [] });
+  assert.deepEqual(R.getFoodGrams("f").map((e) => e.value), [40, 60], "g 없는 식사는 빠짐");
+  assert.match(R.summarize({ type: "meal", data: { foodType: ["건식", "습식"], grams: "60", treats: "육포 1개" } }), /건식·습식 · 60g.*간식 육포 1개/);
+  const fl = V.buildVetSummary({ id: "f", name: "밤", breed: "말티즈", gender: "male", birthDate: "2020-01-01" }, V.getVetNote("f"), today).find((x) => x.key === "vitals").lines.join("\n");
+  assert.match(fl, /먹은 양: 기록한 1일 하루 평균 100g/);
+  assert.doesNotMatch(fl, /건식 사료/, "건식 칸은 따로 안 나옴");
+  // 달력에서 고른 날짜로 새 기록 시각
+  assert.equal(R.dateAt("2026-11-01", "2026-11-09T16:50"), "2026-11-01T16:50");
+  assert.equal(R.dateAt("2026-11-09", "2026-11-09T16:50"), "2026-11-09T16:50");
   console.log("건강 수치 확인 통과");
 }
 
@@ -197,6 +212,12 @@ console.log("통합 기록 확인 통과");
   ]);
   assert.equal(bad.done.length, 0);
   assert.equal(bad.failed, 3, "범위 밖·몸무게·모르는 수치는 저장 안 함");
+  // 예전 건식·습식 칸으로 와도 식사 기록 하나로(이중 기록 없음)
+  const dry = A.applyAppActions(dogA, [{ type: "add_health_value", metric: "dry", value: 50, date: day(0), time: "00:00" }]);
+  assert.equal(dry.done.length, 1, JSON.stringify(dry));
+  const meal = R.getRecords("ai").find((r) => r.type === "meal");
+  assert.deepEqual([meal.data.foodType, meal.data.grams], [["건식"], "50"]);
+  R.deleteRecord("ai", meal.id);
   const id = R.getRecords("ai")[0].id;
   // 고치기·지우기는 버튼 확인 후 — 먼저 confirm 목록으로
   const c = A.applyAppActions(dogA, [{ type: "update_record", kind: "health_record", id, value: 250, summary: "물 200→250" }]);

@@ -10,7 +10,7 @@ import { addCustomSchedule, deleteCustomSchedule, getCustomSchedules, updateCust
 import { syncPushAlarms } from "./notifications";
 import { todayKey, nowLabel } from "../utils/date";
 import { getDosesForDate, markDoseDone, markDoseSkipped, undoDose, editDoneTime } from "./medications";
-import { getRecords, saveRecord, deleteRecord, newRecordId, validateRecord, summarize, syncSchedule, TYPES, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS, LEVELS } from "./records";
+import { getRecords, saveRecord, deleteRecord, newRecordId, validateRecord, summarize, syncSchedule, TYPES, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS, LEVELS, FOOD_TYPES } from "./records";
 import { VITAL, fmtValue } from "../data/vitals";
 
 // 채팅 AI가 "기록해 달라"는 요청을 받아 보낸 동작(actions)을 실제로 앱에 저장한다.
@@ -80,6 +80,8 @@ function run(dog, a) {
       } else if (t === "meal") {
         put("appetite", oneOf(LEVELS, a.appetite));
         put("water", oneOf(LEVELS, a.water));
+        put("foodType", (Array.isArray(a.food_type) ? a.food_type : []).filter((x) => FOOD_TYPES.includes(x)));
+        put("grams", Number(a.grams) > 0 ? String(Math.round(Number(a.grams))) : "");
         put("food", text(a.food));
         put("amount", text(a.amount));
         put("treats", text(a.treats));
@@ -155,6 +157,9 @@ function run(dog, a) {
       return `⏰ 알람: ${a.date ? `${a.date} 하루만` : "매일"} ${a.time} ${text(a.title)}`;
     }
     case "add_health_value": {
+      // 예전 건식·습식·간식 칸은 식사 기록으로(11/9 합침) — 옛 대화·캐시가 보내도 이중 기록이 안 되게
+      if (["dry", "wet", "treat"].includes(a.metric))
+        return run(dog, a.metric === "treat" ? { ...a, type: "add_health_record", record_type: "meal", treats: `${a.value}개` } : { ...a, type: "add_health_record", record_type: "meal", food_type: [a.metric === "dry" ? "건식" : "습식"], grams: a.value });
       const def = VITAL[a.metric];
       if (!def || def.external || !isDate(a.date)) return null;
       const now = new Date().toTimeString().slice(0, 5);

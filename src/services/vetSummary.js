@@ -6,7 +6,7 @@ import { getMeds, getDosesForDate, isEnded, getStockInfo } from "./medications";
 import { getOccurrences } from "./calendarEvents";
 import { visitsByDate, isVisitEvent, eventTitle, isVisitRecord } from "./vetVisits";
 import { getChatMemory } from "./chatMemory";
-import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, vitalDaily, stoolCheckText, checkText } from "./records";
+import { getRecords, filterTimeline, LEVELS, md as mdKey, getVitalEntries, getFoodGrams, vitalDaily, stoolCheckText, checkText } from "./records";
 import { VITALS, fmtValue, outOfRange } from "../data/vitals";
 import { periodSummary } from "./dailyCheck";
 import { getSignals } from "./signals";
@@ -160,7 +160,10 @@ export function buildVetSummary(dog, note, today = todayKey()) {
 
   // 건강 수치(보호자가 잰 값) — 잴 때마다 보는 건 범위·참고 범위 밖 횟수, 하루 합계로 보는 건 기록한 날 평균
   const vitalLines = [];
-  for (const v of VITALS.filter((x) => !x.external)) {
+  // 먹은 양은 식사 기록 g + 예전 건식·습식 칸을 합쳐 한 줄(11/9 합침)
+  const food = vitalDaily(getFoodGrams(dog.id).filter((e) => e.at.slice(0, 10) >= from && e.at.slice(0, 10) <= today), "sum");
+  if (food.length) vitalLines.push(`먹은 양: 기록한 ${food.length}일 하루 평균 ${Math.round(food.reduce((t, d) => t + d.value, 0) / food.length).toLocaleString("ko-KR")}g, 최근 ${mdKey(food.at(-1).date)} ${food.at(-1).value.toLocaleString("ko-KR")}g`);
+  for (const v of VITALS.filter((x) => !x.external && x.id !== "dry" && x.id !== "wet")) {
     const entries = getVitalEntries(dog.id, v.id).filter((e) => e.at.slice(0, 10) >= from && e.at.slice(0, 10) <= today);
     if (!entries.length) continue;
     const last = entries.at(-1);

@@ -497,35 +497,43 @@ function UpcomingCard({ dog, onOpenCalendar }) {
   );
 }
 
-// 건강 수치 칸(집사일기 '주요 수치' 참고) — 자주 쓰는 수치만 기본으로 보이고, 최근 30일 기록이 있거나 [편집]에서 켠 수치가 더해진다.
-const PINS_KEY = "dogcare-vital-pins-v1";
+// 건강 수치 칸(집사일기 '주요 수치' 참고) — 기본은 몸무게만, [편집]에서 켠 칸만 보인다(11/9: 기록이 있다고 저절로 다시 뜨지 않게).
+// v1 → v2: 예전 기본(건식·물·산책·호흡·체온·투약)은 기록 탭과 겹쳐서 한 번 몸무게만으로 정리하고 안내를 띄운다.
+const PINS_KEY = "dogcare-vital-pins-v2";
+const OLD_PINS_KEY = "dogcare-vital-pins-v1";
 function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
   const [editingPins, setEditingPins] = useState(false);
   // 투약 칸("meds")도 같은 목록으로 켜고 끈다. 처음엔 켜져 있다
-  const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || [...DEFAULT_PINS, "meds"]);
+  const [pins, setPins] = useState(() => readJSON(PINS_KEY, {})[dog.id] || DEFAULT_PINS);
+  const [tidied, setTidied] = useState(() => !readJSON(PINS_KEY, {})[dog.id] && Boolean(readJSON(OLD_PINS_KEY, {})[dog.id]));
   const today = todayKey();
-  const since = toDateKey(addDays(new Date(), -29));
-  const tiles = VITALS.map((v) => {
+  const tiles = VITALS.filter((v) => !v.old).map((v) => {
     const entries = getVitalEntries(dog.id, v.id);
     const daily = vitalDaily(entries, v.kind);
-    const recent = entries.some((e) => e.at.slice(0, 10) >= since);
     const todayRow = daily.find((d) => d.date === today);
     const last = entries.at(-1);
-    return { v, recent, todayRow, last };
+    return { v, todayRow, last };
   });
-  const shown = editingPins ? tiles : tiles.filter((t) => pins.includes(t.v.id) || t.recent);
-  function togglePin(id) {
-    const next = pins.includes(id) ? pins.filter((x) => x !== id) : [...pins, id];
+  const shown = editingPins ? tiles : tiles.filter((t) => pins.includes(t.v.id));
+  function savePins(next) {
     setPins(next);
+    setTidied(false);
     writeJSON(PINS_KEY, { ...readJSON(PINS_KEY, {}), [dog.id]: next });
   }
+  const togglePin = (id) => savePins(pins.includes(id) ? pins.filter((x) => x !== id) : [...pins, id]);
   return (
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}>건강 수치</div>
         <button type="button" className="link-btn" style={{ margin: 0, minWidth: 44 }} onClick={() => setEditingPins((e) => !e)}>{editingPins ? "완료" : "편집"}</button>
       </div>
-      {editingPins && <p className="faint" style={{ marginTop: -6 }}>프로필에 늘 보일 수치를 고르세요. 꺼도 최근 30일 기록이 있으면 보여요(투약은 끄면 숨겨져요).</p>}
+      {tidied && !editingPins && (
+        <p className="subtle" style={{ marginTop: -4 }}>
+          식사·물·산책은 기록 탭에서 적으니, 여기는 몸무게만 남겼어요. 예전 기록은 그대로 있어요. 호흡수·체온처럼 따로 재는 수치는 [편집]에서 켜요.{" "}
+          <button type="button" className="link-btn" style={{ margin: "4px 0 0", display: "block" }} onClick={() => savePins(pins)}>알겠어요</button>
+        </p>
+      )}
+      {editingPins && <p className="faint" style={{ marginTop: -6 }}>늘 보일 수치를 고르세요. 밥·간식은 기록 탭의 식사에서 한 번에 적어요.</p>}
       <div className="vt-grid">
         {shown.map(({ v, todayRow, last }) => {
           const { value, sub, stale, never } = tileState(v, last, todayRow?.value, today);

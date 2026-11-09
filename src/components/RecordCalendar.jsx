@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MonthGrid from "./MonthGrid";
 import Ico from "./Ico";
 import { DiffSheet } from "./DailyCheck";
@@ -7,6 +7,7 @@ import { syncPushAlarms } from "../services/notifications";
 import { trackAct } from "../services/analytics";
 import { markCheckedIn } from "../services/routine";
 import { TYPES, summarize } from "../services/records";
+import { VITAL } from "../data/vitals";
 import { isVisitRecord } from "../services/vetVisits";
 import { HOLIDAYS } from "../data/holidays";
 import { formatKoreanDate, todayKey, toDateKey } from "../utils/date";
@@ -18,12 +19,15 @@ import { josa } from "../utils/text";
 const SHORT = { vomit: "토", urine: "소변", energy: "기운", etc: "기타" };
 const short = (id) => SHORT[id] || ITEMS.find((i) => i.id === id)?.label;
 
-export default function RecordCalendar({ dog, items, onChanged }) {
+// 날짜를 누르면: 평소였어요/다른 게 있었어요 → 그날 기록 → [＋ 이날 더 적기](컴플레인 11/9: 달라진 것만 적고, 필요하면 더 적기)
+export default function RecordCalendar({ dog, items, initialDate, onChanged, onAdd, onShowAll }) {
   const today = todayKey();
-  const [monthDate, setMonthDate] = useState(() => new Date());
-  const [selected, setSelected] = useState(today);
+  const [monthDate, setMonthDate] = useState(() => (initialDate ? new Date(`${initialDate}T00:00:00`) : new Date()));
+  const [selected, setSelected] = useState(initialDate && initialDate <= today ? initialDate : today);
   const [only, setOnly] = useState(""); // 이 항목이 다른 날만
   const [sheet, setSheet] = useState(null);
+  const dayRef = useRef(null);
+  useEffect(() => { if (initialDate) dayRef.current?.scrollIntoView({ block: "center" }); }, [initialDate]); // 방금 적은 날을 바로 보이게
   const [, refresh] = useState(0);
   const changed = (d) => (trackAct("check"), d === today && (markCheckedIn(dog.id), syncPushAlarms()), refresh((n) => n + 1), onChanged?.());
 
@@ -88,7 +92,7 @@ export default function RecordCalendar({ dog, items, onChanged }) {
         <p className="faint" style={{ margin: "4px 0 0", fontSize: 12.5 }}>빨간 글자는 그날 하루 체크에서 평소와 달랐다고 고른 것이에요(밥·변·토·소변·기운·물·기타). 두 개 이상이면 개수가 나와요.</p>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="card" style={{ marginBottom: 14 }} ref={dayRef}>
         <div className="h2" style={{ marginBottom: 8 }}>{formatKoreanDate(selected)}</div>
         {sel && sel.status !== "unknown" ? (
           <div className="rc-day">
@@ -114,14 +118,22 @@ export default function RecordCalendar({ dog, items, onChanged }) {
           <div className="rc-recs">
             {selRecords.map((r) => (
               <div key={`${r.source}-${r.id}`} className="rc-rec">
-                <Ico name={TYPES[r.type].ico} size={15} className={`cat-ico tone-${TYPES[r.type].tone}`} />
+                <Ico name={(r.type === "vital" && VITAL[r.data?.metric]?.ico) || TYPES[r.type].ico} size={15} className={`cat-ico tone-${(r.type === "vital" && VITAL[r.data?.metric]?.tone) || TYPES[r.type].tone}`} />
                 <span className="faint">{r.at.slice(11, 16)}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>{summarize(r)}</span>
               </div>
             ))}
           </div>
         )}
+        {selected <= today && onAdd && (
+          <button type="button" className="btn-ghost small" style={{ marginTop: 12 }} onClick={() => onAdd(selected)}>＋ 이날 더 적기 <span className="faint">(몸무게·약·병원·사진 등)</span></button>
+        )}
       </div>
+      {onShowAll && (
+        <button type="button" className="btn-ghost" style={{ width: "100%", marginBottom: 14 }} onClick={onShowAll}>
+          <Ico name="search" size={16} /> 모든 기록 보기·찾기
+        </button>
+      )}
       {sheet && <DiffSheet dog={dog} date={sheet} initial={getDay(dog.id, sheet)?.picks} onClose={() => setSheet(null)} onSaved={() => changed(sheet)} />}
     </>
   );

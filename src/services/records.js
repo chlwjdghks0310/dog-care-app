@@ -13,6 +13,8 @@ import { VITAL, fmtValue } from "../data/vitals";
 const KEY = "dogcare-records-v1";
 
 export const LEVELS = ["평소보다 적음", "평소", "평소보다 많음"];
+// 식사 기록 하나에 사료 종류·먹은 양(g)까지(11/9 컴플레인: 건강 수치 건식·습식 칸과 이중 기록 → 식사로 합침)
+export const FOOD_TYPES = ["건식", "습식", "화식·생식"];
 export const TYPES = {
   weight: { label: "체중", icon: "⚖️", ico: "scales", tone: "blue" },
   symptom: { label: "증상", icon: "🤒", ico: "bandaid", tone: "blue" },
@@ -82,6 +84,9 @@ export function getRecords(dogId) {
 }
 
 // 저장 전 검사 — 문구는 화면에 그대로 보여 준다. 문제가 없으면 null.
+// 달력에서 고른 날짜로 새 기록 시각 — 오늘이면 지금, 지난날이면 그날 지금 시각
+export const dateAt = (date, now = localNow()) => (!date || date >= now.slice(0, 10) ? now : `${date}T${now.slice(11, 16)}`);
+
 export function validateRecord(r, now = localNow()) {
   if (!TYPES[r.type] || r.type === "med") return "기록 종류를 골라 주세요.";
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(r.at || "") || Number.isNaN(new Date(r.at).getTime())) return "날짜와 시각을 확인해 주세요.";
@@ -97,6 +102,8 @@ export function validateRecord(r, now = localNow()) {
     if (!def || def.external) return "어떤 수치인지 골라 주세요.";
     if (!(v >= def.min && v <= def.max)) return `${def.label}은 ${def.min}~${def.max}${def.unit} 사이로 적어 주세요.`;
   }
+  if (r.type === "meal" && d.grams && !(Number(d.grams) >= 1 && Number(d.grams) <= 3000)) return "먹은 양을 1~3000g 사이로 적어 주세요.";
+  if (r.type === "meal" && d.foodType?.some((x) => !FOOD_TYPES.includes(x))) return "사료 종류를 다시 골라 주세요.";
   if (r.type === "symptom" && !d.kinds?.length) return "증상을 하나 이상 골라 주세요.";
   if (r.type === "vet" && !d.reason?.trim()) return "진료 사유를 적어 주세요.";
   if (r.type === "vet" && d.nextDate && !/^\d{4}-\d{2}-\d{2}$/.test(d.nextDate)) return "다음 진료 날짜를 확인해 주세요.";
@@ -179,7 +186,7 @@ export function summarize(rec) {
       parts.push(d.kinds.join(", "), d.repeat && d.repeat !== "처음" ? d.repeat : "", d.since ? `${md(d.since)}부터` : "", d.observed);
       break;
     case "meal":
-      parts.push(d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount);
+      parts.push(d.foodType?.join("·"), Number(d.grams) > 0 && `${d.grams}g`, d.appetite && `식욕 ${d.appetite}`, d.water && `물 ${d.water}`, d.food, d.amount, d.treats && `간식 ${d.treats}`);
       break;
     case "potty":
       parts.push(d.stool && `대변 ${d.stool}`, stoolCheckText(d), d.urine && `소변 ${d.urine}`, d.photoFlags?.length && `⚠ ${d.photoFlags.join(", ")}`, d.photoNote && "📷 사진 확인");
@@ -304,6 +311,16 @@ export function getVitalEntries(dogId, metric) {
     for (const r of recs) if (r.type === "daily" && r.data?.kind === "산책" && Number(r.data.minutes) > 0) out.push({ id: r.id, at: r.at, value: Number(r.data.minutes), memo: r.memo || "", source: "daily" });
   if (metric === "weight")
     for (const w of getWeightRecords(dogId)) out.push({ id: w.id, at: w.measuredAt.slice(0, 16), value: w.weightKg, memo: w.note || "", source: "weight" });
+  return out.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+// 먹은 양(g): 식사 기록의 g + 예전 건강 수치 건식·습식 칸 — 병원용 기록의 하루 평균에 쓴다. 반환: [{ at, value }] 시간순
+export function getFoodGrams(dogId) {
+  const out = [];
+  for (const r of getRecords(dogId)) {
+    if (r.type === "meal" && Number(r.data?.grams) > 0) out.push({ at: r.at, value: Number(r.data.grams) });
+    if (r.type === "vital" && ["dry", "wet"].includes(r.data?.metric)) out.push({ at: r.at, value: Number(r.data.value) });
+  }
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
 

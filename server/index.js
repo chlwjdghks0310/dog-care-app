@@ -522,7 +522,7 @@ const KIND = { type: "string", enum: ["expense", "fixed_expense", "calendar_even
 const LEVEL = { type: "string", enum: ["평소보다 적음", "평소", "평소보다 많음"] };
 const VET_ITEM_ENUM = { type: "array", items: { type: "string", enum: ["진찰", "검사", "백신", "구충·심장사상충", "처치", "수술", "입원", "약"] }, description: "병원비 항목(병원·예방 지출일 때만, 말한 것만)" };
 const CLAIM = { type: "string", enum: ["none", "todo", "sent", "paid"], description: "보험 청구: none=안 함, todo=청구 전, sent=청구함, paid=보험금 받음. 말하지 않았으면 생략" };
-const VITAL_METRIC = { type: "string", enum: ["dry", "wet", "treat", "water", "fluid", "resp", "heart", "temp", "walk"], description: "dry=건식 사료(g), wet=습식(g), treat=간식(개), water=음수량(ml), fluid=피하수액(ml), resp=호흡수(회/분), heart=심박수(회/분), temp=체온(℃), walk=산책(분)" };
+const VITAL_METRIC = { type: "string", enum: ["water", "fluid", "resp", "heart", "temp", "walk"], description: "water=음수량(ml), fluid=피하수액(ml), resp=호흡수(회/분), heart=심박수(회/분), temp=체온(℃), walk=산책(분)" };
 const DATE = { type: "string", description: "YYYY-MM-DD. '오늘/어제/그저께/내일/지난 금요일' 같은 말은 앱 기록의 '오늘' 날짜로 계산" };
 // 앱 일정표의 종류(src/services/calendarEvents.js EVENT_KINDS와 같은 id)
 const EVENT_KIND = { type: "string", enum: ["vet", "vaccine", "grooming", "med", "stay", "day", "etc"], description: "일정 종류: vet=병원 진료·검진, vaccine=예방접종·심장사상충 등 예방, grooming=미용·목욕, med=약 받기·투약 관련, stay=호텔·유치원·돌봄, day=생일·기념일, etc=그 밖" };
@@ -570,7 +570,7 @@ function appTools(categories) {
     ),
     tool(
       "add_health_value",
-      "건강 수치 1건을 기록한다(먹은 양·마신 양·피하수액·호흡수·심박수·체온·산책 시간). 몸무게는 add_weight_record를 쓴다. 숫자와 단위가 분명할 때만.",
+      "건강 수치 1건을 기록한다(마신 양·피하수액·호흡수·심박수·체온·산책 시간). 밥 먹은 양은 add_health_record meal, 몸무게는 add_weight_record를 쓴다. 숫자와 단위가 분명할 때만.",
       {
         metric: VITAL_METRIC,
         value: { type: "number", description: "metric 단위로 바꾼 숫자. 예: '물 한 컵 200ml'→200, '30초에 12번 숨'→24, '1시간 산책'→60" },
@@ -594,6 +594,8 @@ function appTools(categories) {
         observed: { type: "string", description: "symptom: 보호자가 본 모습 그대로" },
         appetite: { ...LEVEL, description: "meal: 식욕" },
         water: { ...LEVEL, description: "meal: 물 마시는 양" },
+        food_type: { type: "array", items: { type: "string", enum: ["건식", "습식", "화식·생식"] }, description: "meal: 먹은 것(캔·파우치=습식, 말한 것만)" },
+        grams: { type: "integer", description: "meal: 먹은 양(g) — 숫자로 말했을 때만" },
         food: { type: "string", description: "meal: 사료 이름" },
         amount: { type: "string", description: "meal: 급여량(예: 40g, 반 컵)" },
         treats: { type: "string", description: "meal: 간식" },
@@ -675,8 +677,9 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 - 밥 시간: "밥은 8시랑 6시에 줘" → set_feeding_times.
 - 약을 새로 등록하거나 용량을 바꾸는 건 하지 않는다 — "약 관리에서 처방대로 등록해 줘"라고 안내한다.
 - 일정: "다음 주 화요일 2시 미용 예약" → add_calendar_event(kind=grooming, time=14:00). "매달 10일 심장사상충약" → kind=med, repeat=monthly(집에서 먹이거나 바르는 심장사상충·구충약은 접종이 아니라 약). 병원에서 맞는 주사만 vaccine. "금~일 호텔링" → end_date. "전날 알려 줘" → alarm=eve. 일정표 기록의 [종류:...]가 틀렸다며 바꿔 달라고 하면 update_record의 event_kind.
-- 건강 수치: "건식 50g 먹었어", "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
-  사료가 건식인지 습식인지(캔·파우치=습식), 단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
+- 밥 먹은 양: "건식 50g 먹었어", "습식 한 캔 80g", "간식 2개" → add_health_record meal(food_type·grams·treats). 건식인지 습식인지(캔·파우치=습식) 애매하면 되묻는다.
+- 건강 수치: "물 200ml 마셨어", "피하수액 100ml 맞혔어", "자는데 호흡수 24회", "심박수 110", "체온 38.6도", "40분 산책했어" → add_health_value.
+  단위나 숫자가 애매하면 되묻는다. "30초 동안 12번"처럼 말하면 1분 값(24)으로 바꿔 적는다. 몸무게는 add_weight_record.
   수치를 보고 진단하지 않는다. [건강 수치]에 참고 범위 밖 값이 있으면 사실만 말하고(예: "잘 때 호흡수가 42회로 적혔어"), 계속되면 동물병원에 문의하라고 한다.
   건강 수치·증상 등 [id:...]가 붙은 기록을 지우거나 고칠 때는 kind=health_record.
 - [약 관리]는 보호자가 처방대로 적은 내용이다. 약의 용량·횟수·복용 간격을 정하거나 바꾸자고 하지 않는다(바꿀 일은 수의사와 상의).

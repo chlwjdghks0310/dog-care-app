@@ -11,7 +11,7 @@ import { linkVetExpense } from "../services/vetVisits";
 import { stoolFlags, conditionFlags } from "../services/healthRules";
 import { StoolCheck, ConditionCheck } from "../components/HealthChecks";
 import {
-  TYPES, ADD_ORDER, LEVELS, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
+  TYPES, ADD_ORDER, LEVELS, FOOD_TYPES, SYMPTOM_KINDS, REPEAT, STOOL, URINE, DAILY_KINDS, LIFE_KINDS,
   localNow, newRecordId, validateRecord, saveRecord, syncSchedule, getRecords,
 } from "../services/records";
 
@@ -22,7 +22,7 @@ const MAX_PHOTOS = 4;
 export default function RecordForm({ dog, initial, startType, prefill, onSaved, onCancel, onOpenMeds, onOpenFeeding, onOpenGallery, onPickType }) {
   const [type, setType] = useState(initial?.type || startType || null);
   if (!type) return <TypePicker onPick={(t) => (t === "med" ? onOpenMeds() : t === "media" && onOpenGallery ? onOpenGallery() : onPickType ? onPickType(t) : setType(t))} onCancel={onCancel} />;
-  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill ? onCancel : onPickType ? null : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
+  return <Form key={type} dog={dog} type={type} initial={initial} prefill={prefill} onSaved={onSaved} onBack={initial || prefill?.data ? onCancel : onPickType ? null : () => setType(null)} onOpenFeeding={onOpenFeeding} />;
 }
 
 function TypePicker({ onPick, onCancel }) {
@@ -139,7 +139,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
     <div className="card">
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {TYPES[type].label} {initial ? "고치기" : "기록"}</div>
-        {onBack && <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill ? "취소" : "← 종류"}</button>}
+        {onBack && <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill?.data ? "취소" : "← 종류"}</button>}
       </div>
 
       <Field label={type === "vet" ? "방문 날짜·시각" : type === "symptom" ? "본 날짜·시각" : "날짜·시각"}>
@@ -153,7 +153,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
           <Field label="어떤 수치">
             <select value={data.metric || ""} onChange={set("metric")} disabled={Boolean(initial)}>
               <option value="" disabled>골라 주세요</option>
-              {VITALS.filter((v) => !v.external).map((v) => <option key={v.id} value={v.id}>{v.label} ({v.unit})</option>)}
+              {VITALS.filter((v) => !v.external && (!v.old || v.id === initial?.data?.metric)).map((v) => <option key={v.id} value={v.id}>{v.label} ({v.unit})</option>)}
             </select>
           </Field>
           {data.metric && <Field label={`${VITAL[data.metric].label} (${VITAL[data.metric].unit})`}>{input("value", { type: "number", inputMode: "decimal", step: VITAL[data.metric].step })}</Field>}
@@ -173,10 +173,12 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding }) {
 
       {type === "meal" && (
         <>
+          <Field label="무엇을 먹었나요 (여러 개 가능)"><Pick multi options={FOOD_TYPES} value={data.foodType || []} onChange={set("foodType")} /></Field>
+          <Field label="먹은 양 (g, 숫자로 적으면 병원용 기록에 하루 평균이 나와요)">{input("grams", { type: "number", inputMode: "numeric", min: "1", max: "3000", placeholder: "예: 40" })}</Field>
+          {initial?.data?.amount && <Field label="급여량 (예전에 적은 글)">{input("amount", {})}</Field>}
           <Field label="식욕"><Pick options={LEVELS} value={data.appetite} onChange={set("appetite")} /></Field>
           <Field label="물 마시는 양"><Pick options={LEVELS} value={data.water} onChange={set("water")} /></Field>
-          <Field label="사료">{input("food", { placeholder: "예: 로얄캐닌 미니" })}</Field>
-          <Field label="급여량">{input("amount", { placeholder: "예: 40g, 반 컵" })}</Field>
+          <Field label="사료 이름">{input("food", { placeholder: "예: 로얄캐닌 미니" })}</Field>
           {onOpenFeeding && (
             <button type="button" className="link-btn" style={{ margin: "-4px 0 12px" }} onClick={onOpenFeeding}>
               <Ico name="bowl" size={15} /> 하루에 얼마나 줘야 할지 사료 계산기로 보기 ›
