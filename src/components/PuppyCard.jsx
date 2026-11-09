@@ -77,8 +77,8 @@ function Task({ step, onDone, onAgain, onSkip, onYesterday }) {
       <div className="pc100-title">오늘의 5분 · {step.t}</div>
       <p className="pc100-why">{step.why}</p>
       <ol className="pc100-steps">{step.s.map((x) => <li key={x}>{x}</li>)}</ol>
-      <p className="pc100-time"><Ico name="timer" size={14} /> 한 번에 1~2분 · 성공하면 바로 끝 · 다 해서 5분이 넘지 않게</p>
-      {step.out && <p className="pc100-out"><Ico name="alert" size={14} /> {OUT_NOTE}</p>}
+      <div className="pc100-time"><Ico name="timer" size={14} /> 한 번에 1~2분 · 성공하면 바로 끝 · 다 해서 5분이 넘지 않게</div>
+      {step.out && <div className="pc100-out"><Ico name="alert" size={14} /> {OUT_NOTE}</div>}
       <div className="dc-btns" style={{ marginTop: 10 }}>
         <button type="button" className="dc-usual" onClick={onDone}>🐾 했어요</button>
         <button type="button" className="dc-diff" onClick={onAgain}>🔁 한 번 더</button>
