@@ -533,7 +533,8 @@ function InfoCard({ card }) {
       </div>
       {card.sources?.length > 0 && (
         <div className="faint info-sources">
-          출처: {card.sources.map((s, k) => <span key={s.url}>{k > 0 && " · "}<a href={s.url} target="_blank" rel="noopener">{s.name}</a></span>)}
+          <span>출처</span>
+          {card.sources.map((s) => <a key={s.url} href={s.url} target="_blank" rel="noopener">{s.name}</a>)}
         </div>
       )}
     </div>

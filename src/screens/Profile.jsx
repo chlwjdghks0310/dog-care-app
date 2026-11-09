@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { timeLabel } from "../components/EventSheet";
 import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, todayKey, addDays } from "../utils/date";
@@ -478,7 +479,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
   const seen = new Set(); // 반복 일정은 가장 가까운 회차만
   const items = getOccurrences(dog.id, today, until)
     .filter((o) => o.isStart && isVisitEvent(o.event) && !seen.has(o.event.id) && seen.add(o.event.id)) // 병원용 기록·일정표와 같은 기준(집에서 먹이는 약 일정은 빠짐)
-    .map((o) => ({ date: o.date, title: `${o.event.title}${o.event.time ? ` ${o.event.time}` : ""}` }))
+    .map((o) => ({ date: o.date, title: o.event.title, time: o.event.time }))
     .slice(0, 3);
   const dday = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
   if (!items.length) return null; // 일정이 있을 때만 보인다
@@ -488,11 +489,13 @@ function UpcomingCard({ dog, onOpenCalendar }) {
         <div className="h2" style={{ margin: 0 }}>다가오는 병원·접종</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenCalendar}>병원 ›</button>
       </div>
+      {/* 날짜 칸(날짜 + 며칠 뒤)과 내용 칸(제목 + 시각)을 나눠, 긴 제목이 날짜 밑으로 흘러들지 않게(사용자 지적 11/9) */}
       {items.map((e, i) => (
-          <div key={i} className="vet-line">
-            <b>{md(e.date)}</b> <span className="faint">{dday(e.date) === 0 ? "오늘" : `${dday(e.date)}일 뒤`}</span> {e.title}
-          </div>
-        ))}
+        <div key={i} className="up-row">
+          <span className="up-row-date"><b>{md(e.date)}</b><span>{dday(e.date) === 0 ? "오늘" : `${dday(e.date)}일 뒤`}</span></span>
+          <span className="up-row-what">{e.title}{e.time && <span className="faint">{timeLabel(e.time)}</span>}</span>
+        </div>
+      ))}
     </div>
   );
 }

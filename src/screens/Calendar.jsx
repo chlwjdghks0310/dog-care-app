@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
 import { todayKey, toDateKey, formatKoreanDate, addDays } from "../utils/date";
-import { getEventsByDog, getOccurrences, kindOf, REPEATS, EVENT_COLORS } from "../services/calendarEvents";
+import { getEventsByDog, getOccurrences, kindOf, REPEATS, ALARMS, EVENT_COLORS } from "../services/calendarEvents";
 import EventSheet, { dateLabel, timeLabel } from "../components/EventSheet";
 import { getRecords, summarize } from "../services/records";
 import { isVisitEvent, isVisitRecord } from "../services/vetVisits";
@@ -131,11 +131,17 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
                 <span className="up-icon" style={{ background: colorOf(o.event) }} aria-hidden="true"><Ico name={k?.ico || "calendar"} size={22} /></span>
                 <span className="up-body">
                   <span className="up-title">{o.event.title}</span>
+                  {/* 날짜·시간 한 줄, 반복·알림은 작은 꼬리표로 — 점(·)이나 종 아이콘이 혼자 다음 줄로 떨어지지 않게(사용자 지적 11/9) */}
                   <span className="up-when">
-                    {dateLabel(o.date)}{nights ? ` ~ ${dateLabel(o.event.endDate)} · ${nights}박` : ` · ${timeLabel(o.event.time)}`}
-                    {o.event.repeat ? ` · ${REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}` : ""}
-                    {o.event.alarm ? <> · <Ico name="bell" size={13} /></> : ""}
+                    <span>{dateLabel(o.date)}</span>
+                    {nights ? <span>~ {dateLabel(o.event.endDate)} ({nights}박)</span> : <span>{timeLabel(o.event.time)}</span>}
                   </span>
+                  {(o.event.repeat || o.event.alarm) && (
+                    <span className="up-tags">
+                      {o.event.repeat && <span className="up-tag"><Ico name="repeat" size={12} /> {REPEATS.find((r) => r[0] === o.event.repeat)?.[1]}</span>}
+                      {o.event.alarm && <span className="up-tag"><Ico name="bell" size={12} /> {ALARMS.find((a) => a[0] === o.event.alarm)?.[1]}</span>}
+                    </span>
+                  )}
                 </span>
                 <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
               </button>

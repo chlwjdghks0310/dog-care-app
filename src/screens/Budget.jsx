@@ -200,7 +200,7 @@ export default function Budget({ dog, onBack }) {
 
         {claimOpen.length > 0 && (
           <button type="button" className="bud-claim" onClick={() => (setClaimView(true), setSearch(null), setFilterCategoryId(null))}>
-            <Ico name="umbrella" size={16} /> 보험 청구 기다리는 병원비 {claimOpen.length}건 · {won(claimOpen.reduce((t, e) => t + e.amount, 0))} ›
+            <Ico name="umbrella" size={16} /> <span style={{ flex: 1 }}>보험 청구 기다리는 병원비 <span className="nowrap">{claimOpen.length}건 · {won(claimOpen.reduce((t, e) => t + e.amount, 0))}</span></span> ›
           </button>
         )}
 
