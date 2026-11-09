@@ -474,8 +474,7 @@ button {
 .swipe-back-under { pointer-events: none; transform: translateX(-30%); opacity: 0.6; }
 .swipe-back-top {
   touch-action: pan-y;
-  /* 밀려나는 화면 왼쪽 가장자리 — 두 화면이 다른 화면인 게 보이게 */
-  border-left: 1px solid var(--border);
+  /* 밀려나는 화면 왼쪽 가장자리 — 두 화면이 다른 화면인 게 보이게(그림자만: 선은 가만히 있을 때도 왼쪽 끝에 줄로 보였음 11/9) */
   box-shadow: -10px 0 18px rgba(0, 0, 0, 0.12);
 }
 
@@ -887,6 +886,9 @@ button {
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); transition: transform 0.2s ease; }
 .switch:checked { background: var(--accent); }
 .switch:checked::after { transform: translateX(20px); }
+/* 설정의 동그라미 스위치(11/9 사용자 결정: 원래는 24px 체크칸 규칙에 눌려 생긴 모양이지만 "개성 있어서" 그대로 둔다).
+   동그라미 24px + 흰 손잡이가 오른쪽으로 26px 튀어나오므로, 그만큼 오른쪽 여백을 줘서 상자 밖으로 나가지 않게 */
+label > input.switch { width: 24px; height: 24px; margin-right: 26px; }
 /* 설정 → 테스트: 온보딩·로그인 화면 미리보기(앱 위에 꽉 차게) */
 
 /* 색을 꽉 채운 타일(체크리스트 빠른 메뉴): 타일 바탕 = 그 종류의 연한 색, 아이콘·글자 = 진한 색 */
@@ -1495,3 +1497,20 @@ button.seg, button.chip { min-height: 36px; }
 .pc100-time { display: flex; align-items: center; gap: 5px; margin: 8px 0 0; font-size: 12.5px; color: var(--text-soft); }
 .pc100-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
 .rc-puppy { display: flex; gap: 6px; align-items: baseline; font-size: 14px; }
+
+/* 다크 모드 점검(11/9) */
+:root[data-theme="dark"] .pf-menu, :root[data-theme="dark"] .pf-cam, :root[data-theme="dark"] .pf-gal-btn { background: rgba(34, 34, 41, 0.9) !important; color: var(--text); border: 1px solid var(--border); }
+:root[data-theme="dark"] .ml-claim { background: var(--warning-bg); color: var(--warning); }
+/* 병원용 기록: 앱 안에서는 어두운 화면에 맞추고, 진료실 [크게 보기]·인쇄는 흰 종이 그대로(수의사가 읽기 쉽게) */
+:root[data-theme="dark"] .vet-doc { background: var(--surface); color: var(--text); }
+:root[data-theme="dark"] .vet-sec { border-bottom-color: var(--border); }
+:root[data-theme="dark"] .vet-sec.note { background: var(--accent-soft); }
+:root[data-theme="dark"] .vet-line.sub { color: var(--text-soft); }
+:root[data-theme="dark"] .vet-show .vet-doc { background: #fff; color: #1f2a37; }
+:root[data-theme="dark"] .vet-show .vet-sec { border-bottom-color: #e4ebf3; }
+:root[data-theme="dark"] .vet-show .vet-sec.note { background: #f3f8ff; }
+:root[data-theme="dark"] .vet-show .vet-line.sub { color: #4a5a6b; }
+/* 프로필 사진이 없을 때: 성장 추억 버튼이 "프로필 사진 넣기" 글자를 가리지 않게 왼쪽 위로(☰와 마주 보게) */
+.pf-hero.empty .pf-gal-btn { top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; left: 14px; right: auto; }
+/* 진료실 [보여 주기]는 다크 모드에서도 흰 종이 — 안의 글자색 토큰을 밝은 모드 값으로 되돌린다(11/9: 흰 바탕에 연한 하늘색·회색 글자가 안 보이던 것) */
+:root[data-theme="dark"] .vet-show { color-scheme: light; --text: #1f2a37; --text-soft: #4a5a6b; --text-faint: #5f6b78; --accent: #4b90e2; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #e4ebf3; --surface: #ffffff; --bg: #ffffff; --danger: #b04a3a; --warning: #8a5a00; color: var(--text); }

@@ -155,7 +155,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   return (
     <div className="screen">
       {/* 위쪽: 사용자가 고른 틀(하트·동그라미…)에 넣은 프로필 사진 + 갤러리 버튼(11/7). 사진 바꾸기는 프로필 편집에서 */}
-      <div className="pf-hero">
+      <div className={`pf-hero${dog.photo ? "" : " empty"}`}>
         {dog.photo ? (
           <FramedPhoto src={dog.photo} pos={dog.coverPos} frame={dog.frame} size={210} alt={`${dog.name} 사진`} />
         ) : (
