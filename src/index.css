@@ -1579,3 +1579,14 @@ button.seg, button.chip { min-height: 36px; }
 .pop-in { animation: pop-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 .home-dog.hop { animation: dog-hop 0.5s ease-out 2; }
 @media (prefers-reduced-motion: reduce) { .rise-in, .pop-in, .home-dog.hop, .es-sheet { animation: none; } }
+
+/* 구역(section): 카드가 아닌 묶음 — 위 구분선 + 여백만(디자인 규칙 5: 한 화면 카드 3개까지, 나머지는 구분선·여백) */
+.section { padding: 14px 2px 4px; margin-bottom: 14px; border-top: 1px solid var(--border); }
+.section > .h2:first-child, .section > .rec-head:first-child { margin-top: 0; }
+/* 모든 기록 목록(11/9 디자인 규칙 5): 줄마다 카드 → 한 상자 안의 줄(구분선). 날짜 제목은 상자 안 작은 글씨 */
+.rec-list { gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 2px 8px; }
+.rec-list .rec-date { margin: 10px 6px 2px; }
+.rec-list .card.rec-item { background: none; border: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--border); }
+.rec-list > div:last-child .card.rec-item { border-bottom: 0; }
+.rec-list .rec-item-row { padding: 12px 6px; }
+.rec-list .rec-detail { padding: 0 6px 12px; }

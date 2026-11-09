@@ -486,7 +486,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
   const dday = (date) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
   if (!items.length) return null; // 일정이 있을 때만 보인다
   return (
-    <div className="card" style={{ marginBottom: 14 }}>
+    <section className="section">
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}>다가오는 병원·접종</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenCalendar}>병원 ›</button>
@@ -498,7 +498,7 @@ function UpcomingCard({ dog, onOpenCalendar }) {
           <span className="up-row-what">{e.title}{e.time && <span className="faint">{timeLabel(e.time)}</span>}</span>
         </div>
       ))}
-    </div>
+    </section>
   );
 }
 
@@ -817,7 +817,7 @@ function ExportCard({ dog, onOpenVet }) {
 function GalleryStrip({ dog, onOpen }) {
   const photos = getPhotos(dog.id);
   return (
-    <div className="card pf-gallery" style={{ marginBottom: 14 }}>
+    <section className="section pf-gallery">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div className="h2" style={{ margin: 0 }}>{dog.name} 성장 추억</div>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpen}>{photos.length ? `전체 ${photos.length}장 ›` : "사진 넣기 ›"}</button>
@@ -831,7 +831,7 @@ function GalleryStrip({ dog, onOpen }) {
         )}
       </div>
       {!photos.length && <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>사진마다 그날의 메모·추억을 적어 둘 수 있어요</p>}
-    </div>
+    </section>
   );
 }
 

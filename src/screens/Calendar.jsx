@@ -153,7 +153,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
 
       {/* 월령에 맞춘 추천(접종·심장사상충) — 일정이 없을 때만, 눌러서 날짜를 정해 넣는다(제안 분석 11/7) */}
       {suggest.length > 0 && (
-        <div className="card sg-card" style={{ marginBottom: 14 }}>
+        <section className="section sg-card">
           <div className="h2" style={{ margin: "0 0 6px" }}>{dog.name} 나이에 맞춘 추천</div>
           {suggest.map((x) => (
             <div key={x.key} className="sg-row">
@@ -162,7 +162,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
             </div>
           ))}
           <p className="faint" style={{ margin: "6px 0 0", fontSize: 12 }}>일반 권장 시기예요. 정확한 날짜는 다니는 병원과 정해 주세요.</p>
-        </div>
+        </section>
       )}
 
       <MedicalLedger dog={dog} onOpenBudget={onOpenBudget} />

@@ -289,7 +289,7 @@ function Trends({ dog, items, onAdd, onPick }) {
         )}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <section className="section">
         <div className="h2"><Ico name="bandaid" size={18} /> 이 기간 증상</div>
         {symptoms.length === 0 ? (
           <p className="subtle" style={{ margin: 0 }}>최근 {days}일 기록된 증상이 없습니다.</p>
@@ -298,9 +298,9 @@ function Trends({ dog, items, onAdd, onPick }) {
             <div key={k} className="vet-line">{k} {dates.length}번 <span className="faint">({dates.join(", ")})</span></div>
           ))
         )}
-      </div>
+      </section>
 
-      <div className="card">
+      <section className="section">
         <div className="h2"><Ico name="chart" size={18} /> 이 기간 기록</div>
         {inPeriod.length === 0 ? (
           <Empty text={`최근 ${days}일 기록이 없습니다.`} onAdd={onAdd} />
@@ -313,7 +313,7 @@ function Trends({ dog, items, onAdd, onPick }) {
         )}
         {observed > 0 && observed < 5 && <p className="faint">관찰 기록이 적어요. 식사·배변·컨디션을 며칠 더 남기면 변화가 더 잘 보여요.</p>}
         <p className="faint" style={{ marginBottom: 0 }}>보호자가 남긴 기록을 모아 보여 줄 뿐, 건강 상태를 판정하지 않아요. 걱정되는 변화가 있으면 수의사와 상담해 주세요.</p>
-      </div>
+      </section>
     </>
   );
 }
