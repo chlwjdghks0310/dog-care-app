@@ -45,7 +45,9 @@ srv.kill();
 fake.close();
 
 assert.equal(calls.length, 5, JSON.stringify(calls));
-const [page, first, open, act, ai] = calls;
+// 서버는 204를 먼저 보내고 DB 호출은 뒤에서 하므로 도착 순서가 바뀔 수 있다 → 이름으로 찾는다(11/9 간헐 실패)
+const by = (m) => calls.find((c) => c.p_metric === m) || {};
+const [page, first, open, act, ai] = ["page:guide", "app_first_open_installed", "app_open", "act:check", "ai_chat:anon"].map(by);
 assert.deepEqual([act.p_metric, act.p_kinds], ["act:check", ["act_check"]]);
 assert.deepEqual([page.p_metric, page.p_source, page.p_kinds], ["page:guide", "threads", ["web"]]);
 assert.match(page.p_visitor, /^[0-9a-f]{24}$/, "기기 번호는 해시로만");
