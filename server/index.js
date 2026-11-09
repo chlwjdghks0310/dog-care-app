@@ -38,7 +38,17 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 // 서버 전용 키(Render 환경 변수에만, 출력·전송 금지) — 푸시 표는 RLS로 막혀 있어 이 키로만 읽고 쓴다
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const pushDb = SUPABASE_URL && SUPABASE_SERVICE_KEY;
+// 환경 변수 점검(11/9: 키 자리에 한글이 들어가 모든 DB 요청이 "ByteString" 오류로 막혔던 일) — 값은 절대 출력하지 않고 상태만
+// 키는 영어·숫자·기호만, 주소는 https://….supabase.co (끝에 /rest/v1 붙이면 안 됨)
+const envState = (v, ok) => (!v ? "missing" : ok(v.trim()) && v === v.trim() ? "ok" : "invalid");
+const asciiKey = (v) => /^[\x21-\x7e]{20,}$/.test(v);
+const ENV_CHECK = {
+  url: envState(SUPABASE_URL, (v) => /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(v)),
+  anon: envState(SUPABASE_ANON_KEY, asciiKey),
+  service: envState(SUPABASE_SERVICE_KEY, asciiKey),
+};
+for (const [k, v] of Object.entries(ENV_CHECK)) if (v === "invalid") console.error(`[server] 환경 변수 확인 필요: ${{ url: "SUPABASE_URL", anon: "SUPABASE_ANON_KEY", service: "SUPABASE_SERVICE_ROLE_KEY" }[k]} 값이 형식에 안 맞아요(한글·빈칸·따옴표가 섞였는지 확인)`);
+const pushDb = ENV_CHECK.url === "ok" && ENV_CHECK.service === "ok";
 async function db(path, { method = "GET", body, prefer } = {}) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method,
@@ -1303,7 +1313,7 @@ app.get("/api/push/tick", async (req, res) => {
   if (/pg_net/i.test(req.get("user-agent") || "")) lastCron = new Date().toISOString();
   await pushReady;
   checkPushAlarms();
-  res.json({ ok: true, devices: pushDevices.size, db: Boolean(pushDb), cron: lastCron });
+  res.json({ ok: true, devices: pushDevices.size, db: Boolean(pushDb), env: ENV_CHECK, cron: lastCron });
 });
 
 app.use((err, req, res, next) => {
