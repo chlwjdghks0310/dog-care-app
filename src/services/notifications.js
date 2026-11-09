@@ -2,6 +2,7 @@
 // 웹 푸시(VAPID) 구독/테스트 함수도 들어있다. 1단계: 실제 기기에서 뜨는지부터 확인하는
 // 용도라, 서버는 구독을 메모리에만 들고 있고 "지금 당장 테스트 알림 보내기"만 지원한다.
 // 일정 시간에 맞춰 서버가 알아서 쏴주는 건 2단계(서버 스케줄러 + DB)에서 붙인다.
+import { alarmLine as puppyAlarmLine } from "./puppy100";
 import { minutesBefore, nowLabel as getNowLabel, todayKey, addDays, toDateKey } from "../utils/date";
 import { API_BASE } from "./aiClient";
 import { getDogs } from "./dogRepository";
@@ -275,7 +276,8 @@ export function buildPushAlarms() {
     all.push({
       time: plan.time,
       title: `🐾 ${who} 오늘 어땠어요?`,
-      body: "평소와 같으면 한 번만 누르면 끝이에요.",
+      // 퍼피 100일 과제가 남았으면 같은 알림에 한 줄만(알림 수는 늘리지 않음, 했으면 안 붙음)
+      body: puppyAlarmLine(dogs) ? `${puppyAlarmLine(dogs)}\n체크는 평소와 같으면 한 번이면 끝이에요.` : "평소와 같으면 한 번만 누르면 끝이에요.",
       url: "/?checkin=1",
       days: plan.days,
       skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,

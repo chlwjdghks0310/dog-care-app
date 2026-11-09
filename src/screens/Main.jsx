@@ -17,6 +17,7 @@ import { GUIDEBOOK_CHAPTERS, GUIDEBOOK_URL } from "../data/guidebookChapters";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
+import PuppyCard from "../components/PuppyCard";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
 import { quickParse } from "../services/quickParse";
@@ -304,6 +305,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           )}
         </div>
       )}
+      {/* 퍼피 첫 100일 "오늘의 5분" — 하루 체크 바로 밑(11/9, 작업 순서 ⑥) */}
+      {!isChat && <PuppyCard dog={dog} onChanged={() => refresh((n) => n + 1)} />}
 
       <div
         onClick={() => isChat && goHome()}

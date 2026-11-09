@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { getProgress as getPuppyProgress, setHidden as setPuppyHidden } from "../services/puppy100";
 import { timeLabel } from "../components/EventSheet";
 import { createPortal } from "react-dom";
 import { calculateAge, formatAge } from "../utils/age";
@@ -358,6 +359,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
                 <input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />
               </label>
             </div>
+            <PuppyToggle dog={dog} />
             <ThemeCard dark={dark} />
             <AccountCard />
             <AIConsentCard />
@@ -829,6 +831,24 @@ function GalleryStrip({ dog, onOpen }) {
         )}
       </div>
       {!photos.length && <p className="faint" style={{ margin: "8px 0 0", fontSize: 12.5 }}>사진마다 그날의 메모·추억을 적어 둘 수 있어요</p>}
+    </div>
+  );
+}
+
+// 설정: 퍼피 100일 카드 켜고 끄기(오늘 탭 카드에서 숨겼을 때 다시 켜는 곳). 진행 기록은 지우지 않는다
+function PuppyToggle({ dog }) {
+  const [on, setOn] = useState(() => !getPuppyProgress(dog.id).hidden);
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
+        <span>
+          <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+            <Ico name="paw" size={18} /> 퍼피 100일 카드
+          </span>
+          <span className="faint" style={{ display: "block", marginTop: 4 }}>오늘 탭에 하루 5분 과제를 보여 줘요(1살 아래). 꺼도 한 기록은 남아요</span>
+        </span>
+        <input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked))} aria-label="퍼피 100일 카드" />
+      </label>
     </div>
   );
 }

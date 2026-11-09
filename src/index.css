@@ -1465,3 +1465,30 @@ button.seg, button.chip { min-height: 36px; }
 
 /* 붙어 다녀야 하는 조각(구분점 · 과 다음 말, 숫자와 단위)이 줄바꿈에 갈라지지 않게 */
 .nowrap { white-space: nowrap; }
+
+/* 퍼피 100일 "오늘의 5분" 카드(PuppyCard) */
+.pc100 { margin-bottom: 14px; }
+.pc100-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.pc100-tag { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: var(--accent-strong); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; }
+.pc100-title { font-size: 17px; font-weight: 800; line-height: 1.4; word-break: keep-all; }
+.pc100-why { margin: 4px 0 8px; color: var(--text-soft); font-size: 14px; line-height: 1.5; word-break: keep-all; }
+.pc100-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; word-break: keep-all; }
+.pc100-no { margin: 0; padding-left: 20px; color: var(--text-soft); line-height: 1.5; }
+.pc100-sub { font-weight: 800; font-size: 14px; margin: 12px 0 4px; }
+.pc100-out { display: flex; gap: 6px; align-items: flex-start; margin: 8px 0 0; font-size: 12.5px; color: var(--text-soft); background: var(--warning-bg); padding: 8px 10px; border-radius: 10px; line-height: 1.5; }
+.pc100-out svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); }
+.pc100-done { margin: 0; font-size: 15px; line-height: 1.5; word-break: keep-all; }
+.pc100-paws { display: flex; align-items: center; gap: 2px; margin-top: 12px; font-size: 14px; }
+.pc100-paws > span[aria-hidden] { filter: grayscale(1); opacity: 0.3; }
+.pc100-paws > span.on { filter: none; opacity: 1; }
+.pc100-paws .faint { margin-left: 6px; font-size: 12.5px; }
+.pc100-urgent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.pc100-urgent .faint { font-size: 12.5px; margin-right: 2px; }
+.pc100-hide { display: block; margin: 8px 0 0 auto; font-size: 12.5px; }
+.pc100-qs { display: flex; flex-direction: column; gap: 6px; }
+.pc100-q { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; text-align: left; font: inherit; font-size: 14px; line-height: 1.45; word-break: keep-all; color: var(--text); background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; }
+.pc100-q.on { border-color: var(--accent-btn); background: var(--accent-soft); }
+.pc100-box { flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; background: var(--surface); }
+.pc100-q.on .pc100-box { background: var(--accent-btn); border-color: var(--accent-btn); }
+.pc100-vet { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--warning-bg); line-height: 1.5; font-size: 14px; }
+.pc100-vet b { display: flex; align-items: center; gap: 6px; }

@@ -26,6 +26,7 @@ export const SYNCED_KEYS = [
   "dogcare-calendar-events-v1",
   "dogcare-allowance-v1",
   "dogcare-fixed-expenses-v1",
+  "dogcare-puppy100-v1", // 퍼피 100일 진행(가족이 같은 발도장을 보게)
 ];
 const DOGS_KEY = "dogcare-dogs-v1";
 const CATEGORIES_KEY = "dogcare-expense-categories-v1";
