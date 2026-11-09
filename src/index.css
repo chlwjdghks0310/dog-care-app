@@ -23,6 +23,10 @@
   --success: #4c8c5b;
   --success-bg: #e7f3ea;
   --danger: #b04a3a; /* 11/8: #c15b4a는 밝은 바탕에서 대비 4.3:1 → 4.5:1 넘게 */
+  /* 따뜻한 보조색 1개(11/9 디자인 규칙 3, 사용자 선택 "살구" — 여름이 탄 색 계열): 강아지·발도장·칭찬에만. 버튼·링크는 파랑 그대로 */
+  --warm: #bb5a1a; /* 아이콘·버튼 바탕용 — 흰 글자 4.57:1, 흰 바탕 위 아이콘 4.57:1(11/9 대비 확인) */
+  --warm-strong: #9c4f1b; /* 작은 글자용(흰 바탕 6.3:1) */
+  --warm-bg: #fdeee2;
   --danger-bg: #fbeae6;
   --warning: #c98a2e;
   --warning-bg: #faf0dd;
@@ -78,6 +82,9 @@
   --check-border: #5a5a68;
   --grid-line: #2f2f39;
   --bubble-me: #2e4a70;
+  --warm: #f2a46f;
+  --warm-strong: #f7bf93;
+  --warm-bg: #3a281c;
   color-scheme: dark;
 }
 
@@ -1533,3 +1540,27 @@ button.seg, button.chip { min-height: 36px; }
 .pp-log:first-of-type { border-top: 0; }
 .pp-log b { flex: 0 0 44px; }
 .pp-log span { flex: 1; min-width: 0; color: var(--text-soft); }
+
+/* ── 디자인 규칙(11/9, 계획표 3장) ──
+   2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목에만 Dongle(동글). 본문은 고딕 그대로. Dongle은 같은 px에서 작게 보여 1.35배 */
+.h1, .pc100-title, .es-title, .summary-open, .onb-title { font-family: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 700; letter-spacing: 0; }
+.h1 { font-size: 34px; line-height: 1.1; }
+.pc100-title { font-size: 25px; line-height: 1.2; }
+.es-title { font-size: 23px; }
+.summary-open { font-size: 25px; line-height: 1.15; }
+.summary-open .summary-role { font-family: "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+/* 1) 고유 표식 = 발도장(살구): 완료·띠·달력·빈 화면·모션에 같은 모양 */
+.paw-mark { color: var(--warm); display: inline-flex; vertical-align: -0.15em; }
+.pc100-strip-ico { background: var(--warm-bg); color: var(--warm); overflow: hidden; }
+.pc100-strip.done .pc100-strip-ico { background: var(--warm-bg); color: var(--warm); opacity: 0.8; }
+.pc100-strip-face { width: 100%; height: 100%; object-fit: cover; }
+.pc100-strip-sub { color: var(--warm-strong); }
+.pc100-paws > span.on, .pp-week li.done .pp-dot, .pp-wk.done { background: var(--warm); border-color: var(--warm); color: #fff; }
+.pp-wk.cur { border-color: var(--warm); background: var(--warm-bg); color: var(--warm-strong); }
+.pp-week li.cur .pp-dot { border-color: var(--warm); color: var(--warm-strong); }
+.dc-usual.paw { background: var(--warm); }
+.dc-usual.paw:active { filter: brightness(0.95); }
+/* 6) 모션은 딱 하나: 발도장이 "쿵" 찍히는 0.35초(움직임 줄이기면 없음) */
+@keyframes paw-stamp { 0% { transform: scale(2.2) rotate(-18deg); opacity: 0; } 55% { transform: scale(0.92) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+.paw-stamp { display: inline-flex; color: var(--warm); animation: paw-stamp 0.35s cubic-bezier(.2,.9,.3,1.3) both; }
+@media (prefers-reduced-motion: reduce) { .paw-stamp { animation: none; } }

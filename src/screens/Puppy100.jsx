@@ -17,9 +17,11 @@ export default function Puppy100({ dog, onBack }) {
   const [more, setMore] = useState(false); // 오늘 몫을 했어도 다음 과제를 막지 않는다(보강 조사 11/9)
   const [urgent, setUrgent] = useState(null);
   const [peek, setPeek] = useState(null); // 14주 지도에서 누른 주(미리 보기)
+  const [stamp, setStamp] = useState(false); // 🐾 누른 직후 발도장 찍히는 모션(디자인 규칙 6)
   const today = todayKey();
   const st = state(dog.id, today);
   const changed = () => (setMore(false), syncPushAlarms(), refresh((n) => n + 1));
+  const stamped = () => (setStamp(true), setTimeout(() => setStamp(false), 900), changed());
   const yesterday = toDateKey(addDays(new Date(`${today}T00:00:00`), -1));
   const days = togetherDays(dog);
   const week = st.step ? WEEKS[st.step.week - 1] : null;
@@ -40,13 +42,13 @@ export default function Puppy100({ dog, onBack }) {
       <section className="card pc100" aria-label="오늘의 5분">
         {st.finished ? (
           <>
-            <div className="pc100-title">100일 과정을 다 마쳤어요 🎓</div>
+            <div className="pc100-title"><Ico name="graduation" size={22} className="paw-mark" /> 100일 과정을 다 마쳤어요</div>
             <p className="pc100-why">배운 동작은 일주일에 몇 번씩 해 주면 오래 기억해요. 아래 지도에서 아무 주나 눌러 다시 볼 수 있어요.</p>
           </>
         ) : st.doneToday && !more ? (
           <>
             <p className="pc100-done">
-              {st.againToday ? <>🔁 내일 한 번 더 해요 · <b>{stepLabel(st.step)}</b></> : <>🐾 오늘의 5분 끝! 내일은 <b>{stepLabel(st.step)}</b></>}
+              {st.againToday ? <><Ico name="repeat" size={16} className="paw-mark" /> 내일 한 번 더 해요 · <b>{stepLabel(st.step)}</b></> : <><span className={stamp ? "paw-stamp" : "paw-mark"}><Ico name="paw" size={20} /></span> 오늘의 5분 끝! 내일은 <b>{stepLabel(st.step)}</b></>}
             </p>
             <button type="button" className="btn-ghost" style={{ marginTop: 10 }} onClick={() => setMore(true)}>{st.againToday ? "지금 한 번 더 하기" : "더 하고 싶으면 지금 하기"}</button>
           </>
@@ -56,7 +58,7 @@ export default function Puppy100({ dog, onBack }) {
           <Task
             key={st.step.id}
             step={st.step}
-            onDone={() => (mark(dog.id, st.step.id, "done", today), trackAct("task"), changed())}
+            onDone={() => (mark(dog.id, st.step.id, "done", today), trackAct("task"), stamped())}
             onAgain={() => (mark(dog.id, st.step.id, "again", today), changed())}
             onSkip={() => (mark(dog.id, st.step.id, "skip", today), changed())}
             onYesterday={st.started && st.idleDays >= 2 && !st.doneToday ? () => (mark(dog.id, st.step.id, "done", yesterday), trackAct("task"), changed()) : null}
@@ -83,7 +85,7 @@ export default function Puppy100({ dog, onBack }) {
               );
             })}
             <li className={st.step.kind === "test" ? "cur" : ""}>
-              <span className="pp-dot" aria-hidden="true">🎖</span>
+              <span className="pp-dot" aria-hidden="true"><Ico name="sparkles" size={13} /></span>
               <span>7일째 체크 {week.test.length}문항</span>
               {st.step.kind === "test" && <span className="faint">오늘</span>}
             </li>
@@ -117,7 +119,7 @@ export default function Puppy100({ dog, onBack }) {
           {log.slice(0, 14).map((d) => (
             <div key={d.date} className="pp-log">
               <b>{md(d.date)}</b>
-              <span>🐾 {d.items.join(" · ")}</span>
+              <span><Ico name="paw" size={13} className="paw-mark" /> {d.items.join(" · ")}</span>
             </div>
           ))}
           {log.length > 14 && <p className="faint" style={{ margin: "6px 0 0" }}>그전 것은 기록 탭 달력에서 날짜를 눌러 봐요.</p>}

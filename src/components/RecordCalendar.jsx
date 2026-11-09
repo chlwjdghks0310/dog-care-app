@@ -120,7 +120,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
         {(selRecords.length > 0 || stampsOn(dog.id, selected).length > 0) && (
           <div className="rc-recs">
             {stampsOn(dog.id, selected).map((t) => (
-              <div key={t} className="rc-rec rc-puppy"><span aria-hidden="true">🐾</span><span className="faint">퍼피 100일</span><span style={{ flex: 1, minWidth: 0 }}>{t}</span></div>
+              <div key={t} className="rc-rec rc-puppy"><Ico name="paw" size={15} className="paw-mark" /><span className="faint">퍼피 100일</span><span style={{ flex: 1, minWidth: 0 }}>{t}</span></div>
             ))}
             {selRecords.map((r) => (
               <div key={`${r.source}-${r.id}`} className="rc-rec">

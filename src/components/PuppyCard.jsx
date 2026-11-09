@@ -14,11 +14,12 @@ export default function PuppyCard({ dog, onOpen }) {
   const st = state(dog.id, today);
   return (
     <button type="button" className={`pc100-strip${st.finished || st.doneToday ? " done" : ""}`} onClick={onOpen} aria-label="퍼피 100일 훈련 화면 열기">
-      <span className="pc100-strip-ico" aria-hidden="true">{st.step?.kind === "test" && !st.doneToday ? "🎖" : <Ico name="paw" size={20} />}</span>
+      {/* 띠 아이콘은 우리 강아지 얼굴(사용자 결정 11/9) — 사진이 없으면 발도장 */}
+      <span className="pc100-strip-ico" aria-hidden="true">{dog.photo ? <img className="pc100-strip-face" src={dog.photo} alt="" /> : <Ico name="paw" size={20} />}</span>
       <span className="pc100-strip-body">
         <span className="pc100-strip-sub">퍼피 100일{st.step ? ` · ${st.step.week}주차` : ""}{st.finished ? "" : ` · 이번 주 ${st.weekPaws.filter(Boolean).length}/6`}</span>
         <span className="pc100-strip-title">
-          {st.finished ? "100일 과정을 다 마쳤어요 🎓" : st.doneToday ? (st.againToday ? `내일 한 번 더 · ${stepLabel(st.step)}` : `오늘 끝! 내일은 ${stepLabel(st.step)}`) : st.step.kind === "test" ? `${stepLabel(st.step)} · ${st.step.qs.length}문항` : `오늘의 5분 · ${st.step.t}`}
+          {st.finished ? <><Ico name="graduation" size={16} className="paw-mark" /> 100일 과정을 다 마쳤어요</> : st.doneToday ? (st.againToday ? `내일 한 번 더 · ${stepLabel(st.step)}` : <><Ico name="paw" size={15} className="paw-mark" /> 오늘 끝! 내일은 {stepLabel(st.step)}</>) : st.step.kind === "test" ? `${stepLabel(st.step)} · ${st.step.qs.length}문항` : `오늘의 5분 · ${st.step.t}`}
         </span>
       </span>
       <span className="pc100-strip-go">{st.finished || st.doneToday ? "›" : "시작 ›"}</span>
@@ -38,8 +39,8 @@ export function Task({ step, onDone, onAgain, onSkip, onYesterday }) {
       <div className="pc100-time"><Ico name="timer" size={14} /> 한 번에 1~2분 · 성공하면 바로 끝 · 다 해서 5분이 넘지 않게</div>
       {step.out && <div className="pc100-out"><Ico name="alert" size={14} /> {OUT_NOTE}</div>}
       <div className="dc-btns" style={{ marginTop: 12 }}>
-        <button type="button" className="dc-usual" onClick={onDone}>🐾 했어요</button>
-        <button type="button" className="dc-diff" onClick={onAgain}>🔁 한 번 더</button>
+        <button type="button" className="dc-usual paw" onClick={onDone}><Ico name="paw" size={18} /> 했어요</button>
+        <button type="button" className="dc-diff" onClick={onAgain}><Ico name="repeat" size={16} /> 한 번 더</button>
       </div>
       <div className="pc100-links">
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onSkip}>이미 잘해요 → 다음 과제</button>
@@ -69,7 +70,7 @@ export function WeekTest({ dog, step, onDone }) {
     );
   return (
     <>
-      <div className="pc100-title">{step.graduation ? "100일 졸업 테스트" : `${step.week}주차 체크`} 🎖</div>
+      <div className="pc100-title">{step.graduation ? "100일 졸업 테스트" : `${step.week}주차 체크`}</div>
       <p className="pc100-why">이번 주에 되는 것만 눌러요. {step.qs.length}개 중 {need}개면 통과예요.</p>
       <div className="pc100-qs">
         {step.qs.map((q, i) => (

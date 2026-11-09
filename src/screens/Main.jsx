@@ -581,7 +581,7 @@ function TodaySummary({ dog }) {
     <span className="summary">
       <span className="summary-open">
         <span className="summary-role">기록 친구 · {dog.name}</span>
-        말로 하면 내가 기록해 줄게 ✍️
+        말로 하면 내가 기록해 줄게
       </span>
       {lines.length ? (
         // 작은 화면에서 말풍선이 길어지면 아래 입력칸이 밀려나서 4줄까지만(점검 11/7, 아이폰 SE)
