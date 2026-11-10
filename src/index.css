@@ -1624,27 +1624,18 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 .fc-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 .fc-legend i.food { background: var(--warm); } .fc-legend i.wet { background: var(--c-rose); } .fc-legend i.water { background: var(--accent); }
 
-/* ── 구름 말풍선(오늘 화면, 11/10 저녁) ── 선·그림자 없이 흰 뭉게구름만(radial-gradient 동그라미 + 둥근 몸통). filter를 안 쓰는 이유: iOS 사파리가 drop-shadow 결과를 상자에 맞춰 잘라 버림(사용자 "잘린다") */
-:root { --font-bubble: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; }
-.sb { position: relative; max-width: 330px; margin: 12px auto 0; padding: 20px 18px 22px; }
-.sb-cloud { position: absolute; inset: -10px -8px; pointer-events: none;
-  background:
-    radial-gradient(circle at 8% 34px, var(--surface) 30px, transparent 30.5px),
-    radial-gradient(circle at 27% 38px, var(--surface) 37px, transparent 37.5px),
-    radial-gradient(circle at 50% 33px, var(--surface) 32px, transparent 32.5px),
-    radial-gradient(circle at 72% 40px, var(--surface) 39px, transparent 39.5px),
-    radial-gradient(circle at 92% 32px, var(--surface) 30px, transparent 30.5px),
-    radial-gradient(circle at 30px 50%, var(--surface) 30px, transparent 30.5px),
-    radial-gradient(circle at calc(100% - 32px) 48%, var(--surface) 31px, transparent 31.5px),
-    radial-gradient(circle at 12% calc(100% - 34px), var(--surface) 31px, transparent 31.5px),
-    radial-gradient(circle at 36% calc(100% - 38px), var(--surface) 36px, transparent 36.5px),
-    radial-gradient(circle at 62% calc(100% - 33px), var(--surface) 33px, transparent 33.5px),
-    radial-gradient(circle at 88% calc(100% - 37px), var(--surface) 35px, transparent 35.5px); }
-.sb-cloud::before { content: ""; position: absolute; inset: 30px 26px; border-radius: 40px; background: var(--surface); }
-.sb-body { position: relative; padding: 0 8px; font-size: 16px; font-weight: 700; line-height: 1.5; text-align: center; white-space: pre-line; }
-.sb-puff { position: absolute; border-radius: 50%; background: var(--surface); }
-.sb-puff1 { width: 20px; height: 20px; left: 44%; bottom: -14px; }
-.sb-puff2 { width: 11px; height: 11px; left: 40%; bottom: -30px; }
+/* ── 구름 말풍선(오늘 화면, 11/10 밤) ── 손으로 그린 구름 한 줄 선(SVG 240×240, 모서리 60)을 border-image로 늘려 쓴다: 네 귀는 그대로, 변은 혹 두 개짜리 무늬가 round로 반복, 가운데는 채움.
+   동그라미를 겹친 모양("도형 붙여넣기") 대신 한 획으로 이어진 선이라 그림처럼 보인다. filter 없음(iOS가 잘라 버림) */
+:root { --font-bubble: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; --cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cpath%20d%3D%22M60%2024%20C70%200%20120%200%20130%2024%20C138%206%20172%206%20180%2024%20C192%200%20244%2014%20216%2060%20C240%2070%20240%20120%20216%20130%20C234%20138%20234%20172%20216%20180%20C240%20194%20226%20240%20180%20216%20C172%20234%20138%20234%20130%20216%20C120%20240%2070%20240%2060%20216%20C14%20240%200%20194%2024%20180%20C6%20172%206%20138%2024%20130%20C0%20120%200%2070%2024%2060%20C0%2014%2048%200%2060%2024%20Z%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23b8ad9f%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cpath%20d%3D%22M60%2024%20C70%200%20120%200%20130%2024%20C138%206%20172%206%20180%2024%20C192%200%20244%2014%20216%2060%20C240%2070%20240%20120%20216%20130%20C234%20138%20234%20172%20216%20180%20C240%20194%20226%20240%20180%20216%20C172%20234%20138%20234%20130%20216%20C120%20240%2070%20240%2060%20216%20C14%20240%200%20194%2024%20180%20C6%20172%206%20138%2024%20130%20C0%20120%200%2070%2024%2060%20C0%2014%2048%200%2060%2024%20Z%22%20fill%3D%22%23222229%22%20stroke%3D%22%236b6f7a%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"); } }
+:root[data-theme="dark"] { --cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cpath%20d%3D%22M60%2024%20C70%200%20120%200%20130%2024%20C138%206%20172%206%20180%2024%20C192%200%20244%2014%20216%2060%20C240%2070%20240%20120%20216%20130%20C234%20138%20234%20172%20216%20180%20C240%20194%20226%20240%20180%20216%20C172%20234%20138%20234%20130%20216%20C120%20240%2070%20240%2060%20216%20C14%20240%200%20194%2024%20180%20C6%20172%206%20138%2024%20130%20C0%20120%200%2070%2024%2060%20C0%2014%2048%200%2060%2024%20Z%22%20fill%3D%22%23222229%22%20stroke%3D%22%236b6f7a%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"); }
+.sb { position: relative; max-width: 358px; margin: 8px auto 0; }
+.sb-body { position: relative; border: 34px solid transparent; border-image: var(--cloud) 60 fill / 34px / 8px round; padding: 0 2px; font-size: 16px; font-weight: 700; line-height: 1.5; text-align: center; white-space: pre-line; }
+.sb-puff { position: absolute; border-radius: 50%; background: var(--surface); border: 1.8px solid #b8ad9f; }
+:root[data-theme="dark"] .sb-puff { border-color: #6b6f7a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sb-puff { border-color: #6b6f7a; } }
+.sb-puff1 { width: 20px; height: 20px; left: 44%; bottom: -12px; }
+.sb-puff2 { width: 11px; height: 11px; left: 40%; bottom: -28px; }
 /* 동글체는 같은 px에서 작게 보여 말풍선 안 글씨만 3~5px 키움 */
 .sb .summary-line, .sb .summary-more, .sb .first-step, .sb .link-btn, .sb .dc-usual, .sb .dc-diff, .sb .summary-go, .sb .btn-primary, .sb .btn-ghost { font-family: var(--font-bubble); font-weight: 400; }
 .sb .summary-line { font-size: 22px; line-height: 1.25; }
