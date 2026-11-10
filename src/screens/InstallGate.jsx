@@ -39,10 +39,11 @@ const DotsGlyph = () => (
   </svg>
 );
 
+// iOS 26 순서(주소창 옆 ⋯ → 공유 → 홈 화면에 추가 → '웹 앱으로 열기' 켠 채 추가). 옛 iOS는 아래쪽 공유 버튼 — 베타 조사 ①(WebKit·MacRumors)
 const IOS_STEPS = [
-  [<>사파리에서 <b>공유 버튼</b> <ShareGlyph /> 누르기 <span className="faint">(안 보이면 <b>⋯</b> 메뉴 → 공유)</span></>],
-  [<>목록을 내려서 <b>홈 화면에 추가</b> <PlusGlyph /> 누르기</>],
-  [<><b>웹 앱으로 열기</b>가 켜져 있으면 그대로 두고, 오른쪽 위 <b>추가</b> 누르기</>],
+  [<>주소창 옆 <b>⋯</b> <DotsGlyph /> 누르고 <b>공유</b> <ShareGlyph /> 누르기 <span className="faint">(화면 아래에 공유 버튼이 보이면 그걸 눌러도 돼요)</span></>],
+  [<>목록을 아래로 내려서 <b>홈 화면에 추가</b> <PlusGlyph /> 누르기</>],
+  [<><b>웹 앱으로 열기</b>는 <b>켜진 채로</b> 두고, 오른쪽 위 <b>추가</b> 누르기</>],
   [<>홈 화면에 생긴 <b>멍케어 아이콘</b>으로 열기</>],
 ];
 const ANDROID_STEPS = (samsung) =>
@@ -164,7 +165,7 @@ export default function InstallGate() {
           ))}
         </div>
       </div>
-      <p className="faint ig-foot">설치한 뒤 홈 화면 아이콘으로 열면 이 안내 없이 바로 시작돼요.</p>
+      <p className="faint ig-foot">설치한 뒤 홈 화면 아이콘으로 열면 이 안내 없이 바로 시작돼요.<br />막히면 <a href="mailto:meongcare.app@gmail.com?subject=%5B멍케어%5D%20설치가%20안%20돼요" style={{ color: "inherit" }}>meongcare.app@gmail.com</a>으로 알려 주세요.</p>
     </div>
   );
 }

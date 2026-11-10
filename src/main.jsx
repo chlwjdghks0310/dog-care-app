@@ -7,6 +7,9 @@ import Contact from './screens/Contact.jsx'
 import Terms from './components/Terms.jsx'
 import { trackAppStart } from './services/analytics'
 import { initPhotos } from './services/photoStore'
+import { initBeta } from './services/beta'
+
+initBeta() // 오류 자동 보고·배포 뒤 옛 파일 오류 새로고침·돌아올 때 새 버전 확인(베타 준비 11/10)
 
 const StatsPage = lazy(() => import('./components/StatsDashboard.jsx').then((m) => ({ default: m.StatsPage })))
 

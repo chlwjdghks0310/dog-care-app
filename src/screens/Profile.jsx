@@ -33,6 +33,7 @@ import { useSwipeClose } from "../components/SwipeBack";
 import Ico from "../components/Ico";
 import Help from "./Help";
 import Contact from "./Contact";
+import Feedback from "./Feedback";
 import DogRegister from "./DogRegister";
 import { getSyncStatus, onSyncStatus } from "../services/sync";
 import { supabase } from "../services/supabase";
@@ -331,6 +332,11 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <div className="h1" style={{ margin: 0 }}>설정</div>
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
             </div>
+            {/* 베타 기간 의견 받는 곳(11/10) — 맨 위 한 곳, 떠 있는 버튼은 화면을 가려서 안 둔다 */}
+            <button type="button" className="card feedback-row" onClick={() => setSettingsSub("feedback")}>
+              <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}><Ico name="pencil" size={18} /> 의견 보내기</span>
+              <span className="subtle">사소한 것도 좋아요 ›</span>
+            </button>
             <FamilyShare dog={dog} />
             <div className="card" style={{ marginBottom: 14 }}>
               <div className="h2">우리 강아지</div>
@@ -418,8 +424,9 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
       {settingsOpen &&
         settingsSub &&
         createPortal(
-          <div className="settings-sheet" role="dialog" aria-label={{ help: "도움말", contact: "문의하기", "add-dog": "강아지 등록" }[settingsSub]} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
+          <div className="settings-sheet" role="dialog" aria-label={{ help: "도움말", contact: "문의하기", feedback: "의견 보내기", "add-dog": "강아지 등록" }[settingsSub]} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
             {settingsSub === "help" && <Help onBack={() => setSettingsSub(null)} />}
+            {settingsSub === "feedback" && <Feedback onBack={() => setSettingsSub(null)} />}
             {settingsSub === "contact" && <Contact onBack={() => setSettingsSub(null)} />}
             {settingsSub === "add-dog" && (
               <DogRegister

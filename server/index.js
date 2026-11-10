@@ -144,6 +144,36 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
   else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : [])]);
 });
 
+// 베타 준비(11/10, supabase/beta.sql): 앱 오류 자동 보고(sendBeacon text/plain)와 [의견 보내기]. 기록 내용·이름은 앱이 애초에 안 보낸다.
+const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
+app.post("/api/err", express.text({ limit: "4kb" }), (req, res) => {
+  res.status(204).end();
+  if (isBot(req) || tooMany(req) || !pushDb) return;
+  let b;
+  try {
+    b = JSON.parse(req.body || "{}");
+  } catch {
+    return;
+  }
+  if (!str(b.msg, 300)) return;
+  dbSave("app_errors", { method: "POST", body: { ver: str(b.ver, 16), path: str(b.path, 80), msg: str(b.msg, 300), stack: str(b.stack, 1200), ua: str(b.ua, 200), visitor: visitorHash(b.v) } });
+});
+app.post("/api/feedback", async (req, res) => {
+  if (isBot(req) || tooMany(req)) return res.status(429).json({ error: "too many" });
+  if (!pushDb) return res.status(503).json({ error: "db off" });
+  const b = req.body || {};
+  const text = str(b.text, 1000).trim();
+  if (!text) return res.status(400).json({ error: "empty" });
+  const shot = typeof b.shot === "string" && b.shot.startsWith("data:image/jpeg;base64,") && b.shot.length <= 1_500_000 ? b.shot : null;
+  try {
+    await db("beta_feedback", { method: "POST", body: { kind: ["bug", "wish", "good"].includes(b.kind) ? b.kind : "bug", text, shot, ver: str(b.ver, 16), path: str(b.path, 80), ua: str(b.ua, 200), visitor: visitorHash(b.v) } });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("[server] feedback:", e.message);
+    res.status(500).json({ error: "save failed" });
+  }
+});
+
 // AI 사용 횟수: 앱이 X-MC-V(기기 번호)·X-MC-L(로그인 1/0)을 붙여 보낸다. 채팅은 비서별(source=mode), 나머지는 기능별
 // chat = 말로 기록하기(예전 AI 채팅 자리 — 통계 표의 "AI 채팅" 칸에 그대로 쌓인다)
 const AI_ROUTES = { "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video", "/api/vet-doc": "vet_doc" };

@@ -221,6 +221,8 @@ export default function StatsDashboard({ onClose }) {
             )}
           </div>
 
+          <BetaInbox />
+
           <button type="button" className="btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={() => download(all)}>
             최근 30일 표 파일로 받기 (CSV · 엑셀)
           </button>
@@ -249,6 +251,43 @@ export function StatsPage() {
       <div className="h1">이용 통계</div>
       <p className="subtle">운영자 계정으로 로그인해 주세요. 컴퓨터에서는 이메일 로그인이 편해요.</p>
       <LoginForm />
+    </div>
+  );
+}
+
+// 베타 의견·오류(supabase/beta.sql beta_inbox) — 운영자만. 오류는 메시지별로 묶여 온다
+function BetaInbox() {
+  const [data, setData] = useState(null);
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    supabase.rpc("beta_inbox", { p_days: 30 }).then(({ data, error }) => setData(error ? { error: error.message } : data));
+  }, []);
+  const KIND = { bug: "버그", wish: "바람", good: "좋아요" };
+  const when = (t) => String(t).slice(5, 16).replace("T", " ").replace("-", "/");
+  return (
+    <div className="card" style={{ marginTop: 12 }}>
+      <div className="h2">베타 의견·오류 (30일)</div>
+      {!data ? <p className="subtle" style={{ margin: 0 }}>불러오는 중…</p> : data.error ? <p className="subtle" style={{ margin: 0 }}>아직 표가 없어요 — supabase/beta.sql을 실행해 주세요. ({data.error})</p> : (
+        <>
+          <div className="faint" style={{ margin: "0 0 6px" }}>의견 {data.feedback.length}건</div>
+          {data.feedback.length === 0 && <p className="subtle" style={{ margin: "0 0 10px" }}>아직 없어요.</p>}
+          {data.feedback.map((f) => (
+            <div key={f.id} style={{ borderTop: "1px solid var(--border)", padding: "8px 0" }}>
+              <div style={{ fontSize: 13.5 }}><b>{KIND[f.kind] || f.kind}</b> · <span className="faint">{when(f.created_at)} · {f.ver} · {f.path}</span></div>
+              <div style={{ whiteSpace: "pre-wrap", margin: "4px 0" }}>{f.text}</div>
+              {f.shot && (open === f.id ? <img src={f.shot} alt="" style={{ width: "100%", borderRadius: 8 }} onClick={() => setOpen(null)} /> : <button type="button" className="link-btn" onClick={() => setOpen(f.id)}>스크린샷 보기</button>)}
+              <div className="faint" style={{ fontSize: 11.5 }}>{f.ua}</div>
+            </div>
+          ))}
+          <div className="faint" style={{ margin: "12px 0 6px" }}>오류 {data.errors.reduce((a, e) => a + n(e.n), 0)}건 · 종류 {data.errors.length}</div>
+          {data.errors.map((e) => (
+            <details key={e.msg} style={{ borderTop: "1px solid var(--border)", padding: "6px 0", fontSize: 13.5 }}>
+              <summary><b>{n(e.n)}번</b> · {n(e.people)}명 · {when(e.last)} · {e.ver} — {e.msg}</summary>
+              <pre style={{ whiteSpace: "pre-wrap", fontSize: 11.5, margin: "6px 0 0" }}>{e.path}\n{e.stack}</pre>
+            </details>
+          ))}
+        </>
+      )}
     </div>
   );
 }

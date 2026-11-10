@@ -40,6 +40,8 @@ import SwipeBack from "./components/SwipeBack";
 import PullToRefresh from "./components/PullToRefresh";
 import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow } from "./services/sync";
+import { isEditing } from "./services/beta";
+import WhatsNew from "./components/WhatsNew";
 
 const PARENT_TAB = {
   home: "main", // 오늘 할 일(옛 체크리스트 탭)은 오늘 탭 안으로
@@ -349,8 +351,7 @@ export default function App() {
       setDog((cur) => list.find((d) => d.id === getActiveDogId()) || list.find((d) => d.id === cur?.id) || list[0]);
       setRoute("app");
       // 적는 중(기록 폼·글자 입력 중·시트 열림)이면 새로 그리지 않는다 — 탭을 바꾸면 어차피 pageKey effect가 새로 그린다
-      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
-      if (typing || document.querySelector("[data-editing], .es-sheet")) return;
+      if (isEditing()) return;
       setPageVersion((v) => v + 1);
     };
     window.addEventListener("dogcare-synced", onSynced);
@@ -543,6 +544,7 @@ export default function App() {
         ))}
       </div>
       {/* 비서(채팅) 화면은 대화 스크롤과 겹치지 않게 빼고, 나머지 화면은 맨 위에서 당기면 새로고침 */}
+      <WhatsNew />
       {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
       <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
       <BottomNav

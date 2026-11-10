@@ -1654,3 +1654,7 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 .sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 21px; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 */
 .sb .summary-go { padding: 6px 16px; }
 .sb .link-btn { font-size: 20px; }
+
+/* ── 베타 준비(11/10) ── 새 버전 한 줄(위쪽 4초) · 설정 맨 위 의견 보내기 줄 */
+.whats-new { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 140; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 999px; background: var(--text); color: var(--surface); font-size: 13.5px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+.feedback-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 14px; text-align: left; cursor: pointer; font: inherit; color: var(--text); }
