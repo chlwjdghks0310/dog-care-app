@@ -139,7 +139,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding, onS
   }
 
   return (
-    <div className="card">
+    <div className="card" data-editing="">{/* 적는 중 표시 — 가족 공유로 새 기록이 와도 App이 이 화면을 새로 그리지 않는다(폼이 비워지지 않게) */}
       <div className="rec-head">
         <div className="h2" style={{ margin: 0 }}><Ico name={TYPES[type].ico} size={20} style={{ color: "var(--accent-strong)" }} /> {onSwitch ? TYPES.daily.pick : TYPES[type].label} {initial ? "고치기" : "기록"}</div>
         {onBack && <button type="button" className="btn-ghost small" onClick={onBack}>{initial || prefill?.data ? "취소" : "← 종류"}</button>}

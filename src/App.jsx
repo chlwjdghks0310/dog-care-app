@@ -348,6 +348,9 @@ export default function App() {
       // 초대 코드로 막 연결한 강아지가 있으면 그 강아지(setActiveDogId)를 먼저 보여 준다
       setDog((cur) => list.find((d) => d.id === getActiveDogId()) || list.find((d) => d.id === cur?.id) || list[0]);
       setRoute("app");
+      // 적는 중(기록 폼·글자 입력 중·시트 열림)이면 새로 그리지 않는다 — 탭을 바꾸면 어차피 pageKey effect가 새로 그린다
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
+      if (typing || document.querySelector("[data-editing], .es-sheet")) return;
       setPageVersion((v) => v + 1);
     };
     window.addEventListener("dogcare-synced", onSynced);
