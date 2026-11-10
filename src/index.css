@@ -1521,7 +1521,6 @@ button.seg, button.chip { min-height: 36px; }
 :root[data-theme="dark"] .vet-show { color-scheme: light; --text: #1f2a37; --text-soft: #4a5a6b; --text-faint: #5f6b78; --accent: #4b90e2; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #e4ebf3; --surface: #ffffff; --bg: #ffffff; --danger: #b04a3a; --warning: #8a5a00; color: var(--text); }
 
 /* 오늘 탭 칩 한 줄(11/9 6→4): 왼쪽 오늘 할 일, 오른쪽 외출. 44px 한 줄로 두 카드를 대신한다 */
-.home-chips { display: flex; gap: 8px; margin-top: 10px; flex-shrink: 0; }
 .home-chip { flex: 1; min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; box-shadow: var(--shadow); }
 .home-chip.on { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-strong); }
 .home-chip span[aria-hidden] { color: var(--text-soft); font-weight: 400; }
@@ -1555,8 +1554,8 @@ button.seg, button.chip { min-height: 36px; }
 .es-title { font-size: 17px; }
 /* 강아지가 말하는 글(말풍선) 글꼴은 --font-bubble 한 곳에서(11/10: 개구체 → 주아체 → 동글체, 사용자 결정) */
 .summary-open, .dc-q b, .onb-speech { font-family: var(--font-bubble); font-weight: 400; }
-.summary-open { font-size: 28px; line-height: 1.1; }
-.dc-q b { font-size: 27px; }
+.summary-open { font-size: 24px; line-height: 1.1; }
+.dc-q b { font-size: 23px; }
 .summary-open .summary-role { font-family: "Apple SD Gothic Neo", "Pretendard", sans-serif; }
 /* 1) 고유 표식 = 발도장(살구): 완료·띠·달력·빈 화면·모션에 같은 모양 */
 .paw-mark { color: var(--warm); display: inline-flex; vertical-align: -0.15em; }
@@ -1628,21 +1627,24 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
    동그라미를 겹친 모양("도형 붙여넣기") 대신 한 획으로 이어진 선이라 그림처럼 보인다. filter 없음(iOS가 잘라 버림) */
 :root { --font-bubble: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; --cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cpath%20d%3D%22M60%2024%20C70%200%20120%200%20130%2024%20C138%206%20172%206%20180%2024%20C192%200%20244%2014%20216%2060%20C240%2070%20240%20120%20216%20130%20C234%20138%20234%20172%20216%20180%20C240%20194%20226%20240%20180%20216%20C172%20234%20138%20234%20130%20216%20C120%20240%2070%20240%2060%20216%20C14%20240%200%20194%2024%20180%20C6%20172%206%20138%2024%20130%20C0%20120%200%2070%2024%2060%20C0%2014%2048%200%2060%2024%20Z%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23b8ad9f%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"); }
 :root[data-theme="dark"] { --cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cpath%20d%3D%22M60%2024%20C70%200%20120%200%20130%2024%20C138%206%20172%206%20180%2024%20C192%200%20244%2014%20216%2060%20C240%2070%20240%20120%20216%20130%20C234%20138%20234%20172%20216%20180%20C240%20194%20226%20240%20180%20216%20C172%20234%20138%20234%20130%20216%20C120%20240%2070%20240%2060%20216%20C14%20240%200%20194%2024%20180%20C6%20172%206%20138%2024%20130%20C0%20120%200%2070%2024%2060%20C0%2014%2048%200%2060%2024%20Z%22%20fill%3D%22%23222229%22%20stroke%3D%22%236b6f7a%22%20stroke-width%3D%222.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E"); }
-.sb { position: relative; max-width: 358px; margin: 8px auto 0; }
-.sb-body { position: relative; border: 34px solid transparent; border-image: var(--cloud) 60 fill / 34px / 8px round; padding: 0 2px; font-size: 16px; font-weight: 700; line-height: 1.5; text-align: center; white-space: pre-line; }
+.sb { position: relative; max-width: 334px; margin: 6px auto 0; }
+.sb-body { position: relative; border: 28px solid transparent; border-image: var(--cloud) 60 fill / 28px / 6px round; padding: 0 2px; font-size: 16px; font-weight: 700; line-height: 1.5; text-align: center; white-space: pre-line; }
 .sb-puff { position: absolute; border-radius: 50%; background: var(--surface); border: 1.8px solid #b8ad9f; }
 :root[data-theme="dark"] .sb-puff { border-color: #6b6f7a; }
-.sb-puff1 { width: 20px; height: 20px; left: 44%; bottom: -12px; }
-.sb-puff2 { width: 11px; height: 11px; left: 40%; bottom: -28px; }
+.sb-puff1 { width: 16px; height: 16px; left: 44%; bottom: -8px; }
+.sb-puff2 { width: 9px; height: 9px; left: 40%; bottom: -21px; }
 /* 동글체는 같은 px에서 작게 보여 말풍선 안 글씨만 3~5px 키움 */
 .sb .summary-line, .sb .summary-more, .sb .first-step, .sb .link-btn, .sb .dc-usual, .sb .dc-diff, .sb .summary-go, .sb .btn-primary, .sb .btn-ghost { font-family: var(--font-bubble); font-weight: 400; }
-.sb .summary-line { font-size: 22px; line-height: 1.25; }
-.sb .summary-more { font-size: 19px; }
-.sb .first-step { font-size: 21px; border-radius: 999px; }
-.sb .dc-usual, .sb .dc-diff, .sb .btn-primary, .sb .btn-ghost, .sb .summary-go { border-radius: 999px; font-size: 21px; padding-left: 10px; padding-right: 10px; }
-.sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 21px; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 */
-.sb .summary-go { padding: 6px 16px; }
-.sb .link-btn { font-size: 20px; }
+.sb .summary-line { font-size: 19px; line-height: 1.25; }
+.sb .summary-more { font-size: 17px; }
+.sb .first-step { font-size: 19px; border-radius: 999px; }
+.sb .dc-usual, .sb .dc-diff, .sb .btn-primary, .sb .btn-ghost, .sb .summary-go { border-radius: 999px; font-size: 19px; padding-left: 10px; padding-right: 10px; }
+.sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 19px; min-height: 44px; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 */
+.sb .summary-go { padding: 5px 12px; margin-top: 0; min-height: 36px; font-size: 17px; border: 1px solid var(--accent-soft); box-shadow: none; } /* 이제 button이라 기본 버튼 선·그림자를 뺀다 */
+/* 말풍선 아래 줄: 할 일 › + 다녀올게(11/11) */
+.sb-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 10px; }
+.sb .home-chip { flex: 0 1 auto; min-height: 36px; padding: 5px 12px; font-family: var(--font-bubble); font-weight: 400; font-size: 17px; box-shadow: none; }
+.sb .link-btn { font-size: 17px; }
 
 /* ── 베타 준비(11/10) ── 새 버전 한 줄(위쪽 4초) · 설정 맨 위 의견 보내기 줄 */
 .whats-new { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 140; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 999px; background: var(--text); color: var(--surface); font-size: 13.5px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }

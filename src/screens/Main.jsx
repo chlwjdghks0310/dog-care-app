@@ -34,7 +34,7 @@ import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 // 예시는 누르면 보내지 않고 입력칸에 채운다(예시를 눌렀다고 가짜 기록이 생기지 않게)
 // 한 문장에 여러 가지를 말해도 된다는 걸 보여 주는 예시(사용자 요청 11/7) — 실제 기록처럼 보이지 않게 누르면 입력칸에만 들어간다
 const RECORD_EXAMPLES = ["아침에 노란 토 한 번 하고 밥은 반만 먹었어", "저녁 산책 40분 했는데 변이 좀 물렀어", "오늘 병원에서 귀 진료 3만 5천 원, 2주 뒤에 다시 오래", "다음 주 토요일 오전 11시 미용 예약 넣어 줘", "몸무게 3.2kg 재고 간식 두 개 줬어"];
-const IDLE_HEIGHT = 290;
+const IDLE_HEIGHT = 360; // 11/11: 칩 두 줄을 말풍선으로 옮기고 강아지를 키움(290→360)
 const CORNER_SIZE = 76;
 // 기록 중 왼쪽 위 강아지: 노치/상태바(safe-area-inset-top) 바로 아래까지 올려 기록 칸을 넓게
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
@@ -286,6 +286,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           {dailyPending(dog.id) || dcOpen ? (
             <SpeechBubble key="check">
               <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && hopNow())} onSheetChange={setDcOpen} />
+              <HomeRow dog={dog} onOpen={onOpenToday} outing={!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
             </SpeechBubble>
           ) : notifyAskPending(dog.id) ? (
             <SpeechBubble key="notify">
@@ -302,11 +303,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
               />
             </SpeechBubble>
           ) : (
-            <button type="button" className="summary-bubble" onClick={onOpenToday} key="summary">
-              <SpeechBubble>
-                <TodaySummary dog={dog} />
-              </SpeechBubble>
-            </button>
+            <SpeechBubble key="summary">
+              <TodaySummary dog={dog} onOpen={onOpenToday} outing={<OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
+            </SpeechBubble>
           )}
         </div>
       )}
@@ -434,14 +433,6 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
 
       <div style={{ flex: isChat ? "0 0 auto" : 1 }} />
 
-      {/* 오늘 화면 6→4(11/9): 할 일 줄 + 외출 카드 → 칩 한 줄. 외출 칩은 첫 걸음을 마친 뒤에(처음 쓰는 사람 화면 줄이기) */}
-      {!isChat && (
-        <div className="home-chips">
-          <TasksChip dog={dog} onOpen={onOpenToday} />
-          {!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />}
-        </div>
-      )}
-
       {/* 예시 문장은 입력창을 누를 때만(11/9) — 채팅 중엔 읽는 동안만 접힘 */}
       <div className={`collapse-y${(isChat ? reading : !(typing || input)) ? " collapsed" : ""}`}><div>
         <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="이렇게 말해 보세요">
@@ -560,18 +551,21 @@ function GuideLink({ chapter, inline }) {
 }
 
 // 첫 화면 말풍선: 우리 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
-// 오늘 할 일로 가는 칩 — 늘 보인다(말풍선 요약에서는 할 일 줄을 뺐다, 11/9 중복 제거)
-function TasksChip({ dog, onOpen }) {
+// 말풍선 아래 줄(11/11): [오늘 할 일 n개 ›] + [다녀올게] — 강아지 밑에 있던 칩 두 개를 말풍선 안으로 옮기고 강아지를 키움(사용자 결정)
+function HomeRow({ dog, onOpen, outing }) {
   const t = getTodaySummary(dog);
   const left = t.tasksLeft.length;
   return (
-    <button type="button" className={`home-chip${left ? " on" : ""}`} onClick={onOpen}>
-      <Ico name="checklist" size={16} /> {left ? `오늘 할 일 ${left}개` : t.tasksTotal ? "할 일 다 했어요" : "오늘 할 일"} <span aria-hidden="true">›</span>
-    </button>
+    <span className="sb-row">
+      <button type="button" className="summary-go" onClick={onOpen}>
+        <Ico name="checklist" size={15} /> {left ? `오늘 할 일 ${left}개` : t.tasksTotal ? "할 일 다 했어요" : "오늘 할 일"} <span aria-hidden="true">›</span>
+      </button>
+      {outing}
+    </span>
   );
 }
 
-function TodaySummary({ dog }) {
+function TodaySummary({ dog, onOpen, outing }) {
   const t = getTodaySummary(dog);
   const together = togetherDays(dog);
   const lines = [...getSignals(dog).filter((s) => !(s.id === "med" && t.checkDoses)).map((s) => ["alert", "rose", s.text]) /* 약은 아래 '약 기록 확인' 줄과 겹치면 뺌 */, ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
@@ -598,8 +592,7 @@ function TodaySummary({ dog }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
-      {/* 누르면 오늘 할 일로 간다는 걸 보이게(사용자 요청 11/7) — 말풍선 전체가 버튼 */}
-      <span className="summary-go" aria-hidden="true"><Ico name="checklist" size={15} /> 오늘 할 일 보기 <span>›</span></span>
+      <HomeRow dog={dog} onOpen={onOpen} outing={outing} />
     </span>
   );
 }
