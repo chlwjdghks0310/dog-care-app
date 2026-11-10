@@ -37,8 +37,14 @@ function saveOuting(date, o, now) {
   writeJSON(OUTINGS_KEY, map);
 }
 export function getOuting(today = todayKey()) {
-  const o = getOutings()[today];
-  return o ? { date: today, ...o } : null;
+  const all = getOutings();
+  const o = all[today];
+  if (o) return { date: today, ...o };
+  // 11/11 점검 #13: 23:50에 나가 00:10에 들어오면 어제 외출이 열린 채 남고 [왔어]가 안 먹던 것 → 어제 미종료 외출은 16시간 안이면 지금 외출로 본다
+  const y = toDateKey(addDays(new Date(`${today}T00:00:00`), -1));
+  const yo = all[y];
+  if (yo && !yo.backAt && new Date() - new Date(`${y}T${yo.leftAt}:00`) < 16 * 3600e3) return { date: y, ...yo };
+  return null;
 }
 export const leaveNow = (now = new Date()) => saveOuting(toDateKey(now), { leftAt: hhmm(now), backAt: null }, now);
 export function backNow(now = new Date()) {

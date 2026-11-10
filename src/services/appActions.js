@@ -1,3 +1,4 @@
+import { localNow } from "./records";
 import { addExpense, deleteExpense, getCategories, getExpenses, setAllowance, updateExpense, findCategoryByName, isMedical, VET_ITEMS, saveFixedExpense, deleteFixedExpense, getFixedExpenses, applyFixedExpenses, addCategory, CATEGORY_CHOICES } from "./expenses";
 import { linkVetExpense } from "./vetVisits";
 import { saveFeedingSettings } from "./feedingSettings";
@@ -137,8 +138,9 @@ function run(dog, a) {
     }
     case "add_weight_record": {
       const kg = Number(a.weight_kg);
-      if (!(kg > 0 && kg < 150) || !isDate(a.date)) return null;
+      if (!(kg > 0 && kg < 120) || !isDate(a.date)) return null; // 폼(validateRecord)과 같은 범위
       const time = isTime(a.time) ? a.time : a.date === todayKey() ? new Date().toTimeString().slice(0, 5) : "12:00";
+      if (`${a.date}T${time}` > localNow()) return null; // 아직 오지 않은 시각(11/11 점검 #17)
       addWeightRecord(dog.id, { weightKg: kg, measuredAt: `${a.date}T${time}:00`, note: "채팅으로 기록" });
       syncDogWeight(dog);
       return `체중 관리: ${a.date} ${kg}kg`;

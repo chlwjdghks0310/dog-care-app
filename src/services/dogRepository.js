@@ -25,6 +25,20 @@ export function saveDog(dog) {
 export function deleteDog(dogId) {
   const dogs = getDogs().filter((d) => d.id !== dogId);
   writeJSON(DOGS_KEY, dogs);
+  // 11/11 점검 #5: 프로필만 지우고 기록·체중·약·하루 체크·사진 참조가 남던 것 → 이 강아지로 묶인 칸은 전부 지운다.
+  // 모양을 모르는 키도 안전하게: 객체면 dogId 칸만, 배열이면 dogId/petId가 같은 항목만 뺀다(사진 실제 파일은 photoStore가 참조 없는 것을 정리)
+  const skip = new Set([DOGS_KEY, "dogcare-active-dog-v1", "dogcare-theme-v1", "dogcare-color-v1", "dogcare-sync", "dogcare-onboarding", "dogcare-invite", "dogcare-notif-prefs-v1", "dogcare-ai-consent-v1"]);
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith("dogcare-") || skip.has(key)) continue;
+    const v = readJSON(key, undefined);
+    if (Array.isArray(v)) {
+      const next = v.filter((x) => !(x && typeof x === "object" && (x.dogId === dogId || x.petId === dogId)));
+      if (next.length !== v.length) writeJSON(key, next);
+    } else if (v && typeof v === "object" && Object.prototype.hasOwnProperty.call(v, dogId)) {
+      const { [dogId]: _, ...rest } = v;
+      writeJSON(key, rest);
+    }
+  }
 }
 
 const ACTIVE_DOG_KEY = "dogcare-active-dog-v1";

@@ -48,7 +48,7 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
         <div className="card" style={{ marginTop: 14 }}>
           <div className="h2">증상 기록</div>
           {r.symptoms.map((s, i) => (
-            <div key={i} className="wr-row"><span className="faint">{md(s.date)}</span><span>{s.kinds.join(", ")}</span></div>
+            <div key={i} className="wr-row"><span className="faint">{md(s.date)}</span><span>{(s.kinds || []).join(", ")}</span></div>
           ))}
           <p className="faint" style={{ marginTop: 6 }}>병원에 가게 되면 병원용 기록으로 한 장에 정리해 보여 줄 수 있어요.</p>
         </div>

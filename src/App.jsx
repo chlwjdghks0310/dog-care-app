@@ -42,6 +42,7 @@ import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow } from "./services/sync";
 import { isEditing } from "./services/beta";
 import WhatsNew from "./components/WhatsNew";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const PARENT_TAB = {
   home: "main", // 오늘 할 일(옛 체크리스트 탭)은 오늘 탭 안으로
@@ -156,6 +157,27 @@ export default function App() {
   const touchingRef = useRef(false);
   const settleTimerRef = useRef(null);
   const [pageVersion, setPageVersion] = useState(0);
+  // 11/11 점검 #3: 자정을 넘겨 돌아오면 어제 날짜로 동작하던 것 → 날짜가 바뀌면(적는 중이 아닐 때) 화면을 새로 그린다
+  const dayRef = useRef(todayKey());
+  useEffect(() => {
+    const check = () => {
+      if (todayKey() === dayRef.current || isEditing()) return;
+      dayRef.current = todayKey();
+      setPageVersion((v) => v + 1);
+    };
+    const id = setInterval(check, 60 * 1000);
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("pageshow", check);
+    return () => (clearInterval(id), document.removeEventListener("visibilitychange", check), window.removeEventListener("pageshow", check));
+  }, []);
+  // 11/11 점검 #4: 저장 실패(개인정보 모드·용량 초과)를 한 줄로 알린다
+  const [storageWarn, setStorageWarn] = useState(false);
+  useEffect(() => {
+    let t;
+    const on = () => (setStorageWarn(true), clearTimeout(t), (t = setTimeout(() => setStorageWarn(false), 6000)));
+    window.addEventListener("dogcare-storage-error", on);
+    return () => (clearTimeout(t), window.removeEventListener("dogcare-storage-error", on));
+  }, []);
 
   useEffect(() => {
     setPageVersion((v) => v + 1);
@@ -539,12 +561,13 @@ export default function App() {
       <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
         {TABS.map((t) => (
           <div key={t.key} data-tab={t.key} className={`pager-page${inSubScreen && t.key === pageKey ? " has-stack" : ""}`} aria-hidden={t.key !== pageKey}>
-            {pages[t.key]}
+            <ErrorBoundary>{pages[t.key]}</ErrorBoundary>
           </div>
         ))}
       </div>
       {/* 비서(채팅) 화면은 대화 스크롤과 겹치지 않게 빼고, 나머지 화면은 맨 위에서 당기면 새로고침 */}
       <WhatsNew />
+      {storageWarn && <div className="whats-new" role="alert" onClick={() => setStorageWarn(false)}><b>저장하지 못했어요</b> · 저장 공간이 부족하거나 개인정보 보호 모드예요. 설정 → 백업·로그인에서 백업해 두세요</div>}
       {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
       <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
       <BottomNav

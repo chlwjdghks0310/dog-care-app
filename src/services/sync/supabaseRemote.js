@@ -19,7 +19,7 @@ export function supabaseRemote(supabase) {
     async pull(petIds, since) {
       const rows = [];
       for (let from = 0; ; from += PAGE) {
-        let q = supabase.from("pet_items").select("pet_id,key,item,shape,value,deleted,updated_at").in("pet_id", petIds).order("updated_at").range(from, from + PAGE - 1);
+        let q = supabase.from("pet_items").select("pet_id,key,item,shape,value,deleted,updated_at").in("pet_id", petIds).order("updated_at").order("pet_id").order("key").order("item").range(from, from + PAGE - 1); // 같은 시각이 많아도 페이지 경계에서 빠지지 않게(11/11 점검 #7)
         if (since) q = q.gt("updated_at", since);
         const page = check(await q);
         rows.push(...page);

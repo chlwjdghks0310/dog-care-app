@@ -55,7 +55,7 @@ function Row({ label, value }) {
 // 로그인 중이면 삭제가 서버 백업(과 다른 폰)에도 반영된다는 걸 미리 알린다
 const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업된 기록과 다른 폰(같은 계정·가족 공유 중인 가족)에서도 사라져요." : "");
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
-const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => null) : null);
+const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => "unknown") : null); // unknown = 로그인했는데 확인 실패(오프라인 등)
 
 export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
@@ -132,7 +132,10 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   }
 
   async function handleDeleteCurrent() {
-    if ((await roleOf(dog.id)) === "family") {
+    const role = await roleOf(dog.id);
+    // 11/11 점검 #6: 가족 폰이 오프라인에서 지우면 다음 동기화 때 보호자 강아지까지 지워지던 것 → 역할을 모르면 멈춘다
+    if (role === "unknown") return window.alert("가족 공유 상태를 확인하지 못했어요. 인터넷에 연결된 뒤 다시 시도해 주세요.");
+    if (role === "family") {
       if (!window.confirm(`${josa(dog.name, "은", "는")} 가족이 공유한 강아지예요. 이 폰에서 빼고 가족 공유에서 나갈까요? 다른 가족의 기록은 그대로 남아요.`)) return;
       // 서버에서 먼저 빠진다 → 맞추기가 이 폰의 사본만 지우고, 화면은 dogcare-synced로 바뀐다
       return leavePet(dog.id).catch((err) => window.alert(err.message));

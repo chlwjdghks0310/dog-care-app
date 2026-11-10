@@ -97,7 +97,7 @@ if (vapidConfigured) {
   console.warn("[server] VAPID 키가 설정되지 않았어요. 푸시 알림 기능은 동작하지 않아요.");
 }
 
-const client = new Anthropic();
+const client = new Anthropic({ timeout: 90_000, maxRetries: 1 }); // 11/11: 응답이 늦으면 10분이 아니라 90초에 끊고 앱에 알린다
 // 안전 필터가 건강 질문을 잘못 거절하면, 서버가 Anthropic 권장 모델로 자동 재시도한다(fallbacks: "default").
 const CLAUDE_MODEL = { model: "claude-opus-5-5", betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
 const FAST_MODEL = { ...CLAUDE_MODEL, model: "claude-sonnet-5-5" }; // 채팅 빠른·수다 모드 — 답이 빨리 나오게
@@ -204,11 +204,12 @@ setInterval(() => {
   const today = kstDay();
   for (const k of dailyUse.keys()) if (!k.startsWith(today)) dailyUse.delete(k);
 }, 3600_000).unref();
-function overDailyLimit(req, bucket, who = visitorHash(req.get("x-mc-v")) || req.ip) {
-  const key = `${kstDay()}:${bucket}:${who}`;
-  const n = (dailyUse.get(key) || 0) + 1;
-  if (n > DAILY_LIMITS[bucket]) return true;
-  dailyUse.set(key, n);
+// 기기 번호(헤더)와 IP를 둘 다 센다 — 헤더를 바꿔 보내도 IP 쪽에서 막힌다(11/11 점검 #11). IP는 기기 한도의 3배(가족·같은 와이파이)
+function overDailyLimit(req, bucket, ip = req.ip) {
+  const vid = visitorHash(req.get ? req.get("x-mc-v") : req.headers?.["x-mc-v"]);
+  const keys = [...(vid ? [[`${kstDay()}:${bucket}:${vid}`, DAILY_LIMITS[bucket]]] : []), [`${kstDay()}:${bucket}:ip:${ip}`, DAILY_LIMITS[bucket] * (vid ? 3 : 1)]];
+  if (keys.some(([k, max]) => (dailyUse.get(k) || 0) + 1 > max)) return true;
+  for (const [k] of keys) dailyUse.set(k, (dailyUse.get(k) || 0) + 1);
   return false;
 }
 const LIMITED = { "/api/analyze-photo": "check", "/api/quick-stool": "check", "/api/analyze-behavior": "check", "/api/record": "record", "/api/transcribe": "voice", "/api/food-info": "food", "/api/food-label": "food", "/api/vet-doc": "vetdoc" };
@@ -1218,8 +1219,20 @@ async function verifiedPets(accessToken) {
 // 알림 종류·조용한 시간(앱 notifPrefs.js와 같은 규칙). 설정은 기기 알람 목록 안의 { prefs } 한 칸으로 온다(DB 칸을 늘리지 않으려고)
 const QUIET_OK = new Set(["med", "custom", "meal"]);
 const hm = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+// 기기가 보낸 알람 목록 정리(11/11 점검 #1): 모양이 이상한 항목 하나가 20초마다 서버를 죽이지 않게. 시각 HH:MM·글자 길이·개수만 본다
+const S = (v, n) => (typeof v === "string" && v.length <= n ? v : undefined);
+function sanitizeAlarms(list) {
+  const out = [];
+  for (const a of Array.isArray(list) ? list.slice(0, 300) : []) {
+    if (!a || typeof a !== "object") continue;
+    if (a.prefs && typeof a.prefs === "object") { out.push({ prefs: a.prefs }); continue; }
+    if (!/^\d\d:\d\d$/.test(String(a.time))) continue;
+    out.push({ time: a.time, title: S(a.title, 120) ?? "멍케어", body: S(a.body, 300) ?? "", url: S(a.url, 300), petId: S(a.petId, 64), cat: S(a.cat, 20), skipDate: S(a.skipDate, 10), onlyDate: S(a.onlyDate, 10), from: S(a.from, 10), until: S(a.until, 10), days: Array.isArray(a.days) ? a.days.filter((d) => Number.isInteger(d)).slice(0, 7) : undefined });
+  }
+  return out;
+}
 function allowedFor(prefs, a) {
-  if (!prefs || !a.cat) return true;
+  if (!prefs || !a.cat || typeof a.time !== "string") return true;
   if (prefs[a.cat] === false) return false;
   const q = prefs.quiet;
   if (!q?.on || QUIET_OK.has(a.cat) || !/^\d\d:\d\d$/.test(q.from || "") || !/^\d\d:\d\d$/.test(q.to || "")) return true;
@@ -1230,7 +1243,7 @@ function alarmsForDevice(device) {
   const prefs = device.alarms.find((a) => a.prefs)?.prefs;
   const own = device.pets?.size ? device.alarms.filter((a) => !device.pets.has(a.petId)) : device.alarms;
   const shared = device.pets?.size ? [...device.pets].flatMap((p) => petAlarms.get(p) || []) : [];
-  return [...own, ...shared].filter((a) => a.time && allowedFor(prefs, a));
+  return [...own, ...shared].filter((a) => typeof a?.time === "string" && allowedFor(prefs, a));
 }
 
 app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res) => {
@@ -1242,13 +1255,15 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
       return res.status(400).json({ error: "invalid JSON" });
     }
   }
-  const { subscription, alarms, timeZone, accessToken, petIds } = body;
-  if (!subscription?.endpoint) {
+  if (tooMany(req)) return res.status(429).json({ error: "too many" });
+  const { subscription, timeZone, accessToken, petIds } = body;
+  const alarms = Array.isArray(body.alarms) ? sanitizeAlarms(body.alarms) : undefined;
+  if (typeof subscription?.endpoint !== "string" || !/^https:\/\//.test(subscription.endpoint) || subscription.endpoint.length > 2048) {
     return res.status(400).json({ error: "subscription is required" });
   }
   await pushReady; // 막 켜진 서버면 저장된 목록을 먼저 불러온 뒤 합친다
   const prev = pushDevices.get(subscription.endpoint);
-  const list = Array.isArray(alarms) ? alarms : prev?.alarms || [];
+  const list = alarms || prev?.alarms || [];
   // ponytail: 가족 확인은 기기가 알람을 보낼 때(앱 열기·닫기)만 — 내보낸 가족 기기는 그 기기가 다시 보낼 때까지 알람을 받을 수 있다. 정확히 하려면 구독을 DB로 옮겨 서버가 직접 확인
   const pets = (await verifiedPets(accessToken)) ?? prev?.pets ?? null;
   // 확인된 강아지의 알람만 공유 목록으로 받는다(가족 아닌 강아지 목록을 덮어쓰지 못하게)
@@ -1265,7 +1280,7 @@ app.post("/api/push/subscribe", express.text({ limit: "1mb" }), async (req, res)
     subscription,
     alarms: list,
     pets,
-    timeZone: timeZone || prev?.timeZone || "Asia/Seoul",
+    timeZone: S(timeZone, 64) || prev?.timeZone || "Asia/Seoul",
     sentDate: prev?.sentDate,
     sent: prev?.sent || new Set(),
   });
@@ -1292,8 +1307,9 @@ async function sendPush(device, title, body, url) {
 // 요청한 기기에만 즉시 테스트 알림을 보낸다.
 app.post("/api/push/test", async (req, res) => {
   if (!vapidConfigured) return res.status(503).json({ error: "푸시 알림이 아직 설정되지 않았어요." });
+  if (tooMany(req)) return res.status(429).json({ error: "too many" });
   const subscription = req.body?.subscription;
-  if (!subscription?.endpoint) return res.status(400).json({ error: "구독된 기기가 없어요. 먼저 알림을 켜주세요." });
+  if (typeof subscription?.endpoint !== "string" || !/^https:\/\//.test(subscription.endpoint)) return res.status(400).json({ error: "구독된 기기가 없어요. 먼저 알림을 켜주세요." });
   const ok = await sendPush({ subscription }, "🐾 멍케어 테스트 알림", "브라우저가 꺼져 있어도 이 알림이 보이면 성공이에요!");
   res.json({ sent: ok ? 1 : 0, total: 1 });
 });
@@ -1312,7 +1328,7 @@ function localNow(timeZone) {
 // Render 무료 서버는 15분간 요청이 없으면 잠들어 이 타이머도 멈춘다 — Supabase cron이 1분마다 /api/push/tick을 불러 깨워 둔다.
 function checkPushAlarms() {
   if (!vapidConfigured) return;
-  for (const device of pushDevices.values()) {
+  for (const device of pushDevices.values()) try {
     let changed = false;
     let now;
     try {
@@ -1338,6 +1354,8 @@ function checkPushAlarms() {
       }
     }
     if (changed) saveDevice(device);
+  } catch (e) {
+    console.error("[server] alarm check:", e.message); // 기기 하나가 이상해도 나머지는 계속
   }
 }
 pushReady.then(() => setInterval(checkPushAlarms, 20 * 1000));

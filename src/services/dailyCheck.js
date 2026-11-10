@@ -92,15 +92,16 @@ export function saveDiff(dogId, date, picks) {
   for (const id of Object.keys(ids)) {
     if (!option(id, picks[id])?.rec) (deleteRecord(dogId, ids[id]), delete ids[id]);
   }
+  for (const [id, label] of entries) if (option(id, label).rec) ids[id] ||= newRecordId();
+  // 하루 상태를 먼저 적고 기록을 쓴다 — 중간에 저장이 실패해도 recIds가 남아 [다시 고르기]로 지울 수 있게(11/11 점검 #16)
+  setDay(dogId, date, { status: "diff", picks: Object.fromEntries(entries), recIds: ids });
   for (const [id, label] of entries) {
     const o = option(id, label);
     if (!o.rec) continue;
     const [type, data] = o.rec;
     const item = ITEMS.find((i) => i.id === id);
-    ids[id] ||= newRecordId();
     saveRecord(dogId, { id: ids[id], type, at, data, memo: `하루 체크: ${item.label} ${label}`, photos: [] });
   }
-  setDay(dogId, date, { status: "diff", picks: Object.fromEntries(entries), recIds: ids });
 }
 
 // 다시 고르기: 그날 체크와 체크로 만든 기록을 지운다

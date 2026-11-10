@@ -184,6 +184,14 @@ function TalkMock() {
 // 알림 허락은 첫 하루 체크 뒤 오늘 탭 말풍선에서 묻는다(NotifyAsk)
 // extras: 평소 모습·다니는 병원·다음 접종일(모두 건너뛰기 가능) — 첫 화면부터 '다가오는 병원'과 '평소'가 채워지게(제안 분석 11/7)
 const STEPS = ["name", "breed", "birthDate", "gender", "weight", "extras", "done"];
+// [다음]이 회색일 때 왜 안 되는지 한 줄(11/11 점검 #9: 이유 없이 죽은 버튼)
+const ONB_HINT = (key, form, breedQuery) =>
+  ({
+    breed: breedQuery.trim() && !form.breed ? "아래 칩을 눌러 견종을 정해 주세요" : "",
+    birthDate: form.birthDate && form.birthDate > todayKey() ? "생일은 오늘까지만 고를 수 있어요" : "",
+    weight: form.weight && !(Number(form.weight) > 0 && Number(form.weight) < 120) ? "체중은 0.1~120kg 사이로 적어 주세요" : "",
+    extras: form.nextVaccine && form.nextVaccine < todayKey() ? "다음 접종일은 오늘 이후 날짜로 골라 주세요" : "",
+  })[key] || "";
 const QUESTION_STEPS = 6; // 진행 막대에 보이는 질문 수(name~extras)
 
 function Setup({ onRegistered, restore }) {
@@ -434,9 +442,12 @@ function Setup({ onRegistered, restore }) {
                 {busy ? "확인하는 중…" : "가족 강아지와 연결하기"}
               </button>
             ) : (
-              <button type="button" className="btn-primary" disabled={!valid} onClick={next}>
-                다음
-              </button>
+              <>
+                <button type="button" className="btn-primary" disabled={!valid} onClick={next}>
+                  다음
+                </button>
+                {!valid && ONB_HINT(key, form, breedQuery) && <p className="subtle" style={{ margin: "8px 0 0", textAlign: "center" }}>{ONB_HINT(key, form, breedQuery)}</p>}
+              </>
             )}
             {key === "extras" && !(form.usual || form.hospital || form.nextVaccine) && (
               <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={next}>

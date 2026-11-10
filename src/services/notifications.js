@@ -77,7 +77,12 @@ function readNotifiedSet(dateKey) {
 function markNotified(dateKey, itemId, time) {
   const set = readNotifiedSet(dateKey);
   set.push(`${itemId}-${time}`);
-  localStorage.setItem(`${NOTIFIED_KEY_PREFIX}${dateKey}`, JSON.stringify(set));
+  try {
+    localStorage.setItem(`${NOTIFIED_KEY_PREFIX}${dateKey}`, JSON.stringify(set));
+    for (const k of Object.keys(localStorage)) if (k.startsWith(NOTIFIED_KEY_PREFIX) && k !== `${NOTIFIED_KEY_PREFIX}${dateKey}`) localStorage.removeItem(k); // 날마다 쌓이던 키 정리(11/11)
+  } catch {
+    /* 저장 공간 문제 — 알림 중복 표시만 생길 수 있음 */
+  }
 }
 
 // 안드로이드는 진동 패턴을 따른다. 아이폰은 웹에서 진동을 직접 못 켜고, 아이폰 설정(소리 및 햅틱)대로 울린다.
@@ -88,7 +93,7 @@ async function fireNotification(title, body, url) {
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
   if (registration) {
-    registration.showNotification(title, { body, icon: "/icon-192.png?v=6", vibrate: VIBRATE, silent: false, data: { url } });
+    registration.showNotification(title, { body, icon: "/icon-192.png?v=6", vibrate: VIBRATE, silent: false, data: { url } }).catch(() => {});
   } else {
     new Notification(title, { body });
   }

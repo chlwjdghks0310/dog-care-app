@@ -87,7 +87,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   add(
     "symptoms",
     `증상 기록 (${periodLabel})`,
-    recs.filter((r) => r.type === "symptom").map((r) => `${mdKey(r.at.slice(0, 10))} ${r.at.slice(11, 16)} ${r.data.kinds.join(", ")}${r.data.repeat ? ` (${r.data.repeat})` : ""}${r.data.since ? ` · ${mdKey(r.data.since)}부터` : ""}${r.data.observed ? ` — ${r.data.observed}` : ""}${r.memo ? ` · 메모: ${r.memo}` : ""}`)
+    recs.filter((r) => r.type === "symptom").map((r) => `${mdKey(r.at.slice(0, 10))} ${r.at.slice(11, 16)} ${(r.data.kinds || []).join(", ")}${r.data.repeat ? ` (${r.data.repeat})` : ""}${r.data.since ? ` · ${mdKey(r.data.since)}부터` : ""}${r.data.observed ? ` — ${r.data.observed}` : ""}${r.memo ? ` · 메모: ${r.memo}` : ""}`)
   );
   const observeLines = [];
   const daily = periodSummary(dog.id, from, today); // "평소엔 어땠어요?"에 바로 답하는 한 줄
@@ -150,7 +150,7 @@ export function buildVetSummary(dog, note, today = todayKey()) {
     const base = [...weights].reverse().find((r) => r.measuredAt.slice(0, 10) <= from) || inPeriod[0];
     if (base && base !== latest) {
       const diff = latest.weightKg - base.weightKg;
-      weightLines.push(`변화: ${md(base.measuredAt.slice(0, 10))} ${base.weightKg}kg → ${latest.weightKg}kg (${diff >= 0 ? "+" : ""}${Math.round(diff * 100) / 100}kg, ${diff >= 0 ? "+" : ""}${Math.round((diff / base.weightKg) * 1000) / 10}%)`);
+      weightLines.push(`변화: ${md(base.measuredAt.slice(0, 10))} ${Math.round(base.weightKg * 100) / 100}kg → ${Math.round(latest.weightKg * 100) / 100}kg (${diff >= 0 ? "+" : ""}${Math.round(diff * 100) / 100}kg, ${diff >= 0 ? "+" : ""}${Math.round((diff / base.weightKg) * 1000) / 10}%)`);
     }
     if (inPeriod.length > 1) weightLines.push(`${periodLabel} 기록: ${inPeriod.slice(-8).map((r) => `${md(r.measuredAt.slice(0, 10))} ${r.weightKg}`).join(", ")}`);
   } else if (dog.weight) {

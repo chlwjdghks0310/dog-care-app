@@ -195,7 +195,7 @@ export function summarize(rec) {
       parts.push(`${d.name} ${d.dose} ${d.status === "done" ? `먹임(${d.doneAt?.slice(11, 16)})` : "건너뜀"}`, `예정 ${d.time}`);
       break;
     case "symptom":
-      parts.push(d.kinds.join(", "), d.repeat && d.repeat !== "처음" ? d.repeat : "", d.since ? `${md(d.since)}부터` : "", d.observed);
+      parts.push((d.kinds || []).join(", "), d.repeat && d.repeat !== "처음" ? d.repeat : "", d.since ? `${md(d.since)}부터` : "", d.observed);
       break;
     case "meal":
       if (d.kind && MEAL_KIND[d.kind]) parts.push(`${MEAL_KIND[d.kind].label} ${Number(d.amount) > 0 ? `${Number(d.amount).toLocaleString("ko-KR")}${MEAL_KIND[d.kind].unit}` : ""}`.trim(), d.kind === "water" ? d.water && `마신 느낌 ${d.water}` : d.appetite && `식욕 ${d.appetite}`, d.food, d.treats && `간식 ${d.treats}`);
@@ -257,7 +257,7 @@ export function getTimeline(dogId) {
 }
 
 // 검색 대상: 종류 이름 + 요약 + 모든 입력 칸(검사 결과·수의사 설명처럼 요약에 안 나오는 칸까지)
-const searchText = (r) => `${TYPES[r.type].label} ${summarize(r)} ${Object.values(r.data || {}).flat().join(" ")}`.toLowerCase();
+const searchText = (r) => `${(TYPES[r.type] || TYPES.daily).label} ${summarize(r)} ${Object.values(r.data || {}).flat().join(" ")}`.toLowerCase();
 
 // 필터: types(빈 배열=전체), days(0=전체), q(키워드), order("new"|"old") — 조건은 모두 AND로 묶는다.
 // 프로필 건강 수치 칸에서 적은 먹은 양·산책은 종류가 "vital"이지만, 식사·산책 기록으로도 보이게 묶는다(같은 걸 두 번 적지 않게)

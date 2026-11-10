@@ -89,7 +89,7 @@ export function buildAppSnapshot(dog) {
   const recs = all30.filter((r) => r.type !== "vital").slice(0, 25);
   if (recs.length) {
     lines.push("", "[보호자 기록 - 최근 30일, 보호자가 관찰해 적은 것]");
-    for (const r of recs) lines.push(`- ${r.at.replace("T", " ")} ${TYPES[r.type].label}: ${summarize(r)} [id:${r.id}]`);
+    for (const r of recs) lines.push(`- ${r.at.replace("T", " ")} ${(TYPES[r.type] || TYPES.daily).label}: ${summarize(r)} [id:${r.id}]`);
   }
   // 건강 수치 — 최근 14일, 최대 40건. 참고 범위 밖이면 표시(판정 아님)
   const vitals = filterTimeline(all30.filter((r) => r.type === "vital"), { days: 14 }).slice(0, 40);

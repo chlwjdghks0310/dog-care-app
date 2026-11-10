@@ -104,7 +104,7 @@ function Trends({ dog, items, onAdd, onPick }) {
   const prev = weights.at(-2);
   const symptoms = inPeriod.filter((r) => r.type === "symptom");
   const kindCount = {};
-  for (const s of symptoms) for (const k of s.data.kinds) (kindCount[k] ||= []).push(md(s.at.slice(0, 10)));
+  for (const s of symptoms) for (const k of s.data?.kinds || []) (kindCount[k] ||= []).push(md(s.at.slice(0, 10)));
   const observed = inPeriod.filter((r) => r.source === "record").length;
 
   return (
@@ -122,8 +122,8 @@ function Trends({ dog, items, onAdd, onPick }) {
         ) : (
           <>
             <p className="subtle" style={{ marginTop: 0 }}>
-              최근 {latest.weightKg}kg ({md(latest.measuredAt.slice(0, 10))})
-              {prev ? ` · 이전 ${prev.weightKg}kg (${md(prev.measuredAt.slice(0, 10))}) 대비 ${fmtDiff(latest.weightKg - prev.weightKg)}kg` : " · 비교할 이전 측정값이 없어요"}
+              최근 {Math.round(latest.weightKg * 100) / 100}kg ({md(latest.measuredAt.slice(0, 10))})
+              {prev ? ` · 이전 ${Math.round(prev.weightKg * 100) / 100}kg (${md(prev.measuredAt.slice(0, 10))}) 대비 ${fmtDiff(latest.weightKg - prev.weightKg)}kg` : " · 비교할 이전 측정값이 없어요"}
             </p>
             {periodWeights.length > 0 ? (
               <WeightChart key={days} records={periodWeights} />

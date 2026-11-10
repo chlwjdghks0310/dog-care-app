@@ -128,7 +128,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
             ))}
             {selRecords.map((r) => (
               <div key={`${r.source}-${r.id}`} className="rc-rec">
-                <Ico name={(r.type === "vital" && VITAL[r.data?.metric]?.ico) || TYPES[r.type].ico} size={15} className={`cat-ico tone-${(r.type === "vital" && VITAL[r.data?.metric]?.tone) || TYPES[r.type].tone}`} />
+                <Ico name={(r.type === "vital" && VITAL[r.data?.metric]?.ico) || (TYPES[r.type] || TYPES.daily).ico} size={15} className={`cat-ico tone-${(r.type === "vital" && VITAL[r.data?.metric]?.tone) || (TYPES[r.type] || TYPES.daily).tone}`} />
                 <span className="faint">{r.at.slice(11, 16)}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>{summarize(r)}</span>
               </div>
