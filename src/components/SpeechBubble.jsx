@@ -1,14 +1,12 @@
-// 강아지가 직접 말하는 듯한 문구를 담는 말풍선 — 손그림 느낌(11/10 사용자 요청): 네 귀가 조금씩 다른 둥근 모서리, 잉크색 선 두 겹,
-// 종이 오려 붙인 듯한 그림자, 꼬리는 손으로 그린 곡선(SVG). 안의 버튼·글도 .sb 아래 CSS에서 같은 느낌으로 맞춘다(index.css "손그림 말풍선").
+// 오늘 화면 말풍선(11/10 구름 모양): 뒤에 깔린 .sb-cloud가 둥근 몸통+가장자리 동그라미 묶음을 그리고,
+// filter drop-shadow로 그 묶음 바깥에만 잉크 선을 두른다(안쪽 글·버튼엔 선이 안 생기게 층을 나눔). 꼬리는 생각 풍선처럼 동그라미 두 개.
 export default function SpeechBubble({ children, className = "rise-in" }) {
   return (
     <div className={`sb ${className}`}>
+      <div className="sb-cloud" aria-hidden="true" />
       <div className="sb-body">{children}</div>
-      <svg className="sb-tail" viewBox="0 0 32 20" width="32" height="20" aria-hidden="true">
-        {/* 몸통 테두리를 덮는 채움 → 양옆 선만 따로 그려 손선처럼 */}
-        <path d="M3 0 H30 V2.5 C 23 6.5, 18 12.5, 14.5 19 C 12 13.5, 9 8.5, 3 2.5 Z" fill="var(--surface)" />
-        <path d="M30 2 C 23 6.5, 18 12.5, 14.5 19 C 12 13.5, 9 8.5, 3 2" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <span className="sb-puff sb-puff1" aria-hidden="true" />
+      <span className="sb-puff sb-puff2" aria-hidden="true" />
     </div>
   );
 }
