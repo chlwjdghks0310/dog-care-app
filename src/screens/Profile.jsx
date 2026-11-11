@@ -37,6 +37,7 @@ import Contact from "./Contact";
 import Feedback from "./Feedback";
 import DogRegister from "./DogRegister";
 import { getSyncStatus, onSyncStatus } from "../services/sync";
+import { isTrackingOff, setTrackingOff } from "../services/analytics";
 import { supabase } from "../services/supabase";
 const StatsDashboard = lazy(() => import("../components/StatsDashboard"));
 import { leavePet, myRole } from "../services/sync/family";
@@ -68,6 +69,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   // 운영자(analytics_admins)면 설정 맨 위 묶음에 "이용 통계" 행을 보여 준다(11/11: 푸터 작은 글자로만 있어서 못 찾음)
   const [admin, setAdmin] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [trackOff, setTrackOff] = useState(isTrackingOff);
   useEffect(() => {
     const check = (st) => (st.user && supabase ? supabase.rpc("is_analytics_admin").then(({ data }) => setAdmin(data === true)).catch(() => setAdmin(false)) : setAdmin(false));
     check(getSyncStatus());
@@ -355,6 +357,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <SettingsRow ico="lock" title="백업·로그인" sub={accountSub} badge={!sync.user ? "권장" : ""} onClick={() => setSettingsSub("account")} />
               <SettingsRow ico="users" title="가족 공유" sub={sync.user ? `초대 코드로 ${dog.name} 기록 함께 보기` : "로그인한 뒤 쓸 수 있어요"} onClick={() => setSettingsSub("family")} />
               {admin && <SettingsRow ico="chart" title="이용 통계" sub="운영자만 보여요 · 유입·로그인·다시 온 사람·베타 의견" badge="운영자" onClick={() => setStatsOpen(true)} />}
+              {admin && <SettingsRow ico="eye" title="이 기기는 통계에서 빼기" sub="내가 열고 쓰는 건 사용자 수에 안 들어가요(기기마다 따로 켜야 해요)" right={<input type="checkbox" role="switch" className="switch" checked={trackOff} onChange={(e) => (setTrackingOff(e.target.checked), setTrackOff(e.target.checked))} aria-label="이 기기는 통계에서 빼기" />} />}
             </SettingsGroup>
             {statsOpen && (
               <Suspense fallback={null}>

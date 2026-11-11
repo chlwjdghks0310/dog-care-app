@@ -11,7 +11,10 @@ const SRC = "mc-src"; // 처음 들어온 경로(홈페이지에서 정해 둔 �
 const SEEN = "mc-app"; // 이 기기에서 앱을 연 적 있음
 const DAY = "mc-open-day";
 
-const off = () => typeof navigator === "undefined" || navigator.globalPrivacyControl === true || navigator.doNotTrack === "1";
+const OFF = "mc-off"; // 운영자 기기: 설정 → 이용 통계 행의 "내 사용은 빼기"(11/12)
+const off = () => typeof navigator === "undefined" || navigator.globalPrivacyControl === true || navigator.doNotTrack === "1" || ls.get(OFF) === "1";
+export const isTrackingOff = () => ls.get(OFF) === "1";
+export const setTrackingOff = (v) => ls.set(OFF, v ? "1" : "0");
 const ls = {
   get: (k) => {
     try {
