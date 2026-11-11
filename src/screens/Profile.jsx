@@ -360,17 +360,14 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
             </SettingsGroup>
             <SettingsGroup title="기록">
               <SettingsRow ico="clipboard" title="기록 내보내기" sub="병원용 한 장 · 엑셀 표 · 전체 백업 파일" onClick={() => setSettingsSub("export")} />
-              <SettingsRow ico="sparkles" title="AI 정보 전송" sub={hasAIConsent() ? "동의함 · Anthropic·Google로 전송" : "동의 안 함 · 처음 쓸 때 물어봐요"} onClick={() => setSettingsSub("ai")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어">
               <SettingsRow ico="pencil" title="의견 보내기" sub="사소한 것도 좋아요" badge="베타" onClick={() => setSettingsSub("feedback")} />
               <SettingsRow ico="book" title="도움말" onClick={() => setSettingsSub("help")} />
               <SettingsRow ico="mail" title="문의하기" sub="1시간 안에 답해요" onClick={() => setSettingsSub("contact")} />
-              {LINKS.map(([ico, label, sub, href]) => (
-                <SettingsRow key={href} ico={ico} title={label} sub={sub} href={href} />
-              ))}
             </SettingsGroup>
-            <FooterLinks />
+            <LinksSection />
+            <FooterLinks onAI={() => setSettingsSub("ai")} />
             <SettingsGroup title="삭제">
               <SettingsRow ico="trash" tone="danger" title="이 강아지 삭제" sub={`${dog.name} 기록이 이 폰에서 지워져요`} onClick={handleDeleteCurrent} />
               <SettingsRow ico="trash" tone="danger" title="전체 삭제" sub="모든 강아지를 지우고 다시 등록해요" onClick={handleDeleteAll} />
@@ -704,7 +701,26 @@ const LINKS = [
   ["users", "스레드", "@meongcare.app", "https://www.threads.com/@meongcare.app"],
 ];
 
-function FooterLinks() {
+// 멍케어 소식·자료 — 예전 모양 그대로(사용자 요청 11/11): 구분선 구역 + 아이콘 줄
+function LinksSection() {
+  return (
+    <div className="section">
+      <div className="h2">멍케어 소식·자료</div>
+      {LINKS.map(([ico, label, sub, href]) => (
+        <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: "1px solid var(--border)" }}>
+          <Ico name={ico} size={20} style={{ color: "var(--accent-strong)", flex: "none" }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontWeight: 600 }}>{label}</span>
+            <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{sub}</span>
+          </span>
+          <span className="subtle">›</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function FooterLinks({ onAI }) {
   const [doc, setDoc] = useState(null); // null | "terms" | "privacy" | "stats"
   // 운영자 계정(supabase analytics_admins)으로 로그인했을 때만 "이용 통계"가 보인다
   const [admin, setAdmin] = useState(false);
@@ -718,7 +734,9 @@ function FooterLinks() {
       <button type="button" className="link-btn" onClick={() => setDoc("terms")}>이용약관</button>
       {" · "}
       <button type="button" className="link-btn" onClick={() => setDoc("privacy")}>개인정보 처리방침</button>
-      {" · "}버전 {APP_VERSION}
+      {" · "}
+      <button type="button" className="link-btn" onClick={onAI}>AI 정보 전송{hasAIConsent() ? "(동의함)" : ""}</button>
+      <br />버전 {APP_VERSION}
       {admin && <>{" · "}<button type="button" className="link-btn" onClick={() => setDoc("stats")}>이용 통계</button></>}
       {doc === "stats" && (
         <Suspense fallback={null}>
