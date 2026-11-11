@@ -65,6 +65,14 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const sync = useSyncStatus();
+  // 운영자(analytics_admins)면 설정 맨 위 묶음에 "이용 통계" 행을 보여 준다(11/11: 푸터 작은 글자로만 있어서 못 찾음)
+  const [admin, setAdmin] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  useEffect(() => {
+    const check = (st) => (st.user && supabase ? supabase.rpc("is_analytics_admin").then(({ data }) => setAdmin(data === true)).catch(() => setAdmin(false)) : setAdmin(false));
+    check(getSyncStatus());
+    return onSyncStatus(check);
+  }, []);
   const accountSub = !sync.enabled ? "" : sync.user ? `${sync.user.user_metadata?.name || sync.user.user_metadata?.full_name || sync.user.email || "로그인됨"} · ${sync.syncing ? "백업 중…" : sync.lastSyncedAt ? `마지막 백업 ${new Date(sync.lastSyncedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}` : "곧 백업"}` : "로그인 안 함 · 기록이 이 폰에만 있어요";
   useEffect(() => {
     const on = () => (setSettingsSub(null), setSettingsOpen(true)); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
@@ -346,7 +354,13 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
             <SettingsGroup title="계정">
               <SettingsRow ico="lock" title="백업·로그인" sub={accountSub} badge={!sync.user ? "권장" : ""} onClick={() => setSettingsSub("account")} />
               <SettingsRow ico="users" title="가족 공유" sub={sync.user ? `초대 코드로 ${dog.name} 기록 함께 보기` : "로그인한 뒤 쓸 수 있어요"} onClick={() => setSettingsSub("family")} />
+              {admin && <SettingsRow ico="chart" title="이용 통계" sub="운영자만 보여요 · 유입·로그인·다시 온 사람·베타 의견" badge="운영자" onClick={() => setStatsOpen(true)} />}
             </SettingsGroup>
+            {statsOpen && (
+              <Suspense fallback={null}>
+                <StatsDashboard onClose={() => setStatsOpen(false)} />
+              </Suspense>
+            )}
             <SettingsGroup title="우리 강아지">
               {getDogs().map((d) => (
                 <SettingsRow key={d.id} ico={d.photo ? <img src={d.photo} alt="" /> : "dog"} title={d.name} sub={[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ") || "정보 없음"} right={d.id === dog.id ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} /> : null} onClick={() => d.id !== dog.id && onUpdateDog?.(d)} />
