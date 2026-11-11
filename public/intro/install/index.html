@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>멍케어 설치 방법 — 홈 화면에 추가 (아이폰·갤럭시)</title>
+  <meta name="description" content="멍케어를 홈 화면에 설치하는 방법을 그림으로 한 단계씩 보여 드려요. 아이폰 사파리 4단계, 갤럭시 크롬 3단계." />
+  <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
+  <link rel="apple-touch-icon" href="/icon-180.png?v=6" />
+  <meta name="theme-color" content="#eef5ff" />
+  <style>
+    :root { --bg: #eef5ff; --surface: #fff; --text: #1f2a37; --soft: #4a5a6b; --faint: #6b7785; --accent: #3676c6; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #dfe7f2; --warm: #ff5a36; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 24px; margin: 8px 0 6px; }
+    .lead { color: var(--soft); margin: 0 0 16px; font-size: 15px; }
+    .why { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .why b { display: block; margin-bottom: 4px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab { flex: 1; min-height: 48px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); font: inherit; font-size: 16px; font-weight: 800; color: var(--soft); cursor: pointer; }
+    .tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+    .panel[hidden] { display: none; }
+    .step { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
+    .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: #fff; font-weight: 900; align-items: center; justify-content: center; margin-right: 8px; }
+    .step h2 { font-size: 17px; margin: 0 0 4px; display: flex; align-items: center; }
+    .step p { margin: 0 0 10px 36px; color: var(--soft); font-size: 14px; }
+    .step img { display: block; width: 100%; max-width: 300px; margin: 0 auto; border-radius: 22px; }
+    .note { font-size: 13px; color: var(--faint); margin: 6px 0 0 36px; }
+    .cta { display: block; text-align: center; padding: 14px; border-radius: 16px; font-weight: 800; text-decoration: none; margin-top: 10px; }
+    .cta.app { background: var(--accent); color: #fff; }
+    .cta.chat { background: var(--surface); color: var(--accent-strong); border: 1.5px solid var(--border); }
+    .help { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
+    .help h3 { margin: 0 0 6px; font-size: 16px; }
+    .help p { margin: 0 0 10px; font-size: 14px; color: var(--soft); }
+    .faq { font-size: 14px; margin-top: 18px; }
+    .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; }
+    .faq summary { font-weight: 700; cursor: pointer; }
+    .faq p { margin: 8px 0 0; color: var(--soft); }
+    footer { text-align: center; font-size: 12.5px; color: var(--faint); margin-top: 28px; }
+    footer a { color: var(--accent-strong); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>멍케어 설치하기</h1>
+    <p class="lead">앱스토어가 아니라 <b>홈 화면에 추가</b>해서 써요. 1분이면 끝나요. 그림대로 한 번만 따라 해 주세요.</p>
+    <div class="why"><b>왜 홈 화면에 설치해야 하나요?</b>아이폰은 홈 화면에 설치한 앱에서만 알림이 오고, 사파리에서 그냥 쓰면 7일 동안 안 열었을 때 기록이 지워질 수 있어요. 설치한 앱은 지워지지 않아요.</div>
+
+    <div class="tabs" role="tablist" aria-label="휴대폰 종류">
+      <button type="button" class="tab" role="tab" id="tab-ios" aria-selected="true" aria-controls="panel-ios">아이폰</button>
+      <button type="button" class="tab" role="tab" id="tab-and" aria-selected="false" aria-controls="panel-and">갤럭시·안드로이드</button>
+    </div>
+
+    <section id="panel-ios" class="panel" role="tabpanel" aria-labelledby="tab-ios">
+      <p class="lead" style="font-size:14px">꼭 <b>사파리</b>로 열어 주세요. 카카오톡 안에서 열렸다면 오른쪽 아래 ··· → <b>다른 브라우저로 열기</b>.</p>
+      <article class="step"><h2><span class="n">1</span>주소창 오른쪽 ••• 누르기</h2><p>화면 아래 주소창 끝에 점 세 개가 있어요. (옛 아이폰은 아래 가운데 공유 버튼 <span aria-hidden="true">⤴</span>을 바로 누르면 2번을 건너뛰어요)</p><img src="/intro/img/install-ios-1.png?v=1" alt="사파리 주소창 오른쪽 점 세 개 버튼 위치" width="300" height="600" loading="lazy" /></article>
+      <article class="step"><h2><span class="n">2</span>공유 누르기</h2><p>메뉴에서 <b>공유</b>를 눌러요.</p><img src="/intro/img/install-ios-2.png?v=1" alt="메뉴에서 공유 항목" width="300" height="600" loading="lazy" /></article>
+      <article class="step"><h2><span class="n">3</span>아래로 내려 홈 화면에 추가</h2><p>공유 창의 목록을 아래로 내리면 <b>홈 화면에 추가</b>가 있어요.</p><img src="/intro/img/install-ios-3.png?v=1" alt="공유 창에서 홈 화면에 추가 항목" width="300" height="600" loading="lazy" /></article>
+      <article class="step"><h2><span class="n">4</span>'웹 앱으로 열기'는 켜진 채로, 오른쪽 위 추가</h2><p>이름은 '멍케어' 그대로 두고 <b>추가</b>를 눌러요.</p><img src="/intro/img/install-ios-4.png?v=1" alt="홈 화면에 추가 창에서 웹 앱으로 열기 켜짐과 추가 버튼" width="300" height="600" loading="lazy" /><p class="note">'웹 앱으로 열기'가 꺼져 있으면 켜 주세요. 꺼진 채로 추가하면 알림이 오지 않아요.</p></article>
+      <article class="step"><h2><span class="n">5</span>홈 화면의 멍케어 아이콘으로 열기</h2><p>이제부터는 사파리가 아니라 <b>이 아이콘</b>으로만 열어 주세요. 처음 열면 우리 아이 이름부터 물어봐요.</p><img src="/intro/img/install-ios-5.png?v=1" alt="홈 화면에 생긴 멍케어 아이콘" width="300" height="600" loading="lazy" /></article>
+    </section>
+
+    <section id="panel-and" class="panel" role="tabpanel" aria-labelledby="tab-and" hidden>
+      <p class="lead" style="font-size:14px"><b>크롬</b>으로 열어 주세요. 화면 아래에 <b>[설치]</b> 띠가 보이면 그걸 바로 눌러도 돼요.</p>
+      <article class="step"><h2><span class="n">1</span>오른쪽 위 ⋮ 누르기</h2><img src="/intro/img/install-and-1.png?v=1" alt="크롬 오른쪽 위 점 세 개 메뉴" width="300" height="600" loading="lazy" /></article>
+      <article class="step"><h2><span class="n">2</span>홈 화면에 추가 (또는 앱 설치)</h2><p>기기에 따라 이름이 '앱 설치'·'홈 화면에 추가'·'설치 및 바로가기 만들기'로 달라요. 셋 다 같은 거예요.</p><img src="/intro/img/install-and-2.png?v=1" alt="크롬 메뉴의 홈 화면에 추가 항목" width="300" height="600" loading="lazy" /></article>
+      <article class="step"><h2><span class="n">3</span>설치 누르기</h2><p>홈 화면에 멍케어 아이콘이 생겨요. 이제 그 아이콘으로 열어 주세요.</p><img src="/intro/img/install-and-3.png?v=1" alt="앱 설치 확인 창의 설치 버튼" width="300" height="600" loading="lazy" /><p class="note">삼성 인터넷을 쓰면: 아래 메뉴(≡) → 현재 페이지 추가 → 홈 화면 → 추가.</p></article>
+    </section>
+
+    <a class="cta app" href="/?app&from=install">멍케어 열기 →</a>
+    <a class="cta chat" href="https://open.kakao.com/o/g4T7VAWi" target="_blank" rel="noopener">설치가 어렵거나 함께 테스트해 주실 분은 오픈채팅으로</a>
+
+    <div class="help">
+      <h3>막혔을 때</h3>
+      <p>화면을 캡처해서 오픈채팅에 올려 주시면 바로 도와드려요. 이미 앱을 쓰고 계시면 설정(☰) → 의견 보내기로도 돼요.</p>
+    </div>
+
+    <div class="faq">
+      <details><summary>'홈 화면에 추가'가 안 보여요</summary><p>카카오톡·인스타그램 안에서 열면 안 보여요. ··· 메뉴에서 '다른 브라우저로 열기'(또는 '외부 브라우저에서 열기')를 누른 뒤 다시 해 주세요.</p></details>
+      <details><summary>사파리에서 적은 기록이 설치한 앱에 없어요</summary><p>아이폰은 사파리와 홈 화면 앱의 저장 공간이 따로예요. 그래서 처음부터 홈 화면 앱에서 시작하는 걸 권해요.</p></details>
+      <details><summary>로그인해야 하나요?</summary><p>아니요. 바로 써요. 로그인은 나중에 설정 → 백업·로그인에서 하면 되고, 하면 폰을 바꿔도 기록이 남아요.</p></details>
+    </div>
+
+    <footer><a href="/intro/?from=install">멍케어 소개</a> · <a href="/intro/guide/?from=install">사용 설명서</a> · <a href="/?privacy">개인정보 처리방침</a></footer>
+  </main>
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.tab');
+      var isAndroid = /Android/.test(navigator.userAgent);
+      function pick(id) {
+        tabs.forEach(function (t) { var on = t.id === id; t.setAttribute('aria-selected', on ? 'true' : 'false'); document.getElementById(t.getAttribute('aria-controls')).hidden = !on; });
+      }
+      tabs.forEach(function (t) { t.addEventListener('click', function () { pick(t.id); }); });
+      if (isAndroid) pick('tab-and');
+    })();
+  </script>
+</body>
+</html>

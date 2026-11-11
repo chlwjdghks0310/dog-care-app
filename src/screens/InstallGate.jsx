@@ -165,7 +165,7 @@ export default function InstallGate() {
           ))}
         </div>
       </div>
-      <p className="faint ig-foot">설치한 뒤 홈 화면 아이콘으로 열면 이 안내 없이 바로 시작돼요.<br />막히면 <a href="mailto:meongcare.app@gmail.com?subject=%5B멍케어%5D%20설치가%20안%20돼요" style={{ color: "inherit" }}>meongcare.app@gmail.com</a>으로 알려 주세요.</p>
+      <p className="faint ig-foot"><a href="/intro/install/?from=app" style={{ color: "var(--accent-strong)", fontWeight: 700 }}>그림으로 한 단계씩 보기 →</a><br />설치한 뒤 홈 화면 아이콘으로 열면 이 안내 없이 바로 시작돼요.<br />막히면 <a href="mailto:meongcare.app@gmail.com?subject=%5B멍케어%5D%20설치가%20안%20돼요" style={{ color: "inherit" }}>meongcare.app@gmail.com</a>으로 알려 주세요.</p>
     </div>
   );
 }
