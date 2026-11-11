@@ -1551,8 +1551,8 @@ button.seg, button.chip { min-height: 36px; }
 .es-title { font-size: 17px; }
 /* 강아지가 말하는 글(말풍선) 글꼴은 --font-bubble 한 곳에서(11/10: 개구체 → 주아체 → 동글체, 사용자 결정) */
 .summary-open, .dc-q b, .onb-speech { font-family: var(--font-bubble); font-weight: 400; }
-.summary-open { font-size: 24px; line-height: 1.1; }
-.dc-q b { font-size: 23px; }
+.summary-open { font-size: 26px; line-height: 1.1; }
+.dc-q b { font-size: 25px; }
 .summary-open .summary-role { font-family: "Apple SD Gothic Neo", "Pretendard", sans-serif; }
 /* 1) 고유 표식 = 발도장(살구): 완료·띠·달력·빈 화면·모션에 같은 모양 */
 .paw-mark { color: var(--warm); display: inline-flex; vertical-align: -0.15em; }
@@ -1632,16 +1632,16 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 .sb-puff2 { width: 9px; height: 9px; left: 40%; bottom: -21px; }
 /* 동글체는 같은 px에서 작게 보여 말풍선 안 글씨만 3~5px 키움 */
 .sb .summary-line, .sb .summary-more, .sb .first-step, .sb .link-btn, .sb .dc-usual, .sb .dc-diff, .sb .summary-go, .sb .btn-primary, .sb .btn-ghost { font-family: var(--font-bubble); font-weight: 400; }
-.sb .summary-line { font-size: 19px; line-height: 1.25; }
-.sb .summary-more { font-size: 17px; }
-.sb .first-step { font-size: 19px; border-radius: 999px; }
-.sb .dc-usual, .sb .dc-diff, .sb .btn-primary, .sb .btn-ghost, .sb .summary-go { border-radius: 999px; font-size: 19px; padding-left: 10px; padding-right: 10px; }
-.sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 19px; min-height: 44px; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 */
-.sb .summary-go { padding: 5px 12px; margin-top: 0; min-height: 36px; font-size: 17px; border: 1px solid var(--accent-soft); box-shadow: none; } /* 이제 button이라 기본 버튼 선·그림자를 뺀다 */
+.sb .summary-line { font-size: 21px; line-height: 1.25; }
+.sb .summary-more { font-size: 19px; }
+.sb .first-step { font-size: 21px; border-radius: 999px; }
+.sb .dc-usual, .sb .dc-diff, .sb .btn-primary, .sb .btn-ghost, .sb .summary-go { border-radius: 999px; font-size: 21px; padding-left: 10px; padding-right: 10px; }
+.sb .dc-btns .dc-usual, .sb .dc-btns .dc-diff { font-size: 21px; min-height: 46px; gap: 4px; white-space: nowrap; } /* "평소와 같아요"가 두 줄로 꺾이지 않게 */
+.sb .summary-go { padding: 5px 12px; margin-top: 0; min-height: 38px; font-size: 19px; border: 1px solid var(--accent-soft); box-shadow: none; } /* 이제 button이라 기본 버튼 선·그림자를 뺀다 */
 /* 말풍선 아래 줄: 할 일 › + 다녀올게(11/11) */
 .sb-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 10px; }
-.sb .home-chip { flex: 0 1 auto; min-height: 36px; padding: 5px 12px; font-family: var(--font-bubble); font-weight: 400; font-size: 17px; box-shadow: none; }
-.sb .link-btn { font-size: 17px; }
+.sb .home-chip { flex: 0 1 auto; min-height: 38px; padding: 5px 12px; font-family: var(--font-bubble); font-weight: 400; font-size: 19px; box-shadow: none; }
+.sb .link-btn { font-size: 19px; }
 
 /* ── 베타 준비(11/10) ── 새 버전 한 줄(위쪽 4초) · 설정 맨 위 의견 보내기 줄 */
 .whats-new { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 140; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 999px; background: var(--text); color: var(--surface); font-size: 13.5px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
