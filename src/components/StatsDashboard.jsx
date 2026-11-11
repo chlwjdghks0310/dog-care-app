@@ -16,10 +16,12 @@ const pct = (v, all) => (v == null ? "—" : `${n(v)}${n(all) ? ` (${Math.round(
 function retentionSummary(rows, today = new Date()) {
   const age = (d) => Math.floor((today - new Date(`${d}T00:00:00+09:00`)) / 86400000);
   const sum = (list, col) => list.reduce((t, r) => t + n(r[col]), 0);
-  const d7 = rows.filter((r) => age(r["처음 쓴 날"]) >= 8);
-  const d30 = rows.filter((r) => age(r["처음 쓴 날"]) >= 36 && r["28~35일 다시(명)"] != null);
-  const rate = (list, col) => (sum(list, "사용자(명)") ? `${Math.round((sum(list, col) / sum(list, "사용자(명)")) * 100)}% (${sum(list, "사용자(명)")}명 중)` : "아직 기간이 안 지남");
-  return { d7: rate(d7, "2~7일 안에 다시(명)"), d30: rate(d30, "28~35일 다시(명)") };
+  const mk = (list, col) => { const base = sum(list, "사용자(명)"); return { pct: base ? Math.round((sum(list, col) / base) * 100) : null, base }; };
+  return {
+    d7: mk(rows.filter((r) => age(r["처음 쓴 날"]) >= 8), "2~7일 안에 다시(명)"),
+    d30: mk(rows.filter((r) => age(r["처음 쓴 날"]) >= 36), "28~35일 다시(명)"),
+    check7: mk(rows.filter((r) => age(r["처음 쓴 날"]) >= 7), "첫 7일 하루 체크(명)"),
+  };
 }
 
 function toCSV(rows) {
@@ -46,6 +48,20 @@ function Tile({ label, value, sub }) {
     </div>
   );
 }
+
+// 목표 대비 타일: 목표 넘으면 초록, 못 미치면 주황, 기간이 안 지났으면 회색
+function Goal({ label, r, goal, note }) {
+  const ok = r.pct != null && r.pct >= goal;
+  const color = r.pct == null ? "var(--text-faint)" : ok ? "#1d7a4f" : "#b4483b";
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "10px 12px" }}>
+      <div className="faint" style={{ fontSize: 12 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, color }}>{r.pct == null ? "—" : `${r.pct}%`}</div>
+      <div className="faint" style={{ fontSize: 11.5 }}>목표 {goal}% · {r.base ? `${r.base}기기 기준` : "아직 기간이 안 지남"}{note ? ` · ${note}` : ""}</div>
+    </div>
+  );
+}
+const delta = (a, b) => (b == null ? "" : a - b > 0 ? ` ▲${a - b}` : a - b < 0 ? ` ▼${b - a}` : " ＝");
 
 function Bars({ rows, k, label }) {
   const max = Math.max(1, ...rows.map((r) => n(r[k])));
@@ -111,19 +127,14 @@ export default function StatsDashboard({ onClose }) {
   const bySource = {};
   for (const s of srcRows) {
     const name = SOURCE_NAME[s["어디서"]] || s["어디서"];
-    const row = (bySource[name] ||= { name, web: 0, open: 0 });
+    const row = (bySource[name] ||= { name, web: 0, open: 0, inst: 0 });
     if (s["무엇"] === "홈페이지 방문") row.web += n(s["횟수"]);
-    if (String(s["무엇"]).includes("앱 처음 열기")) row.open += n(s["횟수"]);
+    if (s["무엇"] === "앱 처음 열기") row.open += n(s["횟수"]);
+    if (s["무엇"] === "홈 화면 앱 처음 열기") (row.open += n(s["횟수"]), (row.inst += n(s["횟수"])));
   }
-  const sources = Object.values(bySource).sort((a, b) => b.web + b.open - (a.web + a.open));
-  const funnel = [
-    ["홈페이지 방문자", sum(rows, "홈페이지 방문자(명)")],
-    ["앱 버튼 누름", sum(rows, "앱 버튼 누름(회)")],
-    ["앱 처음 열기", sum(rows, "앱 처음 연 횟수")],
-    ["그중 홈 화면 앱", sum(rows, "그중 홈 화면 앱")],
-    ["새 가입", sum(rows, "새 가입(명)")],
-  ];
-  const fmax = Math.max(1, ...funnel.map(([, v]) => v));
+  const sources = Object.values(bySource).sort((a, b) => b.open + b.web - (a.open + a.web));
+  const yesterday = rows[1] || null;
+  const ret = retentionSummary(data?.retention || []);
 
   return createPortal(
     <div className="settings-sheet" role="dialog" aria-label="이용 통계" style={{ zIndex: 130 }} {...(onClose && swipeClose)}>
@@ -146,79 +157,88 @@ export default function StatsDashboard({ onClose }) {
 
       {data && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
-            <Tile label="오늘 앱 사용자" value={n(today["앱 사용자(명)"])} sub={`로그인 ${n(today["로그인 사용자(명)"])} · 안 함 ${n(today["로그인 안 한 사용자(명)"])}`} />
-            <Tile label="오늘 홈페이지 방문자" value={n(today["홈페이지 방문자(명)"])} sub={`방문 ${n(today["홈페이지 방문(회)"])}회`} />
-            <Tile label={`${days}일 앱 처음 연 횟수`} value={sum(rows, "앱 처음 연 횟수")} sub={`홈 화면 앱 ${sum(rows, "그중 홈 화면 앱")}`} />
-            <Tile label={`${days}일 말로 기록`} value={sum(rows, "AI 채팅(회)")} sub={`로그인 안 함 ${sum(rows, "그중 로그인 안 함(회)")}회`} />
-            <Tile label="누적 가입" value={n(today["누적 가입(명)"])} sub={`${days}일 새 가입 ${sum(rows, "새 가입(명)")}`} />
-            <Tile label={`${days}일 AI 오류`} value={sum(rows, "AI 오류(회)")} sub="0이 정상" />
+          {/* 1. 오늘 — 기기 수 기준, 어제와 비교 */}
+          <div className="h2" style={{ marginTop: 14 }}>오늘 <span className="faint" style={{ fontWeight: 400, fontSize: 12.5 }}>· 기기 수(한 기기는 하루 1번)</span></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <Tile label="앱을 연 기기" value={n(today["앱 사용자(명)"])} sub={`어제 ${n(yesterday?.["앱 사용자(명)"])}${delta(n(today["앱 사용자(명)"]), yesterday ? n(yesterday["앱 사용자(명)"]) : null)} · 홈 화면 앱 ${n(today["홈 화면 앱 사용자(명)"])}`} />
+            <Tile label="오늘 처음 연 기기" value={n(today["앱 처음 연 횟수"])} sub={`그중 홈 화면 설치 ${n(today["그중 홈 화면 앱"])}`} />
+            <Tile label="로그인 기기" value={n(today["로그인 사용자(명)"])} sub={`안 한 기기 ${n(today["로그인 안 한 사용자(명)"])} · 누적 계정 ${n(today["누적 가입(명)"])}`} />
+            <Tile label="홈페이지 방문 기기" value={n(today["홈페이지 방문자(명)"])} sub={`열람 ${n(today["홈페이지 방문(회)"])}회 · 앱 버튼 ${n(today["앱 버튼 누름(회)"])}회`} />
           </div>
 
-          <Bars rows={rows} k="앱 사용자(명)" label="날짜별 앱 사용자(명)" />
-          <Bars rows={rows} k="홈페이지 방문자(명)" label="날짜별 홈페이지 방문자(명)" />
-
-          <div className="card" style={{ marginTop: 12 }}>
-            <div className="h2">들어와서 가입까지 ({days}일 합계)</div>
-            {funnel.map(([label, v]) => (
-              <div key={label} style={{ display: "grid", gridTemplateColumns: "104px 1fr 40px", alignItems: "center", gap: 8, margin: "6px 0", fontSize: 13 }}>
-                <span>{label}</span>
-                <div style={{ height: 12, borderRadius: 4, background: "var(--accent)", width: `${(v / fmax) * 100}%`, minWidth: v ? 4 : 0 }} />
-                <span style={{ textAlign: "right", fontWeight: 700 }}>{v}</span>
-              </div>
-            ))}
-            <p className="faint" style={{ margin: "6px 0 0", fontSize: 11.5 }}>날짜별 사람 수를 더한 값이라 같은 사람이 여러 날 오면 여러 번 들어가요.</p>
+          {/* 2. 베타 핵심 지표 — 목표 대비 */}
+          <div className="h2" style={{ marginTop: 16 }}>베타 핵심 지표 <span className="faint" style={{ fontWeight: 400, fontSize: 12.5 }}>· 기간이 다 지난 기기만</span></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <Goal label="7일째에도 쓰나 (2~7일 안 재방문)" r={ret.d7} goal={50} />
+            <Goal label="30일째에도 쓰나 (28~35일 재방문)" r={ret.d30} goal={30} />
+            <Goal label="첫 주에 하루 체크 한 번이라도" r={ret.check7} goal={70} note="핵심 행동" />
+            <Tile label={`${days}일 새로 들어온 기기`} value={sum(rows, "앱 처음 연 횟수")} sub={`홈 화면 설치 ${sum(rows, "그중 홈 화면 앱")} · 설치율 ${sum(rows, "앱 처음 연 횟수") ? Math.round((sum(rows, "그중 홈 화면 앱") / sum(rows, "앱 처음 연 횟수")) * 100) : 0}%`} />
           </div>
 
+          {/* 3. 추이 */}
+          <Bars rows={rows} k="앱 사용자(명)" label="날짜별 앱을 연 기기" />
+          <Bars rows={rows} k="홈 화면 앱 사용자(명)" label="날짜별 홈 화면 앱으로 연 기기" />
+
+          {/* 4. 유입 → 설치 */}
           <div className="card" style={{ marginTop: 12 }}>
-            <div className="h2">어디서 왔나 ({days}일)</div>
+            <div className="h2">어디서 왔나 → 설치했나 ({days}일)</div>
             {sources.length ? (
-              <Table cols={[["경로", (r) => r.name], ["홈페이지 방문", (r) => r.web], ["앱 처음 열기", (r) => r.open]]} rows={sources} />
+              <Table cols={[["경로", (r) => r.name], ["홈페이지 열람(회)", (r) => r.web], ["앱 처음 연 기기", (r) => r.open], ["홈 화면 설치", (r) => r.inst], ["설치율", (r) => (r.open ? `${Math.round((r.inst / r.open) * 100)}%` : "—")]]} rows={sources} />
             ) : (
               <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요.</p>
             )}
+            <p className="faint" style={{ margin: "6px 0 0", fontSize: 11.5 }}>경로 = 링크의 ?from= 꼬리표(threads·insta·kakao·beta…) 또는 넘어온 사이트. "바로 들어옴"은 주소를 직접 친 경우예요.</p>
           </div>
 
+          {/* 5. 날짜별 */}
           <div className="card" style={{ marginTop: 12 }}>
-            <div className="h2">날짜별</div>
+            <div className="h2">날짜별 <span className="faint" style={{ fontWeight: 400, fontSize: 12.5 }}>· 기기 수</span></div>
             <Table
               cols={[
                 ["날짜", (r) => md(r["날짜"])],
-                ["홈페이지", (r) => n(r["홈페이지 방문자(명)"])],
-                ["처음 열기", (r) => n(r["앱 처음 연 횟수"])],
-                ["앱 사용자", (r) => n(r["앱 사용자(명)"])],
+                ["앱 연 기기", (r) => n(r["앱 사용자(명)"])],
+                ["홈 화면 앱", (r) => n(r["홈 화면 앱 사용자(명)"])],
+                ["처음 연 기기", (r) => n(r["앱 처음 연 횟수"])],
                 ["로그인", (r) => n(r["로그인 사용자(명)"])],
-                ["비로그인", (r) => n(r["로그인 안 한 사용자(명)"])],
-                ["말로 기록", (r) => n(r["AI 채팅(회)"])],
-                ["가입", (r) => n(r["새 가입(명)"])],
+                ["말로 기록(회)", (r) => n(r["AI 채팅(회)"])],
+                ["새 계정", (r) => n(r["새 가입(명)"])],
               ]}
               rows={rows}
             />
           </div>
 
+          {/* 6. 코호트 */}
           <div className="card" style={{ marginTop: 12 }}>
-            <div className="h2">다시 왔나</div>
-            {data.retention?.length > 0 && (() => {
-              const r = retentionSummary(data.retention);
-              return <p className="subtle" style={{ margin: "0 0 8px" }}>7일 안에 다시: <b>{r.d7}</b> · 4~5주째에도: <b>{r.d30}</b></p>;
-            })()}
+            <div className="h2">처음 연 날 기준 — 다시 왔나</div>
+            <p className="faint" style={{ margin: "0 0 6px", fontSize: 11.5 }}>그날 처음 앱을 연 기기들이 이후에 다시 열었는지. 칸 = 기기 수(비율). 아직 안 지난 기간은 비어 있어요.</p>
             {data.retention?.length ? (
               <Table
                 cols={[
-                  ["처음 쓴 날", (r) => md(r["처음 쓴 날"])],
-                  ["사용자", (r) => n(r["사용자(명)"])],
-                  ["다음 날", (r) => n(r["다음 날 다시(명)"])],
-                  ["2~7일", (r) => n(r["2~7일 안에 다시(명)"])],
-                  ["8~30일", (r) => n(r["8~30일 안에 다시(명)"])],
+                  ["처음 연 날", (r) => md(r["처음 쓴 날"])],
+                  ["기기", (r) => n(r["사용자(명)"])],
+                  ["다음 날", (r) => pct(r["다음 날 다시(명)"], r["사용자(명)"])],
+                  ["2~7일", (r) => pct(r["2~7일 안에 다시(명)"], r["사용자(명)"])],
+                  ["8~30일", (r) => pct(r["8~30일 안에 다시(명)"], r["사용자(명)"])],
                   ["28~35일", (r) => pct(r["28~35일 다시(명)"], r["사용자(명)"])],
                   ["첫주 체크", (r) => pct(r["첫 7일 하루 체크(명)"], r["사용자(명)"])],
-                  ["5주째 체크", (r) => pct(r["28~35일 하루 체크(명)"], r["사용자(명)"])],
                 ]}
                 rows={data.retention.filter((r) => r["처음 쓴 날"] >= since)}
               />
             ) : (
               <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요.</p>
             )}
+          </div>
+
+          {/* 7. 용어 */}
+          <div className="card" style={{ marginTop: 12, fontSize: 12.5 }}>
+            <div className="h2">읽는 법</div>
+            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+              <li><b>기기</b> = 사람이 아니라 브라우저 저장소 하나. 같은 사람의 아이폰 앱·사파리·맥은 각각 1기기. 하루에 몇 번 열어도 1.</li>
+              <li><b>(회)</b> = 누를 때마다 센 횟수. 같은 사람이 열 번 누르면 10.</li>
+              <li><b>처음 연 기기</b> = 그 기기에서 생전 처음 연 날 1번. 앱을 지웠다 깔면 새 기기로 세요.</li>
+              <li><b>재방문 %</b>는 기간이 다 지난 기기만 모아 계산해요. 베타 목표: 7일 50%, 30일 30%.</li>
+              <li>운영자 기기는 설정 → "이 기기는 통계에서 빼기"를 켜면 이 숫자에 안 들어가요. 개발 중 컴퓨터와 자동 점검은 처음부터 빠져 있어요.</li>
+            </ul>
           </div>
 
           <BetaInbox />
