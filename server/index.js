@@ -141,7 +141,7 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
   else if (b.e === "download") track("guide_download", s, v, ["web"]);
   else if (b.e === "first_open") track(b.i ? "app_first_open_installed" : "app_first_open", s, null, null);
   else if (b.e === "act" && ["check", "task"].includes(b.a)) track(`act:${b.a}`, "", v, [`act_${b.a}`]); // 핵심 행동(하루 체크·100일 과제)
-  else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : [])]);
+  else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : []), ...(b.r ? ["app_remote"] : [])]); // app_remote: 가족 집 강아지(비동거 보호자)
 });
 
 // 베타 준비(11/10, supabase/beta.sql): 앱 오류 자동 보고(sendBeacon text/plain)와 [의견 보내기]. 기록 내용·이름은 앱이 애초에 안 보낸다.
@@ -1303,6 +1303,24 @@ async function sendPush(device, title, body, url) {
     return false;
   }
 }
+
+// 가족 알림(11/12): 하루 체크에서 "다른 게 있었어요"를 고른 폰이 보내면, 같은 강아지(petId)를 공유하는 다른 기기들에 한 줄 푸시.
+// 보낸 사람이 그 강아지의 구성원인지 accessToken으로 확인한다. 기기 목록은 subscribe 때 저장된 pets(확인된 강아지)로 고른다.
+app.post("/api/push/family-alert", async (req, res) => {
+  if (!vapidConfigured) return res.status(503).json({ error: "push off" });
+  if (tooMany(req)) return res.status(429).json({ error: "too many" });
+  const { accessToken, petId, title, body, endpoint } = req.body || {};
+  if (typeof petId !== "string" || !petId || typeof body !== "string") return res.status(400).json({ error: "petId/body" });
+  const pets = await verifiedPets(accessToken);
+  if (!pets?.has(petId)) return res.status(403).json({ error: "not a member" });
+  await pushReady;
+  let sent = 0;
+  for (const device of pushDevices.values()) {
+    if (!device.pets?.has(petId) || device.subscription?.endpoint === endpoint) continue;
+    if (await sendPush(device, S(title, 60) || "🐾 멍케어", S(body, 200) || "", "/?app")) sent++;
+  }
+  res.json({ sent });
+});
 
 // 요청한 기기에만 즉시 테스트 알림을 보낸다.
 app.post("/api/push/test", async (req, res) => {

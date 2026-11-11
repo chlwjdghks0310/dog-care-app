@@ -70,7 +70,8 @@ export const trackHeaders = () => (off() ? {} : { "X-MC-V": visitorId(), "X-MC-L
 async function open() {
   ls.set(DAY, new Date().toDateString());
   const session = supabase ? (await supabase.auth.getSession().catch(() => null))?.data?.session : null;
-  send({ e: "open", l: Boolean(session), i: isInstalled(), d: (readJSON("dogcare-dogs-v1", []) || []).length > 0 });
+  const dogs = readJSON("dogcare-dogs-v1", []) || [];
+  send({ e: "open", l: Boolean(session), i: isInstalled(), d: dogs.length > 0, r: dogs.some((x) => x.living === "family") }); // r: 가족 집 강아지(비동거)
 }
 
 // 핵심 행동(11/8): 앱을 "열기만" 한 사람과 "쓴" 사람을 나눠 센다. 하루에 행동마다 한 번만 보낸다.

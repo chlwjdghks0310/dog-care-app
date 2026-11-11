@@ -4,6 +4,7 @@ import DailyCheck, { dailyPending, dailySummaryLines, UsualNote } from "../compo
 import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import BackupAsk, { backupAskPending } from "../components/BackupAsk";
+import RemoteAsk, { useRemoteState } from "../components/RemoteAsk";
 import { getSignals } from "../services/signals";
 import { isMilestone, togetherDays } from "../services/shareCard";
 import OutingChip from "../components/OutingCard";
@@ -41,7 +42,8 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet, onOpenBackup }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet, onOpenBackup, onOpenFamily }) {
+  const remoteState = useRemoteState(dog); // 비동거 보호자(가족 집 강아지)면 하루 체크 대신 가족 초대
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -284,7 +286,11 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
       {!isChat && (
         <div style={{ marginBottom: 16 }}>
           {/* 처음 쓰는 사람도 하루 체크부터(첫 기록까지 1분) → 첫 체크 뒤 한 번 알림 묻기 → 첫 걸음 → 오늘 요약 */}
-          {dailyPending(dog.id) || dcOpen ? (
+          {remoteState.remote && !remoteState.connected ? (
+            <SpeechBubble key="remote">
+              <RemoteAsk dog={dog} user={remoteState.user} onInvite={onOpenFamily} />
+            </SpeechBubble>
+          ) : !remoteState.remote && (dailyPending(dog.id) || dcOpen) ? (
             <SpeechBubble key="check">
               <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && hopNow())} onSheetChange={setDcOpen} />
               <HomeRow dog={dog} onOpen={onOpenToday} outing={!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />

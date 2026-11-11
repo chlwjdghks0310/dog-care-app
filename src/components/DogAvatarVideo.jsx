@@ -102,6 +102,10 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const frameIdRef = useRef(null);
   const [missing, setMissing] = useState({});
   const [readySrc, setReadySrc] = useState(null); // 첫 프레임을 그린 영상 — 그 전(강아지 바꾸는 사이)엔 로딩 표시
+  // 저전력 모드(자동재생 차단)·움직임 줄이기: 영상 대신 정지 그림(public/avatar/<견종>/idle.png) — 재생 버튼이 뜨거나 멈춘 채 보이던 것(사용자 컴플레인 11/11)
+  const [still, setStill] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const stillSrc = KEY_BY_BREED[breed] ? `/avatar/${breed}/idle.png` : "/avatar/idle.png";
+  const blocked = (err) => err?.name === "NotAllowedError" && setStill(true); // 사용자가 화면을 건드려 재생되면 다시 영상으로
   const direct = PLAYS_ALPHA_VIDEO && Boolean(keyFor(breed, state)?.alphaMov); // 투명 .mov를 그대로 보여줌
   const preferred = breedSrc(breed, state, direct ? "mov" : "mp4");
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
@@ -112,7 +116,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   useEffect(() => {
     const resume = () => {
       const video = videoRef.current;
-      if (video && video.paused && document.visibilityState !== "hidden") video.play().catch(() => {});
+      if (video && video.paused && document.visibilityState !== "hidden") video.play().then(() => setStill(false)).catch(blocked);
     };
     const onVisible = () => document.visibilityState === "visible" && resume();
     document.addEventListener("visibilitychange", onVisible);
@@ -144,9 +148,9 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       const onReady = () => setReadySrc(src);
       video.addEventListener("loadeddata", onReady);
       if (video.readyState >= 2) onReady();
-      video.play().catch(() => {});
+      video.play().then(() => setStill(false)).catch(blocked);
       const watchdog = setInterval(() => {
-        if (video.paused && document.visibilityState !== "hidden") video.play().catch(() => {});
+        if (video.paused && document.visibilityState !== "hidden") video.play().catch(blocked);
       }, 500);
       return () => {
         clearInterval(watchdog);
@@ -160,15 +164,13 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
     canvas.width = PROCESS_SIZE;
     canvas.height = PROCESS_SIZE;
 
-    video.play().catch(() => {
-      // 자동재생이 막히는 환경(일부 모바일 브라우저)에서는 조용히 무시한다. 아래 watchdog이 재시도한다.
-    });
+    video.play().then(() => setStill(false)).catch(blocked); // 자동재생이 막히면(저전력 모드) 정지 그림으로
 
     // 탭 전환/화면 꺼짐/자동재생 정책 등 이유를 막론하고 영상이 멈춰 있으면 계속 다시 재생을 시도한다.
     // 캐릭터가 정지 화면으로 보이는 시간을 최대한 짧게 유지하기 위한 안전망.
     const watchdog = setInterval(() => {
       if (video.paused && document.visibilityState !== "hidden") {
-        video.play().catch(() => {});
+        video.play().catch(blocked);
       }
     }, 500);
 
@@ -246,7 +248,8 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const showVideo = direct && src === preferred;
   return (
     <div style={{ position: "relative", width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {readySrc !== src && (
+      {still && <img src={stillSrc} alt="" className="avatar-still" style={{ height: "100%", width: "auto", maxWidth: "100%" }} onError={(e) => (e.currentTarget.style.display = "none")} />}
+      {readySrc !== src && !still && (
         <span className="avatar-loading" role="img" aria-label="강아지 불러오는 중">
           <Ico name="paw" size={36} />
         </span>
@@ -260,9 +263,9 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
         playsInline
         disablePictureInPicture
         className="avatar-video"
-        style={showVideo ? { height: "100%", width: "auto", maxWidth: "100%" } : { display: "none" }}
+        style={showVideo && !still ? { height: "100%", width: "auto", maxWidth: "100%" } : { display: "none" }}
       />
-      <canvas ref={canvasRef} style={showVideo ? { display: "none" } : { height: "100%", width: "auto", maxWidth: "100%" }} />
+      <canvas ref={canvasRef} style={showVideo || still ? { display: "none" } : { height: "100%", width: "auto", maxWidth: "100%" }} />
     </div>
   );
 }

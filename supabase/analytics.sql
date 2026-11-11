@@ -14,7 +14,7 @@ create table if not exists public.analytics_daily (
 );
 
 -- 날짜별 "누가 한 번이라도 했나" — 사람 수를 세는 용도(같은 날 여러 번 와도 1명)
--- kind: web(홈페이지) app(앱) app_login app_anon app_installed(홈 화면 앱) app_dog(강아지 등록함) ai ai_login ai_anon act_check(하루 체크 끝냄) act_task(100일 과제)
+-- kind: web(홈페이지) app(앱) app_login app_anon app_installed(홈 화면 앱) app_dog(강아지 등록함) app_remote(가족 집 강아지=비동거, 11/12) ai ai_login ai_anon act_check(하루 체크 끝냄) act_task(100일 과제)
 create table if not exists public.analytics_seen (
   day date not null,
   kind text not null,
@@ -69,6 +69,7 @@ u as (
     count(*) filter (where kind = 'app_anon') as anon_people,
     count(*) filter (where kind = 'app_installed') as installed_people,
     count(*) filter (where kind = 'app_dog') as dog_people,
+    count(*) filter (where kind = 'app_remote') as remote_people,
     count(*) filter (where kind = 'ai') as ai_people,
     count(*) filter (where kind = 'ai_anon') as ai_anon_people
   from analytics_seen group by day
@@ -91,6 +92,7 @@ select
   coalesce(u.anon_people, 0) as "로그인 안 한 사용자(명)",
   coalesce(u.installed_people, 0) as "홈 화면 앱 사용자(명)",
   coalesce(u.dog_people, 0) as "강아지 등록한 사용자(명)",
+  coalesce(u.remote_people, 0) as "가족 집 강아지 기기(명)",
   coalesce(s.signups, 0) as "새 가입(명)",
   sum(coalesce(s.signups, 0)) over (order by d.day) as "누적 가입(명)",
   coalesce(c.ai_chat, 0) as "AI 채팅(회)",
@@ -126,6 +128,7 @@ with f as (select visitor, min(day) as d0 from analytics_seen where kind = 'app'
 select
   f.d0 as "처음 쓴 날",
   count(*) as "사용자(명)",
+  count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app_remote' and s.visitor = f.visitor)) as "가족 집 강아지(명)",
   count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day = f.d0 + 1)) as "다음 날 다시(명)",
   count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 2 and f.d0 + 7)) as "2~7일 안에 다시(명)",
   count(*) filter (where exists (select 1 from analytics_seen s where s.kind = 'app' and s.visitor = f.visitor and s.day between f.d0 + 8 and f.d0 + 30)) as "8~30일 안에 다시(명)",

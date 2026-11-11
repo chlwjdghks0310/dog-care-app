@@ -7,6 +7,7 @@ import { syncPushAlarms } from "../services/notifications";
 import { trackAct } from "../services/analytics";
 import { EMERGENCY } from "../data/emergency";
 import { todayKey } from "../utils/date";
+import { alertFamily } from "../services/familyAlert";
 import { saveDog } from "../services/dogRepository";
 
 // 오늘 탭 말풍선의 10초 하루 체크: 강아지가 "오늘 어땠어?" 하고 묻는다. [평소와 같아요] 한 번이면 끝, [다른 게 있었어요]면 다른 항목만.
@@ -120,6 +121,8 @@ export function DiffSheet({ dog, date, initial, onClose, onSaved }) {
     } catch (e) {
       return setError(e.message);
     }
+    // 같은 강아지를 공유하는 가족 폰에 한 줄(다른 게 있는 날만, 11/12 비동거 보호자용)
+    alertFamily(dog, `오늘 다른 점: ${Object.entries(picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id)?.label} ${l}`).join(", ")}`);
     onSaved();
     if (!sig.red.length && !sig.warn.length) return onClose();
     setSaved(true);

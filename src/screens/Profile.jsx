@@ -77,7 +77,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   }, []);
   const accountSub = !sync.enabled ? "" : sync.user ? `${sync.user.user_metadata?.name || sync.user.user_metadata?.full_name || sync.user.email || "로그인됨"} · ${sync.syncing ? "백업 중…" : sync.lastSyncedAt ? `마지막 백업 ${new Date(sync.lastSyncedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}` : "곧 백업"}` : "로그인 안 함 · 기록이 이 폰에만 있어요";
   useEffect(() => {
-    const on = () => (setSettingsSub(null), setSettingsOpen(true)); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
+    const on = (e) => (setSettingsSub(e?.detail?.sub || null), setSettingsOpen(true)); // 오늘 화면 말풍선 → 설정(백업·로그인 / 가족 공유)으로(11/11~12)
     window.addEventListener("dogcare-open-settings", on);
     return () => window.removeEventListener("dogcare-open-settings", on);
   }, []);
@@ -368,6 +368,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               {getDogs().map((d) => (
                 <SettingsRow key={d.id} ico={d.photo ? <img src={d.photo} alt="" /> : "dog"} title={d.name} sub={[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ") || "정보 없음"} right={d.id === dog.id ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} /> : null} onClick={() => d.id !== dog.id && onUpdateDog?.(d)} />
               ))}
+              <SettingsRow ico="house" title={`${dog.name}는 가족(본가) 집에 있어요`} sub="켜면 하루 체크 대신 가족 초대·소식 받기로 바뀌어요" right={<input type="checkbox" role="switch" className="switch" checked={dog.living === "family"} onChange={(e) => onUpdateDog?.(saveDog({ ...dog, living: e.target.checked ? "family" : "together" }))} aria-label="가족 집에 있어요" />} />
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
             <SettingsGroup title="화면">

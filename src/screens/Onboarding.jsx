@@ -213,8 +213,8 @@ function Setup({ onRegistered, restore }) {
     }
     if (key === "extras" && dog) {
       const usual = (form.usual || "").trim(), hospital = (form.hospital || "").trim();
-      if (usual || hospital) {
-        const next = { ...dog, ...(usual && { usual }), ...(hospital && { hospital }) };
+      if (usual || hospital || form.living === "family") {
+        const next = { ...dog, ...(usual && { usual }), ...(hospital && { hospital }), ...(form.living === "family" && { living: "family" }) };
         saveDog(next);
         setDog(next);
       }
@@ -355,6 +355,13 @@ function Setup({ onRegistered, restore }) {
 
           {key === "extras" && (
             <div className="onb-extras">
+              {/* 비동거 보호자(11/12): 강아지가 가족 집에 있으면 하루 체크 대신 가족 초대 말풍선으로 간다 */}
+              <div className="field"><span>{name}는 지금 어디에 있어요?</span></div>
+              <div className="chip-wrap" style={{ margin: "-6px 0 14px" }}>
+                {[["together", "나랑 같이 살아요"], ["family", "가족(본가) 집에 있어요"]].map(([v, label]) => (
+                  <button key={v} type="button" className={`seg${(form.living || "together") === v ? " on" : ""}`} aria-pressed={(form.living || "together") === v} onClick={() => update("living", v)}>{label}</button>
+                ))}
+              </div>
               <label className="field">
                 <span>평소 모습 (선택)</span>
                 <textarea rows={2} maxLength={200} value={form.usual || ""} onChange={(e) => update("usual", e.target.value)} placeholder="예: 하루 두 번 다 먹음, 변 하루 2번, 산책 30분" />
