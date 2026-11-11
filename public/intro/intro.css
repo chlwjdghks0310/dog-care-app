@@ -414,3 +414,9 @@ h1 { display: flex; flex-direction: column; gap: 2px; }
 /* 맨 위 안내 띠(소개 페이지 ↔ 앱 구분) */
 .appbar { margin: 0; padding: 9px var(--gutter); background: var(--accent-soft); color: var(--text); font-size: 14px; line-height: 1.5; text-align: center; }
 .appbar a { font-weight: 800; white-space: nowrap; }
+
+/* 베타 모집 띠(11/11~12/15) */
+.beta-bar { display: block; text-align: center; padding: 11px 16px; background: #1f2a37; color: #fff; text-decoration: none; font-size: 14px; line-height: 1.4; }
+.beta-bar strong { color: #ffd59e; }
+.beta-bar span { text-decoration: underline; text-underline-offset: 3px; }
+.beta-bar:hover { background: #2b3a4d; }
