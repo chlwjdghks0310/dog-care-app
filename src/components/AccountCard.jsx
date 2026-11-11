@@ -240,7 +240,9 @@ export function LoginForm({ onEmail }) {
   async function kakao() {
     setBusy(true);
     setError("");
-    const { error: err } = await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: location.origin } });
+    // 카카오로 갈 때 지금 화면을 방문 기록에 남기지 않는다(replace) — 남기면 나중에 뒤로 가기로 로그인 전 화면 스냅샷이 되살아나 "온보딩으로 돌아간" 것처럼 보임(11/11)
+    const { data: oauth, error: err } = await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: location.origin, skipBrowserRedirect: true } });
+    if (!err && oauth?.url) location.replace(oauth.url);
     if (err) setError(authMessage(err));
     setBusy(false);
   }

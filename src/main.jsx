@@ -10,6 +10,9 @@ import { initPhotos } from './services/photoStore'
 import { initBeta } from './services/beta'
 
 initBeta() // 오류 자동 보고·배포 뒤 옛 파일 오류 새로고침·돌아올 때 새 버전 확인(베타 준비 11/10)
+// 뒤로 가기로 예전 화면 스냅샷(bfcache)이 되살아나면 — 예: 카카오 로그인 전에 보던 온보딩 화면 — 그 안의 상태가 옛것이라 "갑자기 온보딩"처럼 보인다(11/11 사용자 보고).
+// 되살아난 문서는 믿지 않고 새로 연다(기록은 폰에 그대로).
+window.addEventListener("pageshow", (e) => e.persisted && location.reload())
 
 const StatsPage = lazy(() => import('./components/StatsDashboard.jsx').then((m) => ({ default: m.StatsPage })))
 
