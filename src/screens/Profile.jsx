@@ -12,7 +12,6 @@ import { isDark, setDark, COLOR_THEMES, getColorTheme, setColorTheme, themeLabel
 import { getPermission, isNotificationSupported, requestPermission, syncPushAlarms } from "../services/notifications";
 import { getDogs, saveDog } from "../services/dogRepository";
 import { backupJson, recordsCsv, shareFile } from "../services/exportData";
-import QuickAddFab from "../components/QuickAddFab";
 import CoverAdjust from "../components/CoverAdjust";
 import { FramedPhoto, PhotoSourceSheet } from "../components/PhotoFrame";
 import { getPhotos } from "../services/gallery";
@@ -231,7 +230,6 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
 
       <HealthServices dog={dog} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} onOpenVital={onOpenVital} />
 
-      <QuickAddFab onPick={onQuickAdd} />
 
       {photoSheet && (
         <PhotoSourceSheet

@@ -7,7 +7,6 @@ import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
 import RecordsBrowser from "../components/RecordsBrowser";
-import QuickAddFab from "../components/QuickAddFab";
 import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotals } from "../services/records";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
@@ -88,7 +87,6 @@ export default function Records({ dog, startNew, startType, prefill, onBack, bac
 
       {!form && view === "cal" && <RecordCalendar key={calDate || ""} dog={dog} items={items} initialDate={calDate} onChanged={reload} onAdd={(date) => (onNew ? onNew(date) : setForm({ initial: null, prefill: { at: dateAt(date) } }))} onShowAll={() => setBrowse({})} />}
       {!form && view === "trend" && <Trends dog={dog} items={items} onPick={(t, d) => setBrowse({ types: [t], days: d })} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
-      {!form && !startNew && <QuickAddFab onPick={onQuickAdd} />}
     </div>
   );
 }

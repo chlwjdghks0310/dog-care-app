@@ -40,6 +40,7 @@ import SwipeBack from "./components/SwipeBack";
 import PullToRefresh from "./components/PullToRefresh";
 import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow } from "./services/sync";
+import { deletePetRemote } from "./services/sync/family";
 import { isEditing } from "./services/beta";
 import WhatsNew from "./components/WhatsNew";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -170,6 +171,11 @@ export default function App() {
     window.addEventListener("pageshow", check);
     return () => (clearInterval(id), document.removeEventListener("visibilitychange", check), window.removeEventListener("pageshow", check));
   }, []);
+  useEffect(() => {
+    const on = () => !isEditing() && setPageVersion((v) => v + 1); // 사진 저장소가 늦게 열렸을 때(11/11 #10)
+    window.addEventListener("dogcare-photos-ready", on);
+    return () => window.removeEventListener("dogcare-photos-ready", on);
+  }, []);
   // 11/11 점검 #4: 저장 실패(개인정보 모드·용량 초과)를 한 줄로 알린다
   const [storageWarn, setStorageWarn] = useState(false);
   useEffect(() => {
@@ -273,6 +279,7 @@ export default function App() {
   function handleDeleteCurrentDog() {
     const remaining = getDogs().filter((d) => d.id !== dog.id);
     deleteDog(dog.id);
+    deletePetRemote(dog.id).catch(() => {}); // 로그인 상태면 서버 기록도 같이(11/11: 고아 기록 안 남게). 실패해도 폰에서는 지워짐
     if (remaining.length > 0) {
       setActiveDog(remaining[0]);
       setTab("main");

@@ -10,7 +10,6 @@ import Ico from "../components/Ico";
 import MonthGrid from "../components/MonthGrid";
 import VetDocSheet from "../components/VetDocSheet";
 import MedicalLedger from "../components/MedicalLedger";
-import QuickAddFab from "../components/QuickAddFab";
 import { getRulesForAge } from "../data/careRules";
 
 const MEDICAL = ["vet", "vaccine", "recheck", "checkup", "scaling", "deworm", "heartworm", "med"];
@@ -256,7 +255,6 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         />
       )}
 
-      <QuickAddFab onPick={onQuickAdd} />
     </div>
   );
 }

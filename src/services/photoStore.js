@@ -84,14 +84,18 @@ function remember(id, blob) {
 // 앱을 열 때 한 번: 저장된 사진 전부의 화면용 주소를 만든다(파일을 메모리에 다 올리는 건 아님). 3초 넘으면 기다리지 않음
 export async function initPhotos() {
   if (!has()) return;
-  try {
-    const all = await Promise.race([tx("readonly", (s) => s.getAll()), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000))]);
+  const fill = (all) => {
     for (const r of all || []) remember(r.id, blobOf(r));
     ready = true;
     stashSoon(0);
-  } catch {
-    ready = false; // 못 열면 예전처럼 기록 안의 사진 글자를 그대로 쓴다
-  }
+  };
+  // 3초 넘으면 화면부터 그리되, 늦게라도 열리면 그때 채우고 화면에 알린다(11/11 점검 #10: 그 세션 사진이 전부 빈 이미지로 남던 것)
+  const loading = tx("readonly", (s) => s.getAll());
+  const first = await Promise.race([loading.then((all) => ({ all })), new Promise((res) => setTimeout(() => res(null), 3000))]).catch(() => ({ failed: true }));
+  if (first?.all) return fill(first.all);
+  ready = false; // 못 열면 예전처럼 기록 안의 사진 글자를 그대로 쓴다
+  if (first?.failed) return;
+  loading.then((all) => (fill(all), window.dispatchEvent(new Event("dogcare-photos-ready")))).catch(() => {});
 }
 
 // ── storage.js가 쓰는 변환 ──

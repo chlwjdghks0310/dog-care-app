@@ -54,6 +54,14 @@ export async function removeMember(petId, userId) {
 }
 
 // 나가기: 서버에서 먼저 빠진 뒤 맞추기 → 엔진이 이 폰의 사본만 지운다(다른 가족의 기록은 그대로)
+// 보호자가 강아지를 지울 때: 서버의 pets 행을 지우면 기록·구성원·초대 코드가 함께 지워진다(schema on delete cascade). 로그인 안 했으면 아무것도 안 함
+export async function deletePetRemote(petId) {
+  if (!supabase) return;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) return;
+  await call(supabase.from("pets").delete().eq("id", petId));
+}
+
 export async function leavePet(petId) {
   const { data: auth } = await supabase.auth.getUser();
   await removeMember(petId, auth.user.id);

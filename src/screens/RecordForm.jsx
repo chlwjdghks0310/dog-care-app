@@ -131,6 +131,9 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding, onS
           syncPushAlarms(); // 알람이 바뀌었을 수 있다 — 실패해도 기록은 이미 저장됨
         }
       }
+      // 저장 버튼을 연타하면 화면이 바뀐 뒤 그 자리의 다른 버튼이 눌리던 것(11/11 점검 #15) → 0.4초 동안 탭을 무시
+      document.body.classList.add("tap-shield");
+      setTimeout(() => document.body.classList.remove("tap-shield"), 400);
       onSaved(saved);
     } catch (err) {
       setError(err.message || "저장하지 못했어요. 다시 시도해 주세요.");

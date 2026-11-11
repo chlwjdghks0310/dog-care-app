@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSheetSwipe } from "./SwipeBack";
 import Ico from "./Ico";
@@ -27,6 +27,8 @@ export default function RecordsBrowser({ dog, items, initialTypes = [], initialD
   const [order, setOrder] = useState("new");
   const [showFilters, setShowFilters] = useState(Boolean(initialTypes.length || initialDays));
   const [openId, setOpenId] = useState(null);
+  const [limit, setLimit] = useState(80); // 11/11: 400건을 한 번에 그리지 않고 80개씩(끝에 닿으면 더)
+  useEffect(() => setLimit(80), [types, days, q, order]);
   const close = () => (history.state?.allRecords ? history.back() : onClose());
   const swipe = useSheetSwipe(close);
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function RecordsBrowser({ dog, items, initialTypes = [], initialD
             </div>
           ) : (
             <div className="rec-list">
-              {shown.map((r, i) => (
+              {shown.slice(0, limit).map((r, i) => (
                 <div key={`${r.source}-${r.id}`}>
                   {(i === 0 || shown[i - 1].at.slice(0, 10) !== r.at.slice(0, 10)) && <div className="rec-date">{formatKoreanDate(r.at.slice(0, 10))}{dayTotals(r.at.slice(0, 10))}</div>}
                   <RecordItem
@@ -101,6 +103,7 @@ export default function RecordsBrowser({ dog, items, initialTypes = [], initialD
               ))}
             </div>
           )}
+          {shown.length > limit && <MoreSentinel onMore={() => setLimit((n) => n + 80)} left={shown.length - limit} />}
           {readOnly && items.length > 0 && <p className="faint" style={{ margin: "10px 2px 0", textAlign: "center" }}>고치거나 지우는 건 기록 탭에서 해요.</p>}
         </div>
       </div>
@@ -170,4 +173,17 @@ function VitalDayItem({ rec, open, onToggle, onEdit, readOnly }) {
       )}
     </div>
   );
+}
+
+// 기록이 많을 때 80개씩 — 목록 끝에 닿으면 자동으로, 안 되면 버튼으로 더 그린다(11/11 점검: 400건 한 번에 → DOM 5천 개)
+function MoreSentinel({ onMore, left }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && onMore(), { rootMargin: "240px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [onMore]);
+  return <button ref={ref} type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={onMore}>기록 {left}개 더 보기</button>;
 }

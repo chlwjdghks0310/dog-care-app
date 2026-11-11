@@ -965,10 +965,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .dog-health-line { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.45; }
 .dog-health-line .faint { flex-shrink: 0; min-width: 52px; }
 .dog-info-rows { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
-.fab-wrap { position: sticky; bottom: -82px; /* .screen 아래 여백(96px) 안쪽까지 내려 탭 바로 위(약 14px)에 */ display: flex; justify-content: flex-end; pointer-events: none; margin: 4px -2px 0 0; z-index: 4; } /* 오른쪽 끝 = 가계부 탭 바로 위 */
-.fab { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; padding: 0; border: none; border-radius: 50%; background: var(--accent-btn, var(--accent)); color: #fff; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform 0.22s ease, opacity 0.22s ease; }
-.fab.hidden { transform: translateY(90px); opacity: 0; pointer-events: none; }
-.fab:active { transform: scale(0.96); }
+/* 떠 있는 연필 버튼(QuickAddFab)은 11/11 사용자 결정으로 제거 — 기록 탭 [+ 새 기록]만 */
 .report-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 14px; }
 /* 나가면 지워진다는 안내(건강 체크) */
 .leave-note { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 12px; background: var(--warning-bg); color: var(--text); font-size: 13.5px; line-height: 1.45; }
@@ -1649,3 +1646,6 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 /* ── 베타 준비(11/10) ── 새 버전 한 줄(위쪽 4초) · 설정 맨 위 의견 보내기 줄 */
 .whats-new { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); z-index: 140; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 999px; background: var(--text); color: var(--surface); font-size: 13.5px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
 .feedback-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 14px; text-align: left; cursor: pointer; font: inherit; color: var(--text); }
+
+/* 저장 직후 0.4초 탭 무시(RecordForm, 11/11) */
+body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-sheet { pointer-events: none; }
