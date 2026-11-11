@@ -10,7 +10,9 @@ const KEY = "dogcare-backup-ask-v1"; // { since: 처음 본 날, askedAt: 마지
 const state = () => readJSON(KEY, null) || {};
 const hasPhoto = (dog) => Boolean(dog.photo) || getRecords(dog.id).some((r) => r.photos?.length);
 
+const TEST_ALWAYS = true; // ★ 테스트용(11/11 사용자 요청): 로그인·날짜 조건 없이 바로 띄움 — 확인 뒤 false로 되돌리기
 export function backupAskPending(dog) {
+  if (TEST_ALWAYS) return !(state().askedAt && state().askedAt > toDateKey(addDays(new Date(), -14)));
   if (getSyncStatus().user) return false;
   const s = state();
   if (!s.since) {
