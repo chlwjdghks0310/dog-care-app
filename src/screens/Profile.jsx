@@ -23,10 +23,12 @@ import { josa } from "../utils/text";
 import { TYPES, getRecords, getVitalEntries, vitalDaily, filterTimeline, groupVitalDays, summarize, md } from "../services/records";
 import { readJSON, writeJSON } from "../services/storage";
 import { VITALS, DEFAULT_PINS, fmtValue, outOfRange, tileState } from "../data/vitals";
-import AccountCard from "../components/AccountCard";
+import AccountCard, { useSyncStatus } from "../components/AccountCard";
+import { APP_VERSION } from "../services/beta";
 import PrivacyPolicy from "../components/PrivacyPolicy";
 import Terms from "../components/Terms";
 import { AIConsentCard } from "../components/AIConsent";
+import { hasAIConsent } from "../services/aiConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
 import Ico from "../components/Ico";
@@ -62,6 +64,8 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const sync = useSyncStatus();
+  const accountSub = !sync.enabled ? "" : sync.user ? `${sync.user.user_metadata?.name || sync.user.user_metadata?.full_name || sync.user.email || "로그인됨"} · ${sync.syncing ? "백업 중…" : sync.lastSyncedAt ? `마지막 백업 ${new Date(sync.lastSyncedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}` : "곧 백업"}` : "로그인 안 함 · 기록이 이 폰에만 있어요";
   useEffect(() => {
     const on = () => setSettingsOpen(true); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
     window.addEventListener("dogcare-open-settings", on);
@@ -338,100 +342,56 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <div className="h1" style={{ margin: 0 }}>설정</div>
               <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
             </div>
-            {/* 베타 기간 의견 받는 곳(11/10) — 맨 위 한 곳, 떠 있는 버튼은 화면을 가려서 안 둔다 */}
-            <button type="button" className="card feedback-row" onClick={() => setSettingsSub("feedback")}>
-              <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}><Ico name="pencil" size={18} /> 의견 보내기</span>
-              <span className="subtle">사소한 것도 좋아요 ›</span>
-            </button>
-            <FamilyShare dog={dog} />
-            <div className="card" style={{ marginBottom: 14 }}>
-              <div className="h2">우리 강아지</div>
-              <p className="subtle" style={{ margin: "0 0 8px" }}>누르면 그 강아지로 바뀌어요.</p>
-              <div className="dog-list" role="radiogroup" aria-label="보고 있는 강아지">
-                {getDogs().map((d) => (
-                  <button key={d.id} type="button" role="radio" aria-checked={d.id === dog.id} className={`dog-row${d.id === dog.id ? " on" : ""}`} onClick={() => d.id !== dog.id && onUpdateDog?.(d)}>
-                    {d.photo ? <img src={d.photo} alt="" className="dog-row-face" /> : <span className="dog-row-face"><Ico name="dog" size={22} /></span>}
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span className="dog-row-name">{d.name}</span>
-                      <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ")}</span>
-                    </span>
-                    {d.id === dog.id && <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} />}
-                  </button>
-                ))}
-              </div>
-              <button type="button" className="btn-ghost" style={{ marginTop: 10 }} onClick={() => setSettingsSub("add-dog")}>
-                + 새 강아지 등록하기
-              </button>
-            </div>
-            <div className="card" style={{ marginBottom: 14 }}>
-              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
-                <span>
-                  <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
-                    <Ico name="moon" size={18} /> 다크 모드
-                  </span>
-                  <span className="faint" style={{ display: "block", marginTop: 4 }}>어두운 화면으로 눈이 덜 부셔요</span>
-                </span>
-                <input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />
-              </label>
-            </div>
-            <PuppyToggle dog={dog} />
-            <ThemeCard dark={dark} />
-            <AccountCard />
-            <AIConsentCard />
-            <LinksCard />
-
-            <div className="card" style={{ marginTop: 14 }}>
-              <button
-                onClick={() => setSettingsSub("help")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                }}
-              >
-                <span className="h2" style={{ margin: 0 }}>도움말</span>
-                <span className="subtle">›</span>
-              </button>
-              <button
-                onClick={() => setSettingsSub("contact")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  borderTop: "1px solid var(--border)",
-                  padding: 0,
-                  marginTop: 14,
-                  paddingTop: 14,
-                }}
-              >
-                <span className="h2" style={{ margin: 0 }}>문의하기</span>
-                <span className="subtle">›</span>
-              </button>
-            </div>
-
-            <ExportCard dog={dog} onOpenVet={() => (setSettingsOpen(false), onOpenVet())} />
-
-            <button className="btn-ghost" style={{ width: "100%", marginTop: 14, color: "var(--danger)" }} onClick={handleDeleteCurrent}>
-              이 강아지 삭제
-            </button>
-            <button className="btn-ghost" style={{ width: "100%", marginTop: 8, color: "var(--danger)" }} onClick={handleDeleteAll}>
-              전체 삭제 (모든 강아지, 다시 등록하기)
-            </button>
+            {/* 11/11 사용자 요청: 카드가 다 똑같아 안 읽힘 → 아이폰 설정처럼 묶음 제목 + 한 줄 행. 자세한 건 한 번 더 눌러 들어간다(계정·가족·테마·내보내기·AI) */}
+            <SettingsGroup title="계정">
+              <SettingsRow ico="lock" title="백업·로그인" sub={accountSub} badge={!sync.user ? "권장" : ""} onClick={() => setSettingsSub("account")} />
+              <SettingsRow ico="users" title="가족 공유" sub={sync.user ? `초대 코드로 ${dog.name} 기록 함께 보기` : "로그인한 뒤 쓸 수 있어요"} onClick={() => setSettingsSub("family")} />
+            </SettingsGroup>
+            <SettingsGroup title="우리 강아지">
+              {getDogs().map((d) => (
+                <SettingsRow key={d.id} ico={d.photo ? <img src={d.photo} alt="" /> : "dog"} title={d.name} sub={[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ") || "정보 없음"} right={d.id === dog.id ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} /> : null} onClick={() => d.id !== dog.id && onUpdateDog?.(d)} />
+              ))}
+              <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
+            </SettingsGroup>
+            <SettingsGroup title="화면">
+              <SettingsRow ico="moon" title="다크 모드" sub="어두운 화면으로 눈이 덜 부셔요" right={<input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />} />
+              <SettingsRow ico="sun" title="배경 테마" sub={dark ? "다크 모드를 끄면 고를 수 있어요" : themeLabel(getColorTheme())} onClick={() => !dark && setSettingsSub("theme")} />
+              <PuppyToggle dog={dog} />
+            </SettingsGroup>
+            <SettingsGroup title="기록">
+              <SettingsRow ico="clipboard" title="기록 내보내기" sub="병원용 한 장 · 엑셀 표 · 전체 백업 파일" onClick={() => setSettingsSub("export")} />
+              <SettingsRow ico="sparkles" title="AI 정보 전송" sub={hasAIConsent() ? "동의함 · Anthropic·Google로 전송" : "동의 안 함 · 처음 쓸 때 물어봐요"} onClick={() => setSettingsSub("ai")} />
+            </SettingsGroup>
+            <SettingsGroup title="멍케어">
+              <SettingsRow ico="pencil" title="의견 보내기" sub="사소한 것도 좋아요" badge="베타" onClick={() => setSettingsSub("feedback")} />
+              <SettingsRow ico="book" title="도움말" onClick={() => setSettingsSub("help")} />
+              <SettingsRow ico="mail" title="문의하기" sub="1시간 안에 답해요" onClick={() => setSettingsSub("contact")} />
+              {LINKS.map(([ico, label, sub, href]) => (
+                <SettingsRow key={href} ico={ico} title={label} sub={sub} href={href} />
+              ))}
+            </SettingsGroup>
+            <FooterLinks />
+            <SettingsGroup title="삭제">
+              <SettingsRow ico="trash" tone="danger" title="이 강아지 삭제" sub={`${dog.name} 기록이 이 폰에서 지워져요`} onClick={handleDeleteCurrent} />
+              <SettingsRow ico="trash" tone="danger" title="전체 삭제" sub="모든 강아지를 지우고 다시 등록해요" onClick={handleDeleteAll} />
+            </SettingsGroup>
           </div>,
           document.body
         )}
       {settingsOpen &&
         settingsSub &&
         createPortal(
-          <div className="settings-sheet" role="dialog" aria-label={{ help: "도움말", contact: "문의하기", feedback: "의견 보내기", "add-dog": "강아지 등록" }[settingsSub]} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
+          <div className="settings-sheet" role="dialog" aria-label={SUB_TITLES[settingsSub] || "설정"} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
             {settingsSub === "help" && <Help onBack={() => setSettingsSub(null)} />}
+            {["account", "family", "theme", "export", "ai"].includes(settingsSub) && (
+              <SettingsSub title={SUB_TITLES[settingsSub]} onBack={() => setSettingsSub(null)}>
+                {settingsSub === "account" && <AccountCard />}
+                {settingsSub === "family" && <FamilyShare dog={dog} />}
+                {settingsSub === "theme" && <ThemeCard dark={dark} defaultOpen />}
+                {settingsSub === "export" && <ExportCard dog={dog} onOpenVet={() => (setSettingsOpen(false), onOpenVet())} />}
+                {settingsSub === "ai" && <AIConsentCard />}
+              </SettingsSub>
+            )}
             {settingsSub === "feedback" && <Feedback onBack={() => setSettingsSub(null)} />}
             {settingsSub === "contact" && <Contact onBack={() => setSettingsSub(null)} />}
             {settingsSub === "add-dog" && (
@@ -694,9 +654,9 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital 
 
 // 배경 테마: 색 조합 11개(기본 소프트 블루 포함) + 같은 색 발바닥. 눌러서 펼치고, 고르면 바로 바뀌고 저장된다.
 // 다크 모드일 때는 흐리게 잠가 둔다(다크 색이 우선이라 골라도 안 보이므로) — 다크 모드를 끄면 다시 열 수 있다
-function ThemeCard({ dark }) {
+function ThemeCard({ dark, defaultOpen = false }) {
   const [cur, setCur] = useState(getColorTheme);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   useEffect(() => {
     if (dark) setOpen(false); // 다크 모드를 켜면 접는다 — 끄고 나서 다시 눌러 연다
   }, [dark]);
@@ -744,7 +704,7 @@ const LINKS = [
   ["users", "스레드", "@meongcare.app", "https://www.threads.com/@meongcare.app"],
 ];
 
-function LinksCard() {
+function FooterLinks() {
   const [doc, setDoc] = useState(null); // null | "terms" | "privacy" | "stats"
   // 운영자 계정(supabase analytics_admins)으로 로그인했을 때만 "이용 통계"가 보인다
   const [admin, setAdmin] = useState(false);
@@ -754,28 +714,12 @@ function LinksCard() {
     return onSyncStatus(check);
   }, []);
   return (
-    <div className="section">
-      <div className="h2">멍케어 소식·자료</div>
-      {LINKS.map(([ico, label, sub, href], i) => (
-        <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: i ? "1px solid var(--border)" : "none" }}>
-          <Ico name={ico} size={20} style={{ color: "var(--accent-strong)", flex: "none" }} />
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontWeight: 600 }}>{label}</span>
-            <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{sub}</span>
-          </span>
-          <span className="subtle">›</span>
-        </a>
-      ))}
-      <p className="faint" style={{ margin: "10px 0 0", fontSize: 12.5, textAlign: "center" }}>
-        <button type="button" className="link-btn" onClick={() => setDoc("terms")}>이용약관</button>
-        {" · "}
-        <button type="button" className="link-btn" onClick={() => setDoc("privacy")}>개인정보 처리방침</button>
-      </p>
-      {admin && (
-        <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 10 }} onClick={() => setDoc("stats")}>
-          이용 통계 보기 (운영자)
-        </button>
-      )}
+    <p className="sg-foot">
+      <button type="button" className="link-btn" onClick={() => setDoc("terms")}>이용약관</button>
+      {" · "}
+      <button type="button" className="link-btn" onClick={() => setDoc("privacy")}>개인정보 처리방침</button>
+      {" · "}버전 {APP_VERSION}
+      {admin && <>{" · "}<button type="button" className="link-btn" onClick={() => setDoc("stats")}>이용 통계</button></>}
       {doc === "stats" && (
         <Suspense fallback={null}>
           <StatsDashboard onClose={() => setDoc(null)} />
@@ -783,6 +727,44 @@ function LinksCard() {
       )}
       {doc === "terms" && <Terms onClose={() => setDoc(null)} />}
       {doc === "privacy" && <PrivacyPolicy onClose={() => setDoc(null)} />}
+    </p>
+  );
+}
+
+// 설정 묶음 + 한 줄 행(11/11)
+const SUB_TITLES = { help: "도움말", contact: "문의하기", feedback: "의견 보내기", "add-dog": "강아지 등록", account: "백업·로그인", family: "가족 공유", theme: "배경 테마", export: "기록 내보내기", ai: "AI 정보 전송" };
+function SettingsGroup({ title, children }) {
+  return (
+    <section className="sg" aria-label={title}>
+      <div className="sg-title">{title}</div>
+      <div className="sg-list">{children}</div>
+    </section>
+  );
+}
+function SettingsRow({ ico, tone = "", title, sub, badge, right, onClick, href }) {
+  const Tag = href ? "a" : onClick ? "button" : "div";
+  const extra = href ? { href, target: "_blank", rel: "noopener", "aria-label": `${title} (새 창)` } : onClick ? { type: "button", onClick } : {};
+  return (
+    <Tag className={`sg-row${tone ? ` ${tone}` : ""}${!onClick && !href ? " static" : ""}`} {...extra}>
+      <span className={`sg-ico${tone ? ` ${tone}` : ""}`} aria-hidden="true">{typeof ico === "string" ? <Ico name={ico} size={18} /> : ico}</span>
+      <span className="sg-main">
+        <span className="sg-t">{title}</span>
+        {sub && <span className="sg-s">{sub}</span>}
+      </span>
+      <span className="sg-right">
+        {badge && <span className="sg-badge">{badge}</span>}
+        {right}
+        {(onClick || href) && !right && <span className="chev" aria-hidden="true">›</span>}
+      </span>
+    </Tag>
+  );
+}
+function SettingsSub({ title, onBack, children }) {
+  return (
+    <div className="screen">
+      <button type="button" className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 설정으로</button>
+      {/* 제목은 안의 카드가 이미 갖고 있어 여기선 생략(중복 방지) */}
+      {children}
     </div>
   );
 }
@@ -855,17 +837,5 @@ function GalleryStrip({ dog, onOpen }) {
 // 설정: 퍼피 100일 카드 켜고 끄기(오늘 탭 카드에서 숨겼을 때 다시 켜는 곳). 진행 기록은 지우지 않는다
 function PuppyToggle({ dog }) {
   const [on, setOn] = useState(() => !getPuppyProgress(dog.id).hidden);
-  return (
-    <div className="section">
-      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
-        <span>
-          <span className="h2" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
-            <Ico name="paw" size={18} /> 퍼피 100일 카드
-          </span>
-          <span className="faint" style={{ display: "block", marginTop: 4 }}>오늘 탭에 하루 5분 과제를 보여 줘요(1살 아래). 꺼도 한 기록은 남아요</span>
-        </span>
-        <input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked))} aria-label="퍼피 100일 카드" />
-      </label>
-    </div>
-  );
+  return <SettingsRow ico="paw" title="퍼피 100일 카드" sub="오늘 탭에 하루 5분 과제(1살 아래) · 꺼도 기록은 남아요" right={<input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked))} aria-label="퍼피 100일 카드" />} />;
 }

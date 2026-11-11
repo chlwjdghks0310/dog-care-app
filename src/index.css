@@ -1649,3 +1649,27 @@ input.meal-amount { font-size: 30px; font-weight: 800; text-align: center; paddi
 
 /* 저장 직후 0.4초 탭 무시(RecordForm, 11/11) */
 body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-sheet { pointer-events: none; }
+
+/* ── 설정 화면 묶음 목록(11/11 사용자 요청: 카드가 다 똑같아 안 읽힘 → 아이폰 설정처럼 "작은 제목 + 한 줄 행") ── */
+.sg { margin-bottom: 18px; }
+.sg-title { font-size: 12.5px; font-weight: 700; color: var(--text-faint); letter-spacing: 0.02em; margin: 0 0 6px 12px; }
+.sg-list { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.sg-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 10px 14px; background: none; border: none; border-top: 1px solid var(--border); color: var(--text); text-align: left; font: inherit; cursor: pointer; text-decoration: none; }
+.sg-row:first-child { border-top: none; }
+.sg-row:active { background: var(--accent-soft); }
+.sg-row.static { cursor: default; }
+.sg-ico { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--accent-soft); color: var(--accent-strong); }
+.sg-ico.warm { background: var(--warm-bg); color: var(--warm-strong); }
+.sg-ico.danger { background: #fdecea; color: var(--danger); }
+:root[data-theme="dark"] .sg-ico.danger { background: rgba(220, 90, 70, 0.18); }
+.sg-ico img { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; }
+.sg-main { flex: 1; min-width: 0; }
+.sg-t { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.25; }
+.sg-s { display: block; font-size: 12.5px; color: var(--text-soft); margin-top: 2px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-right { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 13.5px; }
+.sg-right .chev { font-size: 20px; line-height: 1; color: var(--text-faint); }
+.sg-badge { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--warm-bg); color: var(--warm-strong); }
+.sg-row.danger .sg-t { color: var(--danger); }
+.sg-foot { text-align: center; font-size: 12.5px; color: var(--text-faint); margin: 6px 0 14px; }
+.sg-foot .link-btn { font-size: 12.5px; padding: 2px 4px; }
+.sg-sub-body { padding: 0 16px calc(env(safe-area-inset-bottom) + 24px); }
