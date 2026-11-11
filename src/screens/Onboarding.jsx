@@ -19,15 +19,12 @@ import Ico from "../components/Ico";
 // 로그인해서 서버에 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced). 게스트도 나중에 설정에서 로그인할 수 있다.
 // 도중에 앱을 꺼도 이어서 하도록 진행 상태를 저장하고(PROGRESS_KEY), 강아지가 저장되면 지운다.
 // skipIntro: 강아지를 모두 지운 뒤 다시 등록할 때는 소개를 건너뛴다.
-// 소개는 3장(방향 A, 2026-11-07 — 3장째 "말하면 기록" 사용자 요청): NN/g 실험 — 소개를 건너뛴 쪽이 성공률·쉬움 점수가 더 높음, Apple HIG — 짧고 건너뛸 수 있게.
-// 한 장 = 한 약속, 그림 속 내용은 "예시"로 표시, 마지막 버튼은 첫 행동. 근거: ../자료용/자료/2026-11-07-온보딩-2장.md
-// 빠진 내용은 제자리에서 안내: 말로 기록=입력줄 예시, 출처=정보 카드·수치마다, 손동작=도움말
-const SLIDES = [
-  { title: "“평소엔 어땠어요?”", text: "병원에서 이 질문을 받으면\n멍케어를 보여 주세요." },
-  { title: "하루 10초, 다른 날만", text: "평소와 같으면 한 번만 누르고, 다르면 그것만." },
-  { title: "말하면 기록해 줘요", text: "“산책 30분 했어” “몸무게 3.2kg”\n비서에게 말하거나 적으면 알아서 기록해요." },
-];
-const SLIDE_VISUALS = [VetMock, DailyMock, TalkMock];
+// 소개는 1장(11/11 3차 점검, 사용자 결정): 이 앱의 약속 "병원 갈 때 꺼내는 한 장"만 보여 주고 바로 강아지 이름으로.
+// 하루 체크·말로 기록은 첫 화면 말풍선과 입력줄 예시가 제자리에서 보여 준다. 로그인 벽·"로그인 없이 시작할까요?" 경고 시트도 뺐다 —
+// 기존 사용자는 이름 칸 아래 "로그인해서 불러오기", 백업 권유는 기록이 쌓인 뒤 말풍선(components/BackupAsk)으로.
+// 근거: NN/g 실험 — 소개를 건너뛴 쪽이 성공률·쉬움 점수가 더 높음, Apple HIG — 짧고 건너뛸 수 있게(../자료용/자료/2026-11-07-온보딩-2장.md)
+const SLIDES = [{ title: "“평소엔 어땠어요?”", text: "병원에서 이 질문을 받으면\n멍케어를 보여 주세요." }];
+const SLIDE_VISUALS = [VetMock];
 
 
 const PROGRESS_KEY = "dogcare-onboarding-v1";
@@ -36,60 +33,13 @@ const saveProgress = (patch) => writeJSON(PROGRESS_KEY, { ...loadProgress(), ...
 const clearProgress = () => writeJSON(PROGRESS_KEY, null);
 
 export default function Onboarding({ onRegistered, skipIntro = false }) {
-  const [phase, setPhase] = useState(() => (skipIntro ? "setup" : loadProgress().phase || (supabase ? "login" : "intro")));
-  const { user } = useSyncStatus();
-  // 로그인 화면에서 로그인됨(카카오에서 돌아와 앱이 새로 켜진 경우 포함) → 소개로
-  const current = phase === "login" && user ? "intro" : phase;
+  const [phase, setPhase] = useState(() => (skipIntro ? "setup" : loadProgress().phase === "setup" ? "setup" : "intro"));
   useEffect(() => {
-    if (!skipIntro) saveProgress({ phase: current });
-  }, [current, skipIntro]);
+    if (!skipIntro) saveProgress({ phase });
+  }, [phase, skipIntro]);
   const done = (dog) => (clearProgress(), onRegistered(dog));
-  if (current === "login") return <Login onGuest={() => setPhase("intro")} />;
-  if (current === "intro") return <Intro onDone={() => setPhase("setup")} />;
+  if (phase === "intro") return <Intro onDone={() => setPhase("setup")} />;
   return <Setup onRegistered={done} restore={!skipIntro} />;
-}
-
-// 로그인 첫 화면: 강아지 + 한 줄 인사, 버튼은 카카오·이메일 두 개만. 이메일과 "로그인 없이"는 밑에서 올라오는 시트로
-function Login({ onGuest }) {
-  const [sheet, setSheet] = useState(null); // null | "email" | "guest"
-  return (
-    <div className="onb">
-      <div className="login-hero">
-        <SpeechBubble>안녕! 나랑 같이 시작해 볼래? 🐾</SpeechBubble>
-        <DogAvatarVideo state="idle" height={210} breed="pomeranian" />
-        <div className="onb-title" style={{ marginBottom: 6 }}>멍케어</div>
-        <p className="onb-text" style={{ margin: "0 auto" }}>병원 갈 때 꺼내는 우리 아이 건강 수첩</p>
-      </div>
-      <div className="login-bottom">
-        <LoginForm onEmail={() => setSheet("email")} />
-        <button type="button" className="link-btn login-guest" onClick={() => setSheet("guest")}>
-          로그인 없이 둘러보기
-        </button>
-        <PolicyLine />
-      </div>
-      {sheet === "email" && (
-        <BottomSheet title="이메일로 계속하기" onClose={() => setSheet(null)}>
-          <EmailLogin />
-        </BottomSheet>
-      )}
-      {sheet === "guest" && (
-        <BottomSheet title="로그인 없이 시작할까요?" onClose={() => setSheet(null)}>
-          <ul className="login-guest-list">
-            <li><Ico name="lock" size={18} className="cat-ico tone-teal" /> 기록은 이 폰에만 저장돼요</li>
-            <li><Ico name="alert" size={18} className="cat-ico tone-rose" /> 앱을 지우거나 폰을 바꾸면 기록이 사라질 수 있어요</li>
-            <li><Ico name="users" size={18} className="cat-ico tone-violet" /> 가족과 함께 보려면 로그인이 필요해요</li>
-            <li><Ico name="settings" size={18} className="cat-ico tone-blue" /> 나중에 설정에서 언제든 로그인할 수 있어요</li>
-          </ul>
-          <button type="button" className="btn-primary" onClick={onGuest}>
-            그래도 시작하기
-          </button>
-          <button type="button" className="btn-ghost" onClick={() => setSheet(null)}>
-            로그인할게요
-          </button>
-        </BottomSheet>
-      )}
-    </div>
-  );
 }
 
 function Intro({ onDone }) {
@@ -105,11 +55,13 @@ function Intro({ onDone }) {
 
   return (
     <div className="onb">
-      <div className="onb-top">
-        <button type="button" className="onb-skip" onClick={onDone}>
-          건너뛰기
-        </button>
-      </div>
+      {SLIDES.length > 1 && (
+        <div className="onb-top">
+          <button type="button" className="onb-skip" onClick={onDone}>
+            건너뛰기
+          </button>
+        </div>
+      )}
       <div ref={trackRef} className="onb-track" onScroll={(e) => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
         {SLIDES.map((s, i) => (
           <div key={i} className="onb-slide">
@@ -119,15 +71,18 @@ function Intro({ onDone }) {
           </div>
         ))}
       </div>
-      <div className="onb-dots" aria-hidden="true">
-        {SLIDES.map((_, i) => (
-          <span key={i} className={i === index ? "on" : ""} />
-        ))}
-      </div>
+      {SLIDES.length > 1 && (
+        <div className="onb-dots" aria-hidden="true">
+          {SLIDES.map((_, i) => (
+            <span key={i} className={i === index ? "on" : ""} />
+          ))}
+        </div>
+      )}
       <div className="onb-bottom">
         <button type="button" className="btn-primary" onClick={next}>
           {last ? "우리 아이 소개하기" : "다음"}
         </button>
+        <PolicyLine />
       </div>
     </div>
   );

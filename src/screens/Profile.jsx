@@ -62,6 +62,11 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   const [notifPermission, setNotifPermission] = useState(getPermission());
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    const on = () => setSettingsOpen(true); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
+    window.addEventListener("dogcare-open-settings", on);
+    return () => window.removeEventListener("dogcare-open-settings", on);
+  }, []);
   // 설정 위에 겹쳐 여는 화면(도움말·문의하기·강아지 등록) — 닫으면 아래 설정이 그대로 보인다
   const [settingsSub, setSettingsSub] = useState(null); // null | "help" | "contact" | "add-dog"
   const subSwipeClose = useSwipeClose(() => setSettingsSub(null));

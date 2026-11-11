@@ -3,6 +3,7 @@ import { recordFromText } from "../services/aiClient";
 import DailyCheck, { dailyPending, dailySummaryLines, UsualNote } from "../components/DailyCheck";
 import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
+import BackupAsk, { backupAskPending } from "../components/BackupAsk";
 import { getSignals } from "../services/signals";
 import { isMilestone, togetherDays } from "../services/shareCard";
 import OutingChip from "../components/OutingCard";
@@ -40,7 +41,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet, onOpenBackup }) {
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState("idle"); // 'idle' | 'chat'
@@ -301,6 +302,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
                 onVet={onOpenVet}
                 onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
               />
+            </SpeechBubble>
+          ) : backupAskPending(dog) ? (
+            <SpeechBubble key="backup">
+              <BackupAsk dog={dog} onBackup={onOpenBackup} onDone={() => refresh((n) => n + 1)} />
             </SpeechBubble>
           ) : (
             <SpeechBubble key="summary">
