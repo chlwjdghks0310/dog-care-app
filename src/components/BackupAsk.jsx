@@ -12,7 +12,7 @@ const laterOk = (s) => (s.asks || 0) < MAX_ASKS && !(s.askedAt && s.askedAt > to
 const state = () => readJSON(KEY, null) || {};
 const hasPhoto = (dog) => Boolean(dog.photo) || getRecords(dog.id).some((r) => r.photos?.length);
 
-const TEST_ALWAYS = true; // ★ 테스트용(11/11 사용자 요청): 로그인·날짜 조건 없이 바로 띄움 — 확인 뒤 false로 되돌리기
+const TEST_ALWAYS = false; // 테스트할 때만 true(11/11 확인 끝)
 export function backupAskPending(dog) {
   if (TEST_ALWAYS) return laterOk(state());
   if (getSyncStatus().user) return false;

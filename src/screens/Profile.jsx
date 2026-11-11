@@ -67,7 +67,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   const sync = useSyncStatus();
   const accountSub = !sync.enabled ? "" : sync.user ? `${sync.user.user_metadata?.name || sync.user.user_metadata?.full_name || sync.user.email || "로그인됨"} · ${sync.syncing ? "백업 중…" : sync.lastSyncedAt ? `마지막 백업 ${new Date(sync.lastSyncedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}` : "곧 백업"}` : "로그인 안 함 · 기록이 이 폰에만 있어요";
   useEffect(() => {
-    const on = () => setSettingsOpen(true); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
+    const on = () => (setSettingsSub(null), setSettingsOpen(true)); // 오늘 화면 백업 권유 말풍선 → 설정(백업·로그인)으로(11/11)
     window.addEventListener("dogcare-open-settings", on);
     return () => window.removeEventListener("dogcare-open-settings", on);
   }, []);
@@ -191,7 +191,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
               <div className="h1" style={{ margin: 0 }}>{dog.name}</div>
-              {togetherDays(dog) > 0 && <span className="faint" style={{ fontSize: 13 }}>함께한 지 {togetherDays(dog)}일</span>}
+              {togetherDays(dog) > 0 && <span className="faint" style={{ fontSize: 13 }}>{dog.adoptionDate ? "함께한 지" : "태어난 지"} {togetherDays(dog)}일</span>}
             </div>
             <div className="dog-chips">
               <span className="chip">{formatAge(age)}</span>
@@ -340,7 +340,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
           <div className="settings-sheet" role="dialog" aria-label="설정" {...swipeClose}>
             <div className="settings-head">
               <div className="h1" style={{ margin: 0 }}>설정</div>
-              <button type="button" className="btn-ghost" onClick={() => setSettingsOpen(false)}>닫기</button>
+              <button type="button" className="btn-ghost" onClick={() => (setSettingsSub(null), setSettingsOpen(false))}>닫기</button>
             </div>
             {/* 11/11 사용자 요청: 카드가 다 똑같아 안 읽힘 → 아이폰 설정처럼 묶음 제목 + 한 줄 행. 자세한 건 한 번 더 눌러 들어간다(계정·가족·테마·내보내기·AI) */}
             <SettingsGroup title="계정">
@@ -355,7 +355,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
             </SettingsGroup>
             <SettingsGroup title="화면">
               <SettingsRow ico="moon" title="다크 모드" sub="어두운 화면으로 눈이 덜 부셔요" right={<input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />} />
-              <SettingsRow ico="sun" title="배경 테마" sub={dark ? "다크 모드를 끄면 고를 수 있어요" : themeLabel(getColorTheme())} onClick={() => !dark && setSettingsSub("theme")} />
+              <SettingsRow ico="sun" title="배경 테마" sub={dark ? "다크 모드를 끄면 고를 수 있어요" : themeLabel(getColorTheme())} onClick={dark ? undefined : () => setSettingsSub("theme")} />
               <PuppyToggle dog={dog} />
             </SettingsGroup>
             <SettingsGroup title="기록">
@@ -385,7 +385,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
                 {settingsSub === "account" && <AccountCard />}
                 {settingsSub === "family" && <FamilyShare dog={dog} />}
                 {settingsSub === "theme" && <ThemeCard dark={dark} defaultOpen />}
-                {settingsSub === "export" && <ExportCard dog={dog} onOpenVet={() => (setSettingsOpen(false), onOpenVet())} />}
+                {settingsSub === "export" && <ExportCard dog={dog} onOpenVet={() => (setSettingsSub(null), setSettingsOpen(false), onOpenVet())} />}
                 {settingsSub === "ai" && <AIConsentCard />}
               </SettingsSub>
             )}

@@ -283,7 +283,7 @@ function BetaInbox() {
           {data.errors.map((e) => (
             <details key={e.msg} style={{ borderTop: "1px solid var(--border)", padding: "6px 0", fontSize: 13.5 }}>
               <summary><b>{n(e.n)}번</b> · {n(e.people)}명 · {when(e.last)} · {e.ver} — {e.msg}</summary>
-              <pre style={{ whiteSpace: "pre-wrap", fontSize: 11.5, margin: "6px 0 0" }}>{e.path}\n{e.stack}</pre>
+              <pre style={{ whiteSpace: "pre-wrap", fontSize: 11.5, margin: "6px 0 0" }}>{`${e.path}\n${e.stack || ""}`}</pre>
             </details>
           ))}
         </>

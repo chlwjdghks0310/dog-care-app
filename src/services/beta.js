@@ -51,6 +51,21 @@ export function initBeta() {
   if (typeof window === "undefined") return;
   window.addEventListener("error", (e) => reportError(e.message, e.error?.stack));
   window.addEventListener("unhandledrejection", (e) => reportError(e.reason?.message || e.reason, e.reason?.stack));
-  window.addEventListener("vite:preloadError", (e) => (e.preventDefault(), location.reload()));
+  // 배포 직후 옛 파일을 못 불러오면 한 번만 새로고침 — 오프라인(저장된 화면으로 연 상태)이거나 방금 새로고침했으면 반복하지 않는다
+  window.addEventListener("vite:preloadError", (e) => {
+    e.preventDefault();
+    try {
+      if (!navigator.onLine || sessionStorage.getItem("mc-rl")) return;
+      sessionStorage.setItem("mc-rl", "1");
+    } catch {
+      return;
+    }
+    location.reload();
+  });
+  try {
+    setTimeout(() => sessionStorage.removeItem("mc-rl"), 10_000); // 정상적으로 10초 버티면 다음 배포 때 또 한 번 허용
+  } catch {
+    /* 저장소 없음 */
+  }
   document.addEventListener("visibilitychange", checkVersion);
 }

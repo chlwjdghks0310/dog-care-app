@@ -146,7 +146,7 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
 
 // 베타 준비(11/10, supabase/beta.sql): 앱 오류 자동 보고(sendBeacon text/plain)와 [의견 보내기]. 기록 내용·이름은 앱이 애초에 안 보낸다.
 const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-app.post("/api/err", express.text({ limit: "4kb" }), (req, res) => {
+app.post("/api/err", express.text({ limit: "8kb" }), (req, res) => {
   res.status(204).end();
   if (isBot(req) || tooMany(req) || !pushDb) return;
   let b;
@@ -1220,7 +1220,7 @@ async function verifiedPets(accessToken) {
 const QUIET_OK = new Set(["med", "custom", "meal"]);
 const hm = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 // 기기가 보낸 알람 목록 정리(11/11 점검 #1): 모양이 이상한 항목 하나가 20초마다 서버를 죽이지 않게. 시각 HH:MM·글자 길이·개수만 본다
-const S = (v, n) => (typeof v === "string" && v.length <= n ? v : undefined);
+const S = (v, n) => (typeof v === "string" ? v.slice(0, n) : undefined);
 function sanitizeAlarms(list) {
   const out = [];
   for (const a of Array.isArray(list) ? list.slice(0, 300) : []) {

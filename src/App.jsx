@@ -568,7 +568,7 @@ export default function App() {
       <div ref={pagerRef} className={`pager${inSubScreen ? " locked" : ""}`} onScroll={handlePagerScroll} onTouchStart={() => (touchingRef.current = true)} onTouchEnd={handlePagerTouchEnd} onTouchCancel={handlePagerTouchEnd}>
         {TABS.map((t) => (
           <div key={t.key} data-tab={t.key} className={`pager-page${inSubScreen && t.key === pageKey ? " has-stack" : ""}`} aria-hidden={t.key !== pageKey}>
-            <ErrorBoundary>{pages[t.key]}</ErrorBoundary>
+            <ErrorBoundary resetKey={`${tab}-${pageVersion}`} onHome={() => setTab("main")}>{pages[t.key]}</ErrorBoundary>
           </div>
         ))}
       </div>

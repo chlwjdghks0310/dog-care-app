@@ -36,7 +36,7 @@ export default function Puppy100({ dog, onBack }) {
       </div>
       <div className="h1" style={{ marginBottom: 2 }}>퍼피 100일</div>
       <p className="subtle" style={{ margin: "0 0 12px" }}>
-        {dog.name}{days > 0 ? ` · 함께한 지 ${days}일` : ""}{week ? ` · ${st.step.week}주차 ${week.title}` : ""}
+        {dog.name}{days > 0 ? ` · ${dog.adoptionDate ? "함께한 지" : "태어난 지"} ${days}일` : ""}{week ? ` · ${st.step.week}주차 ${week.title}` : ""}
       </p>
 
       <section className="card pc100" aria-label="오늘의 5분">

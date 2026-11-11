@@ -146,13 +146,13 @@ export function buildVetSummary(dog, note, today = todayKey()) {
   const weightLines = [];
   const latest = weights.at(-1);
   if (latest) {
-    weightLines.push(`최근: ${latest.weightKg}kg (${md(latest.measuredAt.slice(0, 10))})`);
+    weightLines.push(`최근: ${Math.round(latest.weightKg * 100) / 100}kg (${md(latest.measuredAt.slice(0, 10))})`);
     const base = [...weights].reverse().find((r) => r.measuredAt.slice(0, 10) <= from) || inPeriod[0];
     if (base && base !== latest) {
       const diff = latest.weightKg - base.weightKg;
       weightLines.push(`변화: ${md(base.measuredAt.slice(0, 10))} ${Math.round(base.weightKg * 100) / 100}kg → ${Math.round(latest.weightKg * 100) / 100}kg (${diff >= 0 ? "+" : ""}${Math.round(diff * 100) / 100}kg, ${diff >= 0 ? "+" : ""}${Math.round((diff / base.weightKg) * 1000) / 10}%)`);
     }
-    if (inPeriod.length > 1) weightLines.push(`${periodLabel} 기록: ${inPeriod.slice(-8).map((r) => `${md(r.measuredAt.slice(0, 10))} ${r.weightKg}`).join(", ")}`);
+    if (inPeriod.length > 1) weightLines.push(`${periodLabel} 기록: ${inPeriod.slice(-8).map((r) => `${md(r.measuredAt.slice(0, 10))} ${Math.round(r.weightKg * 100) / 100}`).join(", ")}`);
   } else if (dog.weight) {
     weightLines.push(`프로필 체중: ${dog.weight}kg (측정 기록 없음)`);
   }
