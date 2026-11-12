@@ -71,6 +71,12 @@ function run(dog, a) {
     case "add_health_record": {
       const t = a.record_type;
       if (!isDate(a.date) || !TYPES[t] || ["weight", "vital", "med", "media"].includes(t)) return null;
+      // 11/12 버그: "사료 15 물 60"처럼 AI가 밥과 물을 한 동작에 담아 보내면 물만 저장되던 것 → 두 기록으로 나눠 저장
+      if (t === "meal" && Number(a.water_ml) > 0 && Number(a.grams) > 0) {
+        const food = run(dog, { ...a, water_ml: undefined, water: undefined });
+        const water = run(dog, { ...a, grams: undefined, food_type: undefined, appetite: undefined, food: undefined, treats: undefined, memo: "" });
+        return [food, water].filter((x) => typeof x === "string").join("\n") || null;
+      }
       const d = {};
       const put = (k, v) => v && (Array.isArray(v) ? v.length : true) && (d[k] = v);
       if (t === "symptom") {

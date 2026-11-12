@@ -66,6 +66,12 @@ const ev = C.getEventsByDog(dog.id);
 assert.deepEqual(["repeat", "alarm", "memo"].map((k) => ev[day(3)][0][k]), ["monthly", "morning", "밥 먹고"]);
 assert.deepEqual([ev[day(5)][0].endDate, ev[day(5)][0].repeat], [day(7), undefined], "기간 일정은 반복 안 함");
 
+// 밥·물을 한 동작에 담아 보낸 경우(11/12 버그: 물만 저장됨) → 건식 15g + 물 60ml 두 기록
+r = run({ type: "add_health_record", record_type: "meal", date: day(-1), time: "09:00", food_type: ["건식"], grams: 15, water_ml: 60, appetite: "평소" });
+assert.equal(r.done.length, 1);
+const meals = R.getRecords(dog.id).filter((x) => x.type === "meal" && x.at.startsWith(day(-1)));
+assert.deepEqual(meals.map((m) => `${m.data.kind}:${m.data.amount}`).sort(), ["dry:15", "water:60"], "밥과 물이 각각 저장");
+
 // 밥 시간
 r = run({ type: "set_feeding_times", times: ["18:00", "08:00", "25:00"] });
 assert.deepEqual(getFeedingSettings(dog.id).times, ["08:00", "18:00"]);
