@@ -41,6 +41,7 @@ revoke execute on function public.analytics_track(date, text, text, text, text[]
 grant execute on function public.analytics_track(date, text, text, text, text[]) to service_role;
 
 -- ① 날짜별 한눈에 (최근 날짜가 위)
+drop view if exists public.analytics_report; -- 칸이 늘어나면 create or replace로는 안 바뀜(11/12)
 create or replace view public.analytics_report with (security_invoker = true) as
 with days as (
   select generate_series(
@@ -123,6 +124,7 @@ group by 1, 2, 3
 order by 1 desc, 2, 4 desc;
 
 -- ③ 다시 왔나 (앱을 처음 쓴 날 기준)
+drop view if exists public.analytics_retention; -- 칸이 늘어나면 create or replace로는 안 바뀜(11/12)
 create or replace view public.analytics_retention with (security_invoker = true) as
 with f as (select visitor, min(day) as d0 from analytics_seen where kind = 'app' group by visitor)
 select
