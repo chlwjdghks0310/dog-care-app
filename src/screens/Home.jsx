@@ -70,16 +70,16 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 오늘로</button>
       <div className="h1" style={{ marginBottom: 10 }}>오늘 할 일</div>
       <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile tone-rose filled" onClick={onOpenFeeding}>
+        <button className="quick-tile" onClick={onOpenFeeding}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
           <span className="quick-tile-label">사료 계산기</span>
         </button>
-        <button className="quick-tile tone-violet filled" onClick={onOpenAlarms}>
+        <button className="quick-tile" onClick={onOpenAlarms}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
           <span className="quick-tile-label">알림·알람</span>
         </button>
         {/* 외출 시간 설정 — 오늘 탭 외출 카드의 ⚙가 여기로(11/9 오늘 화면 줄이기) */}
-        <button className="quick-tile tone-blue filled" onClick={() => setRoutineOpen(true)}>
+        <button className="quick-tile" onClick={() => setRoutineOpen(true)}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
           <span className="quick-tile-label">외출 시간</span>
         </button>

@@ -903,6 +903,11 @@ button {
 .vd-icon > .ico-sk svg { width: 44px; height: 44px; }
 .sv-icon > .ico-sk svg { width: 32px; height: 32px; }
 .quick-tile.filled .quick-tile-icon:has(> .ico-sk) { background: transparent; }
+.ico-sk { vertical-align: -0.3em; }
+.h1 .ico-sk svg, .h2 .ico-sk svg { width: 1.35em; height: 1.35em; }
+.btn-primary .ico-sk svg, .btn-ghost .ico-sk svg, .chip .ico-sk svg { width: 1.3em; height: 1.3em; }
+.bud-cat-icon:has(> .ico-sk) { background: var(--sk-plate) !important; }
+.bud-cat-icon > .ico-sk svg { width: 30px; height: 30px; }
 .up-icon { color: #fff; }
 
 /* 켜고 끄는 스위치(다크 모드) */

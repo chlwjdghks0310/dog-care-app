@@ -100,16 +100,16 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         <div className="h1" style={{ margin: 0 }}>병원</div>
         <button type="button" className="btn-primary small" onClick={() => setSheet({ start: selectedDateKey < today ? today : selectedDateKey })}>＋ 일정</button>
       </div>
-      <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile tone-rose filled" onClick={() => setDocOpen(true)}>
+      <div className="quick-actions" style={{ marginBottom: 14 }}>{/* 11/14: 색 상자 제거(사용자), 기록 타일과 같은 흰 타일 + 스티커 */}
+        <button className="quick-tile" onClick={() => setDocOpen(true)}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="camera" size={24} sticker /></span>
           <span className="quick-tile-label">진료 정리</span>
         </button>
-        <button className="quick-tile tone-violet filled" onClick={onOpenHealth}>
+        <button className="quick-tile" onClick={onOpenHealth}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} sticker /></span>
           <span className="quick-tile-label">건강 체크</span>
         </button>
-        <button className="quick-tile tone-blue filled" onClick={onOpenVet}>
+        <button className="quick-tile" onClick={onOpenVet}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="clipboard" size={24} sticker /></span>
           <span className="quick-tile-label">병원용 기록</span>
         </button>

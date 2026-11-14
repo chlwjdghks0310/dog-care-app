@@ -55,20 +55,26 @@ export function iconFromTitle(title) {
 
 // 스티커 아이콘(11/14, Recraft 벡터 40개 → public/sk/stickers.svg 한 장). "내용" 아이콘(기록 종류·수치·일상·병원)만 스티커로,
 // 닫기·검색·알림 같은 조작 아이콘은 그대로 선 아이콘. 어디서 스티커로 그릴지는 부르는 쪽이 정한다: sticker 속성, 또는 className에 cat-ico.
-// 앱 아이콘 이름 → 스티커 id(없는 이름은 스티커 없음). 색은 index.css의 --sk-* 변수(다크 모드는 외곽선 그대로 두고 채움만 중간 톤 + 접시).
+// 앱 아이콘 이름 → 스티커 id. 매핑된 이름은 어디서든 스티커(11/14 저녁, 사용자 "그 외 모든 아이콘"), sticker={false}로만 끈다. x·menu·화살표·check·stop·paw는 맵에 없어 선 그대로.
+// 색은 index.css의 --sk-* 변수(다크 모드는 외곽선 그대로 두고 채움만 중간 톤 + 접시).
 const STICKER = {
   scales: "weight", bandaid: "symptom", bowl: "meal", toilet: "potty", pill: "med", stethoscope: "vet", smiley: "condition", sun: "daily", star: "life", camera: "media", chartLine: "vital",
   droplets: "droplets", bone: "bone", droplet: "droplet", pipette: "pipette", wind: "wind", heart: "heart", thermometer: "thermometer", ruler: "ruler",
   walk: "walk", handHeart: "handHeart", tooth: "tooth", bath: "bath", target: "target", firstAid: "firstAid", syringe: "syringe", bed: "bed", scissors: "scissors", box: "box",
   shoppingBag: "shoppingBag", umbrella: "umbrella", cake: "cake", party: "party", building: "building", dog: "dog", scan: "scan", wallet: "wallet", clipboard: "clipboard", calendar: "calendar",
+  // 11/14 저녁 추가 34개(사용자: 하단 탭·순수 조작·발도장 빼고 전부)
+  bell: "bell", bellOff: "bellOff", alarm: "alarm", timer: "timer", house: "house", chart: "chart", checklist: "checklist", note: "note", image: "image", imagePlus: "imagePlus",
+  users: "users", settings: "settings", search: "search", sparkles: "sparkles", idea: "idea", book: "book", graduation: "graduation", mail: "mail", lock: "lock", printer: "printer",
+  video: "video", speaker: "speaker", mic: "mic", pencil: "pencil", trash: "trash", pin: "pin", repeat: "repeat", clip: "clip", heartPlain: "heartPlain", chatHeart: "chatHeart",
+  tap: "tap", alert: "alert", siren: "siren", eye: "eye",
 };
-const SK_URL = "/sk/stickers.svg?v=1";
+const SK_URL = "/sk/stickers.svg?v=2";
 export const hasSticker = (name) => Boolean(STICKER[name]);
 
 // 눌러서 쓰는 곳(버튼·링크·라벨) 안에 있으면 누를 때 한 번 움직인다(폰엔 마우스 올리기가 없어서)
 export default function Ico({ name, size = 20, className, style, sticker }) {
   const sk = STICKER[name];
-  if (sk && (sticker || (sticker !== false && /\bcat-ico\b/.test(className || "")))) {
+  if (sk && sticker !== false) {
     const w = Math.round(size * 1.4); // 선 아이콘보다 통통해서 같은 자리에 조금 크게
     return (
       <span className={`ico ico-sk${className ? ` ${className}` : ""}`} style={style} aria-hidden="true">
