@@ -113,3 +113,10 @@ html { scroll-padding-top: calc(var(--head) + 64px); }
 }
 /* 설명서 머리글은 차례 칩까지 덮으므로 비치지 않게 */
 .guide .top { background: var(--paper); }
+/* 11/14 밤: 설명서 아이콘도 앱 스티커로(화살표·맨 위 버튼만 선 아이콘) */
+.sk { flex-shrink: 0; display: inline-block; vertical-align: middle; }
+.eyebrow .sk { width: 22px; height: 22px; }
+.g-card-ic.sk { width: 40px; height: 40px; margin-bottom: 6px; }
+.g-side-sec .sk { width: 26px; height: 26px; }
+.g-sec-head h2 .sk { width: 42px; height: 42px; }
+.g-tip .sk, .g-note .sk { width: 28px; height: 28px; margin-top: -2px; }
