@@ -214,11 +214,11 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
 
           {isNotificationSupported() && notifPermission !== "granted" && (
             <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={handleEnableNotifications} aria-label="알림 켜기">
-              <Ico name="bell" size={18} />
+              <Ico name="bell" size={26} />{/* 11/14: 스티커라 선 아이콘보다 작아 보여 키움(사용자) */}
             </button>
           )}
           {isNotificationSupported() && notifPermission === "granted" && (
-            <span className="faint" title="정해진 시간에 케어 알림을 보내드려요"><Ico name="bell" size={18} /></span>
+            <span className="faint" title="정해진 시간에 케어 알림을 보내드려요"><Ico name="bell" size={26} /></span>
           )}
         </div>
         <HealthLines dog={dog} onEdit={startEdit} />
@@ -726,7 +726,7 @@ function LinksSection() {
       <div className="h2">멍케어 소식·자료</div>
       {LINKS.map(([ico, label, sub, href]) => (
         <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: "1px solid var(--border)" }}>
-          <Ico name={ico} size={20} style={{ color: "var(--accent-strong)", flex: "none" }} />
+          <Ico name={ico} size={20} sticker={false} style={{ color: "var(--accent-strong)", flex: "none" }} />{/* 11/14: 소식·자료 줄은 원래 선 아이콘(사용자) */}
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontWeight: 600 }}>{label}</span>
             <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{sub}</span>

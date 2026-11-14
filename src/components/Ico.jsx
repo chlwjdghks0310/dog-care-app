@@ -67,8 +67,9 @@ const STICKER = {
   users: "users", settings: "settings", search: "search", sparkles: "sparkles", idea: "idea", book: "book", graduation: "graduation", mail: "mail", lock: "lock", printer: "printer",
   video: "video", speaker: "speaker", mic: "mic", pencil: "pencil", trash: "trash", pin: "pin", repeat: "repeat", clip: "clip", heartPlain: "heartPlain", chatHeart: "chatHeart",
   tap: "tap", alert: "alert", siren: "siren", eye: "eye",
+  moon: "moon", // 11/14 설정 다크 모드(사용자)
 };
-const SK_URL = "/sk/stickers.svg?v=2";
+const SK_URL = "/sk/stickers.svg?v=3"; // v3: 강아지 얼굴(눈·코·입)·달 추가
 export const hasSticker = (name) => Boolean(STICKER[name]);
 
 // 눌러서 쓰는 곳(버튼·링크·라벨) 안에 있으면 누를 때 한 번 움직인다(폰엔 마우스 올리기가 없어서)
