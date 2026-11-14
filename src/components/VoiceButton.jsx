@@ -301,7 +301,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
   return (
     <>
       <button type="button" onClick={() => state === "idle" && start()} disabled={disabled || open} className="voice-btn" aria-label="말로 입력하기">
-        <Ico name="mic" size={20} />
+        <Ico name="mic" size={20} sticker={false} />{/* 11/14: 마이크는 하단 탭처럼 움직이는 선 아이콘(사용자) */}
       </button>
       {open &&
         createPortal(
@@ -315,7 +315,7 @@ export default function VoiceButton({ getText, onText, onError, disabled, hints 
               </div>
               <button type="button" className={`voice-orb${state === "transcribing" ? " busy" : ""}`} onClick={stop} aria-label="말하기 끝내기" disabled={state === "transcribing"}>
                 <span ref={orbRef} className="voice-orb-glow" aria-hidden="true" />
-                <span className="voice-orb-core" aria-hidden="true"><Ico name="mic" size={34} /></span>
+                <span className="voice-orb-core" aria-hidden="true"><Ico name="mic" size={34} sticker={false} /></span>
               </button>
               <div className="faint" style={{ fontSize: 13 }}>{state === "transcribing" ? "잠시만요" : "말을 멈추면 저절로 끝나요 · 동그라미를 누르면 바로 끝"}</div>
             </div>
