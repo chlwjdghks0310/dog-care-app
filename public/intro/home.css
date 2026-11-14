@@ -1,6 +1,6 @@
 /* 멍케어 소개 홈페이지(2026-11-14 개편) — 앱 스티커 아이콘(/sk/stickers.svg)과 같은 손그림·종이 느낌.
    색은 스티커 색(잉크 #47392e·살구 #f6b78a·하늘 #81abcc·크림 #fefdf9) + 앱 버튼 파랑(#3676c6). 제목 서체는 앱과 같은 Bagel Fat One.
-   설명서·자료실·설치 페이지는 intro.css를 그대로 쓴다. 휴대폰 데모 동작은 intro.js(.hots/.scr/.svc 클래스 유지). */
+   설명서·자료실도 이 파일 위에 guide.css·resources.css를 얹는다(옛 intro.css는 11/14 삭제). 휴대폰 데모 동작은 intro.js(.hots/.scr/.svc 클래스 유지). */
 @font-face { font-family: "Bagel Fat One"; src: url("/fonts/bagelfatone-subset.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Dongle"; src: url("/fonts/dongle-bold.woff2") format("woff2"); font-display: swap; }
 
