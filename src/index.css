@@ -892,6 +892,17 @@ button {
 .sv-icon, .vd-icon { background: var(--tone-bg, var(--accent-soft)); }
 .quick-tile-icon { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
 .rec-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
+/* ── 스티커 아이콘(11/14, components/Ico.jsx STICKER) ── 색은 변수 하나로 라이트·다크. 스티커가 든 칸은 종류 색판을 빼고(사용자 결정), 다크에선 표면보다 한 단 밝은 접시만 */
+:root { --sk-ink: #47392e; --sk-warm: #f6b78a; --sk-cool: #81abcc; --sk-paper: #fefdf9; --sk-brown: #7d5c47; --sk-plate: transparent; }
+:root[data-theme="dark"] { --sk-ink: #3a2f28; --sk-warm: #d9a074; --sk-cool: #7d9bb8; --sk-paper: #e8e1d6; --sk-brown: #8e6a50; --sk-plate: #2e333d; }
+.ico-sk svg { display: block; }
+.quick-tile-icon:has(> .ico-sk), .rec-icon:has(> .ico-sk), .vd-icon:has(> .ico-sk), .sv-icon:has(> .ico-sk) { background: var(--sk-plate); }
+.quick-tile-icon:has(> .ico-sk) { width: 54px; height: 54px; border-radius: 17px; }
+.quick-tile-icon > .ico-sk svg { width: 46px; height: 46px; }
+.rec-icon > .ico-sk svg { width: 32px; height: 32px; }
+.vd-icon > .ico-sk svg { width: 44px; height: 44px; }
+.sv-icon > .ico-sk svg { width: 32px; height: 32px; }
+.quick-tile.filled .quick-tile-icon:has(> .ico-sk) { background: transparent; }
 .up-icon { color: #fff; }
 
 /* 켜고 끄는 스위치(다크 모드) */

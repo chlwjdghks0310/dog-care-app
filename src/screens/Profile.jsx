@@ -545,7 +545,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
               onClick={() => (editingPins ? togglePin(v.id) : v.external ? onOpenWeight() : onOpenVital(v.id))}
             >
               <span className="vt-top">
-                <Ico name={v.ico} size={16} className={`tone-${v.tone}`} />
+                <Ico name={v.ico} size={16} className={`tone-${v.tone}`} sticker />
                 <span className="vt-label">{v.label}</span>
                 {editingPins && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
               </span>
@@ -584,7 +584,7 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
       aria-label={doses.length ? `투약 오늘 ${done}/${doses.length}회` : "투약"}
     >
       <span className="vt-top">
-        <Ico name="pill" size={16} className="tone-teal" />
+        <Ico name="pill" size={16} className="tone-teal" sticker />
         <span className="vt-label">투약</span>
         {editing && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
       </span>
@@ -642,7 +642,7 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital 
       {SERVICES.filter((svc) => svc.key !== "report" && (more || MAIN_SERVICES.includes(svc.key))).map((svc) => (
         <div key={svc.key} className="sv-row">
           <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : setBrowse({ types: svc.types }))}>
-            <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} /></span>
+            <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} sticker /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span className="sv-label">{svc.label}</span>
               <span className={`sv-sub${svc.key === "meds" && check ? " warn" : ""}`}>{subFor(svc)}</span>

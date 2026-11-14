@@ -122,7 +122,7 @@ function RecordItem({ rec, open, onToggle, onEdit, onDelete, readOnly }) {
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
-        <span className={`rec-icon tone-${(vitalDef && vitalDef.tone) || (TYPES[rec.type] || TYPES.daily).tone}`} aria-hidden="true"><Ico name={(vitalDef && vitalDef.ico) || (mealKind === "water" ? "droplet" : (TYPES[rec.type] || TYPES.daily).ico)} size={19} /></span>
+        <span className={`rec-icon tone-${(vitalDef && vitalDef.tone) || (TYPES[rec.type] || TYPES.daily).tone}`} aria-hidden="true"><Ico name={(vitalDef && vitalDef.ico) || (mealKind === "water" ? "droplet" : (TYPES[rec.type] || TYPES.daily).ico)} size={19} sticker /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="rec-item-title">{vitalDef ? (vitalDef.inMeal ? TYPES.meal.label : vitalDef.label) : (TYPES[rec.type] || TYPES.daily).label} <span className="faint">{rec.at.slice(11, 16)}</span></span>
           <span className="rec-item-text">{summarize(rec) || "내용 없음"}</span>
@@ -156,7 +156,7 @@ function VitalDayItem({ rec, open, onToggle, onEdit, readOnly }) {
   return (
     <div className="card rec-item">
       <button type="button" className="rec-item-row" onClick={onToggle} aria-expanded={open}>
-        <span className={`rec-icon tone-${meal ? "rose" : "violet"}`} aria-hidden="true"><Ico name={meal ? "bowl" : "walk"} size={19} /></span>
+        <span className={`rec-icon tone-${meal ? "rose" : "violet"}`} aria-hidden="true"><Ico name={meal ? "bowl" : "walk"} size={19} sticker /></span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="rec-item-title">{meal ? TYPES.meal.label : "산책"} <span className="faint">하루 합계</span></span>
           <span className="rec-item-text">{summarize(rec)}</span>

@@ -53,8 +53,29 @@ export function iconFromTitle(title) {
   return null;
 }
 
+// 스티커 아이콘(11/14, Recraft 벡터 40개 → public/sk/stickers.svg 한 장). "내용" 아이콘(기록 종류·수치·일상·병원)만 스티커로,
+// 닫기·검색·알림 같은 조작 아이콘은 그대로 선 아이콘. 어디서 스티커로 그릴지는 부르는 쪽이 정한다: sticker 속성, 또는 className에 cat-ico.
+// 앱 아이콘 이름 → 스티커 id(없는 이름은 스티커 없음). 색은 index.css의 --sk-* 변수(다크 모드는 외곽선 그대로 두고 채움만 중간 톤 + 접시).
+const STICKER = {
+  scales: "weight", bandaid: "symptom", bowl: "meal", toilet: "potty", pill: "med", stethoscope: "vet", smiley: "condition", sun: "daily", star: "life", camera: "media", chartLine: "vital",
+  droplets: "droplets", bone: "bone", droplet: "droplet", pipette: "pipette", wind: "wind", heart: "heart", thermometer: "thermometer", ruler: "ruler",
+  walk: "walk", handHeart: "handHeart", tooth: "tooth", bath: "bath", target: "target", firstAid: "firstAid", syringe: "syringe", bed: "bed", scissors: "scissors", box: "box",
+  shoppingBag: "shoppingBag", umbrella: "umbrella", cake: "cake", party: "party", building: "building", dog: "dog", scan: "scan", wallet: "wallet", clipboard: "clipboard", calendar: "calendar",
+};
+const SK_URL = "/sk/stickers.svg?v=1";
+export const hasSticker = (name) => Boolean(STICKER[name]);
+
 // 눌러서 쓰는 곳(버튼·링크·라벨) 안에 있으면 누를 때 한 번 움직인다(폰엔 마우스 올리기가 없어서)
-export default function Ico({ name, size = 20, className, style }) {
+export default function Ico({ name, size = 20, className, style, sticker }) {
+  const sk = STICKER[name];
+  if (sk && (sticker || (sticker !== false && /\bcat-ico\b/.test(className || "")))) {
+    const w = Math.round(size * 1.4); // 선 아이콘보다 통통해서 같은 자리에 조금 크게
+    return (
+      <span className={`ico ico-sk${className ? ` ${className}` : ""}`} style={style} aria-hidden="true">
+        <svg width={w} height={w} viewBox="0 0 1024 1024"><use href={`${SK_URL}#sk-${sk}`} /></svg>
+      </span>
+    );
+  }
   const P = PHOSPHOR[name];
   if (P) {
     return (
