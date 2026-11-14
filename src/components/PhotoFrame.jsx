@@ -25,7 +25,7 @@ export function FramedPhoto({ src, pos, frame, size = 200, alt = "" }) {
   const maskStyle = f.mask ? { WebkitMaskImage: f.mask, maskImage: f.mask, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" } : {};
   return (
     <span className="framed" style={{ width: size, height: size, ...f.style, ...maskStyle }}>
-      {src ? <img src={src} alt={alt} draggable={false} style={{ objectPosition: `${p.x}% ${p.y}%`, transform: `scale(${p.z})`, transformOrigin: `${p.x}% ${p.y}%` }} /> : <Ico name="dog" size={Math.round(size * 0.42)} />}
+      {src ? <img src={src} alt={alt} draggable={false} style={{ objectPosition: `${p.x}% ${p.y}%`, transform: `scale(${p.z})`, transformOrigin: `${p.x}% ${p.y}%` }} /> : <Ico name="dog" size={Math.round(size * 0.42)} style={{ color: "var(--ico-line)" }} />}
     </span>
   );
 }

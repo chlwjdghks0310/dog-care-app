@@ -893,8 +893,10 @@ button {
 .quick-tile-icon { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
 .rec-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: var(--tone-bg, var(--accent-soft)); }
 /* ── 스티커 아이콘(11/14, components/Ico.jsx STICKER) ── 색은 변수 하나로 라이트·다크. 스티커가 든 칸은 종류 색판을 빼고(사용자 결정), 다크에선 표면보다 한 단 밝은 접시만 */
-:root { --sk-ink: #47392e; --sk-warm: #f6b78a; --sk-cool: #81abcc; --sk-paper: #fefdf9; --sk-brown: #7d5c47; --sk-plate: transparent; }
-:root[data-theme="dark"] { --sk-ink: #3a2f28; --sk-warm: #d9a074; --sk-cool: #7d9bb8; --sk-paper: #e8e1d6; --sk-brown: #8e6a50; --sk-plate: #2e333d; }
+:root { --sk-ink: #47392e; --sk-warm: #f6b78a; --sk-cool: #81abcc; --sk-paper: #fefdf9; --sk-brown: #7d5c47; --sk-plate: transparent;
+  /* 11/14 밤: 선 아이콘은 스티커 외곽선 갈색, 설정 줄 색판은 배경 테마 색을 살짝 섞은 크림 한 가지(테마마다 따라 바뀜) */
+  --ico-line: var(--sk-ink); --plate: color-mix(in srgb, var(--accent-soft) 30%, #fffcf6); }
+:root[data-theme="dark"] { --sk-ink: #3a2f28; --sk-warm: #d9a074; --sk-cool: #7d9bb8; --sk-paper: #e8e1d6; --sk-brown: #8e6a50; --sk-plate: #2e333d; --ico-line: #ddd5c9; --plate: var(--sk-plate); }
 .ico-sk svg { display: block; }
 .quick-tile-icon:has(> .ico-sk), .rec-icon:has(> .ico-sk), .vd-icon:has(> .ico-sk), .sv-icon:has(> .ico-sk) { background: var(--sk-plate); }
 .quick-tile-icon:has(> .ico-sk) { width: 54px; height: 54px; border-radius: 17px; }
@@ -1674,10 +1676,9 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .sg-row:first-child { border-top: none; }
 .sg-row:active { background: var(--accent-soft); }
 .sg-row.static { cursor: default; }
-.sg-ico { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--accent-soft); color: var(--accent-strong); }
-.sg-ico.warm { background: var(--warm-bg); color: var(--warm-strong); }
-.sg-ico.danger { background: #fdecea; color: var(--danger); }
-:root[data-theme="dark"] .sg-ico.danger { background: rgba(220, 90, 70, 0.18); }
+.sg-ico { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--plate); color: var(--ico-line); } /* 11/14 밤: 색판 한 가지(--plate), 선 아이콘 갈색 */
+.sg-ico.warm { color: var(--warm-strong); }
+.sg-ico.danger { color: var(--danger); }
 .sg-ico img { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; }
 .sg-main { flex: 1; min-width: 0; }
 .sg-t { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.25; }

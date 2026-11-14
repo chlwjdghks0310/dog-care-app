@@ -61,13 +61,14 @@ const STICKER = {
   scales: "weight", bandaid: "symptom", bowl: "meal", toilet: "potty", pill: "med", stethoscope: "vet", smiley: "condition", sun: "daily", star: "life", camera: "media", chartLine: "vital",
   droplets: "droplets", bone: "bone", droplet: "droplet", pipette: "pipette", wind: "wind", heart: "heart", thermometer: "thermometer", ruler: "ruler",
   walk: "walk", handHeart: "handHeart", tooth: "tooth", bath: "bath", target: "target", firstAid: "firstAid", syringe: "syringe", bed: "bed", scissors: "scissors", box: "box",
-  shoppingBag: "shoppingBag", umbrella: "umbrella", cake: "cake", party: "party", building: "building", dog: "dog", scan: "scan", wallet: "wallet", clipboard: "clipboard", calendar: "calendar",
+  shoppingBag: "shoppingBag", umbrella: "umbrella", cake: "cake", party: "party", building: "building", scan: "scan", wallet: "wallet", clipboard: "clipboard", calendar: "calendar",
   // 11/14 저녁 추가 34개(사용자: 하단 탭·순수 조작·발도장 빼고 전부)
   bell: "bell", bellOff: "bellOff", alarm: "alarm", timer: "timer", house: "house", chart: "chart", checklist: "checklist", note: "note", image: "image", imagePlus: "imagePlus",
   users: "users", settings: "settings", search: "search", sparkles: "sparkles", idea: "idea", book: "book", graduation: "graduation", mail: "mail", lock: "lock", printer: "printer",
   video: "video", speaker: "speaker", mic: "mic", pencil: "pencil", trash: "trash", pin: "pin", repeat: "repeat", clip: "clip", heartPlain: "heartPlain", chatHeart: "chatHeart",
   tap: "tap", alert: "alert", siren: "siren", eye: "eye",
   moon: "moon", // 11/14 설정 다크 모드(사용자)
+  // dog는 뺌(11/14 밤, 사용자: 프로필·강아지 자리 전부 원래 선 아이콘으로)
 };
 const SK_URL = "/sk/stickers.svg?v=3"; // v3: 강아지 얼굴(눈·코·입)·달 추가
 export const hasSticker = (name) => Boolean(STICKER[name]);

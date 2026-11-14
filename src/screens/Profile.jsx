@@ -726,7 +726,7 @@ function LinksSection() {
       <div className="h2">멍케어 소식·자료</div>
       {LINKS.map(([ico, label, sub, href]) => (
         <a key={href} href={href} target="_blank" rel="noopener" aria-label={`${label} (새 창)`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "8px 0", color: "inherit", textDecoration: "none", borderTop: "1px solid var(--border)" }}>
-          <Ico name={ico} size={20} sticker={false} style={{ color: "var(--accent-strong)", flex: "none" }} />{/* 11/14: 소식·자료 줄은 원래 선 아이콘(사용자) */}
+          <Ico name={ico} size={20} sticker={false} style={{ color: "var(--ico-line)", flex: "none" }} />{/* 11/14: 소식·자료 줄은 원래 선 아이콘(사용자) */}
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontWeight: 600 }}>{label}</span>
             <span className="faint" style={{ display: "block", fontSize: 12.5 }}>{sub}</span>
