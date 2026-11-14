@@ -7,34 +7,35 @@
   <meta name="description" content="멍케어를 홈 화면에 설치하는 방법을 그림으로 한 단계씩 보여 드려요. 아이폰 사파리 4단계, 갤럭시 크롬 3단계." />
   <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
   <link rel="apple-touch-icon" href="/icon-180.png?v=6" />
-  <meta name="theme-color" content="#eef5ff" />
+  <meta name="theme-color" content="#fffaf3" />
   <style>
-    :root { --bg: #eef5ff; --surface: #fff; --text: #1f2a37; --soft: #4a5a6b; --faint: #6b7785; --accent: #3676c6; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #dfe7f2; --warm: #ff5a36; }
+    :root { --bg: #fffaf3; --surface: #fffdf9; --text: #47392e; --soft: #7a6a5c; --faint: #8f7f70; --accent: #3676c6; --accent-strong: #255a9c; --accent-soft: #e6eff7; --border: #e9dac8; --ink: #47392e; --warm: #f6b78a; }
+    @font-face { font-family: "Bagel Fat One"; src: url("/fonts/bagelfatone-subset.woff2") format("woff2"); font-display: swap; }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; line-height: 1.5; -webkit-text-size-adjust: 100%; }
     .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 48px; }
-    h1 { font-size: 24px; margin: 8px 0 6px; }
+    h1 { font-family: "Bagel Fat One", "Apple SD Gothic Neo", sans-serif; font-weight: 400; font-size: 30px; margin: 8px 0 6px; }
     .lead { color: var(--soft); margin: 0 0 16px; font-size: 15px; }
-    .why { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .why { background: #fdeee2; border: 1.5px dashed #9c4f1b; border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .why b { display: block; margin-bottom: 4px; }
     .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-    .tab { flex: 1; min-height: 48px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); font: inherit; font-size: 16px; font-weight: 800; color: var(--soft); cursor: pointer; }
-    .tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+    .tab { flex: 1; min-height: 48px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface); font: inherit; font-size: 16px; font-weight: 800; color: var(--soft); cursor: pointer; }
+    .tab[aria-selected="true"] { border-color: var(--ink); background: var(--warm); color: var(--ink); }
     .panel[hidden] { display: none; }
-    .step { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
-    .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: #fff; font-weight: 900; align-items: center; justify-content: center; margin-right: 8px; }
+    .step { background: var(--surface); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 3px 4px 0 rgba(71,57,46,.1); padding: 14px; margin-bottom: 14px; }
+    .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: var(--ink); border: 1.5px solid var(--ink); font-weight: 900; align-items: center; justify-content: center; margin-right: 8px; }
     .step h2 { font-size: 17px; margin: 0 0 4px; display: flex; align-items: center; }
     .step p { margin: 0 0 10px 36px; color: var(--soft); font-size: 14px; }
     .step img { display: block; width: 100%; max-width: 300px; margin: 0 auto; border-radius: 22px; }
     .note { font-size: 13px; color: var(--faint); margin: 6px 0 0 36px; }
-    .cta { display: block; text-align: center; padding: 14px; border-radius: 16px; font-weight: 800; text-decoration: none; margin-top: 10px; }
-    .cta.app { background: var(--accent); color: #fff; }
-    .cta.chat { background: var(--surface); color: var(--accent-strong); border: 1.5px solid var(--border); }
-    .help { margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
+    .cta { display: block; text-align: center; padding: 14px; border-radius: 999px; font-weight: 800; text-decoration: none; margin-top: 10px; }
+    .cta.app { background: var(--accent); color: #fff; border: 2px solid var(--accent-strong); box-shadow: 0 4px 0 var(--accent-strong); }
+    .cta.chat { background: var(--surface); color: var(--text); border: 2px solid var(--ink); box-shadow: 0 4px 0 rgba(71,57,46,.2); }
+    .help { margin-top: 24px; background: var(--accent-soft); border: 1.5px dashed #81abcc; border-radius: 18px; padding: 14px; }
     .help h3 { margin: 0 0 6px; font-size: 16px; }
     .help p { margin: 0 0 10px; font-size: 14px; color: var(--soft); }
     .faq { font-size: 14px; margin-top: 18px; }
-    .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; }
+    .faq details { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; }
     .faq summary { font-weight: 700; cursor: pointer; }
     .faq p { margin: 8px 0 0; color: var(--soft); }
     footer { text-align: center; font-size: 12.5px; color: var(--faint); margin-top: 28px; }

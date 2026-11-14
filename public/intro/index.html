@@ -37,7 +37,7 @@
   <link rel="preload" href="/fonts/bagelfatone-subset.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- 2026-11-14 개편: 스티커 아이콘(/sk/stickers.svg)과 같은 손그림 느낌. 설명서·자료실은 intro.css 그대로 -->
-  <link rel="stylesheet" href="/intro/home.css?v=1" />
+  <link rel="stylesheet" href="/intro/home.css?v=2" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -158,13 +158,25 @@
             <div class="svc-body">
               <ul class="svc-cards">
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-calendar"/></svg><div><b>기록 달력</b><span>평소는 점(●), 다른 날은 항목 첫 글자 배지(밥·변…), 병원 간 날은 ＋. 밥·변 같은 <b>항목을 고르면 그 항목이 다른 날만</b> 남아요. 놓친 날도 달력에서 눌러 채워요.</span></div></li>
-                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-note"/></svg><div><b>＋ 새 기록</b><span>체중·증상·밥·물·배변·복약·병원 진료·일상·컨디션·추억·사진·건강 수치 중 골라 적어요. 날짜를 누르면 <b>[＋ 이날 더 적기]</b>로 그날에 바로 더해요.</span></div></li>
+                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-note"/></svg><div><b>＋ 새 기록</b><span>누르면 “어떤 기록을 남길까요?” 하고 아홉 가지가 나와요. 날짜를 누르면 <b>[＋ 이날 더 적기]</b>로 그날에 바로 더해요.</span>
+                  <ul class="kinds" aria-label="새 기록에서 고르는 종류">
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-weight"/></svg>체중</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-meal"/></svg>밥·물</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-potty"/></svg>배변·배뇨</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-symptom"/></svg>증상</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-vital"/></svg>건강 수치</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-med"/></svg>복약</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-vet"/></svg>병원 진료</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-media"/></svg>성장 추억</li>
+                    <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-daily"/></svg>일상·컨디션</li>
+                  </ul>
+                  <span>체중은 몸무게와 잰 방법, 밥·물은 건식·습식·물을 양(g·ml)과 식욕으로, 배변·배뇨는 대변·소변 상태, 증상은 구토·설사·기침 같은 종류와 횟수, 건강 수치는 호흡수·체온·음수량 같은 재는 값, 복약은 먹인 약, 병원 진료는 병원·이유·설명·검사·처방·진료비·다음 진료일, 성장 추억은 사진, 일상·컨디션은 산책·간식·미용·양치·놀이와 활동량·수면·피부·구강 상태를 적어요. 사진과 메모는 어디에나 붙일 수 있어요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-weight"/></svg><div><b>변화 보기</b><span>몸무게·식사량 같은 수치가 어떻게 변했는지 그래프로 봐요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-search"/></svg><div><b>모든 기록 보기·찾기</b><span>“구토”처럼 찾거나 종류·기간으로 걸러요. 병원에서 바로 보여 줄 수 있어요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-scan"/></svg><div><b>건강 체크</b><span>병원 탭에 있어요. <b>변 체크</b>는 모양(1~7)·색·신호를, <b>컨디션 체크</b>는 항목을 보호자가 직접 골라요. 원하면 AI 사진·영상 확인도 할 수 있어요(참고용, 하루 2번).</span></div></li>
               </ul>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/records.jpg?v=7" alt="기록 달력 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/healthcheck.jpg?v=7" alt="건강 체크 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/records.jpg?v=7" alt="기록 달력 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/newrec.jpg?v=7" alt="새 기록에서 종류를 고르는 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#profile">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>

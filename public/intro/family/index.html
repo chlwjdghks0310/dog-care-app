@@ -6,30 +6,31 @@
   <title>멍케어 가족 공유 연결하기 — 본가 강아지도 같이 보기</title>
   <meta name="description" content="강아지가 본가(가족 집)에 있을 때, 가족 폰과 멍케어를 연결하는 방법을 그림으로 한 단계씩." />
   <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
-  <meta name="theme-color" content="#eef5ff" />
+  <meta name="theme-color" content="#fffaf3" />
   <style>
-    :root { --bg: #eef5ff; --surface: #fff; --text: #1f2a37; --soft: #4a5a6b; --faint: #6b7785; --accent: #3676c6; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #dfe7f2; --warm: #ff5a36; }
+    :root { --bg: #fffaf3; --surface: #fffdf9; --text: #47392e; --soft: #7a6a5c; --faint: #8f7f70; --accent: #3676c6; --accent-strong: #255a9c; --accent-soft: #e6eff7; --border: #e9dac8; --ink: #47392e; --warm: #f6b78a; }
+    @font-face { font-family: "Bagel Fat One"; src: url("/fonts/bagelfatone-subset.woff2") format("woff2"); font-display: swap; }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; line-height: 1.5; }
     .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 48px; }
-    h1 { font-size: 24px; margin: 8px 0 6px; }
+    h1 { font-family: "Bagel Fat One", "Apple SD Gothic Neo", sans-serif; font-weight: 400; font-size: 30px; margin: 8px 0 6px; }
     .lead { color: var(--soft); margin: 0 0 16px; font-size: 15px; }
-    .who { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .who { background: #fdeee2; border: 1.5px dashed #9c4f1b; border-radius: 16px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .who b { display: block; margin-bottom: 4px; }
     .part { font-size: 13px; font-weight: 800; color: var(--accent-strong); margin: 18px 0 8px; letter-spacing: 0.02em; }
-    .step { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
-    .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: #fff; font-weight: 900; align-items: center; justify-content: center; margin-right: 8px; }
+    .step { background: var(--surface); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 3px 4px 0 rgba(71,57,46,.1); padding: 14px; margin-bottom: 14px; }
+    .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: var(--ink); border: 1.5px solid var(--ink); font-weight: 900; align-items: center; justify-content: center; margin-right: 8px; }
     .step h2 { font-size: 17px; margin: 0 0 4px; display: flex; align-items: center; }
     .step p { margin: 0 0 10px 36px; color: var(--soft); font-size: 14px; }
     .step img { display: block; width: 100%; max-width: 300px; margin: 0 auto; border-radius: 18px; border: 1px solid var(--border); }
-    .code { margin: 0 auto; max-width: 300px; background: var(--accent-soft); border-radius: 14px; padding: 14px; text-align: center; }
+    .code { margin: 0 auto; max-width: 300px; background: var(--accent-soft); border: 1.5px dashed #81abcc; border-radius: 14px; padding: 14px; text-align: center; }
     .code b { display: block; font-size: 28px; letter-spacing: 0.2em; color: var(--accent-strong); }
     .code span { font-size: 12.5px; color: var(--soft); }
-    .cta { display: block; text-align: center; padding: 14px; border-radius: 16px; font-weight: 800; text-decoration: none; margin-top: 10px; }
-    .cta.app { background: var(--accent); color: #fff; }
-    .cta.chat { background: var(--surface); color: var(--accent-strong); border: 1.5px solid var(--border); }
+    .cta { display: block; text-align: center; padding: 14px; border-radius: 999px; font-weight: 800; text-decoration: none; margin-top: 10px; }
+    .cta.app { background: var(--accent); color: #fff; border: 2px solid var(--accent-strong); box-shadow: 0 4px 0 var(--accent-strong); }
+    .cta.chat { background: var(--surface); color: var(--text); border: 2px solid var(--ink); box-shadow: 0 4px 0 rgba(71,57,46,.2); }
     .faq { font-size: 14px; margin-top: 18px; }
-    .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; }
+    .faq details { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 14px; margin-bottom: 8px; }
     .faq summary { font-weight: 700; cursor: pointer; }
     .faq p { margin: 8px 0 0; color: var(--soft); }
     footer { text-align: center; font-size: 12.5px; color: var(--faint); margin-top: 28px; }
@@ -44,12 +45,12 @@
 
     <div class="part">내 폰에서</div>
     <article class="step"><h2><span class="n">1</span>앱 처음 등록 때 "가족(본가) 집에 있어요" 고르기</h2><p>이미 등록했다면 우리 아이 탭 → 메뉴(☰) → 우리 강아지 → <b>"가족 집에 있어요"</b> 스위치를 켜요. 그러면 오늘 화면이 하루 체크 대신 가족 초대로 바뀌어요.</p></article>
-    <article class="step"><h2><span class="n">2</span>메뉴(☰) → 계정 → 가족 공유</h2><p>로그인이 안 돼 있으면 여기서 먼저 로그인해요.</p><img src="/intro/img/family-1-settings.png?v=1" alt="설정 화면의 계정 묶음, 가족 공유 행" width="390" height="700" loading="lazy" /></article>
+    <article class="step"><h2><span class="n">2</span>메뉴(☰) → 계정 → 가족 공유</h2><p>로그인이 안 돼 있으면 여기서 먼저 로그인해요.</p><img src="/intro/img/family-1-settings.png?v=2" alt="설정 화면의 계정 묶음, 가족 공유 행" width="390" height="700" loading="lazy" /></article>
     <article class="step"><h2><span class="n">3</span>초대 코드 만들기</h2><p>[초대 코드 만들기]를 누르면 6자리 코드가 나와요. 가족에게 카톡으로 보내 주세요. 코드는 24시간 동안 쓸 수 있어요. 지나면 다시 만들면 돼요.</p><div class="code"><b>AB12CD</b><span>예시예요. 실제 코드는 앱에서 만들어요</span></div></article>
 
     <div class="part">가족 폰에서</div>
     <article class="step"><h2><span class="n">4</span>멍케어 설치하기</h2><p>가족 폰도 홈 화면에 설치해요. <a href="/intro/install/">설치 방법 그림으로 보기 →</a></p></article>
-    <article class="step"><h2><span class="n">5</span>처음 열 때 이름 칸 아래 "가족 초대 코드"에 입력</h2><p>강아지 이름을 새로 적지 말고, 아래 <b>가족 초대 코드</b> 칸에 받은 코드를 넣고 [가족 강아지와 연결하기]를 눌러요. 로그인 한 번 하면 강아지가 그대로 나타나요.</p><img src="/intro/img/family-3-code.png?v=1" alt="처음 등록 화면의 가족 초대 코드 칸" width="390" height="844" loading="lazy" /></article>
+    <article class="step"><h2><span class="n">5</span>처음 열 때 이름 칸 아래 "가족 초대 코드"에 입력</h2><p>강아지 이름을 새로 적지 말고, 아래 <b>가족 초대 코드</b> 칸에 받은 코드를 넣고 [가족 강아지와 연결하기]를 눌러요. 로그인 한 번 하면 강아지가 그대로 나타나요.</p><img src="/intro/img/family-3-code.png?v=2" alt="처음 등록 화면의 가족 초대 코드 칸" width="390" height="844" loading="lazy" /></article>
     <article class="step"><h2><span class="n">6</span>가족은 매일 "오늘 나 어땠어?"에 한 번만</h2><p>평소와 같으면 한 번, 다른 게 있으면 그것만 골라요. 다른 게 있는 날만 내 폰에 "오늘 다른 점: 변 무름" 같은 알림이 와요. 병원 일정·접종 날짜도 같이 보여요.</p></article>
 
     <a class="cta app" href="/?app&from=family">멍케어 열기 →</a>
