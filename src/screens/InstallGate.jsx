@@ -9,7 +9,8 @@ export const isStandalone = () => window.navigator.standalone === true || window
 const ua = () => navigator.userAgent;
 export const isIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = () => /Android/.test(ua());
-const inApp = () => (/KAKAOTALK/i.test(ua()) ? "카카오톡" : /NAVER\(inapp/i.test(ua()) ? "네이버" : /Instagram/i.test(ua()) ? "인스타그램" : /FBAN|FBAV/i.test(ua()) ? "페이스북" : /Line\//i.test(ua()) ? "라인" : /DaumApps/i.test(ua()) ? "다음" : /GSA\//.test(ua()) ? "구글 앱" : "");
+// 11/14: 스레드 앱 안 브라우저(UA에 Barcelona)도 알아본다 — 인스타처럼 홈 화면 추가가 안 됨
+const inApp = () => (/KAKAOTALK/i.test(ua()) ? "카카오톡" : /NAVER\(inapp/i.test(ua()) ? "네이버" : /Instagram/i.test(ua()) ? "인스타그램" : /Barcelona/i.test(ua()) ? "스레드" : /FBAN|FBAV/i.test(ua()) ? "페이스북" : /Line\//i.test(ua()) ? "라인" : /DaumApps/i.test(ua()) ? "다음" : /GSA\//.test(ua()) ? "구글 앱" : "");
 const isSamsung = () => /SamsungBrowser/i.test(ua());
 // 휴대폰 브라우저로 열었고 아직 설치한 앱이 아니면 안내가 필요하다(컴퓨터는 안내 없이 바로)
 export const needsInstall = () => (isIOS() || isAndroid()) && !isStandalone();
@@ -107,7 +108,7 @@ export default function InstallGate() {
           <div className="onb-mock ig-card">
             <p style={{ margin: "0 0 10px", lineHeight: 1.6 }}>
               <b>{app}</b> 안에서는 설치할 수 없어요. 아래 브라우저로 열어 주세요. 설치는 {os === "ios" ? "사파리" : "크롬·삼성 인터넷"}에서 가장 확실해요.
-              {(app === "인스타그램" || app === "페이스북") && " 오른쪽 위 ⋯ → '외부 브라우저에서 열기'가 가장 확실해요."}
+              {(app === "인스타그램" || app === "페이스북" || app === "스레드") && " 오른쪽 위 ⋯ → '외부 브라우저에서 열기'가 가장 확실해요."}
             </p>
             {targets.map((t, i) => (
               <a key={t.id} href={t.href} onClick={watchOpen} className={i ? "btn-ghost" : "btn-primary"} style={{ display: "block", textAlign: "center", marginBottom: 8, textDecoration: "none" }}>
