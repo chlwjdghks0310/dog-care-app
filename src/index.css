@@ -284,10 +284,10 @@ button {
   gap: 3px;
   background: none;
   border: none;
-  padding: 6px 2px;
+  padding: 6px 0;
   min-height: 48px;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: 11.5px; /* 11/15 탭 5개 */
   font-weight: 500;
   border-radius: 16px;
   transition: background 0.15s ease, color 0.15s ease;
@@ -1753,3 +1753,19 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mg-urgent { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--warm-bg); color: var(--warm-strong); font-size: 14px; font-weight: 700; line-height: 1.5; }
 .mg-foot { margin: 16px 0 0; line-height: 1.55; }
 .mg-ask-input:focus { outline: none; border-color: var(--accent-strong); box-shadow: 0 0 0 3px var(--accent-soft); }
+/* 케어 탭 첫 화면(11/15): 월령별 가이드 큰 카드 + 접힌 할 일 */
+.care-guide { display: flex; flex-direction: column; gap: 10px; width: 100%; margin: 0 0 14px; padding: 16px; text-align: left; border: 1.5px solid var(--accent-strong); border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); color: var(--text); font-family: inherit; cursor: pointer; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 16%, transparent); }
+.care-guide:active { filter: brightness(0.97); }
+.care-guide-top { display: flex; gap: 12px; align-items: flex-start; }
+.care-guide-ico { flex-shrink: 0; width: 56px; height: 56px; border-radius: 18px; background: var(--plate); display: flex; align-items: center; justify-content: center; }
+.care-guide-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.care-guide-sub { font-size: 12.5px; font-weight: 800; color: var(--accent-strong); }
+.care-guide-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-size: 22px; line-height: 1.2; }
+.care-guide-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.45; }
+.care-guide-fit { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--warm-bg); font-size: 13.5px; line-height: 1.4; }
+.care-guide-fit > span { display: flex; gap: 6px; align-items: flex-start; }
+.care-guide-go { align-self: flex-end; font-size: 14px; font-weight: 800; color: var(--accent-strong); }
+.care-list-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; background: none; border: none; text-align: left; color: var(--text); font-family: inherit; cursor: pointer; }
+.care-list-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.care-list-text b { font-size: 16px; }
+.care-list-text .faint { font-size: 12.5px; }

@@ -2,22 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
 import { formatAge } from "../utils/age";
 import { RoutineSheet } from "../components/OutingCard";
-import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
+import { getTodayChecklist } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
 import { getCategoryIco, getCategoryTone } from "../data/categoryIcons";
 import Ico from "../components/Ico";
 import ProgressRing from "../components/ProgressRing";
+import PuppyCard from "../components/PuppyCard";
 import { getFeedingSettings } from "../services/feedingSettings";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
 import { getFoodStock, stockLabel } from "../services/foodStock";
-import { getStage } from "../services/stageGuide";
+import { getStage, getFit } from "../services/stageGuide";
 import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenGuide }) {
+export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenGuide, onOpenPuppy }) {
   const stage = useMemo(() => getStage(dog), [dog]); // 월령별 가이드 띠(11/15)
   const [routineOpen, setRoutineOpen] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
@@ -46,8 +47,6 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
   }
   useEffect(loadChecklist, [dog, dateKey]);
 
-  const weekHighlights = useMemo(() => getThisWeekHighlights(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
-  const upcoming = useMemo(() => getUpcoming(dog).slice(0, 2), [dog, hidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const food = useMemo(() => getFoodStock(dog), [dog]);
   const groupedChecklist = useMemo(() => {
@@ -68,36 +67,35 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
 
   const noMealTimes = !(getFeedingSettings(dog.id).times || []).length;
 
+  const [listOpen, setListOpen] = useState(false); // 11/15 사용자: 케어 탭은 가이드·훈련이 먼저, 할 일은 접어서 아래에
+  const left = checklist.length - doneCount;
+  const fit = useMemo(() => getFit(dog, stage).slice(0, 2), [dog, stage]);
+
   return (
     <div className="screen">
-      <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>← 오늘로</button>
-      <div className="h1" style={{ marginBottom: 10 }}>오늘 할 일</div>
-      <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
-          <span className="quick-tile-label">사료 계산기</span>
-        </button>
-        <button className="quick-tile" onClick={onOpenAlarms}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
-          <span className="quick-tile-label">알림·알람</span>
-        </button>
-        {/* 외출 시간 설정 — 오늘 탭 외출 카드의 ⚙가 여기로(11/9 오늘 화면 줄이기) */}
-        <button className="quick-tile" onClick={() => setRoutineOpen(true)}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
-          <span className="quick-tile-label">외출 시간</span>
-        </button>
-      </div>
-      {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
+      {/* 11/15: 케어 탭 첫 화면 — 월령별 가이드(크게) → 퍼피 100일 → 하루 체크 결과 → 오늘 할 일(접힘) → 사료 계산기·알림·외출 시간 */}
+      <div className="h1" style={{ marginBottom: 2 }}>케어</div>
+      <p className="subtle" style={{ margin: "0 0 12px" }}>{dog.name} · {formatAge(stage.age)} · {stage.sizeLabel}{dog.weight ? ` · ${dog.weight}kg` : ""}</p>
 
-      {/* 월령별 가이드 띠(11/15): 오늘 할 일은 행동 체크, 가이드는 이 시기에 알아야 할 것 */}
-      <button type="button" className="mg-band" onClick={onOpenGuide}>
-        <span className="mg-band-ico"><Ico name={stage.ico} size={24} /></span>
-        <span className="mg-band-body">
-          <span className="mg-band-sub">지금은 {stage.name}{stage.settle ? ` · 집에 온 지 ${stage.settle}일째` : ""}</span>
-          <span className="mg-band-title">월령별 가이드 · {stage.sizeLabel} {formatAge(stage.age)}에 맞춰</span>
+      <button type="button" className="care-guide" onClick={onOpenGuide}>
+        <span className="care-guide-top">
+          <span className="care-guide-ico"><Ico name={stage.ico} size={34} /></span>
+          <span className="care-guide-text">
+            <span className="care-guide-sub">지금은 {stage.name} · {stage.rangeLabel}{stage.settle ? ` · 집에 온 지 ${stage.settle}일째` : ""}</span>
+            <span className="care-guide-title">월령별 가이드</span>
+            <span className="care-guide-desc">{stage.tip}</span>
+          </span>
         </span>
-        <span className="mg-band-go">보기 ›</span>
+        {fit.length > 0 && (
+          <span className="care-guide-fit">
+            {fit.map((f, i) => <span key={i}><Ico name={f.ico} size={16} /> {f.text}</span>)}
+          </span>
+        )}
+        <span className="care-guide-go">간식·장난감·산책·건강 카드 보기 ›</span>
       </button>
+
+      {onOpenPuppy && <PuppyCard dog={dog} onOpen={onOpenPuppy} />}
+      {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
 
       {food && food.daysLeft <= 7 && (
         <button type="button" className="food-alert" onClick={onOpenFeeding}>
@@ -106,27 +104,29 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
         </button>
       )}
 
-
       <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} />
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div className="h2">오늘 해야 할 일</div>
-          <span className="faint">{formatKoreanDate(dateKey)}</span>
-        </div>
-        {checklist.length === 0 ? (
-          <p className="subtle">오늘 등록된 필수 일과가 없어요. 이번 주 핵심을 확인해보세요.</p>
-        ) : (
-          <>
-            <div className="today-head">
-              <ProgressRing done={doneCount} total={checklist.length} label="오늘 할 일" />
-              <div>
-                <div style={{ fontWeight: 700 }}>
-                  {doneCount === checklist.length ? `오늘 할 일을 다 했어요!` : `${checklist.length - doneCount}개 남았어요`}
+      {/* 오늘 할 일: 접어 두고 남은 개수만. 밥 시간 알림·산책 체크·가이드에서 넣은 할 일이 여기 쌓인다 */}
+      <div className="card" style={{ marginBottom: 14, padding: listOpen ? undefined : "12px 16px" }}>
+        <button type="button" className="care-list-head" aria-expanded={listOpen} onClick={() => setListOpen((v) => !v)}>
+          <Ico name="checklist" size={22} />
+          <span className="care-list-text">
+            <b>오늘 할 일</b>
+            <span className="faint">{checklist.length === 0 ? "오늘 등록된 할 일이 없어요" : left === 0 ? "다 했어요!" : `${left}개 남았어요 · ${checklist.length}개 중 ${doneCount}개 완료`} · {formatKoreanDate(dateKey)}</span>
+          </span>
+          <Ico name="arrowDown" size={18} className={`mg-card-arrow${listOpen ? " up" : ""}`} style={{ marginTop: 0 }} />
+        </button>
+        {listOpen && (
+          <div style={{ marginTop: 10 }}>
+            {checklist.length > 0 && (
+              <div className="today-head">
+                <ProgressRing done={doneCount} total={checklist.length} label="오늘 할 일" />
+                <div>
+                  <div style={{ fontWeight: 700 }}>{doneCount === checklist.length ? `오늘 할 일을 다 했어요!` : `${left}개 남았어요`}</div>
+                  <div className="faint">{checklist.length}개 중 {doneCount}개 완료</div>
                 </div>
-                <div className="faint">{checklist.length}개 중 {doneCount}개 완료</div>
               </div>
-            </div>
+            )}
             {groupedChecklist.map(([category, items]) => (
               <div key={category} className="category-group">
                 <div className="category-label">
@@ -147,63 +147,43 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
                 ))}
               </div>
             ))}
-          </>
-        )}
-        {hiddenList.length > 0 && (
-          <div style={{ marginTop: 8 }}>
-            <button type="button" className="link-btn" aria-expanded={showHidden} onClick={() => setShowHidden((v) => !v)}>
-              숨긴 할 일 {hiddenList.length}개 {showHidden ? "▴" : "▾"}
-            </button>
-            {showHidden &&
-              hiddenList.map((rule) => (
-                <div key={rule.id} className="hidden-row">
-                  <span className="subtle">{rule.title}</span>
-                  <button type="button" className="hide-btn" onClick={() => toggleHide(rule.id, false)}>다시 보이기</button>
-                </div>
-              ))}
+            {hiddenList.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <button type="button" className="link-btn" aria-expanded={showHidden} onClick={() => setShowHidden((v) => !v)}>
+                  숨긴 할 일 {hiddenList.length}개 {showHidden ? "▴" : "▾"}
+                </button>
+                {showHidden &&
+                  hiddenList.map((rule) => (
+                    <div key={rule.id} className="hidden-row">
+                      <span className="subtle">{rule.title}</span>
+                      <button type="button" className="hide-btn" onClick={() => toggleHide(rule.id, false)}>다시 보이기</button>
+                    </div>
+                  ))}
+              </div>
+            )}
+            {noMealTimes && (
+              <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
+                <Ico name="bowl" size={16} /> 밥 시간 정하고 알림 받기
+              </button>
+            )}
           </div>
         )}
-        {noMealTimes && (
-          <button type="button" className="btn-ghost small" style={{ width: "100%", marginTop: 10 }} onClick={onOpenFeeding}>
-            <Ico name="bowl" size={16} /> 밥 시간 정하고 알림 받기
-          </button>
-        )}
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div className="h2">이번 주 핵심</div>
-          <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12.5 }} onClick={onOpenWeek}>
-            더보기
-          </button>
-        </div>
-        {weekHighlights.length === 0 ? (
-          <p className="subtle">이번 주 특별히 챙길 항목이 없어요.</p>
-        ) : (
-          weekHighlights.map((rule) => (
-            <div key={rule.id} style={{ marginBottom: 10 }}>
-              <div style={{ fontWeight: 600, fontSize: 14.5 }}>{rule.title}</div>
-              <div className="subtle">{rule.why}</div>
-            </div>
-          ))
-        )}
+      <div className="quick-actions" style={{ marginBottom: 14 }}>
+        <button className="quick-tile" onClick={onOpenFeeding}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
+          <span className="quick-tile-label">사료 계산기</span>
+        </button>
+        <button className="quick-tile" onClick={onOpenAlarms}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
+          <span className="quick-tile-label">알림·알람</span>
+        </button>
+        <button className="quick-tile" onClick={() => setRoutineOpen(true)}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
+          <span className="quick-tile-label">외출 시간</span>
+        </button>
       </div>
-
-      {upcoming.length > 0 && (
-        <div className="card" style={{ marginBottom: 14 }}>
-          <div className="h2">곧 시작하는 관리</div>
-          {upcoming.map((rule) => (
-            <div key={rule.id} className="subtle" style={{ marginBottom: 6 }}>
-              약 {rule.startsInWeeks}주 후 · {rule.title}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <button className="btn-ghost" style={{ width: "100%" }} onClick={onOpenGuide}>
-        <Ico name="book" size={18} /> 월령별 가이드 보기
-      </button>
-
     </div>
   );
 }

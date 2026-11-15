@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 // 움직이는 아이콘(animateicons.in, MIT · Lucide 모양 기반 — 저작권 표시는 public/licenses.txt)
-import { DogIcon, NotebookPenIcon, PawPrintIcon, StethoscopeIcon } from "@animateicons/react/lucide";
+import { DogIcon, NotebookPenIcon, PawPrintIcon, SproutIcon, StethoscopeIcon } from "@animateicons/react/lucide";
 
 export const TABS = [
   // 방향 A(병원 수첩, 2026-11-07): 오늘 · 기록 · 병원 · 우리 아이
   { key: "main", label: "오늘", Icon: DogIcon },
+  { key: "care", label: "케어", Icon: SproutIcon }, // 11/15 사용자 결정: 월령별 가이드·퍼피 100일·오늘 할 일을 한 탭으로(5탭). 새싹 = 시기에 맞춰 자라는 아이
   { key: "records", label: "기록", Icon: NotebookPenIcon },
   { key: "hospital", label: "병원", Icon: StethoscopeIcon },
   { key: "profile", label: "우리 아이", Icon: PawPrintIcon },

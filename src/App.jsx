@@ -47,12 +47,14 @@ import WhatsNew from "./components/WhatsNew";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const PARENT_TAB = {
-  home: "main", // 오늘 할 일(옛 체크리스트 탭)은 오늘 탭 안으로
-  week: "main",
-  feeding: "main",
-  alarms: "main",
-  info: "main",
-  puppy: "main", // 퍼피 100일 훈련 화면(11/9) — 오늘 탭 띠에서 열림
+  // 11/15: 케어 탭(5번째) = 오늘 할 일(care 루트) + 월령별 가이드 + 퍼피 100일 + 사료 계산기·알림. 오늘 탭 띠·칩에서 열어도 케어 탭 페이지에 쌓인다
+  guide: "care",
+  week: "care",
+  feeding: "care",
+  alarms: "care",
+  info: "care",
+  puppy: "care", // 퍼피 100일 훈련 화면(11/9) — 오늘 탭 띠·케어 탭 띠에서 열림
+  "guide-profile": "profile",
   health: "hospital", // 건강 체크(변·컨디션)는 병원 탭에서(사용자 요청 11/7)
   "health-stool": "hospital",
   "health-behavior": "hospital",
@@ -70,8 +72,7 @@ const PARENT_TAB = {
   vital: "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
-const MAIN_SUB = ["week", "feeding", "alarms", "info"];
-const BACK_OF = { ...PARENT_TAB, "records-meds": "records-new", "records-gallery": "records-new", "records-feeding": "records-new", ...Object.fromEntries(MAIN_SUB.map((k) => [k, "home"])), "health-stool": "health", "health-behavior": "health" };
+const BACK_OF = { ...PARENT_TAB, "records-meds": "records-new", "records-gallery": "records-new", "records-feeding": "records-new", "health-stool": "health", "health-behavior": "health" };
 
 // 메인 화면은 three.js(3D 아바타)를 포함해 번들이 커서, 실제로 탭을 열 때만 불러온다.
 const Main = lazy(() => import("./screens/Main"));
@@ -463,24 +464,25 @@ export default function App() {
     );
   }
 
-  const homeScreens = {
-    home: () => (
+  const careScreens = {
+    care: () => (
       <Home
         dog={dog}
-        onBack={() => setTab("main")}
+        root
         onOpenWeek={() => setTab("week")}
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
         onOpenGuide={() => setTab("guide")}
+        onOpenPuppy={() => setTab("puppy")}
       />
     ),
-    guide: () => <StageGuide dog={dog} onBack={() => setTab("home")} />,
-    week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => setTab("main")} />,
-    feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
-    alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
-    info: () => <Info dog={dog} onBack={() => setTab("home")} />,
-    puppy: () => <Puppy100 dog={dog} onBack={() => setTab("main")} />,
+    guide: () => <StageGuide dog={dog} onBack={() => setTab("care")} />,
+    week: () => <ThisWeek dog={dog} onBack={() => setTab("care")} onOpenMain={() => setTab("main")} />,
+    feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("care")} />,
+    alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("care")} />,
+    info: () => <Info dog={dog} onBack={() => setTab("care")} />,
+    puppy: () => <Puppy100 dog={dog} onBack={() => setTab("care")} />,
   };
   const profileScreens = {
     "guide-profile": () => <StageGuide dog={dog} onBack={() => setTab("profile")} />,
@@ -554,13 +556,13 @@ export default function App() {
         {/* 세부 화면(오늘 할 일 등)은 오늘 화면 위에 겹쳐 그려서, 밀어서 뒤로 갈 때 아래에 오늘 화면이 보인다 */}
         <div style={{ display: "contents" }}>
           <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("home")} onOpenPuppy={() => setTab("puppy")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} onOpenBackup={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "account" } })), 350))} onOpenFamily={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "family" } })), 350))} />
+            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("care")} onOpenPuppy={() => setTab("puppy")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} onOpenBackup={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "account" } })), 350))} onOpenFamily={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "family" } })), 350))} />
           </Suspense>
         </div>
-        {homeScreens[tab] && <Fragment key={`${dog.id}-${pageVersion}`}>{tab === "home" ? <SwipeBack key="home" onBack={() => setTab("main")} renderUnderlay={() => null}>{homeScreens.home()}</SwipeBack> : renderStack(homeScreens, "home")}</Fragment>}
       </>
     ),
     // 강아지를 바꾸면(dog.id) 화면을 새로 그려 앞 강아지의 상태(숨긴 할 일·수치 칸 등)가 남지 않게
+    care: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(careScreens, "care")}</Fragment>,
     records: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(recordScreens, "records")}</Fragment>,
     hospital: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(hospitalScreens, "hospital")}</Fragment>,
     profile: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(profileScreens, "profile")}</Fragment>,

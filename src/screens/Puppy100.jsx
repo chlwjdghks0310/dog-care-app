@@ -31,7 +31,7 @@ export default function Puppy100({ dog, onBack }) {
   return (
     <div className="screen">
       <div className="pp-head">
-        <button className="btn-ghost" onClick={onBack}>← 오늘로</button>
+        <button className="btn-ghost" onClick={onBack}>← 케어로</button>
         <button type="button" className="btn-ghost small" onClick={() => (setHidden(dog.id, true), onBack())}>숨기기</button>
       </div>
       <div className="h1" style={{ marginBottom: 2 }}>퍼피 100일</div>

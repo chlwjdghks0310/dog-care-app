@@ -33,7 +33,7 @@ export default function StageGuide({ dog, onBack }) {
   return (
     <div className="screen mg">
       <div className="pp-head">
-        <button className="btn-ghost" onClick={onBack}>← 할 일로</button>
+        <button className="btn-ghost" onClick={onBack}>← 뒤로</button>
       </div>
       <div className="h1" style={{ marginBottom: 2 }}>월령별 가이드</div>
       <p className="subtle" style={{ margin: "0 0 12px" }}>
