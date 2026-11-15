@@ -94,7 +94,7 @@ export default function AlarmSettings({ dog, onBack }) {
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
-        ← 오늘 할 일로
+        ← 케어로
       </button>
       <div className="h1">알림·알람</div>
       <p className="subtle" style={{ marginBottom: 16 }}>

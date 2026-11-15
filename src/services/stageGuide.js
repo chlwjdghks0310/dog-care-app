@@ -4,9 +4,7 @@
 import { calculateAge } from "../utils/age";
 import { getBreedAppearance } from "../data/breedAppearance";
 import { getFeedingPlan } from "../data/feedingGuide";
-import { todayKey } from "../utils/date";
-import { createScheduleItem } from "../models/dog";
-import { getScheduleForDate, setScheduleForDate } from "./scheduleRepository";
+import { todayKey, toDateKey, addDays } from "../utils/date";
 
 // 크기: 견종표(breedAppearance.sizeCategory) 기준. "푸들"만 적힌 건 국내에선 대부분 토이·미니어처라 소형으로 본다(자료용 11/15).
 // 1살이 넘고 몸무게가 있으면 몸무게가 우선(10kg 미만 소형, 25kg 미만 중형).
@@ -99,16 +97,13 @@ export function getFit(dog, st) {
   return out;
 }
 
-// [오늘 할 일로 넣기]: 오늘 체크리스트에 한 줄 추가(하루짜리). 같은 카드는 한 번만.
-export function addGuideTask(dog, card) {
-  const dateKey = todayKey();
-  const items = getScheduleForDate(dog.id, dateKey) || [];
-  const ruleId = `guide-${card.id}`;
-  if (items.some((it) => it.ruleId === ruleId)) return false;
-  setScheduleForDate(dog.id, dateKey, [
-    ...items,
-    createScheduleItem({ id: `sch-${dateKey}-${ruleId}`, dogId: dog.id, ruleId, title: card.title, description: card.how?.[0] || "", date: dateKey, category: "월령별 가이드" }),
-  ]);
-  return true;
+// 다음 시기가 시작되는 날(알림용). 오늘 이후 1년 안이면 { date, name, tip }, 아니면 null
+export function nextStageChange(dog) {
+  if (!dog.birthDate) return null;
+  const st = getStage(dog);
+  if (!st.next) return null;
+  const [from] = rangeOf(st.size, st.next.id);
+  const date = toDateKey(addDays(new Date(`${dog.birthDate}T00:00:00`), Math.round(from * 7)));
+  if (date < todayKey() || date > toDateKey(addDays(new Date(), 366))) return null;
+  return { date, name: st.next.name, tip: st.next.tip };
 }
-export const hasGuideTask = (dog, card) => (getScheduleForDate(dog.id, todayKey()) || []).some((it) => it.ruleId === `guide-${card.id}`);

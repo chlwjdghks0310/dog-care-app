@@ -15,7 +15,7 @@ const STOOL_OPTIONS = [
   { value: "constipated", label: "단단한 편" },
 ];
 
-export default function FeedingPlan({ dog, onBack, backLabel = "← 오늘 할 일로" }) {
+export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }) {
   const [settings, setSettings] = useState(() => getFeedingSettings(dog.id));
   const [saved, setSaved] = useState(false);
 

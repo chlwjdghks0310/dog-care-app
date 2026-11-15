@@ -67,6 +67,8 @@ export default function BottomNav({ active, onChange, onItemLongPress, onItemDou
 
   return (
     <nav ref={navRef} className="bottom-nav">
+      {/* 슬라이딩 필(11/15): 켜진 탭 뒤의 둥근 판이 탭 사이를 미끄러져 간다. 탭 수로 폭을 나눈다 */}
+      <span className="nav-pill" aria-hidden="true" style={{ width: `calc((100% - 12px) / ${TABS.length})`, transform: `translateX(${Math.max(0, TABS.findIndex((t) => t.key === active)) * 100}%)` }} />
       {TABS.map((tab) => (
         <button
           key={tab.key}

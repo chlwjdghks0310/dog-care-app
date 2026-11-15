@@ -6,7 +6,7 @@ import { alarmLine as puppyAlarmLine } from "./puppy100";
 import { minutesBefore, nowLabel as getNowLabel, todayKey, addDays, toDateKey } from "../utils/date";
 import { API_BASE } from "./aiClient";
 import { getDogs } from "./dogRepository";
-import { getTodayChecklist } from "./careEngine";
+import { nextStageChange } from "./stageGuide";
 import { getFeedingSettings } from "./feedingSettings";
 import { getCustomSchedules } from "./customSchedules";
 import { getMeds, getDosesForDate, medMessage, medUrl } from "./medications";
@@ -100,6 +100,9 @@ async function fireNotification(title, body, url) {
 }
 
 export const checklistMessage = (dog, item) => ({ title: `🐾 ${dog.name}`, body: `나 이제 ${item.title} 시간이야! 알고 있지?` });
+// 11/15: 오늘 할 일 목록을 뺀 뒤에도 밥 시간 알림은 그대로 — 사료 계산기에서 정한 시각으로 같은 모양의 항목을 만든다(앱 안 알림·서버 푸시 공용)
+const mealLabel = (t) => (Number(t.slice(0, 2)) < 11 ? "아침" : Number(t.slice(0, 2)) < 16 ? "점심" : "저녁");
+export const mealChecklist = (dog, dateKey) => [...(getFeedingSettings(dog.id).times || [])].sort().map((t) => ({ id: `sch-${dateKey}-meal-${t}`, title: `${mealLabel(t)} 밥 주기`, suggestedTimes: [t], completed: false }));
 // 제목에 강아지 이름을 넣는다 — 알림만 보고도 어느 강아지 알람인지 알 수 있게
 export const customAlarmMessage = (dog, alarm) => ({ title: `⏰ ${dog.name} · ${alarm.title}`, body: `나 지금 "${alarm.title}" 시간이라고 알려주는 거야, 잊지 마!` });
 export const soakMessage = (dog, soakNeeded) => ({
@@ -203,12 +206,11 @@ export function buildPushAlarms() {
   const prefs = getNotifPrefs();
   for (const dog of getDogs()) {
     const alarms = [];
-    for (const item of getTodayChecklist(dog)) {
-      // 오늘 이미 체크한 일은 오늘만 건너뛴다(서버는 매일 같은 알람을 보내므로 내일은 다시 울려야 함)
-      const skipDate = item.completed ? todayKey() : undefined;
-      // 나가 있는 동안에도 원래 시각에 울린다(밖에서도 챙길 일을 떠올리게 — 사용자 결정 2026-10-27)
-      for (const time of item.suggestedTimes || []) alarms.push({ cat: "care", time, ...checklistMessage(dog, item), skipDate });
-    }
+    // 밥 시간(사료 계산기 시각) — 나가 있는 동안에도 원래 시각에 울린다(사용자 결정 2026-10-27)
+    for (const item of mealChecklist(dog, todayKey())) for (const time of item.suggestedTimes) alarms.push({ cat: "meal", time, ...checklistMessage(dog, item) });
+    // 시기가 바뀌는 날 아침(11/15): "이제 사춘기예요" — 케어 탭 월령별 가이드로
+    const change = nextStageChange(dog);
+    if (change) alarms.push({ cat: "care", time: "09:00", title: `🌱 ${dog.name}, 이제 ${change.name}`, body: `${change.tip} 케어 탭에서 지금 챙길 것을 봐요.`, url: "/?tab=care", onlyDate: change.date });
     // 주간 리포트: 일요일 밤
     alarms.push({ cat: "report", time: REPORT_TIME, title: `📊 ${dog.name}의 이번 주`, body: "지난 7일 기록을 모아 봤어요. 눌러서 확인해 보세요.", url: `/?report=1&dog=${encodeURIComponent(dog.id)}`, days: [REPORT_DAY] });
     // 사료 떨어짐 예고: 떨어지기 5일 전·1일 전 점심

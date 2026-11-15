@@ -27,6 +27,7 @@ import { getWeightRecords, deleteWeightRecord } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import { todayKey } from "../utils/date";
 import { calculateAge, formatAge } from "../utils/age";
+import { getStage } from "../services/stageGuide";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
@@ -42,7 +43,7 @@ const CORNER_SIZE = 76;
 const CORNER_TOP = "calc(8px + env(safe-area-inset-top, 0px))";
 const chapterOf = (c) => GUIDEBOOK_CHAPTERS.find((x) => x.chapter === c);
 
-export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet, onOpenBackup, onOpenFamily }) {
+export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, onOpenPuppy, onOpenFeeding, onOpenWeight, onOpenVet, onOpenBackup, onOpenFamily }) {
   const remoteState = useRemoteState(dog); // 비동거 보호자(가족 집 강아지)면 하루 체크 대신 가족 초대
   const [, refresh] = useState(0); // 첫 걸음 "다음에 할게" 뒤 다시 그리기
   const [messages, setMessages] = useState([]);
@@ -293,7 +294,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
           ) : !remoteState.remote && (dailyPending(dog.id) || dcOpen) ? (
             <SpeechBubble key="check">
               <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && hopNow())} onSheetChange={setDcOpen} />
-              <HomeRow dog={dog} onOpen={onOpenToday} outing={!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
+              <HomeRow dog={dog} onOpen={onOpenGuide} outing={!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
             </SpeechBubble>
           ) : notifyAskPending(dog.id) ? (
             <SpeechBubble key="notify">
@@ -315,7 +316,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenToday, o
             </SpeechBubble>
           ) : (
             <SpeechBubble key="summary">
-              <TodaySummary dog={dog} onOpen={onOpenToday} outing={<OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
+              <TodaySummary dog={dog} onOpen={onOpenGuide} outing={<OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
             </SpeechBubble>
           )}
         </div>
@@ -562,14 +563,14 @@ function GuideLink({ chapter, inline }) {
 }
 
 // 첫 화면 말풍선: 우리 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
-// 말풍선 아래 줄(11/11): [오늘 할 일 n개 ›] + [다녀올게] — 강아지 밑에 있던 칩 두 개를 말풍선 안으로 옮기고 강아지를 키움(사용자 결정)
+// 말풍선 아래 줄(11/11): [지금 시기 가이드 ›](11/15, 전엔 오늘 할 일 n개) + [다녀올게] — 강아지 밑에 있던 칩 두 개를 말풍선 안으로 옮기고 강아지를 키움(사용자 결정)
 function HomeRow({ dog, onOpen, outing }) {
-  const t = getTodaySummary(dog);
-  const left = t.tasksLeft.length;
+  // 11/15 사용자: 오늘 할 일 목록은 뺐다. 그 자리에 지금 시기 가이드 — 보호자가 찾아가지 않아도 "지금 챙길 것"이 먼저 보이게
+  const st = getStage(dog);
   return (
     <span className="sb-row">
       <button type="button" className="summary-go" onClick={onOpen}>
-        <Ico name="checklist" size={15} /> {left ? `오늘 할 일 ${left}개` : t.tasksTotal ? "할 일 다 했어요" : "오늘 할 일"} <span aria-hidden="true">›</span>
+        <Ico name={st.ico} size={15} /> {st.short} 가이드 <span aria-hidden="true">›</span>
       </button>
       {outing}
     </span>
@@ -594,7 +595,7 @@ function TodaySummary({ dog, onOpen, outing }) {
       </span>
       {lines.length ? (
         // 작은 화면에서 말풍선이 길어지면 아래 입력칸이 밀려나서 4줄까지만(점검 11/7, 아이폰 SE)
-        [...lines.slice(0, 3), ...(lines.length > 3 ? [["checklist", "blue", `그 밖에 ${lines.length - 3}개 — 눌러서 오늘 할 일에서 보기`]] : [])].map(([ico, tone, text]) => (
+        [...lines.slice(0, 3), ...(lines.length > 3 ? [["checklist", "blue", `그 밖에 ${lines.length - 3}개 — 케어 탭에서 보기`]] : [])].map(([ico, tone, text]) => (
           <span key={text} className="summary-line">
             <Ico name={ico} size={16} className={`cat-ico tone-${tone}`} />
             <span>{text}</span>

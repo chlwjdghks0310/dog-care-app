@@ -1,8 +1,7 @@
 import { Fragment, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
-import { getTodayChecklist } from "./services/careEngine";
-import { checkAndNotify, checkCustomAlarms, checkFeedingSoakReminders, checkMedAlarms, registerServiceWorker, syncPushAlarms } from "./services/notifications";
+import { checkAndNotify, mealChecklist, checkCustomAlarms, checkFeedingSoakReminders, checkMedAlarms, registerServiceWorker, syncPushAlarms } from "./services/notifications";
 import { getFeedingSettings } from "./services/feedingSettings";
 import { allowed } from "./services/notifPrefs";
 import { getCustomSchedules } from "./services/customSchedules";
@@ -47,7 +46,7 @@ import WhatsNew from "./components/WhatsNew";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const PARENT_TAB = {
-  // 11/15: 케어 탭(5번째) = 오늘 할 일(care 루트) + 월령별 가이드 + 퍼피 100일 + 사료 계산기·알림. 오늘 탭 띠·칩에서 열어도 케어 탭 페이지에 쌓인다
+  // 11/15: 케어 탭(5번째) = 월령별 가이드 + 퍼피 100일 + 사료 계산기·알림(오늘 할 일 목록은 사용자 결정으로 뺌). 오늘 탭 띠·칩에서 열어도 케어 탭 페이지에 쌓인다
   guide: "care",
   week: "care",
   feeding: "care",
@@ -405,7 +404,7 @@ export default function App() {
       const now = new Date().toTimeString().slice(0, 5);
       const on = (cat) => allowed(cat, now); // 알림 종류·조용한 시간(알림·알람 설정)
       for (const d of getDogs()) {
-        if (on("care")) checkAndNotify(d, getTodayChecklist(d, dateKey), dateKey);
+        if (on("meal")) checkAndNotify(d, mealChecklist(d, dateKey), dateKey); // 11/15: 할 일 목록 대신 사료 계산기 시각으로 밥 알림
         const feedingSettings = getFeedingSettings(d.id);
         if (on("meal") && feedingSettings.times.length > 0) {
           const age = calculateAge(d.birthDate);
@@ -556,7 +555,7 @@ export default function App() {
         {/* 세부 화면(오늘 할 일 등)은 오늘 화면 위에 겹쳐 그려서, 밀어서 뒤로 갈 때 아래에 오늘 화면이 보인다 */}
         <div style={{ display: "contents" }}>
           <Suspense fallback={<div className="screen subtle">불러오는 중…</div>}>
-            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenToday={() => setTab("care")} onOpenPuppy={() => setTab("puppy")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} onOpenBackup={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "account" } })), 350))} onOpenFamily={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "family" } })), 350))} />
+            <Main dog={dog} resetSignal={mainResetSignal} onReadingChange={setChatReading} onOpenGuide={() => setTab("guide")} onOpenPuppy={() => setTab("puppy")} onOpenVet={() => openVet("main")} onOpenFeeding={() => setTab("feeding")} onOpenWeight={() => setTab("weight")} onOpenBackup={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "account" } })), 350))} onOpenFamily={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "family" } })), 350))} />
           </Suspense>
         </div>
       </>

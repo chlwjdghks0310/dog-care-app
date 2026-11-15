@@ -12,7 +12,6 @@ const CATEGORY_ICOS = {
   수면: "bed",
   체중관리: "scales",
   약: "pill",
-  "월령별 가이드": "book", // 가이드 카드에서 [오늘 할 일로 넣기]한 것(11/15)
 };
 export const getCategoryIco = (category) => CATEGORY_ICOS[category] || "pin";
 // 아이콘 색(index.css .tone-*) — 정해 두지 않은 분류는 대표색(소프트블루)

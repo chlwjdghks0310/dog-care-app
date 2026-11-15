@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import Ico from "../components/Ico";
 import { GUIDE_AREAS, GUIDE_CARDS, LATER_STAGES } from "../data/stageGuide";
-import { STAGES, getStage, getFit, stageRangeLabel, addGuideTask, hasGuideTask } from "../services/stageGuide";
+import { STAGES, getStage, getFit, stageRangeLabel } from "../services/stageGuide";
 import { formatAge } from "../utils/age";
 import { isEmergency } from "../services/infoSearch";
 import { trackAct } from "../services/analytics";
 
-// 월령별 가이드(11/15, 사용자: "오늘 할 일은 할 일대로, 이 시기에 필요한 것을 자세히"): 지금 시기 → 영역 칩 → 카드(왜·이렇게·피해요·병원에 물어볼 때·출처).
+// 월령별 가이드(11/15, 사용자: "이 시기에 필요한 것을 자세히, 찾아가지 않아도 보이게"): 지금 시기 → 영역 칩 → 카드(왜·이렇게·피해요·병원에 물어볼 때·출처).
 // 강아지 나이·크기·몸무게·중성화로 시기와 맞춤 한 줄을 정한다(services/stageGuide). 카드는 정적 데이터(data/stageGuide), AI 없음.
 // 다른 시기도 미리 볼 수 있고, 맨 아래에서 더 궁금한 건 ChatGPT로 넘긴다(멍케어 밖 AI, 이름은 안 넣음).
 export default function StageGuide({ dog, onBack }) {
@@ -98,7 +98,7 @@ export default function StageGuide({ dog, onBack }) {
       {shown.length > 0 ? (
         <div className="rec-list">
           {shown.map((c) => (
-            <GuideCard key={c.id} dog={dog} card={c} area={areaOf(c.area)} open={open === c.id} onToggle={() => { setOpen(open === c.id ? null : c.id); if (open !== c.id) trackAct("guide"); }} />
+            <GuideCard key={c.id} card={c} area={areaOf(c.area)} open={open === c.id} onToggle={() => { setOpen(open === c.id ? null : c.id); if (open !== c.id) trackAct("guide"); }} />
           ))}
         </div>
       ) : later ? (
@@ -118,11 +118,7 @@ export default function StageGuide({ dog, onBack }) {
   );
 }
 
-function GuideCard({ dog, card, area, open, onToggle }) {
-  const [added, setAdded] = useState(() => hasGuideTask(dog, card));
-  function add() {
-    if (addGuideTask(dog, card)) { setAdded(true); trackAct("guide_task"); }
-  }
+function GuideCard({ card, area, open, onToggle }) {
   return (
     <article className={`card mg-card${open ? " open" : ""}`}>
       <button type="button" className="mg-card-head" aria-expanded={open} onClick={onToggle}>
@@ -157,11 +153,6 @@ function GuideCard({ dog, card, area, open, onToggle }) {
               <span key={i}>{i > 0 && " · "}{s.url ? <a href={s.url} target="_blank" rel="noopener noreferrer">{s.name}</a> : s.name}</span>
             ))}</p>
           )}
-          <div className="mg-card-foot">
-            <button type="button" className={`btn-ghost small${added ? " done" : ""}`} disabled={added} onClick={add}>
-              <Ico name={added ? "check" : "checklist"} size={16} sticker={false} /> {added ? "오늘 할 일에 있어요" : "오늘 할 일로 넣기"}
-            </button>
-          </div>
         </div>
       )}
     </article>

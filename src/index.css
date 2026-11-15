@@ -1764,8 +1764,33 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .care-guide-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.45; }
 .care-guide-fit { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--warm-bg); font-size: 13.5px; line-height: 1.4; }
 .care-guide-fit > span { display: flex; gap: 6px; align-items: flex-start; }
-.care-guide-go { align-self: flex-end; font-size: 14px; font-weight: 800; color: var(--accent-strong); }
+.care-guide-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.care-guide-go { margin-left: auto; font-size: 14px; font-weight: 800; color: var(--accent-strong); }
 .care-list-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; background: none; border: none; text-align: left; color: var(--text); font-family: inherit; cursor: pointer; }
 .care-list-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .care-list-text b { font-size: 16px; }
 .care-list-text .faint { font-size: 12.5px; }
+
+/* ── 11/15 움직임: 네비게이션 슬라이딩 필 · 스위치 기울기·구르기 · 카드 펼침 · 누름 피드백 (움직임 줄이기 켜면 전부 정지) */
+.bottom-nav { position: sticky; }
+.nav-pill { position: absolute; top: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); left: 6px; border-radius: 16px; background: var(--accent-soft); transition: transform 0.42s cubic-bezier(0.34, 1.3, 0.64, 1); pointer-events: none; }
+.nav-item { position: relative; z-index: 1; background: none !important; transition: color 0.2s ease, transform 0.15s ease; }
+.nav-item:active { transform: scale(0.94); }
+/* 스위치: 누르면 살짝 기울고(tilt), 켜질 때 손잡이가 굴러간다(roll — 손잡이 점이 한 바퀴) */
+.switch { transition: background 0.25s ease, transform 0.18s ease; }
+.switch:active { transform: rotate(-6deg) scale(0.96); }
+.switch::after { background-image: radial-gradient(circle at 50% 22%, var(--accent-soft) 0 3px, transparent 3.5px); transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1); }
+.switch:checked::after { transform: translateX(20px) rotate(360deg); }
+/* 카드가 위에서 접혀 내려오듯 펼쳐진다(fold down) */
+.mg-card-body, .sg-sub, .howto[open] > *:not(summary) { transform-origin: top center; animation: fold-down 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes fold-down { from { opacity: 0; transform: perspective(600px) rotateX(-10deg) translateY(-6px); } to { opacity: 1; transform: none; } }
+/* 누르면 살짝 뒤로 물러나는 느낌(push back) */
+.care-guide, .mg-card-head, .quick-tile, .mg-band, .pc100-strip, .mg-stage, .mg-chip { transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease; }
+.care-guide:active, .quick-tile:active, .mg-band:active, .pc100-strip:active { transform: scale(0.98); }
+.mg-card-head:active { transform: scale(0.99); }
+.mg-stage:active, .mg-chip:active { transform: scale(0.95); }
+@media (prefers-reduced-motion: reduce) {
+  .nav-pill, .switch, .switch::after, .care-guide, .mg-card-head, .quick-tile, .mg-band, .pc100-strip, .mg-stage, .mg-chip, .nav-item { transition: none; }
+  .mg-card-body, .sg-sub, .howto[open] > *:not(summary) { animation: none; }
+  .switch:active, .nav-item:active, .care-guide:active, .quick-tile:active, .mg-band:active, .pc100-strip:active, .mg-card-head:active, .mg-stage:active, .mg-chip:active { transform: none; }
+}

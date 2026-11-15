@@ -107,7 +107,7 @@ export default function Medications({ dog, focusDose, onBack, backLabel = "← �
       ))}
       {remindOff && (
         <div className="faint" style={{ margin: "0 0 10px" }}>
-          <Ico name="bellOff" size={15} /> 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 오늘 → 오늘 할 일 → 알림·알람에서 켤 수 있어요.
+          <Ico name="bellOff" size={15} /> 알림 권한이 꺼져 있어 복용 알림이 오지 않아요. 케어 탭 → 알림·알람에서 켤 수 있어요.
         </div>
       )}
 
