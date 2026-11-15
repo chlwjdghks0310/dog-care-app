@@ -32,6 +32,7 @@ import { hasAIConsent } from "../services/aiConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
 import Ico from "../components/Ico";
+import { getStage } from "../services/stageGuide";
 import Help from "./Help";
 import Contact from "./Contact";
 import Feedback from "./Feedback";
@@ -59,7 +60,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => "unknown") : null); // unknown = 로그인했는데 확인 실패(오프라인 등)
 
-export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
+export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onOpenGuide, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
@@ -243,6 +244,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
       </div>
 
       <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
+      <GuideEntry dog={dog} onOpen={onOpenGuide} />
 
       <GalleryStrip dog={dog} onOpen={onOpenGallery} />
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
@@ -463,6 +465,21 @@ function HealthLines({ dog, onEdit }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// 월령별 가이드 입구(11/15): 지금 시기 한 줄 + 보기
+function GuideEntry({ dog, onOpen }) {
+  const st = getStage(dog);
+  return (
+    <button type="button" className="mg-band" style={{ marginBottom: 14 }} onClick={onOpen}>
+      <span className="mg-band-ico"><Ico name={st.ico} size={24} /></span>
+      <span className="mg-band-body">
+        <span className="mg-band-sub">지금은 {st.name} · {st.rangeLabel}</span>
+        <span className="mg-band-title">월령별 가이드 · 간식·장난감·산책·건강을 시기에 맞게</span>
+      </span>
+      <span className="mg-band-go">보기 ›</span>
+    </button>
   );
 }
 

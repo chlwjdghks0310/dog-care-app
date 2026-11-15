@@ -20,6 +20,7 @@ import Puppy100 from "./screens/Puppy100";
 import ThisWeek from "./screens/ThisWeek";
 import Calendar from "./screens/Calendar";
 import Info from "./screens/Info";
+import StageGuide from "./screens/StageGuide";
 import Profile from "./screens/Profile";
 import HealthHub from "./screens/HealthHub";
 import HealthCheck from "./screens/HealthCheck";
@@ -471,8 +472,10 @@ export default function App() {
         onOpenFeeding={() => setTab("feeding")}
         onOpenAlarms={() => setTab("alarms")}
         onOpenInfo={() => setTab("info")}
+        onOpenGuide={() => setTab("guide")}
       />
     ),
+    guide: () => <StageGuide dog={dog} onBack={() => setTab("home")} />,
     week: () => <ThisWeek dog={dog} onBack={() => setTab("home")} onOpenMain={() => setTab("main")} />,
     feeding: () => <FeedingPlan dog={dog} onBack={() => setTab("home")} />,
     alarms: () => <AlarmSettings dog={dog} onBack={() => setTab("home")} />,
@@ -480,6 +483,7 @@ export default function App() {
     puppy: () => <Puppy100 dog={dog} onBack={() => setTab("main")} />,
   };
   const profileScreens = {
+    "guide-profile": () => <StageGuide dog={dog} onBack={() => setTab("profile")} />,
     profile: () => (
       <Profile
         dog={dog}
@@ -493,6 +497,7 @@ export default function App() {
         onOpenWeight={() => setTab("weight")}
         onOpenMeds={() => setTab("meds")}
         onOpenCalendar={() => setTab("hospital")}
+        onOpenGuide={() => setTab("guide-profile")}
         onUpdateDog={setActiveDog}
         onDeleteCurrent={handleDeleteCurrentDog}
         onDeleteAll={handleDeleteAllDogs}

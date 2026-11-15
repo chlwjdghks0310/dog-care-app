@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { todayKey, formatKoreanDate } from "../utils/date";
+import { formatAge } from "../utils/age";
 import { RoutineSheet } from "../components/OutingCard";
 import { getTodayChecklist, getThisWeekHighlights, getUpcoming } from "../services/careEngine";
 import { toggleScheduleItem } from "../services/scheduleRepository";
@@ -10,12 +11,14 @@ import { getFeedingSettings } from "../services/feedingSettings";
 import { getHiddenRules, setRuleHidden } from "../services/ruleOverrides";
 import { getRuleById } from "../data/careRules";
 import { getFoodStock, stockLabel } from "../services/foodStock";
+import { getStage } from "../services/stageGuide";
 import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo }) {
+export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAlarms, onOpenInfo, onOpenGuide }) {
+  const stage = useMemo(() => getStage(dog), [dog]); // 월령별 가이드 띠(11/15)
   const [routineOpen, setRoutineOpen] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
   const [checklist, setChecklist] = useState([]);
@@ -85,6 +88,16 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
         </button>
       </div>
       {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
+
+      {/* 월령별 가이드 띠(11/15): 오늘 할 일은 행동 체크, 가이드는 이 시기에 알아야 할 것 */}
+      <button type="button" className="mg-band" onClick={onOpenGuide}>
+        <span className="mg-band-ico"><Ico name={stage.ico} size={24} /></span>
+        <span className="mg-band-body">
+          <span className="mg-band-sub">지금은 {stage.name}{stage.settle ? ` · 집에 온 지 ${stage.settle}일째` : ""}</span>
+          <span className="mg-band-title">월령별 가이드 · {stage.sizeLabel} {formatAge(stage.age)}에 맞춰</span>
+        </span>
+        <span className="mg-band-go">보기 ›</span>
+      </button>
 
       {food && food.daysLeft <= 7 && (
         <button type="button" className="food-alert" onClick={onOpenFeeding}>
@@ -187,8 +200,8 @@ export default function Home({ dog, onBack, onOpenWeek, onOpenFeeding, onOpenAla
         </div>
       )}
 
-      <button className="btn-ghost" style={{ width: "100%" }} onClick={onOpenInfo}>
-        <Ico name="book" size={18} /> 월령별 케어 정보 더 보기
+      <button className="btn-ghost" style={{ width: "100%" }} onClick={onOpenGuide}>
+        <Ico name="book" size={18} /> 월령별 가이드 보기
       </button>
 
     </div>
