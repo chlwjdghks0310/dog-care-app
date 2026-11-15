@@ -341,6 +341,11 @@ export default function App() {
       setTab(params.get("vet") ? "vet" : "hospital");
       return true;
     }
+    // 시기 바뀜 알림(/?tab=care) → 케어 탭(11/15)
+    if (params.get("tab") === "care") {
+      setTab("care");
+      return true;
+    }
     // 주간 리포트 알림(/?report=1&dog=..) → 그 강아지의 이번 주 리포트
     if (params.get("report")) {
       const d = getDogs().find((x) => x.id === params.get("dog"));
