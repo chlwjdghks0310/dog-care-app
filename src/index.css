@@ -1562,11 +1562,13 @@ button.seg, button.chip { min-height: 36px; }
 .pp-log span { flex: 1; min-width: 0; color: var(--text-soft); }
 
 /* ── 디자인 규칙(11/9, 계획표 3장) ──
-   2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목·창 제목에만 Bagel Fat One(굵고 둥근 제목체, OFL, 자료용 1순위 11/9). 본문은 고딕 그대로 */
-.h1, .pc100-title, .es-title, .onb-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 400; letter-spacing: 0.01em; }
-.h1 { font-size: 27px; line-height: 1.15; }
-.pc100-title { font-size: 20px; line-height: 1.3; }
-.es-title { font-size: 17px; }
+   2) 제목 서체 1개: 화면 제목·말풍선 큰 글·과제 제목·창 제목에만. 11/9 Bagel Fat One → 11/16 말풍선과 같은 동글 굵게(사용자 결정, 글자 속이 작아 Bagel 때보다 1.3배). 본문은 고딕 그대로 */
+.h1, .pc100-title, .es-title, .onb-title { font-family: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-weight: 400; letter-spacing: 0; }
+.h1 { font-size: 35px; line-height: 1.02; }
+.pc100-title { font-size: 26px; line-height: 1.1; }
+.es-title { font-size: 22px; line-height: 1.1; }
+.onb-title { font-size: 31px; line-height: 1.05; }
+.h1 .ico-sk svg { width: 1.05em; height: 1.05em; }
 /* 강아지가 말하는 글(말풍선) 글꼴은 --font-bubble 한 곳에서(11/10: 개구체 → 주아체 → 동글체, 사용자 결정) */
 .summary-open, .dc-q b, .onb-speech { font-family: var(--font-bubble); font-weight: 400; }
 .summary-open { font-size: 26px; line-height: 1.1; }
@@ -1709,7 +1711,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mg-hero-top { display: flex; gap: 12px; align-items: flex-start; }
 .mg-hero-ico { flex-shrink: 0; width: 52px; height: 52px; border-radius: 16px; background: var(--plate); display: flex; align-items: center; justify-content: center; }
 .mg-hero-kicker { font-size: 12px; font-weight: 700; color: var(--accent-strong); }
-.mg-hero-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-size: 23px; line-height: 1.2; margin: 1px 0 4px; }
+.mg-hero-title { font-family: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-size: 30px; line-height: 1.02; margin: 1px 0 4px; }
 .mg-hero-tip { margin: 0; font-size: 14px; color: var(--text-soft); line-height: 1.5; }
 .mg-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
 .mg-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--field); overflow: hidden; }
@@ -1760,7 +1762,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .care-guide-ico { flex-shrink: 0; width: 56px; height: 56px; border-radius: 18px; background: var(--plate); display: flex; align-items: center; justify-content: center; }
 .care-guide-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .care-guide-sub { font-size: 12.5px; font-weight: 800; color: var(--accent-strong); }
-.care-guide-title { font-family: "Bagel Fat One", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-size: 22px; line-height: 1.2; }
+.care-guide-title { font-family: "Dongle", "Apple SD Gothic Neo", "Pretendard", sans-serif; font-size: 29px; line-height: 1.02; }
 .care-guide-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.45; }
 .care-guide-fit { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--warm-bg); font-size: 13.5px; line-height: 1.4; }
 .care-guide-fit > span { display: flex; gap: 6px; align-items: flex-start; }
