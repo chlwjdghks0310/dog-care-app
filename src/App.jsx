@@ -545,8 +545,10 @@ export default function App() {
   // 세부 화면이면 오른쪽으로 밀어 뒤로 갈 수 있게 감싼다(아래에 돌아갈 화면을 깔아 둠)
   function renderStack(screens, root) {
     if (!screens[tab] || tab === root) return screens[root]();
+    // 종류를 고른 새 기록은 뒤로 = 종류 고르기. 탭 키가 그대로라 밀려난 화면이 그대로 남고 아래(기록 목록)만 보이던 문제(사용자 11/16) → 키에 종류를 넣어 새로 그리고, 밀 때 아래엔 종류 고르기를 보여 준다
+    const picked = tab === "records-new" && recordsOpts.picked;
     return (
-      <SwipeBack key={tab} onBack={() => (tab === "records-new" ? recordsBack() : tab === "records-meds" && recordsOpts.medsFrom ? setTab(recordsOpts.medsFrom) : tab === "records-gallery" && recordsOpts.galleryFrom ? setTab(recordsOpts.galleryFrom) : tab === "vet" ? setTab(vetFrom) : setTab(BACK_OF[tab]))} renderUnderlay={screens[BACK_OF[tab]]}>
+      <SwipeBack key={picked ? `records-new-${recordsOpts.type}` : tab} renderUnderlay={picked ? () => <Records dog={dog} startNew backLabel="← 기록으로" /> : screens[BACK_OF[tab]]} onBack={() => (tab === "records-new" ? recordsBack() : tab === "records-meds" && recordsOpts.medsFrom ? setTab(recordsOpts.medsFrom) : tab === "records-gallery" && recordsOpts.galleryFrom ? setTab(recordsOpts.galleryFrom) : tab === "vet" ? setTab(vetFrom) : setTab(BACK_OF[tab]))}>
         {screens[tab]()}
       </SwipeBack>
     );
