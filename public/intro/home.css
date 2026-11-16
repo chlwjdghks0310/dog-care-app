@@ -141,14 +141,14 @@ h1 em { background: linear-gradient(transparent 58%, rgba(246, 183, 138, 0.7) 58
 .nav-glow span::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--btn); }
 @keyframes glow { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 .demo.tried .nav-glow, .demo.tried .demo-hint, .demo.tried .ping { display: none; }
-.hots { position: absolute; left: 0; right: 0; bottom: 0; height: 10%; display: grid; grid-template-columns: repeat(4, 1fr); }
+.hots { position: absolute; left: 0; right: 0; bottom: 0; height: 10%; display: grid; grid-template-columns: repeat(5, 1fr); }
 .hot { position: relative; border: none; background: transparent; cursor: pointer; border-radius: 12px; padding: 0; }
 .hot:hover { background: rgba(54, 118, 198, 0.1); }
 .hot[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--btn); }
 .hot:focus-visible { outline: 3px solid var(--btn); outline-offset: -3px; }
 .ping { position: absolute; top: 6px; right: 22%; width: 8px; height: 8px; border-radius: 50%; background: var(--btn); }
 .ping::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--btn); animation: ping 1.6s ease-out infinite; }
-.hot:nth-child(2) .ping::after { animation-delay: 0.3s; } .hot:nth-child(3) .ping::after { animation-delay: 0.6s; } .hot:nth-child(4) .ping::after { animation-delay: 0.9s; }
+.hot:nth-child(2) .ping::after { animation-delay: 0.3s; } .hot:nth-child(3) .ping::after { animation-delay: 0.6s; } .hot:nth-child(4) .ping::after { animation-delay: 0.9s; } .hot:nth-child(5) .ping::after { animation-delay: 1.2s; }
 @keyframes ping { to { transform: scale(3); opacity: 0; } }
 .demo-cap { font-size: 14px; color: var(--ink-soft); text-align: center; max-width: 320px; line-height: 1.6; }
 .demo-cap b { color: var(--ink); }
@@ -161,7 +161,7 @@ h1 em { background: linear-gradient(transparent 58%, rgba(246, 183, 138, 0.7) 58
   .float { display: flex; align-items: center; gap: 8px; position: absolute; z-index: 2; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1.5px solid var(--ink); border-radius: 16px; padding: 8px 14px 8px 8px; box-shadow: 3px 4px 0 var(--ink-20); animation: floaty 4s ease-in-out infinite; }
   .float .sk { width: 30px; height: 30px; }
   .floats .float { opacity: 0; transform: translateY(10px) scale(0.96); transition: opacity 0.35s ease, transform 0.35s ease; }
-  .demo[data-cur="assistant"] [data-for="assistant"] .float, .demo[data-cur="records"] [data-for="records"] .float,
+  .demo[data-cur="assistant"] [data-for="assistant"] .float, .demo[data-cur="care"] [data-for="care"] .float, .demo[data-cur="records"] [data-for="records"] .float,
   .demo[data-cur="hospital"] [data-for="hospital"] .float, .demo[data-cur="profile"] [data-for="profile"] .float { opacity: 1; transform: none; }
   .floats .f2 { transition-delay: 0.08s; } .floats .f3 { transition-delay: 0.16s; }
   /* 휴대폰(300px) 양옆 빈 자리(각 120px쯤)에만 두고 화면은 가리지 않는다 */
