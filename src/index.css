@@ -1721,8 +1721,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mg-fit li { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 1.45; }
 .mg-fit li span { display: flex; flex-direction: column; min-width: 0; }
 .mg-fit li small { font-size: 11.5px; color: var(--text-soft); }
-.mg-areas { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; margin: 0 -2px 4px; scrollbar-width: none; }
-.mg-areas::-webkit-scrollbar { display: none; }
+.mg-areas { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 10px; margin: 0 0 4px; } /* 11/16 사용자: 옆으로 넘기지 말고 한눈에 */
 .mg-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13.5px; font-weight: 700; font-family: inherit; cursor: pointer; }
 .mg-chip.on { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent-strong); }
 .mg-card { padding: 0; overflow: hidden; }
