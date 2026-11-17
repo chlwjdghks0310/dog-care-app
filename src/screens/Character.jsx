@@ -221,17 +221,29 @@ function Working({ job, onRefresh, busy }) {
   const title = job.status === "render" ? "움직임을 만드는 중" : job.status === "sheet" ? "설정화를 그리는 중" : "순서를 기다리는 중";
   const cur = ["picked", "render"].includes(job.status) ? 2 : 0; // pick 상태는 다른 화면
   const p = job.progress;
-  const eta = p ? Math.max(1, Math.ceil(((p.secs || 60) - (Date.now() - new Date(p.since || Date.now()).getTime()) / 1000) / 60)) : null;
+  // 이 단계가 보통 얼마나 걸리고 지금 얼마나 지났나(1초마다). 예상의 2배를 넘으면 "조금 더 걸리고 있어요"
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  const elapsed = p ? Math.max(0, (now - new Date(p.since || now).getTime()) / 1000) : 0;
+  const usual = p ? Math.max(1, Math.round((p.secs || 60) / 60)) : null;
+  const late = p && elapsed > (p.secs || 60) * 2;
+  const mins = Math.floor(elapsed / 60), secs = Math.floor(elapsed % 60);
+  // [새로고침] 티 내기: 누르면 "확인 중…", 끝나면 게이지가 한 번 반짝 + "방금 확인했어요 · 시각" 3초
+  const [checked, setChecked] = useState(null);
+  const [bump, setBump] = useState(false);
+  const refresh = async () => { await onRefresh(); setChecked(new Date()); setBump(true); setTimeout(() => setBump(false), 500); setTimeout(() => setChecked(null), 3000); };
   return (
     <section className="px-card" style={{ textAlign: "center", padding: 22 }}>
-      <PawProgress progress={job.progress} label={title} />
+      <div className={bump ? "pawp-bump-host bump" : ""}><PawProgress progress={job.progress} label={title} /></div>
       <div className="px-feat-title" style={{ marginTop: 10 }}>{title}</div>
-      <p className="px-feat-desc" style={{ margin: 0 }}>{job.step}{eta ? ` · 이 단계 약 ${eta}분 남음` : ""}</p>
+      <p className="px-feat-desc" style={{ margin: 0 }}>{job.step}</p>
+      {p && <p className="px-note" style={{ margin: 0 }}>이 단계는 보통 {usual}분 · 지금 {mins > 0 ? `${mins}분 ` : ""}{secs}초 지남{late ? " · 조금 더 걸리고 있어요. 서버는 계속 일하고 있어요" : ""}</p>}
       <ol className="px-stages" aria-label="진행 단계">
         {STAGES.map((s, i) => <li key={s} className={i < cur ? "done" : i === cur ? "cur" : ""}><span className="px-stage-dot">{i < cur ? "✓" : i + 1}</span>{s}</li>)}
       </ol>
-      <p className="px-note">앱을 닫아도 계속 만들어요. 끝나면 알림으로 알려 드려요.</p>
-      <button type="button" className="btn-ghost" onClick={onRefresh} disabled={busy}>새로고침</button>
+      <p className="px-note">앱을 닫아도 계속 만들어요. 30초마다 서버에 묻고, 끝나면 알림으로 알려 드려요.</p>
+      <button type="button" className="btn-ghost" onClick={refresh} disabled={busy}>{busy ? "확인 중…" : "지금 확인하기"}</button>
+      {checked && <p className="px-note" style={{ margin: 0, color: "var(--accent-strong)" }}>방금 확인했어요 · {checked.toTimeString().slice(0, 5)}</p>}
     </section>
   );
 }

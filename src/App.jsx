@@ -262,13 +262,24 @@ export default function App() {
   }
 
   // 아래로 당겨 새로고침: 로그인했으면 이 폰 기록을 백업하고 가족이 적은 기록을 받아 온 뒤, 열려 있는 강아지 화면을 다시 그린다
+  // 새로고침 티 내기(11/18 사용자: "한 건지 안 한 건지 모르겠다"): 화면이 살짝 가라앉았다 다시 자리 잡고(.page-settle), 위에 "새로 불러왔어요 · 시각" 한 줄 2초
+  const [refreshedAt, setRefreshedAt] = useState(null);
   async function handleRefresh() {
     await syncNow();
     const fresh = getDogs().find((d) => d.id === dog?.id);
     if (fresh) setDog(fresh);
     touchingRef.current = false;
     setPageVersion((v) => v + 1);
+    setRefreshedAt(new Date());
+    requestAnimationFrame(() => {
+      document.querySelectorAll(".pager-page").forEach((p) => { p.classList.remove("page-settle"); void p.offsetWidth; p.classList.add("page-settle"); });
+    });
   }
+  useEffect(() => {
+    if (!refreshedAt) return;
+    const id = setTimeout(() => setRefreshedAt(null), 2200);
+    return () => clearTimeout(id);
+  }, [refreshedAt]);
 
   // 강아지 추가 — 기존 강아지는 그대로 두고 새 강아지를 등록한 뒤, 그 강아지로 바로 전환한다.
   function handleAddDog(newDog) {
@@ -597,6 +608,7 @@ export default function App() {
       {storageWarn && <div className="whats-new" role="alert" onClick={() => setStorageWarn(false)}><b>저장하지 못했어요</b> · 저장 공간이 부족하거나 개인정보 보호 모드예요. 설정 → 백업·로그인에서 백업해 두세요</div>}
       {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
       <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
+      {refreshedAt && <div className="refreshed-pill rise-in" role="status">새로 불러왔어요 · {refreshedAt.toTimeString().slice(0, 5)}</div>}
       <BottomNav
         active={TABS[visibleIndex]?.key || pageKey}
         onChange={handleTabChange}

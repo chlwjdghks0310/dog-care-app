@@ -1875,3 +1875,13 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 @media (prefers-reduced-motion: reduce) { .pawp-paw { animation: none; } }
 .char-making { position: absolute; top: 2px; right: 2px; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-soft); font: inherit; font-size: 11px; line-height: 1.2; font-weight: 600; text-align: left; box-shadow: var(--shadow); }
 .char-making b { color: var(--accent-strong); font-size: 12.5px; }
+
+/* 새로고침 티 내기(App handleRefresh, 11/18): 화면이 살짝 가라앉았다 제자리, 위에 알약 한 줄 */
+@keyframes page-settle { 0% { opacity: .55; transform: translateY(8px) scale(.992); } 60% { opacity: 1; transform: translateY(-2px) scale(1.002); } 100% { opacity: 1; transform: none; } }
+.pager-page.page-settle { animation: page-settle .55s cubic-bezier(.2,.8,.2,1) both; }
+.refreshed-pill { position: fixed; top: calc(env(safe-area-inset-top) + 14px); left: 50%; transform: translateX(-50%); z-index: 61; padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--accent-strong); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 12.5px; font-weight: 700; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .pager-page.page-settle { animation: none; } }
+/* 캐릭터 만드는 중 [새로고침] 뒤 게이지가 한 번 반짝 */
+@keyframes pawp-bump { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.pawp.bump { animation: pawp-bump .45s ease-out; }
+.pawp-bump-host.bump .pawp { animation: pawp-bump .45s ease-out; }

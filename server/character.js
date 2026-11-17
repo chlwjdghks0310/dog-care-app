@@ -103,7 +103,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
       j.status === "queued" ? [0.02, 0.06, 60]
       : j.status === "sheet" ? (m ? [0.06 + 0.2 * Number(m[1]), 0.06 + 0.2 * (Number(m[1]) + 1), 70] : [0.06, 0.26, 70])
       : j.status === "picked" ? [0.02, 0.08, 60]
-      : j.status === "render" ? (/엎드린/.test(s) ? [0.18, 0.28, 45] : /영상 2편/.test(s) ? [0.28, 0.86, 360] : /배경/.test(s) ? [0.86, 0.98, 45] : [0.08, 0.18, 45])
+      : j.status === "render" ? (/엎드린/.test(s) ? [0.18, 0.28, 45] : /영상 2편/.test(s) ? [0.28, 0.86, 360] : /배경 지우는 중 1/.test(s) ? [0.86, 0.91, 70] : /배경 지우는 중 2/.test(s) ? [0.91, 0.95, 70] : /저장/.test(s) ? [0.95, 0.98, 40] : [0.08, 0.18, 45])
       : j.status === "extra-queued" ? [0.02, 0.1, 60]
       : j.status === "extra" ? [0.1, 0.92, 300]
       : null;
@@ -338,10 +338,13 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
         runway(idleJ, motion(j.style, "idle"), DURATION[j.style].idle, bump),
         runway(lieJ, motion(j.style, "thinking"), DURATION[j.style].thinking, bump),
       ]);
-      await update(j.id, { step: "배경을 지우고 앱용으로 바꾸는 중" });
+      // 마지막 단계는 서버에서 2~3분 걸린다(11/18 사용자: 98%에서 멈춘 듯 보임) → 잘게 나눠 알린다
+      await update(j.id, { step: "배경 지우는 중 1/2 (기다리기 영상)" });
       const idleMp4 = await keyVideo(idleRaw, path.join(tmp, "idle"));
+      await update(j.id, { step: "배경 지우는 중 2/2 (고민 중 영상)" });
       const thinkMp4 = await keyVideo(thinkRaw, path.join(tmp, "think"));
       const posterPng = await poster(idleRaw, path.join(tmp, "idle"));
+      await update(j.id, { step: "저장하는 중" });
       const base = `${j.id}/v${j.regen || 0}-${j.picked}`;
       const outputs = {
         style: j.style,
