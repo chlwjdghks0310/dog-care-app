@@ -51,7 +51,7 @@ export default function Plus({ dog, onOpenCharacter }) {
             <button type="button" className="btn-primary" style={{ flex: "0 0 auto", width: "auto", padding: "0 18px" }} onClick={useCode} disabled={busy || !st || st.offline}>쓰기</button>
           </div>
           {err && <p className="error-text" style={{ margin: 0 }}>{err}</p>}
-          <span className="muted" style={{ fontSize: 13 }}>베타 기간엔 코드로만 열려요. 가격은 베타가 끝나고 정해요(결제 없음).</span>
+          <span className="muted" style={{ fontSize: 13 }}>베타 기간엔 코드로만 열려요(결제 없음). 정식 가격은 <b>월 3,900원 · 연 29,000원</b>(연간엔 기본 캐릭터 1번 포함) 예정이에요.</span>
         </div>
       )}
     </div>

@@ -769,7 +769,7 @@ app.post("/api/ask", async (req, res) => {
   if (n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? "오늘 플러스 비서 횟수(50번)를 다 썼어요. 내일 다시 물어봐 주세요." : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
   try {
     const response = await client.beta.messages.create({
-      ...(plus ? CLAUDE_MODEL : { model: RECORD_MODEL }),
+      ...(plus ? FAST_MODEL : { model: RECORD_MODEL }), // 플러스 월 3,900원(사용자 11/18) → 원가 안전하게 Sonnet(답 1개 ≈ ₩16~25)
       max_tokens: plus ? 1200 : 300,
       thinking: { type: "disabled" },
       output_config: { effort: plus ? "medium" : "low" },
