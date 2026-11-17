@@ -95,7 +95,21 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
     return rows.reduce((s, r) => s + Number(r.cost || 0), 0);
   }
-  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs, error: j.error, extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
+  // 진행도(11/18, 사용자: 발바닥 둘레 원형 게이지): 단계마다 [지금 값, 다음 값, 보통 걸리는 초]. 앱이 updated_at부터 흐른 시간으로 그 사이를 채운다
+  function progressOf(j) {
+    const s = j.step || "";
+    const m = s.match(/후보 (\d)\/4 완성/);
+    const seg =
+      j.status === "queued" ? [0.02, 0.06, 60]
+      : j.status === "sheet" ? (m ? [0.06 + 0.2 * Number(m[1]), 0.06 + 0.2 * (Number(m[1]) + 1), 70] : [0.06, 0.26, 70])
+      : j.status === "picked" ? [0.02, 0.08, 60]
+      : j.status === "render" ? (/엎드린/.test(s) ? [0.18, 0.28, 45] : /영상 2편/.test(s) ? [0.28, 0.86, 360] : /배경/.test(s) ? [0.86, 0.98, 45] : [0.08, 0.18, 45])
+      : j.status === "extra-queued" ? [0.02, 0.1, 60]
+      : j.status === "extra" ? [0.1, 0.92, 300]
+      : null;
+    return seg && { base: Math.min(seg[0], 0.98), next: Math.min(seg[1], 0.98), secs: seg[2], since: j.updated_at };
+  }
+  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, progress: progressOf(j), style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs, error: j.error, extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
 
   // ---- 푸시 ----
   async function notify(endpoint, title, body) {

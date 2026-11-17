@@ -1853,3 +1853,24 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .char-code { width: 100%; box-sizing: border-box; }
 .px-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .px-num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-strong); color: #fff; font-size: 12.5px; font-weight: 800; margin-right: 6px; vertical-align: -4px; }
+
+/* 발바닥 원형 게이지(components/PawProgress.jsx, 11/18) */
+.pawp { position: relative; display: grid; place-items: center; margin: 0 auto; }
+.pawp svg { position: absolute; inset: 0; }
+.pawp-in { display: grid; justify-items: center; gap: 0; }
+.pawp-in b { font-size: 15px; font-weight: 800; color: var(--accent-strong); line-height: 1; margin-top: 2px; }
+.pawp-sm .pawp-in b { font-size: 11px; }
+.pawp-paw { display: block; color: var(--accent-strong); opacity: .85; animation: pawp-hop 1.2s ease-in-out infinite; }
+.pawp-sm .pawp-paw { animation: none; }
+.pawp-in { gap: 2px; }
+@keyframes pawp-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .pawp-paw { animation: none; } }
+.px-stages { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 14px 0 4px; padding: 0; font-size: 11.5px; color: var(--text-faint); }
+.px-stages li { display: grid; justify-items: center; gap: 4px; position: relative; }
+.px-stages li::before { content: ""; position: absolute; top: 11px; left: -50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
+.px-stages li:first-child::before { display: none; }
+.px-stages li.done::before, .px-stages li.cur::before { background: var(--accent-strong); }
+.px-stage-dot { position: relative; z-index: 1; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); font-size: 11px; font-weight: 800; }
+.px-stages li.done .px-stage-dot, .px-stages li.cur .px-stage-dot { border-color: var(--accent-strong); color: var(--accent-strong); }
+.px-stages li.cur { color: var(--text); font-weight: 700; }
+.char-making { position: absolute; top: 2px; right: 2px; z-index: 6; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-soft); font: inherit; font-size: 11px; line-height: 1.15; font-weight: 700; text-align: left; box-shadow: var(--shadow); }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
+import PawProgress from "../components/PawProgress";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
 import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
 
@@ -205,7 +206,7 @@ function Extras({ dog, job, setSt, act, busy }) {
           <Ico name={EXTRA_ICO[kind] || "sparkles"} size={30} />
           <div className="px-feat-body"><div className="px-feat-title" style={{ fontSize: 15 }}>{label}</div><div className="px-feat-desc" style={{ fontSize: 13 }}>{EXTRA_WHEN[kind]}</div></div>
           {have[kind] ? <Ico name="check" size={22} style={{ color: "var(--accent-strong)", alignSelf: "center" }} />
-            : pending === kind ? <span className="px-dim" style={{ alignSelf: "center" }}>{isExtraWorking(job) ? "만드는 중…" : "대기"}</span>
+            : pending === kind ? <span className="pawp-sm" style={{ alignSelf: "center" }}><PawProgress progress={job.progress} size={44} stroke={4} label={`${label} 만드는 중`} /></span>
             : <button type="button" className="btn-ghost small" style={{ alignSelf: "center" }} onClick={add(kind)} disabled={busy || Boolean(pending) || n >= max}>만들기</button>}
         </div>
       ))}
@@ -215,13 +216,20 @@ function Extras({ dog, job, setSt, act, busy }) {
   );
 }
 
+const STAGES = ["후보 그리기", "고르기", "움직임 만들기", "완성"];
 function Working({ job, onRefresh, busy }) {
   const title = job.status === "render" ? "움직임을 만드는 중" : job.status === "sheet" ? "설정화를 그리는 중" : "순서를 기다리는 중";
+  const cur = ["picked", "render"].includes(job.status) ? 2 : 0; // pick 상태는 다른 화면
+  const p = job.progress;
+  const eta = p ? Math.max(1, Math.ceil(((p.secs || 60) - (Date.now() - new Date(p.since || Date.now()).getTime()) / 1000) / 60)) : null;
   return (
     <section className="px-card" style={{ textAlign: "center", padding: 22 }}>
-      <span className="avatar-loading" role="img" aria-label="만드는 중" style={{ justifySelf: "center" }}><Ico name="paw" size={36} /></span>
-      <div className="px-feat-title">{title}</div>
-      <p className="px-feat-desc" style={{ margin: 0 }}>{job.step}</p>
+      <PawProgress progress={job.progress} label={title} />
+      <div className="px-feat-title" style={{ marginTop: 10 }}>{title}</div>
+      <p className="px-feat-desc" style={{ margin: 0 }}>{job.step}{eta ? ` · 이 단계 약 ${eta}분 남음` : ""}</p>
+      <ol className="px-stages" aria-label="진행 단계">
+        {STAGES.map((s, i) => <li key={s} className={i < cur ? "done" : i === cur ? "cur" : ""}><span className="px-stage-dot">{i < cur ? "✓" : i + 1}</span>{s}</li>)}
+      </ol>
       <p className="px-note">앱을 닫아도 계속 만들어요. 끝나면 알림으로 알려 드려요.</p>
       <button type="button" className="btn-ghost" onClick={onRefresh} disabled={busy}>새로고침</button>
     </section>

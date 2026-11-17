@@ -31,7 +31,8 @@ import { getStage } from "../services/stageGuide";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
-import { characterOutputs } from "../services/character";
+import { characterOutputs, getCharacter, refreshJob, isWorking } from "../services/character";
+import PawProgress from "../components/PawProgress";
 import { getFeedingSettings } from "../services/feedingSettings";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
@@ -77,6 +78,16 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
     window.addEventListener("dogcare-character-changed", on);
     return () => window.removeEventListener("dogcare-character-changed", on);
   }, [dog.id]);
+  // 캐릭터 만드는 중이면 강아지 오른쪽 위에 작은 발바닥 게이지(누르면 캐릭터 화면). 30초마다 서버에 물어 본다
+  const [charJob, setCharJob] = useState(() => getCharacter(dog.id)?.job || null);
+  useEffect(() => {
+    const read = () => setCharJob(getCharacter(dog.id)?.job || null);
+    read();
+    window.addEventListener("dogcare-character-changed", read);
+    const id = setInterval(() => { if (isWorking(getCharacter(dog.id)?.job)) refreshJob(dog.id).then(read).catch(() => {}); }, 30_000);
+    return () => { window.removeEventListener("dogcare-character-changed", read); clearInterval(id); };
+  }, [dog.id]);
+  const openCharacter = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "character" } }));
   // 가만히 있을 때의 모습: 밤(22시~6시)엔 "졸림", 밥 시간 30분 전후엔 "밥 기다림"(부가 동작이 있을 때만)
   const hour = new Date().getHours();
   const mealSoon = (getFeedingSettings(dog.id).times || []).some((t) => Math.abs(Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) - (hour * 60 + new Date().getMinutes())) <= 30);
@@ -364,6 +375,12 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
         }}
       >
         <DogAvatarVideo state={avatarState === "idle" ? idleState : avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" custom={customAvatar} />
+        {!isChat && isWorking(charJob) && (
+          <button type="button" className="char-making" onClick={openCharacter} aria-label="캐릭터 만드는 중, 자세히 보기">
+            <span className="pawp-sm"><PawProgress progress={charJob.progress} size={46} stroke={4} /></span>
+            <span>캐릭터<br />만드는 중</span>
+          </button>
+        )}
       </div>
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}
