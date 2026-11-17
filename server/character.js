@@ -97,7 +97,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
 
   // ---- API ----
   const bad = (res, code, msg) => res.status(code).json({ error: msg });
-  const gate = (req, res) => { if (tooMany(req)) { bad(res, 429, "too many"); return false; } if (!dbOk) { bad(res, 503, "db off"); return false; } return true; };
+  const gate = (req, res) => { if (tooMany(req)) { bad(res, 429, "too many"); return false; } if (!dbOk) { bad(res, 503, "서버가 준비 중이에요. 잠시 뒤 다시 열어 주세요"); return false; } return true; };
 
   // 화면 하나가 한 번에 묻는다: 문 열렸나 · 이 강아지는 코드 썼나 · 마지막 작업
   app.get("/api/character/status", async (req, res) => {
