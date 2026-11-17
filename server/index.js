@@ -256,6 +256,8 @@ function dogInfo(dogContext) {
   const genderLabel = gender === "male" ? "수컷" : gender === "female" ? "암컷" : gender;
   const appearance = getBreedAppearance(breed);
   const lines = [
+    // 날짜는 서버가 항상 넣는다(11/17: 앱 기록(appData)이 없는 호출에서 모델이 2025-01-01로 짐작한 일). 앱이 보낸 "오늘:"과 같은 날이다(한국 시각)
+    `오늘 날짜: ${kstDay()} (한국 시각). "오늘/어제/내일" 같은 말은 이 날짜 기준으로 계산한다.`,
     "현재 상담 중인 강아지 정보(보호자가 앱 프로필에 적은 내용 — 답할 때 항상 이 정보에 맞춰 판단하고, 관련 있으면 자연스럽게 언급한다. 예: 알레르기 있는 재료는 권하지 않기, 체중 변화가 있으면 짚어 주기):",
     `이름: ${name || "알 수 없음"}`,
     `견종: ${breed || "알 수 없음"}`,
