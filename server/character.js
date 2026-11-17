@@ -74,11 +74,14 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   const jobsOf = (petId) => db(`character_jobs?pet_id=eq.${encodeURIComponent(petId)}&order=created_at.desc&limit=1`);
   const jobById = (id) => db(`character_jobs?id=eq.${encodeURIComponent(id)}`).then(one);
   const update = (id, patch) => db(`character_jobs?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: { ...patch, updated_at: nowIso() } });
-  async function hasAccess(petId, token) {
-    if (typeof petId !== "string" || typeof token !== "string" || token.length < 32) return false;
-    const row = one(await db(`character_access?pet_id=eq.${encodeURIComponent(petId)}&select=token_hash`));
-    return Boolean(row && row.token_hash === sha(token));
+  // 이 강아지가 쓴 코드(토큰이 맞을 때만). 멍케어 플러스 코드(MC-PLUS-*)는 캐릭터 + 플러스 비서를 함께 연다(11/17)
+  async function accessCode(petId, token) {
+    if (typeof petId !== "string" || typeof token !== "string" || token.length < 32) return null;
+    const row = one(await db(`character_access?pet_id=eq.${encodeURIComponent(petId)}&select=token_hash,code`).catch(() => []));
+    return row && row.token_hash === sha(token) ? row.code || "" : null;
   }
+  const hasAccess = async (petId, token) => (await accessCode(petId, token)) !== null;
+  const isPlusCode = (code) => /^MC-PLUS-/.test(code || "");
   async function spentToday() {
     const start = new Date(Date.now() + 9 * 3600e3); start.setUTCHours(0, 0, 0, 0); // KST 자정
     const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
@@ -100,10 +103,10 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   app.get("/api/character/status", async (req, res) => {
     if (!gate(req, res)) return;
     const { petId, token } = req.query;
-    const access = await hasAccess(petId, token).catch(() => false);
+    const code = await accessCode(petId, token);
     const job = typeof petId === "string" && petId ? one(await jobsOf(petId).catch(() => [])) : null;
     const wait = req.query.endpoint ? one(await db(`character_waitlist?endpoint=eq.${encodeURIComponent(req.query.endpoint)}&select=endpoint`).catch(() => [])) : null;
-    res.json({ open: isOpen(), ready, access, waiting: Boolean(wait), job: view(job) });
+    res.json({ open: isOpen(), ready, access: code !== null, plus: isPlusCode(code), waiting: Boolean(wait), job: view(job) });
   });
 
   // [출시되면 알려 주세요] 켜기/끄기 — 푸시 주소만 저장(이름·이메일 없음)
@@ -132,7 +135,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     // 선물 코드: 완성된 작업을 바로 넣어 앱이 다음 status 조회에서 홈 화면에 적용하게
     const preset = PRESETS[code];
     if (preset) await db("character_jobs", { method: "POST", body: { id: randomUUID(), pet_id: petId, style: preset.style, status: "done", step: "완성!", picked: 1, outputs: presetOutputs(preset), cost: 0 } });
-    res.json({ token, preset: Boolean(preset) });
+    res.json({ token, preset: Boolean(preset), plus: isPlusCode(code) });
   });
 
   // 사진 2~4장(앱이 캔버스로 다시 그려 EXIF 없이 JPEG로 보냄) + 그림체 + 동의 → 작업 등록
@@ -359,7 +362,8 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     }
   }
   if (ready) setInterval(tick, 20_000).unref();
-  // 선물 코드 등록(이미 있으면 건드리지 않음)
-  if (dbOk) db("character_invites", { method: "POST", prefer: "resolution=ignore-duplicates", body: Object.entries(PRESETS).map(([code, p]) => ({ code, note: p.note, max_uses: 3 })) }).catch((e) => console.error("[character] 선물 코드 등록:", e.message));
-  return { tick };
+  // 선물 코드·멍케어 플러스 코드 등록(이미 있으면 건드리지 않음). 플러스 코드 = 플러스 비서(하루 50번·긴 답) + 캐릭터 만들기
+  const PLUS_CODES = ["MC-PLUS-A7KQ", "MC-PLUS-B3ZM", "MC-PLUS-C9RX", "MC-PLUS-D2WH", "MC-PLUS-E6NT"];
+  if (dbOk) db("character_invites", { method: "POST", prefer: "resolution=ignore-duplicates", body: [...Object.entries(PRESETS).map(([code, p]) => ({ code, note: p.note, max_uses: 3 })), ...PLUS_CODES.map((code) => ({ code, note: "멍케어 플러스(베타)", max_uses: 3 }))] }).catch((e) => console.error("[character] 코드 등록:", e.message));
+  return { tick, accessCode, isPlusCode };
 }

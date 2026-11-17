@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { recordFromText } from "../services/aiClient";
+import { recordFromText, askAssistant } from "../services/aiClient";
 import DailyCheck, { dailyPending, dailySummaryLines, UsualNote } from "../components/DailyCheck";
 import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
@@ -524,7 +524,8 @@ function InfoAnswer({ msg, dog }) {
           </div>
         </div>
       )}
-      {!emergency && <p className="info-lead">질문에는 답하지 않지만, 멍케어 자료에서 관련 내용을 찾아봤어요.</p>}
+      {!emergency && said && <AssistantAnswer dog={dog} said={said} />}
+      {!emergency && results.length > 0 && <p className="info-lead">멍케어 자료에서 관련 내용도 찾아봤어요.</p>}
       {results.map((r) =>
         r.type === "card" ? <InfoCard key={r.card.id} card={r.card} /> : <GuideLink key={r.chapter.chapter} chapter={r.chapter} />
       )}
@@ -640,6 +641,35 @@ function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
       ))}
       <button type="button" className="link-btn summary-more" onClick={onLater}>다음에 할게</button>
     </span>
+  );
+}
+
+// 멍케어 비서(11/17 재도입): 우리 아이 기록을 아는 답. 무료는 두 칸(지금 할 일 / 병원에 물어볼 것), 플러스는 자세한 답. 응급은 위 응급 카드가 대신한다.
+function AssistantAnswer({ dog, said }) {
+  const [res, setRes] = useState(null); // { tier, answer, todo, vet, left } | { error, status }
+  useEffect(() => {
+    const controller = new AbortController();
+    setRes(null);
+    askAssistant(dog, said, { signal: controller.signal }).then(setRes).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
+    return () => controller.abort();
+  }, [dog.id, said]);
+  const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
+  if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name} 기록을 보고 생각하는 중…</p>;
+  if (res.error) return <p className="info-lead">{res.error}</p>;
+  const plus = res.tier === "plus";
+  return (
+    <div className="asst">
+      <div className="asst-head"><span className="chip">{plus ? "플러스 비서" : "멍케어 비서"}</span><span className="faint">오늘 {Math.max(0, res.left)}번 더 물어볼 수 있어요</span></div>
+      {plus || !(res.todo || res.vet) ? (
+        <div className="asst-body">{res.answer}</div>
+      ) : (
+        <>
+          <div className="asst-row"><b>지금 할 일</b><div>{res.todo}</div></div>
+          <div className="asst-row"><b>병원에 물어볼 것</b><div>{res.vet}</div></div>
+        </>
+      )}
+      {!plus && <button type="button" className="link-btn" onClick={openPlus}>더 자세한 답은 멍케어 플러스에서</button>}
+    </div>
   );
 }
 

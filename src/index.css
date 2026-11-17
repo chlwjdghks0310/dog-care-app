@@ -1813,3 +1813,10 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .char-check input { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--accent-strong); }
 .char-code { min-height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 0 12px; font: inherit; font-size: 16px; letter-spacing: .04em; }
 .char-cands { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* 멍케어 비서 답(Main AssistantAnswer, 11/17) */
+.asst { display: grid; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--accent-soft); margin-bottom: 10px; }
+.asst-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; }
+.asst-row { display: grid; gap: 2px; font-size: 14px; line-height: 1.55; } .asst-row b { font-size: 13px; color: var(--accent-strong); }
+.asst-body { white-space: pre-line; font-size: 14px; line-height: 1.6; }
+.asst .link-btn { justify-self: start; font-size: 12.5px; }

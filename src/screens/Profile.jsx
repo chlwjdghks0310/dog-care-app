@@ -38,6 +38,7 @@ import Contact from "./Contact";
 import Feedback from "./Feedback";
 import DogRegister from "./DogRegister";
 import Character from "./Character";
+import Plus from "./Plus";
 import { characterOutputs } from "../services/character";
 import { getSyncStatus, onSyncStatus } from "../services/sync";
 import { isTrackingOff, setTrackingOff } from "../services/analytics";
@@ -376,6 +377,9 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <SettingsRow ico="sparkles" title="우리 아이 캐릭터" sub={characterOutputs(dog.id) ? `${dog.name} 캐릭터가 홈 화면에 있어요` : "사진으로 만드는 움직이는 캐릭터"} badge={characterOutputs(dog.id) ? "" : "곧 출시"} onClick={() => setSettingsSub("character")} />
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
+            <SettingsGroup title="멍케어 플러스">
+              <SettingsRow ico="sparkles" title="멍케어 플러스" sub="플러스 비서(자세한 답) · 우리 아이 캐릭터" badge="베타" onClick={() => setSettingsSub("plus")} />
+            </SettingsGroup>
             <SettingsGroup title="화면">
               <SettingsRow ico="moon" title="다크 모드" sub="어두운 화면으로 눈이 덜 부셔요" right={<input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />} />
               <SettingsRow ico="sun" title="배경 테마" sub={dark ? "다크 모드를 끄면 고를 수 있어요" : themeLabel(getColorTheme())} onClick={dark ? undefined : () => setSettingsSub("theme")} />
@@ -403,9 +407,10 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
         createPortal(
           <div className="settings-sheet" role="dialog" aria-label={SUB_TITLES[settingsSub] || "설정"} style={{ zIndex: 110, padding: 0, display: "flex", flexDirection: "column" }} {...subSwipeClose}>
             {settingsSub === "help" && <Help onBack={() => setSettingsSub(null)} />}
-            {["account", "family", "theme", "export", "ai", "character"].includes(settingsSub) && (
+            {["account", "family", "theme", "export", "ai", "character", "plus"].includes(settingsSub) && (
               <SettingsSub title={SUB_TITLES[settingsSub]} onBack={() => setSettingsSub(null)}>
                 {settingsSub === "character" && <Character dog={dog} />}
+                {settingsSub === "plus" && <Plus dog={dog} onOpenCharacter={() => setSettingsSub("character")} />}
                 {settingsSub === "account" && <AccountCard />}
                 {settingsSub === "family" && <FamilyShare dog={dog} />}
                 {settingsSub === "theme" && <ThemeCard dark={dark} defaultOpen />}
@@ -789,7 +794,7 @@ function FooterLinks({ onAI }) {
 }
 
 // 설정 묶음 + 한 줄 행(11/11)
-const SUB_TITLES = { help: "도움말", contact: "문의하기", feedback: "의견 보내기", "add-dog": "강아지 등록", account: "백업·로그인", family: "가족 공유", theme: "배경 테마", export: "기록 내보내기", ai: "AI 정보 전송", character: "우리 아이 캐릭터" };
+const SUB_TITLES = { help: "도움말", contact: "문의하기", feedback: "의견 보내기", "add-dog": "강아지 등록", account: "백업·로그인", family: "가족 공유", theme: "배경 테마", export: "기록 내보내기", ai: "AI 정보 전송", character: "우리 아이 캐릭터", plus: "멍케어 플러스" };
 function SettingsGroup({ title, children }) {
   return (
     <section className="sg" aria-label={title}>

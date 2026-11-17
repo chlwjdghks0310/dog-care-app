@@ -734,8 +734,57 @@ const APP_TOOL_RULES = `[앱에 기록하기]
   놓친 약을 더 먹이거나 두 배로 먹이라고 하지 않는다. 구토·설사·처짐·발진·호흡 이상 등 이상 반응이 의심되면 약을 임의로 더 주거나 끊지 말고 바로 수의사에게 문의하라고 한다.`;
 
 
-// 질문 답변(AI 채팅)은 2026-11 종료 — 비용과 건강 답변 책임 때문에 "기록 중심"으로 바꿨다. 예전 앱이 부르면 안내만 한다.
-app.post("/api/ask", (req, res) => res.status(410).json({ error: "질문 답변 기능은 끝났어요. 앱을 완전히 껐다 켜면 새 화면이 나와요. 기록은 첫 화면에서 말로 적어 주세요." }));
+// 우리 아이 캐릭터(server/character.js, supabase/character.sql): 초대 코드·알림 대기·생성 작업 큐. 키가 없으면 라우트는 503으로 답하고 일꾼은 안 돈다.
+// 여기서 켜는 이유: 아래 멍케어 비서(/api/ask)가 같은 코드 표(MC-PLUS-*)로 플러스를 판단한다
+const character = mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, pushDevices, sendPush, tooMany });
+
+// 멍케어 비서(11/17 재도입, 사용자 결정): 질문이면 우리 아이 기록을 아는 비서가 답한다. ChatGPT 버튼은 그대로 둔다(평균적인 답을 원할 수도 있어서).
+//   무료: 가장 가벼운 모델, 두 칸 고정 답(지금 할 일 / 병원에 물어볼 것), 하루 5번
+//   플러스(MC-PLUS 코드): 큰 모델, 자세한 답, 하루 50번
+// 둘 다: 진단 단정 ✗, 약 용량 ✗, 응급 신호면 병원 먼저. 사용 횟수는 메모리(서버가 다시 켜지면 0부터 — 비용이 싸서 괜찮다).
+const ASK_LIMIT = { free: 5, plus: 50 };
+const ASK_GLOBAL_LIMIT = 3000; // 하루 전체(비용 안전장치)
+const askUsed = new Map(); // `${day}|${petId}` → n, `${day}|*` → 전체
+const askCount = (petId) => { const d = kstDay(); const k = `${d}|${petId}`; const g = `${d}|*`; return { k, g, n: askUsed.get(k) || 0, all: askUsed.get(g) || 0 }; };
+const ASK_RULES_FREE = `너는 강아지 돌봄 앱 "멍케어"의 비서다. 아래 "강아지 정보"의 기록을 아는 상태에서 보호자의 질문에 아주 짧게 답한다.
+반드시 아래 두 줄 형식으로만 답한다(다른 말 금지, 각 줄 2문장 이내, 전체 4줄 이내):
+지금 할 일: (집에서 지금 해 볼 것 — 기록에 근거가 있으면 한 번 언급. 예: "어제 체중이 2.4kg로 늘었으니…")
+병원에 물어볼 것: (병원에 가면 이렇게 말하라는 한 문장. 병원 갈 필요가 없어 보이면 "지금은 지켜봐도 돼요. ~하면 병원에 물어보세요")
+규칙: 진단을 단정하지 않는다(병 이름을 "~일 수 있어요"로 하나만). 약 이름·용량·횟수는 절대 말하지 않는다(그건 "병원에 물어볼 것"으로). 호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함 같은 응급 신호면 첫 줄을 "지금 할 일: 지금 바로 동물병원(야간이면 24시 병원)으로 가세요."로 쓴다. 해요체, 이모지 없음.`;
+const ASK_RULES_PLUS = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록(체중·접종·약·최근 하루 체크)을 아는 상태에서 보호자의 질문에 친절하고 구체적으로 답한다.
+구성: ① 한 줄 결론 ② 집에서 지금 확인·해 볼 것(기록 근거가 있으면 날짜·수치로 짚기) ③ 생각해 볼 수 있는 이유 2~4가지(흔한 것부터, 각각 구별 포인트) ④ 병원에 가야 하는 신호와 병원에서 할 말. 8~14줄, 소제목은 "·"로 시작하는 줄로.
+규칙: 진단을 단정하지 않는다(순위·확률 표현 금지). 약 이름은 설명해도 되지만 용량·횟수·투약 변경은 절대 말하지 않는다(수의사에게). 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 첫 줄에 "지금 바로 동물병원(야간이면 24시)"을 쓴다. 해요체, 이모지 없음, 마크다운 기호(#, **) 없음.`;
+app.post("/api/ask", async (req, res) => {
+  if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 물어봐 주세요." });
+  const { dogContext, text, petId, token } = req.body || {};
+  const q = typeof text === "string" ? text.trim().slice(0, 600) : "";
+  const pet = typeof petId === "string" && petId ? petId.slice(0, 80) : req.ip;
+  if (!q) return res.status(400).json({ error: "질문을 적어 주세요." });
+  const plus = character.isPlusCode(await character.accessCode(pet, token));
+  const tier = plus ? "plus" : "free";
+  const { k, g, n, all } = askCount(pet);
+  if (all >= ASK_GLOBAL_LIMIT) return res.status(429).json({ error: "오늘은 비서가 쉬어야 해요. 내일 다시 물어봐 주세요.", tier, left: 0 });
+  if (n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? "오늘 플러스 비서 횟수(50번)를 다 썼어요. 내일 다시 물어봐 주세요." : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
+  try {
+    const response = await client.beta.messages.create({
+      ...(plus ? CLAUDE_MODEL : { model: RECORD_MODEL }),
+      max_tokens: plus ? 1200 : 300,
+      thinking: { type: "disabled" },
+      output_config: { effort: plus ? "medium" : "low" },
+      system: [{ type: "text", text: plus ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
+      messages: [{ role: "user", content: q }],
+    });
+    logCache(response);
+    askUsed.set(k, n + 1); askUsed.set(g, all + 1);
+    const answer = claudeText(response).trim();
+    const todo = answer.match(/지금 할 일:\s*([\s\S]*?)(?=\n병원에 물어볼 것:|$)/)?.[1]?.trim() || "";
+    const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
+    res.json({ tier, answer, todo, vet, left: ASK_LIMIT[tier] - n - 1 });
+  } catch (err) {
+    console.error("[server] ask error:", err.message);
+    res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier });
+  }
+});
 
 // 말로 기록하기: 보호자가 한 말을 앱 기록(도구 호출)으로만 바꾼다 — 가장 가벼운 모델, 생각 없이, 질문에는 답하지 않음.
 // 서버는 저장하지 않고 동작(actions)을 앱에 돌려주며, 앱이 형식을 확인한 뒤 저장한다(src/services/appActions.js).
@@ -1393,9 +1442,6 @@ app.use((err, req, res, next) => {
   }
   next(err);
 });
-
-// 우리 아이 캐릭터(server/character.js, supabase/character.sql): 초대 코드·알림 대기·생성 작업 큐. 키가 없으면 라우트는 503으로 답하고 일꾼은 안 돈다
-mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, pushDevices, sendPush, tooMany });
 
 const server = app.listen(PORT, () => {
   console.log(`[server] AI proxy listening on http://localhost:${PORT}`);

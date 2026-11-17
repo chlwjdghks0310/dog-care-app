@@ -62,6 +62,22 @@ export async function recordFromText(dog, text, { signal } = {}) {
   return { actions: Array.isArray(data.actions) ? data.actions : [], question: data.question === true, reply: typeof data.reply === "string" ? data.reply : "" };
 }
 
+// 멍케어 비서(11/17): 질문에 우리 아이 기록을 아는 비서가 답한다. 무료는 두 칸(todo/vet), 플러스(MC-PLUS 코드)는 자세한 답(answer). 한도를 넘으면 status 429.
+export async function askAssistant(dog, text, { signal } = {}) {
+  await ensureAIConsent();
+  const { getCharacter } = await import("./character");
+  const token = getCharacter(dog.id)?.token;
+  const res = await fetch(`${API_BASE}/api/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...trackHeaders() },
+    body: JSON.stringify({ dogContext: toDogContext(dog), text, petId: dog.id, ...(token && { token }) }),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || "비서가 답을 만들지 못했어요."), { status: res.status, tier: data.tier });
+  return { tier: data.tier === "plus" ? "plus" : "free", answer: String(data.answer || ""), todo: String(data.todo || ""), vet: String(data.vet || ""), left: Number(data.left ?? 0) };
+}
+
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).
 export async function analyzePhoto(dog, file, question) {
   await ensureAIConsent();
