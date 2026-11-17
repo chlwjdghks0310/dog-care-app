@@ -186,6 +186,25 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     setTimeout(tick, 500);
   });
 
+  // 운영자(analytics_admins)만: 대기 명단 전원에게 "열렸어요" 푸시 한 번 → 명단 비움. 보통 CHARACTER_OPEN=1로 바꾼 뒤 누른다
+  async function isAdmin(accessToken) {
+    if (!accessToken) return false;
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/is_analytics_admin`, { method: "POST", headers: { apikey: (process.env.SUPABASE_ANON_KEY || "").trim(), Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(8000) }).catch(() => null);
+    return Boolean(r?.ok && (await r.json()) === true);
+  }
+  app.post("/api/character/notify-waitlist", async (req, res) => {
+    if (!gate(req, res)) return;
+    if (!(await isAdmin(req.body?.accessToken))) return bad(res, 403, "운영자만");
+    const rows = await db("character_waitlist?select=endpoint");
+    let sent = 0;
+    for (const { endpoint } of rows) {
+      const device = pushDevices.get(endpoint);
+      if (device && (await sendPush(device, "🐾 우리 아이 캐릭터가 열렸어요", "기다려 주셔서 고마워요. 사진 2~4장이면 바로 만들 수 있어요", "/?app&open=character"))) sent++;
+    }
+    if (req.body?.clear !== false) await db("character_waitlist?endpoint=neq.", { method: "DELETE" });
+    res.json({ waitlist: rows.length, sent, open: isOpen() });
+  });
+
   // ---- 생성 단계 ----
   const part = (buf, mime) => ({ inlineData: { mimeType: mime, data: buf.toString("base64") } });
   async function gen(parts, addCost) {

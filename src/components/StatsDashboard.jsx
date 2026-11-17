@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useSwipeClose } from "./SwipeBack";
 import { supabase } from "../services/supabase";
 import { LoginForm } from "./AccountCard";
+import { API_BASE } from "../services/aiClient";
 
 // 운영자용 이용 통계(설정 → 이용 통계). 숫자는 Supabase analytics_dashboard()가 준다 —
 // analytics_admins 표에 든 계정만 볼 수 있다(supabase/analytics.sql ④). 이름·이메일 같은 개인정보는 없다.
@@ -243,6 +244,7 @@ export default function StatsDashboard({ onClose }) {
           </div>
 
           <BetaInbox />
+          <CharacterOps />
 
           <button type="button" className="btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={() => download(all)}>
             최근 30일 표 파일로 받기 (CSV · 엑셀)
@@ -272,6 +274,43 @@ export function StatsPage() {
       <div className="h1">이용 통계</div>
       <p className="subtle">운영자 계정으로 로그인해 주세요. 컴퓨터에서는 이메일 로그인이 편해요.</p>
       <LoginForm />
+    </div>
+  );
+}
+
+// 우리 아이 캐릭터 운영(supabase/character.sql character_summary + 서버 /api/character/notify-waitlist) — 운영자만(11/17)
+function CharacterOps() {
+  const [data, setData] = useState(null);
+  const [msg, setMsg] = useState("");
+  const load = () => supabase.rpc("character_summary").then(({ data, error }) => setData(error ? { error: error.message } : data));
+  useEffect(() => { load(); }, []);
+  const notify = async () => {
+    if (!confirm("대기 명단 전원에게 '열렸어요' 알림을 한 번 보내고 명단을 비워요. 서버의 CHARACTER_OPEN이 1인지 먼저 확인했나요?")) return;
+    setMsg("보내는 중…");
+    try {
+      const { data: s } = await supabase.auth.getSession();
+      const r = await fetch(`${API_BASE}/api/character/notify-waitlist`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessToken: s.session?.access_token }) });
+      const j = await r.json();
+      setMsg(r.ok ? `대기 ${j.waitlist}명 중 ${j.sent}명에게 보냈어요${j.open ? "" : " · 주의: 서버 문이 아직 잠겨 있어요(CHARACTER_OPEN=0)"}` : `실패: ${j.error}`);
+      load();
+    } catch (e) { setMsg(`실패: ${e.message}`); }
+  };
+  const st = data?.by_status || {};
+  return (
+    <div className="card" style={{ marginTop: 12 }}>
+      <div className="h2">우리 아이 캐릭터</div>
+      {!data ? <p className="subtle" style={{ margin: 0 }}>불러오는 중…</p> : data.error ? <p className="subtle" style={{ margin: 0 }}>아직 표가 없어요 — supabase/character.sql을 실행해 주세요. ({data.error})</p> : (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, fontSize: 13.5 }}>
+            <div><div className="faint">오늘 생성비</div><b>${Number(data.today_cost).toFixed(2)}</b></div>
+            <div><div className="faint">출시 알림 대기</div><b>{data.waitlist}명</b></div>
+            <div><div className="faint">남은 초대 코드</div><b>{data.invites_left}개</b></div>
+          </div>
+          <div className="faint" style={{ margin: "8px 0 4px" }}>작업: {Object.keys(st).length ? Object.entries(st).map(([k, n]) => `${k} ${n}`).join(" · ") : "없음"}</div>
+          <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 6 }} onClick={notify} disabled={!data.waitlist}>대기자에게 출시 알림 보내기</button>
+          {msg && <p className="subtle" style={{ margin: "6px 0 0" }}>{msg}</p>}
+        </>
+      )}
     </div>
   );
 }
