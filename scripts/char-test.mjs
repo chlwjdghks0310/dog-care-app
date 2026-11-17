@@ -69,7 +69,7 @@ const STYLE = {
 // 견본 견종을 섞는다(11/17: 포메 견본 3장만 쓰니 흰 말티즈·검은 믹스견에 포메 무늬가 섞여 나옴)
 const SAMPLE_BREEDS = ["a golden retriever", "a grey miniature schnauzer", "a brown dachshund"];
 const SAMPLES = {
-  crayon: (i) => `a children's picture-diary style drawing of ${SAMPLE_BREEDS[(i - 1) % SAMPLE_BREEDS.length]} sitting and facing the camera, drawn with wax crayons and colored pencils on cream drawing paper, visible crayon texture and slightly wobbly outlines, warm and cute, simple, no text, no sun, no grass, no doodles, full body centered`,
+  crayon: (i) => `a children's picture-diary style drawing of ${SAMPLE_BREEDS[(i - 1) % SAMPLE_BREEDS.length]} sitting and facing the camera, drawn with wax crayons and colored pencils on cream drawing paper, visible crayon texture and slightly wobbly outlines, warm and cute, simple, no text, no sun, no grass, no doodles, no drawn frame or border, full body centered`,
   sticker: "a flat hand-drawn sticker illustration of a small fluffy black-and-tan pomeranian puppy sitting and facing the camera, thick dark-brown ink outline, soft pastel fills, almost no shading, cream paper background, cute simple face, no text, full body centered",
 };
 // 11/17: 예시로 적었던 "black-and-tan" 문구가 검은 개에 황갈 무늬를 만들어 냄 → 예시 삭제, "사진에 없는 무늬 금지" 명시
