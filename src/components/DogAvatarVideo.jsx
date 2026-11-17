@@ -96,7 +96,15 @@ function keyOutLightBackground(imageData, { min: BRIGHTNESS_MIN, full: BRIGHTNES
   return imageData;
 }
 
-export default function DogAvatarVideo({ state = "idle", height = 200, breed }) {
+// 우리 아이 캐릭터(11/17, server/character.js) 영상은 "stacked": 위 절반이 색, 아래 절반이 알파(흰=불투명). 위 색의 투명 자리는 검정.
+// 위 픽셀의 알파를 아래 픽셀의 밝기로 채운다 — 초록 키잉과 달리 색 복원이 필요 없다(이미 서버 ffmpeg가 despill까지 했다).
+function applyStackedAlpha(top, bottom) {
+  const d = top.data, a = bottom.data;
+  for (let i = 0; i < d.length; i += 4) d[i + 3] = a[i];
+  return top;
+}
+
+export default function DogAvatarVideo({ state = "idle", height = 200, breed, custom }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const frameIdRef = useRef(null);
@@ -104,10 +112,13 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
   const [readySrc, setReadySrc] = useState(null); // 첫 프레임을 그린 영상 — 그 전(강아지 바꾸는 사이)엔 로딩 표시
   // 저전력 모드(자동재생 차단)·움직임 줄이기: 영상 대신 정지 그림(public/avatar/<견종>/idle.png) — 재생 버튼이 뜨거나 멈춘 채 보이던 것(사용자 컴플레인 11/11)
   const [still, setStill] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const stillSrc = KEY_BY_BREED[breed] ? `/avatar/${breed}/idle.png` : "/avatar/idle.png";
+  // custom = { idle, thinking, poster }(우리 아이 캐릭터 완성본). 영상 주소가 깨지면(404) 기본 견종으로 돌아간다
+  const customSrc = custom?.idle && !missing[custom.idle] && !missing[custom.thinking] ? (state === "thinking" && custom.thinking ? custom.thinking : custom.idle) : null;
+  const stacked = Boolean(customSrc);
+  const stillSrc = stacked && custom.poster ? custom.poster : KEY_BY_BREED[breed] ? `/avatar/${breed}/idle.png` : "/avatar/idle.png";
   const blocked = (err) => err?.name === "NotAllowedError" && setStill(true); // 사용자가 화면을 건드려 재생되면 다시 영상으로
-  const direct = PLAYS_ALPHA_VIDEO && Boolean(keyFor(breed, state)?.alphaMov); // 투명 .mov를 그대로 보여줌
-  const preferred = breedSrc(breed, state, direct ? "mov" : "mp4");
+  const direct = !stacked && PLAYS_ALPHA_VIDEO && Boolean(keyFor(breed, state)?.alphaMov); // 투명 .mov를 그대로 보여줌
+  const preferred = stacked ? customSrc : breedSrc(breed, state, direct ? "mov" : "mp4");
   const src = preferred && !missing[preferred] ? preferred : VIDEO_SRC[state] || VIDEO_SRC.idle;
 
   // 앱을 나갔다 오면 iOS가 영상을 멈춰 두고, 화면에 보이는 <video>엔 재생(▶) 버튼을 띄운다(기기·저전력 모드에 따라 다름).
@@ -180,6 +191,21 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       const vh = video.videoHeight;
       if (!vw || !vh) return;
 
+      if (stacked && src === preferred) {
+        // 위 절반(색)을 그리고, 아래 절반(알파)을 따로 읽어 알파로 넣는다
+        ctx.drawImage(video, 0, 0, vw, vh / 2, 0, 0, PROCESS_SIZE, PROCESS_SIZE);
+        const color = ctx.getImageData(0, 0, PROCESS_SIZE, PROCESS_SIZE);
+        ctx.drawImage(video, 0, vh / 2, vw, vh / 2, 0, 0, PROCESS_SIZE, PROCESS_SIZE);
+        const alpha = ctx.getImageData(0, 0, PROCESS_SIZE, PROCESS_SIZE);
+        ctx.clearRect(0, 0, PROCESS_SIZE, PROCESS_SIZE);
+        ctx.putImageData(applyStackedAlpha(color, alpha), 0, 0);
+        if (!shown) {
+          shown = true;
+          setReadySrc(src);
+        }
+        return;
+      }
+
       ctx.drawImage(video, 0, 0, vw, vh, 0, 0, PROCESS_SIZE, PROCESS_SIZE);
 
       // 워터마크 자리를 배경과 비슷한 밝은 색으로 덮는다 — 아래 키잉 단계에서 자연스럽게 투명해진다.
@@ -243,7 +269,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       clearInterval(watchdog);
       video.removeEventListener("error", onVideoError);
     };
-  }, [src, preferred, breed, state, direct]);
+  }, [src, preferred, breed, state, direct, stacked]);
 
   const showVideo = direct && src === preferred;
   return (
@@ -257,6 +283,7 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed }) 
       <video
         ref={videoRef}
         src={src}
+        crossOrigin={stacked ? "anonymous" : undefined}
         muted
         loop
         autoPlay

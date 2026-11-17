@@ -31,6 +31,7 @@ import { getStage } from "../services/stageGuide";
 import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
+import { characterOutputs } from "../services/character";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
 // 질문이면 AI를 부르지 않고, 응급 단어면 응급 카드, 아니면 우리 정보 카드·가이드북에서 찾아 보여 준다(src/services/infoSearch.js).
@@ -67,6 +68,14 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   // 보내는 중인지 바로 알기 위한 표시 — state(pending)는 다음 그리기 때 바뀌어서, 빠르게 여러 번 누르면 요청이 여러 개 나갔다
   const busyRef = useRef(false);
   const [avatarState, setAvatarState] = useState("idle");
+  // 우리 아이 캐릭터(11/17): 완성본이 폰에 있으면 기본 포메 대신 그 아이. 만들어지거나 되돌리면 바로 바뀐다
+  const [customAvatar, setCustomAvatar] = useState(() => characterOutputs(dog.id));
+  useEffect(() => {
+    const on = () => setCustomAvatar(characterOutputs(dog.id));
+    on();
+    window.addEventListener("dogcare-character-changed", on);
+    return () => window.removeEventListener("dogcare-character-changed", on);
+  }, [dog.id]);
   const talkTimerRef = useRef(null);
   const abortRef = useRef(null);
   // 기록 읽기: 목록을 아래로 스크롤하면 안내문·하단 탭을 내려 숨기고, 위로 스크롤하면 다시 보인다
@@ -345,7 +354,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
           zIndex: 5,
         }}
       >
-        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" />
+        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" custom={customAvatar} />
       </div>
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}

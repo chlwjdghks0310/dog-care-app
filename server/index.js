@@ -13,6 +13,7 @@ import { WebSocketServer } from "ws";
 import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
+import { mountCharacter } from "./character.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
 
@@ -1392,6 +1393,9 @@ app.use((err, req, res, next) => {
   }
   next(err);
 });
+
+// 우리 아이 캐릭터(server/character.js, supabase/character.sql): 초대 코드·알림 대기·생성 작업 큐. 키가 없으면 라우트는 503으로 답하고 일꾼은 안 돈다
+mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, pushDevices, sendPush, tooMany });
 
 const server = app.listen(PORT, () => {
   console.log(`[server] AI proxy listening on http://localhost:${PORT}`);

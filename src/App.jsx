@@ -341,6 +341,12 @@ export default function App() {
       setTab(params.get("vet") ? "vet" : "hospital");
       return true;
     }
+    // 캐릭터 알림(/?open=character: 후보 나옴·완성) → 우리 아이 탭 설정의 캐릭터 화면(11/17)
+    if (params.get("open") === "character") {
+      setTab("profile");
+      setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "character" } })), 350);
+      return true;
+    }
     // 시기 바뀜 알림(/?tab=care) → 케어 탭(11/15)
     if (params.get("tab") === "care") {
       setTab("care");
