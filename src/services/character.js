@@ -83,6 +83,13 @@ export async function pickCandidate(dogId, picked) {
   save(dogId, { job });
   return job;
 }
+// 영상 단계에서 실패했을 때: 고른 설정화 그대로 영상만 다시
+export async function retryRender(dogId) {
+  const c = getCharacter(dogId);
+  const { job } = await call(`/jobs/${c.job.id}/retry`, { method: "POST", body: { token: c.token } });
+  save(dogId, { job });
+  return job;
+}
 export async function regenCandidates(dogId) {
   const c = getCharacter(dogId);
   const { job } = await call(`/jobs/${c.job.id}/regen`, { method: "POST", body: { token: c.token } });

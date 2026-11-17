@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
-import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, getCharacter, clearCharacterOutputs, isWorking, STYLE_LABEL } from "../services/character";
+import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, getCharacter, clearCharacterOutputs, isWorking, STYLE_LABEL } from "../services/character";
 
 // 우리 아이 캐릭터(11/17): 설정 → 우리 강아지 → "우리 아이 캐릭터". 문은 잠겨 있고(곧 출시) 초대 코드를 쓴 강아지만 만든다.
 // 흐름: 잠김(알림 대기·코드) → 그림체·사진·동의 → 후보 4장 중 고르기 → 영상 만드는 중 → 완성(홈 강아지가 바뀜)
@@ -127,7 +127,17 @@ function Form({ dog, job, st, setSt, act, busy }) {
           <button type="button" className="btn-ghost" onClick={() => (clearCharacterOutputs(dog.id), setSt((s) => ({ ...s })))}>기본 강아지로 돌리기</button>
         </div>
       )}
-      {job?.status === "failed" && <p className="error-text">지난번 만들기가 실패했어요({job.error || "이유 모름"}). 사진은 지웠어요. 다시 시도해 주세요.</p>}
+      {job?.status === "failed" && (
+        <div className="card" style={{ display: "grid", gap: 8 }}>
+          <p className="error-text" style={{ margin: 0 }}>지난번 만들기가 실패했어요. 사진은 지웠어요.</p>
+          {job.picked ? (
+            <>
+              <span className="muted" style={{ fontSize: 13 }}>고른 설정화는 남아 있어요. 움직임 만들기만 다시 할 수 있어요.</span>
+              <button type="button" className="btn-primary" onClick={act(async () => { const j = await retryRender(dog.id); setSt((s) => ({ ...s, job: j })); })} disabled={busy}>움직임만 다시 만들기</button>
+            </>
+          ) : <span className="muted" style={{ fontSize: 13 }}>아래에서 다시 시도해 주세요.</span>}
+        </div>
+      )}
       {!outputs && <Intro />}
       <div className="card" style={{ display: "grid", gap: 10 }}>
         <b>1. 그림체</b>

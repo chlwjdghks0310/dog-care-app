@@ -163,6 +163,17 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     setTimeout(tick, 500);
   });
 
+  // 영상 단계에서 실패한 작업: 사진·후보는 그대로 두고 고른 설정화로 영상만 다시(Gemini 후보 비용 없음)
+  app.post("/api/character/jobs/:id/retry", async (req, res) => {
+    if (!gate(req, res)) return;
+    const j = await jobById(req.params.id).catch(() => null);
+    if (!j || !(await hasAccess(j.pet_id, req.body?.token))) return bad(res, 404, "없어요");
+    if (j.status !== "failed" || !j.picked || !(j.candidates || []).length) return bad(res, 409, "영상 단계만 다시 할 수 있는 작업이 아니에요");
+    await update(j.id, { status: "picked", error: null, step: "순서를 기다리는 중" });
+    res.json({ job: view(await jobById(j.id)) });
+    setTimeout(tick, 500);
+  });
+
   // 후보 다시 뽑기(MAX_REGEN회)
   app.post("/api/character/jobs/:id/regen", async (req, res) => {
     if (!gate(req, res)) return;
@@ -205,21 +216,36 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     throw new Error("영상이 6분 넘게 안 끝났어요");
   }
   // 초록 빼기 → 720px stacked(위 색·아래 알파) mp4. 포스터는 첫 프레임 투명 PNG 512px
-  const CK = "format=rgba,chromakey=0x00FF00:0.22:0.06,despill=type=green,scale=720:720:flags=lanczos";
+  // 끝의 format=rgba: ffmpeg 6.0(ffmpeg-static)은 scale 뒤에 알파를 떨어뜨려 alphaextract가 "Requested planes not available"로 죽는다(11/17 첫 서버 시험)
+  const CK = "format=rgba,chromakey=0x00FF00:0.22:0.06,despill=type=green,scale=720:720:flags=lanczos,format=rgba";
+  // ffmpeg 실패는 stderr 끝부분을 오류 문장에 남긴다(11/17 첫 서버 시험: "Command failed"만 보여 원인을 못 봄)
+  async function ff(args) {
+    try { await run(ffmpegPath, ["-y", "-hide_banner", "-loglevel", "error", ...args], { maxBuffer: 4 * 1024 * 1024 }); }
+    catch (e) { throw new Error(`ffmpeg: ${String(e.stderr || e.message).trim().split("\n").slice(-3).join(" | ").slice(0, 400)}`); }
+  }
   async function keyVideo(raw, base) {
     await fs.writeFile(`${base}-raw.mp4`, raw);
-    await run(ffmpegPath, ["-y", "-loglevel", "error", "-i", `${base}-raw.mp4`, "-filter_complex", `[0:v]${CK},split[c][a];[a]alphaextract,format=yuv420p[al];[c]format=yuv420p[cc];[cc][al]vstack,format=yuv420p`, "-c:v", "libx264", "-crf", "22", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", `${base}-stacked.mp4`]);
+    await ff(["-i", `${base}-raw.mp4`, "-filter_complex", `[0:v]${CK},split[c][a];[a]alphaextract,format=yuv420p[al];[c]format=yuv420p[cc];[cc][al]vstack,format=yuv420p`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", `${base}-stacked.mp4`]);
     return fs.readFile(`${base}-stacked.mp4`);
   }
   async function poster(raw, base) {
-    await run(ffmpegPath, ["-y", "-loglevel", "error", "-i", `${base}-raw.mp4`, "-vf", `${CK},scale=512:512`, "-frames:v", "1", "-pix_fmt", "rgba", `${base}-poster.png`]);
+    await ff(["-i", `${base}-raw.mp4`, "-vf", `${CK},scale=512:512`, "-frames:v", "1", "-pix_fmt", "rgba", `${base}-poster.png`]);
     return fs.readFile(`${base}-poster.png`);
   }
   // 초록판을 Runway에 JPEG로(PNG도 되지만 data URI를 작게)
   async function toJpeg(pngBuf, base) {
     await fs.writeFile(`${base}.png`, pngBuf);
-    await run(ffmpegPath, ["-y", "-loglevel", "error", "-i", `${base}.png`, "-vf", "scale=960:960", "-q:v", "3", `${base}.jpg`]);
+    await ff(["-i", `${base}.png`, "-vf", "scale=960:960", "-q:v", "3", `${base}.jpg`]);
     return fs.readFile(`${base}.jpg`);
+  }
+  // 켤 때 한 번: 이 ffmpeg가 필요한 필터·인코더를 가졌는지 로그로(없으면 서버 시험 전에 안다)
+  if (ffmpegPath) {
+    Promise.all([run(ffmpegPath, ["-hide_banner", "-filters"]), run(ffmpegPath, ["-hide_banner", "-encoders"]), run(ffmpegPath, ["-version"])])
+      .then(([f, e, v]) => {
+        const miss = ["chromakey", "despill", "alphaextract", "vstack"].filter((n) => !f.stdout.includes(` ${n} `)).concat(e.stdout.includes("libx264") ? [] : ["libx264"]);
+        console.log(`[character] ffmpeg ${v.stdout.split("\n")[0].slice(0, 40)}${miss.length ? ` · 없음: ${miss.join(",")}` : " · 필터·인코더 OK"}`);
+      })
+      .catch((e) => console.error("[character] ffmpeg 점검 실패:", e.message.slice(0, 200)));
   }
 
   async function doSheet(j) {
