@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import Ico from "../components/Ico";
 import { fetchStatus, redeem } from "../services/character";
 
-// 멍케어 플러스(11/17, 사용자 결정): 설정에 따로 있는 칸. 지금은 결제 없이 플러스 코드(베타 테스터)로만 열린다.
-// 플러스 = 플러스 비서(자세한 답·하루 50번) + 우리 아이 캐릭터 만들기. 무료는 멍케어 비서(두 칸 답·하루 5번)·기록·수첩·가이드 전부.
+// 멍케어 플러스(11/17, 사용자 결정): 설정에 따로 있는 칸. 베타 동안은 결제 없이 플러스 코드로만 열리고, 막는 건 플러스 비서 하나뿐.
+// 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 스티커 아이콘을 기능마다 다르게(플러스=트로피 win, 비서=chatHeart, 캐릭터=video, 진료 정리=clipboard, 리포트=chart, 코드=lock),
+// 세로 한 줄 구성, 무료/플러스 차이는 작은 표로.
 export default function Plus({ dog, onOpenCharacter }) {
   const [st, setSt] = useState(null);
   const [code, setCode] = useState("");
@@ -20,54 +21,64 @@ export default function Plus({ dog, onOpenCharacter }) {
   };
   const plus = Boolean(st?.plus);
   return (
-    <div style={{ display: "grid", gap: 14, padding: "4px 0 24px" }}>
-      <div className="card" style={{ display: "grid", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Ico name="sparkles" size={22} style={{ color: "var(--accent-strong)" }} />
-          <b style={{ fontSize: 17 }}>{plus ? `${dog.name}는 멍케어 플러스예요` : "멍케어 플러스"}</b>
-          {plus && <span className="chip">베타</span>}
+    <div className="px">
+      <header className="px-hero">
+        <Ico name="star" size={48} />
+        <div>
+          <div className="h1" style={{ margin: 0 }}>멍케어 플러스</div>
+          <p className="px-lead">{plus ? `${dog.name}는 플러스예요. 고마워요!` : "기록·수첩·가이드·가족 공유는 언제나 무료. 플러스는 우리 아이를 더 깊이 아는 두 가지를 더해요."}</p>
         </div>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>
-          기록·병원 수첩·월령별 가이드·가족 공유는 언제나 무료예요. 플러스는 그 위에 "우리 아이를 더 깊이 아는" 두 가지를 더해요.
-        </p>
+      </header>
+      <div className="px-price">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}><span className="px-dim">정식 가격(예정)</span><span className="chip">지금은 베타 무료</span></div>
+        <div style={{ width: "100%" }}><b>월 3,900원</b> <span className="px-dim">또는</span> <b>연 29,000원</b> <span className="px-dim">(연간엔 기본 캐릭터 1번 포함)</span></div>
       </div>
-      {/* 베타 동안 플러스로 막는 건 플러스 비서 하나뿐(사용자 11/17). 나머지는 "들어갈 예정"으로만 적고 지금은 모두 열어 둔다 */}
-      <div className="card" style={{ display: "grid", gap: 12 }}>
-        <div className="sg-title" style={{ margin: 0 }}>지금 플러스에만</div>
-        <Row ico="chatHeart" title="플러스 비서" sub="질문하면 기록(체중·접종·약·하루 체크)을 근거로 결론·집에서 확인할 것·생각해 볼 이유·병원 신호까지 자세히 답해요. 하루 50번." free="무료 비서: 두 줄 답(지금 할 일 / 병원에 물어볼 것), 하루 5번" on={plus} />
-        <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>두 비서 모두 진단을 단정하거나 약 용량을 말하지 않아요. 응급 신호면 병원 안내가 먼저예요. 평균적인 답을 보고 싶을 땐 답 아래 ChatGPT 버튼을 그대로 쓸 수 있어요.</p>
-      </div>
-      <div className="card" style={{ display: "grid", gap: 12 }}>
-        <div className="sg-title" style={{ margin: 0 }}>들어갈 예정 (베타 동안은 모두 열려 있어요)</div>
-        <Row ico="sparkles" title="우리 아이 캐릭터" sub="기본(기다리기·고민하기 2편)과 정성(부가 동작 3편 더: 기쁨·졸림·밥·산책)은 단품으로 따로. 플러스 연간에는 기본 1번이 들어가고, 정성 올리기와 다른 그림체 추가는 플러스 할인 예정." free="지금: 곧 출시 · 초대 코드를 쓴 분은 정성까지 무료" action={onOpenCharacter} actionLabel="캐릭터 화면으로" />
-        <Row ico="clipboard" title="진료 정리·사진 확인 넉넉히" sub="영수증·처방전 사진을 읽어 진료 기록으로 정리하고, 변·피부 사진을 확인하는 횟수를 늘려요." free="지금: 하루 3번, 모두 무료" />
-        <Row ico="chart" title="주간 리포트 해설" sub="이번 주 기록을 비서가 읽고 '잘한 것·지켜볼 것·다음 주 할 일' 세 줄로 적어 줘요." free="지금: 리포트는 무료, 해설은 준비 중" />
-      </div>
+
+      <section className="px-card">
+        <div className="px-sec">지금 플러스에만</div>
+        <Feature ico="chatHeart" title="플러스 비서" on={plus}
+          desc="질문하면 체중·접종·약·하루 체크 기록을 근거로 답해요." />
+        <table className="px-table"><tbody>
+          <tr><th></th><th>무료 비서</th><th>플러스 비서</th></tr>
+          <tr><td>답</td><td>두 줄<br /><span className="px-dim">지금 할 일 · 병원에 물어볼 것</span></td><td>자세히<br /><span className="px-dim">결론 · 확인할 것 · 이유 · 병원 신호</span></td></tr>
+          <tr><td>하루</td><td>5번</td><td>50번</td></tr>
+          <tr><td>기록 반영</td><td>✓</td><td>✓</td></tr>
+        </tbody></table>
+        <p className="px-note">둘 다 진단을 단정하거나 약 용량을 말하지 않아요. 응급 신호면 병원 안내가 먼저. 평균적인 답이 궁금하면 답 아래 ChatGPT 버튼을 그대로 쓸 수 있어요.</p>
+      </section>
+
+      <section className="px-card">
+        <div className="px-sec">들어갈 예정 <span className="px-dim">· 베타 동안은 모두 열려 있어요</span></div>
+        <Feature ico="video" title="우리 아이 캐릭터" tag="곧 출시" onClick={onOpenCharacter}
+          desc="사진으로 만드는 움직이는 우리 아이. 기본(기다리기·고민하기)과 정성(부가 동작 3편)은 단품, 연간 플러스엔 기본 1번 포함." />
+        <Feature ico="clipboard" title="진료 정리·사진 확인 넉넉히" tag="지금 하루 3번 무료"
+          desc="영수증·처방전을 읽어 진료 기록으로, 변·피부 사진 확인 횟수를 늘려요." />
+        <Feature ico="chart" title="주간 리포트 해설" tag="준비 중"
+          desc="이번 주 기록을 비서가 읽고 잘한 것·지켜볼 것·다음 주 할 일 세 줄로." />
+      </section>
+
       {!plus && (
-        <div className="card" style={{ display: "grid", gap: 8 }}>
-          <b>플러스 코드가 있어요</b>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="예: MC-PLUS-XXXX" autoCapitalize="characters" autoCorrect="off" spellCheck={false} style={{ flex: 1 }} />
-            <button type="button" className="btn-primary" style={{ flex: "0 0 auto", width: "auto", padding: "0 18px" }} onClick={useCode} disabled={busy || !st || st.offline}>쓰기</button>
-          </div>
+        <section className="px-card">
+          <Feature ico="lock" title="플러스 코드가 있어요" desc="베타 테스터에게 드린 코드예요. 강아지 한 마리에 한 번 써요." />
+          <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="MC-PLUS-XXXX" autoCapitalize="characters" autoCorrect="off" spellCheck={false} />
+          <button type="button" className="btn-primary" onClick={useCode} disabled={busy || !st || st.offline}>{busy ? "확인 중…" : "코드 쓰기"}</button>
           {err && <p className="error-text" style={{ margin: 0 }}>{err}</p>}
-          <span className="muted" style={{ fontSize: 13 }}>베타 기간엔 코드로만 열려요(결제 없음). 정식 가격은 <b>월 3,900원 · 연 29,000원</b>(연간엔 기본 캐릭터 1번 포함) 예정이에요.</span>
-        </div>
+        </section>
       )}
     </div>
   );
 }
 
-function Row({ ico, title, sub, free, on, action, actionLabel }) {
+function Feature({ ico, title, desc, tag, on, onClick }) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-      <Ico name={ico} size={20} style={{ color: "var(--accent-strong)", marginTop: 2, flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700 }}>{title} {on && <Ico name="check" size={16} style={{ color: "var(--accent-strong)", verticalAlign: "-3px" }} />}</div>
-        <div style={{ fontSize: 13.5, lineHeight: 1.5 }}>{sub}</div>
-        <div className="muted" style={{ fontSize: 12.5 }}>{free}</div>
-        {on && action && <button type="button" className="link-btn" onClick={action}>{actionLabel}</button>}
+    <Tag type={onClick ? "button" : undefined} className={`px-feat${onClick ? " tap" : ""}`} onClick={onClick}>
+      <Ico name={ico} size={38} />
+      <div className="px-feat-body">
+        <div className="px-feat-title">{title} {on && <Ico name="check" size={16} style={{ color: "var(--accent-strong)", verticalAlign: "-3px" }} />} {tag && <span className="px-tag">{tag}</span>}</div>
+        <div className="px-feat-desc">{desc}</div>
       </div>
-    </div>
+      {onClick && <span className="chev" aria-hidden="true">›</span>}
+    </Tag>
   );
 }

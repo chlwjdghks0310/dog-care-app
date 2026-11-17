@@ -374,11 +374,11 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
                 <SettingsRow key={d.id} ico={d.photo ? <img src={d.photo} alt="" /> : "dog"} title={d.name} sub={[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ") || "정보 없음"} right={d.id === dog.id ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} /> : null} onClick={() => d.id !== dog.id && onUpdateDog?.(d)} />
               ))}
               <SettingsRow ico="house" title={`${dog.name}는 가족(본가) 집에 있어요`} sub="켜면 하루 체크 대신 가족 초대·소식 받기로 바뀌어요" right={<input type="checkbox" role="switch" className="switch" checked={dog.living === "family"} onChange={(e) => onUpdateDog?.(saveDog({ ...dog, living: e.target.checked ? "family" : "together" }))} aria-label="가족 집에 있어요" />} />
-              <SettingsRow ico="sparkles" title="우리 아이 캐릭터" sub={characterOutputs(dog.id) ? `${dog.name} 캐릭터가 홈 화면에 있어요` : "사진으로 만드는 움직이는 캐릭터"} badge={characterOutputs(dog.id) ? "" : "곧 출시"} onClick={() => setSettingsSub("character")} />
+              <SettingsRow ico="video" title="우리 아이 캐릭터" sub={characterOutputs(dog.id) ? `${dog.name} 캐릭터가 홈 화면에 있어요` : "사진으로 만드는 움직이는 캐릭터"} badge={characterOutputs(dog.id) ? "" : "곧 출시"} onClick={() => setSettingsSub("character")} />
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어 플러스">
-              <SettingsRow ico="sparkles" title="멍케어 플러스" sub="플러스 비서(자세한 답) · 우리 아이 캐릭터" badge="베타" onClick={() => setSettingsSub("plus")} />
+              <SettingsRow ico="star" title="멍케어 플러스" sub="플러스 비서 · 월 3,900원(베타 무료)" badge="베타" onClick={() => setSettingsSub("plus")} />
             </SettingsGroup>
             <SettingsGroup title="화면">
               <SettingsRow ico="moon" title="다크 모드" sub="어두운 화면으로 눈이 덜 부셔요" right={<input type="checkbox" role="switch" className="switch" checked={dark} onChange={(e) => (setDark(e.target.checked), setDarkState(e.target.checked))} aria-label="다크 모드" />} />
