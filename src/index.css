@@ -1864,14 +1864,14 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .px-stages li.cur { color: var(--text); font-weight: 700; }
 
 /* 발바닥 원형 게이지(components/PawProgress.jsx, 11/18 새벽): 살구 바 + 크림 접시 + 갈색 잉크 발바닥, 퍼센트는 원 밖 알약 */
-:root { --pawp-bar: var(--warm); --pawp-track: var(--warm-bg); --pawp-plate: var(--surface); --pawp-ink: var(--sk-brown, #7d5c47); }
-:root[data-theme="dark"] { --pawp-plate: #2e333d; }
+:root { --pawp-bar: var(--accent-strong); --pawp-track: var(--accent-soft); --pawp-plate: transparent; --pawp-ink: var(--accent-strong); --pawp-paw: var(--warm); }
 .pawp-wrap { display: grid; justify-items: center; gap: 8px; margin: 0 auto; }
 .pawp { position: relative; display: grid; place-items: center; }
 .pawp svg { position: absolute; inset: 0; }
-.pawp-paw { transform-box: fill-box; transform-origin: center; animation: pawp-breathe 2.4s ease-in-out infinite; }
-.pawp-pct { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--warm-bg); color: var(--warm-strong); font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.pawp-paw { position: absolute; display: block; color: var(--pawp-paw); animation: pawp-breathe 2.4s ease-in-out infinite; transform-origin: center; }
+.pawp-paw .ico, .pawp-paw .ico > *, .pawp-paw svg { display: block; width: 100%; height: 100%; }
+.pawp-pct { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; font-weight: 800; letter-spacing: .02em; }
 @keyframes pawp-breathe { 0%, 100% { transform: scale(1) rotate(-6deg); opacity: .85; } 50% { transform: scale(1.1) rotate(4deg); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pawp-paw { animation: none; } }
 .char-making { position: absolute; top: 2px; right: 2px; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-soft); font: inherit; font-size: 11px; line-height: 1.2; font-weight: 600; text-align: left; box-shadow: var(--shadow); }
-.char-making b { color: var(--warm-strong); font-size: 12.5px; }
+.char-making b { color: var(--accent-strong); font-size: 12.5px; }
