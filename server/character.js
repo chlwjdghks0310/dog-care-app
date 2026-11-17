@@ -257,8 +257,13 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const files = (await fs.readdir(dir).catch(() => [])).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort().slice(0, 3);
     return Promise.all(files.map(async (f) => part(await fs.readFile(path.join(dir, f)), f.endsWith(".png") ? "image/png" : "image/jpeg")));
   }
+  const RUNWAY_H = () => ({ Authorization: `Bearer ${runwayKey}`, "X-Runway-Version": "2024-11-06", "Content-Type": "application/json" });
+  // 남은 크레딧(5초 = 45). 모자라면 실패시키지 않고 기다린다(11/18 새벽: 1,000 → 10으로 바닥나 "움직임 만들기"가 계속 실패)
+  async function runwayCredits() {
+    try { const r = await fetch(`${RUNWAY}/v1/organization`, { headers: RUNWAY_H(), signal: AbortSignal.timeout(10000) }); const j = await r.json(); return Number(j.creditBalance ?? -1); } catch { return -1; }
+  }
   async function runway(jpegBuf, promptText, duration, addCost) {
-    const H = { Authorization: `Bearer ${runwayKey}`, "X-Runway-Version": "2024-11-06", "Content-Type": "application/json" };
+    const H = RUNWAY_H();
     const uri = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
     const r = await fetch(`${RUNWAY}/v1/image_to_video`, { method: "POST", headers: H, body: JSON.stringify({ model: "kling3.0_standard", ratio: "960:960", duration, audio: false, promptImage: [{ uri, position: "first" }, { uri, position: "last" }], promptText }) });
     const t = await r.json();
@@ -327,37 +332,43 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     try {
       await update(j.id, { status: "render", step: "고른 설정화로 움직임을 만드는 중 (10~15분)" });
       const sheetPath = j.candidates[j.picked - 1];
-      const sheet = Buffer.from(await (await fetch(publicUrl(sheetPath))).arrayBuffer());
       const style = STYLE[j.style];
-      const green = await gen([part(sheet, "image/png"), { text: GREEN }], bump);
-      await update(j.id, { step: "엎드린 모습을 그리는 중" });
-      const lie = await gen([part(green, "image/png"), { text: `The image is the official character sheet of this dog character. Draw the SAME character (identical face, markings, colors, line style, background) in a new pose: ${LIE}. Keep the exact art style: ${style}. Square image, character centered, nothing else.` }], bump);
-      await update(j.id, { step: "움직이는 영상 2편을 만드는 중 (5~10분)" });
-      const [idleJ, lieJ] = await Promise.all([toJpeg(green, path.join(tmp, "idle")), toJpeg(lie, path.join(tmp, "lie"))]);
-      const [idleRaw, thinkRaw] = await Promise.all([
-        runway(idleJ, motion(j.style, "idle"), DURATION[j.style].idle, bump),
-        runway(lieJ, motion(j.style, "thinking"), DURATION[j.style].thinking, bump),
-      ]);
-      // 마지막 단계는 서버에서 2~3분 걸린다(11/18 사용자: 98%에서 멈춘 듯 보임) → 잘게 나눠 알린다
-      await update(j.id, { step: "배경 지우는 중 1/2 (기다리기 영상)" });
-      const idleMp4 = await keyVideo(idleRaw, path.join(tmp, "idle"));
-      await update(j.id, { step: "배경 지우는 중 2/2 (고민 중 영상)" });
-      const thinkMp4 = await keyVideo(thinkRaw, path.join(tmp, "think"));
-      const posterPng = await poster(idleRaw, path.join(tmp, "idle"));
-      await update(j.id, { step: "저장하는 중" });
       const base = `${j.id}/v${j.regen || 0}-${j.picked}`;
-      const outputs = {
-        style: j.style,
-        sheet: publicUrl(sheetPath),
-        idle: publicUrl(await put("character-public", `${base}-idle.mp4`, idleMp4, "video/mp4")),
-        thinking: publicUrl(await put("character-public", `${base}-thinking.mp4`, thinkMp4, "video/mp4")),
-        poster: publicUrl(await put("character-public", `${base}-poster.png`, posterPng, "image/png")),
-        // 부가 동작을 나중에 만들 때 다시 쓰는 판(초록 배경). 공개 주소지만 경로가 uuid라 추측 불가
-        green: publicUrl(await put("character-public", `${base}-green.png`, green, "image/png")),
-        lie: publicUrl(await put("character-public", `${base}-lie.png`, lie, "image/png")),
-        extras: {},
-        madeAt: nowIso(),
-      };
+      // 중간 결과는 outputs.partial에 저장해 두고 다시 시작하면 건너뛴다(11/18: 서버가 쉬거나 크레딧이 모자라도 만든 건 다시 안 만듦)
+      const made = { ...(j.outputs?.partial || {}) };
+      const savePartial = () => update(j.id, { outputs: { ...(j.outputs || {}), partial: made } });
+      const fetchBuf = async (u) => Buffer.from(await (await fetch(u)).arrayBuffer());
+      let green, lie;
+      if (made.green && made.lie) { green = await fetchBuf(made.green); lie = await fetchBuf(made.lie); }
+      else {
+        const sheet = await fetchBuf(publicUrl(sheetPath));
+        green = await gen([part(sheet, "image/png"), { text: GREEN }], bump);
+        await update(j.id, { step: "엎드린 모습을 그리는 중" });
+        lie = await gen([part(green, "image/png"), { text: `The image is the official character sheet of this dog character. Draw the SAME character (identical face, markings, colors, line style, background) in a new pose: ${LIE}. Keep the exact art style: ${style}. Square image, character centered, nothing else.` }], bump);
+        made.green = publicUrl(await put("character-public", `${base}-green.png`, green, "image/png"));
+        made.lie = publicUrl(await put("character-public", `${base}-lie.png`, lie, "image/png"));
+        await savePartial();
+      }
+      // 영상은 한 편씩(Runway 동시 생성 1개 제한) 만들고 바로 키잉·저장
+      const plan = [["idle", green, "기다리기"], ["thinking", lie, "고민 중"]];
+      for (const [kind, png, label] of plan) {
+        if (made[kind]) continue;
+        const need = DURATION[j.style][kind] * 9;
+        const credits = await runwayCredits();
+        if (credits >= 0 && credits < need) { // 크레딧 부족: 실패 아님. picked로 되돌려 두고 충전되면 자동으로 이어간다
+          await update(j.id, { status: "picked", step: `영상 크레딧이 모자라요(남은 ${credits}, 필요 ${need}). 운영자가 충전하면 자동으로 이어가요` });
+          return;
+        }
+        await update(j.id, { step: `${label} 영상을 만드는 중 (${DURATION[j.style][kind]}초, 3~5분)` });
+        const raw = await runway(await toJpeg(png, path.join(tmp, kind)), motion(j.style, kind), DURATION[j.style][kind], bump);
+        await update(j.id, { step: `${label} 영상 배경 지우는 중` });
+        const mp4 = await keyVideo(raw, path.join(tmp, kind));
+        made[kind] = publicUrl(await put("character-public", `${base}-${kind}.mp4`, mp4, "video/mp4"));
+        if (kind === "idle") made.poster = publicUrl(await put("character-public", `${base}-poster.png`, await poster(raw, path.join(tmp, kind)), "image/png"));
+        await savePartial();
+      }
+      await update(j.id, { step: "저장하는 중" });
+      const outputs = { style: j.style, sheet: publicUrl(sheetPath), idle: made.idle, thinking: made.thinking, poster: made.poster, green: made.green, lie: made.lie, extras: {}, madeAt: nowIso() };
       await update(j.id, { status: "done", outputs, step: "완성!" });
       await delPrivate(j.photos);
       await notify(j.endpoint, "🎉 우리 아이 캐릭터가 완성됐어요", "앱을 열면 홈 화면에서 움직여요");
