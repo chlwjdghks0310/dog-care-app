@@ -39,7 +39,7 @@ export default function Plus({ dog, onOpenCharacter }) {
       </div>
       <div className="card" style={{ display: "grid", gap: 12 }}>
         <div className="sg-title" style={{ margin: 0 }}>들어갈 예정 (베타 동안은 모두 열려 있어요)</div>
-        <Row ico="sparkles" title="우리 아이 캐릭터" sub="사진으로 만드는 움직이는 캐릭터. 홈 화면에서 기다리고, 물어볼 땐 엎드려 고민해요. 단품으로 따로 팔고, 플러스 연간에는 1번 포함할 예정." free="지금: 곧 출시 · 초대 코드로 미리 써 볼 수 있어요" action={onOpenCharacter} actionLabel="캐릭터 화면으로" />
+        <Row ico="sparkles" title="우리 아이 캐릭터" sub="기본(기다리기·고민하기 2편)과 정성(부가 동작 3편 더: 기쁨·졸림·밥·산책)은 단품으로 따로. 플러스 연간에는 기본 1번이 들어가고, 정성 올리기와 다른 그림체 추가는 플러스 할인 예정." free="지금: 곧 출시 · 초대 코드를 쓴 분은 정성까지 무료" action={onOpenCharacter} actionLabel="캐릭터 화면으로" />
         <Row ico="clipboard" title="진료 정리·사진 확인 넉넉히" sub="영수증·처방전 사진을 읽어 진료 기록으로 정리하고, 변·피부 사진을 확인하는 횟수를 늘려요." free="지금: 하루 3번, 모두 무료" />
         <Row ico="chart" title="주간 리포트 해설" sub="이번 주 기록을 비서가 읽고 '잘한 것·지켜볼 것·다음 주 할 일' 세 줄로 적어 줘요." free="지금: 리포트는 무료, 해설은 준비 중" />
       </div>

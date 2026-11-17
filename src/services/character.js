@@ -35,7 +35,7 @@ export async function fetchStatus(dogId) {
   const ep = await endpoint();
   const q = new URLSearchParams({ petId: dogId, ...(c.token && { token: c.token }), ...(ep && { endpoint: ep }) });
   const s = await call(`/status?${q}`);
-  if (s.job) save(dogId, { job: s.job, ...(s.job.status === "done" && s.job.outputs && { outputs: s.job.outputs }) });
+  if (s.job) save(dogId, { job: s.job, ...(["done", "extra-queued", "extra"].includes(s.job.status) && s.job.outputs && { outputs: s.job.outputs }) });
   return s;
 }
 export async function setWaitlist(dogId, on) {
@@ -74,7 +74,7 @@ export async function refreshJob(dogId) {
   const c = getCharacter(dogId);
   if (!c?.job?.id) return null;
   const { job } = await call(`/jobs/${c.job.id}?token=${encodeURIComponent(c.token || "")}`);
-  save(dogId, { job, ...(job.status === "done" && job.outputs && { outputs: job.outputs }) });
+  save(dogId, { job, ...(["done", "extra-queued", "extra"].includes(job.status) && job.outputs && { outputs: job.outputs }) });
   return job;
 }
 export async function pickCandidate(dogId, picked) {
@@ -97,4 +97,12 @@ export async function regenCandidates(dogId) {
   return job;
 }
 export const STYLE_LABEL = { "3d": "말랑 3D", hand: "그림일기" };
-export const isWorking = (job) => job && ["queued", "sheet", "picked", "render"].includes(job.status);
+export const isWorking = (job) => job && ["queued", "sheet", "picked", "render", "extra-queued", "extra"].includes(job.status);
+export const isExtraWorking = (job) => job && ["extra-queued", "extra"].includes(job.status);
+// 부가 동작 한 편 더(정성 상품: 3편까지). 기본 캐릭터가 완성된 뒤에만
+export async function addExtra(dogId, kind) {
+  const c = getCharacter(dogId);
+  const { job } = await call(`/jobs/${c.job.id}/extra`, { method: "POST", body: { kind, token: c.token } });
+  save(dogId, { job });
+  return job;
+}

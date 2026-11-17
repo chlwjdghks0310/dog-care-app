@@ -32,6 +32,7 @@ import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 import { characterOutputs } from "../services/character";
+import { getFeedingSettings } from "../services/feedingSettings";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
 // 질문이면 AI를 부르지 않고, 응급 단어면 응급 카드, 아니면 우리 정보 카드·가이드북에서 찾아 보여 준다(src/services/infoSearch.js).
@@ -76,6 +77,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
     window.addEventListener("dogcare-character-changed", on);
     return () => window.removeEventListener("dogcare-character-changed", on);
   }, [dog.id]);
+  // 가만히 있을 때의 모습: 밤(22시~6시)엔 "졸림", 밥 시간 30분 전후엔 "밥 기다림"(부가 동작이 있을 때만)
+  const hour = new Date().getHours();
+  const mealSoon = (getFeedingSettings(dog.id).times || []).some((t) => Math.abs(Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) - (hour * 60 + new Date().getMinutes())) <= 30);
+  const idleState = customAvatar?.extras?.sleepy && (hour >= 22 || hour < 6) ? "sleepy" : customAvatar?.extras?.meal && mealSoon ? "meal" : "idle";
   const talkTimerRef = useRef(null);
   const abortRef = useRef(null);
   // 기록 읽기: 목록을 아래로 스크롤하면 안내문·하단 탭을 내려 숨기고, 위로 스크롤하면 다시 보인다
@@ -233,6 +238,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       } else {
         const records = applyAppActions(dog, actions);
         if (records.done.length) markFirstSteps(dog.id, { chat: true }); // 첫 걸음 ③ "말로 기록해 보기" 완료
+        if (records.done.length && customAvatar?.extras?.happy) { // 부가 동작 "기쁨": 기록이 저장되면 6초 동안
+          setAvatarState("happy");
+          setTimeout(() => setAvatarState((s) => (s === "happy" ? "idle" : s)), 6000);
+        }
         // 새로 생긴 기록에 강아지가 한마디(걱정되는 기록이 있으면 그걸 먼저)
         const added = getRecords(dog.id).filter((r) => !before.has(r.id));
         setMessages((m) => [...m, { role: "ai", kind: "record", records, reacted: added.slice(-1)[0] || null }]);
@@ -354,7 +363,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
           zIndex: 5,
         }}
       >
-        <DogAvatarVideo state={avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" custom={customAvatar} />
+        <DogAvatarVideo state={avatarState === "idle" ? idleState : avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" custom={customAvatar} />
       </div>
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}

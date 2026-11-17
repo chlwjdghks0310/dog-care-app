@@ -113,7 +113,10 @@ export default function DogAvatarVideo({ state = "idle", height = 200, breed, cu
   // 저전력 모드(자동재생 차단)·움직임 줄이기: 영상 대신 정지 그림(public/avatar/<견종>/idle.png) — 재생 버튼이 뜨거나 멈춘 채 보이던 것(사용자 컴플레인 11/11)
   const [still, setStill] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   // custom = { idle, thinking, poster }(우리 아이 캐릭터 완성본). 영상 주소가 깨지면(404) 기본 견종으로 돌아간다
-  const customSrc = custom?.idle && !missing[custom.idle] && !missing[custom.thinking] ? (state === "thinking" && custom.thinking ? custom.thinking : custom.idle) : null;
+  // state가 부가 동작 이름(happy·sleepy·meal·walk)이고 그 영상이 있으면 그걸, 없으면 idle로
+  const customSrc = custom?.idle && !missing[custom.idle] && !missing[custom.thinking]
+    ? (state === "thinking" && custom.thinking ? custom.thinking : custom.extras?.[state] && !missing[custom.extras[state]] ? custom.extras[state] : custom.idle)
+    : null;
   const stacked = Boolean(customSrc);
   const stillSrc = stacked && custom.poster ? custom.poster : KEY_BY_BREED[breed] ? `/avatar/${breed}/idle.png` : "/avatar/idle.png";
   const blocked = (err) => err?.name === "NotAllowedError" && setStill(true); // 사용자가 화면을 건드려 재생되면 다시 영상으로

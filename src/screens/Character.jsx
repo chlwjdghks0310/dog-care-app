@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
-import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, getCharacter, clearCharacterOutputs, isWorking, STYLE_LABEL } from "../services/character";
+import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
 
 // 우리 아이 캐릭터(11/17): 설정 → 우리 강아지 → "우리 아이 캐릭터". 문은 잠겨 있고(곧 출시) 초대 코드를 쓴 강아지만 만든다.
 // 흐름: 잠김(알림 대기·코드) → 그림체·사진·동의 → 후보 4장 중 고르기 → 영상 만드는 중 → 완성(홈 강아지가 바뀜)
@@ -38,8 +38,8 @@ export default function Character({ dog }) {
     <div className="char" style={{ display: "grid", gap: 14, padding: "4px 0 24px" }}>
       {err && <p className="error-text" role="alert">{err}</p>}
       {!unlocked && <Locked dog={dog} st={st} setSt={setSt} act={act} busy={busy} />}
-      {unlocked && (!job || ["done", "failed"].includes(job.status)) && <Form dog={dog} job={job} st={st} setSt={setSt} act={act} busy={busy} />}
-      {unlocked && isWorking(job) && <Working job={job} onRefresh={act(() => refreshJob(dog.id).then((j) => setSt((s) => ({ ...s, job: j }))))} busy={busy} />}
+      {unlocked && (!job || ["done", "failed"].includes(job.status) || isExtraWorking(job)) && <Form dog={dog} job={job} st={st} setSt={setSt} act={act} busy={busy} />}
+      {unlocked && isWorking(job) && !isExtraWorking(job) && <Working job={job} onRefresh={act(() => refreshJob(dog.id).then((j) => setSt((s) => ({ ...s, job: j }))))} busy={busy} />}
       {unlocked && job?.status === "pick" && <Pick dog={dog} job={job} setSt={setSt} act={act} busy={busy} />}
     </div>
   );
@@ -124,6 +124,7 @@ function Form({ dog, job, st, setSt, act, busy }) {
               <div className="muted" style={{ fontSize: 13 }}>{STYLE_LABEL[outputs.style]} · {outputs.preset ? "선물 코드로 받음" : String(outputs.madeAt).slice(0, 10)}</div>
             </div>
           </div>
+          {job?.outputs?.green && <Extras dog={dog} job={job} setSt={setSt} act={act} busy={busy} />}
           <button type="button" className="btn-ghost" onClick={() => (clearCharacterOutputs(dog.id), setSt((s) => ({ ...s })))}>기본 강아지로 돌리기</button>
         </div>
       )}
@@ -169,8 +170,32 @@ function Form({ dog, job, st, setSt, act, busy }) {
       </div>
       <button type="button" className="btn-primary" onClick={go} disabled={busy || st.offline || !st.ready}>{busy ? "보내는 중…" : outputs ? "새로 만들기" : "만들기 시작"}</button>
       {!st.ready && !st.offline && <p className="muted" style={{ fontSize: 13, margin: 0 }}>지금은 서버 준비 중이라 만들 수 없어요.</p>}
-      <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>후보 4장이 나오면 알림으로 알려 드려요(10분쯤). 하나 고르면 움직이는 모습 2가지(기다리기·고민하기)를 만들어요(15분쯤).</p>
+      <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>후보 4장이 나오면 알림으로 알려 드려요(10분쯤). 하나 고르면 기본 움직임 2가지(기다리기·고민하기)를 만들어요(15분쯤). 그 뒤 부가 동작(기쁨·졸림·밥·산책)을 3개까지 더할 수 있어요.</p>
     </>
+  );
+}
+
+// 부가 동작(정성 상품 = 3편, 베타는 무료): 기쁨(기록 저장 때)·졸림(밤)·밥 기다림(밥 시간)·산책 가자(산책 알림 때, 준비 중)
+const EXTRA_WHEN = { happy: "기록을 저장하면 6초 동안", sleepy: "밤 10시~아침 6시 가만히 있을 때", meal: "밥 시간 30분 전후", walk: "산책 시간(곧)" };
+function Extras({ dog, job, setSt, act, busy }) {
+  const have = job.outputs?.extras || {};
+  const pending = job.outputs?.pendingExtra;
+  const n = Object.keys(have).length;
+  const add = (kind) => act(async () => { const j = await addExtra(dog.id, kind); setSt((s) => ({ ...s, job: j })); });
+  return (
+    <div style={{ display: "grid", gap: 6, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+      <b style={{ fontSize: 14 }}>부가 동작 <span className="muted" style={{ fontWeight: 400 }}>{n}/{job.maxExtras || 3} · 상황에 맞춰 홈 화면에서 움직여요</span></b>
+      {Object.entries(job.extras || {}).map(([kind, label]) => (
+        <div key={kind} className="sg-row" style={{ padding: "6px 0" }}>
+          <div style={{ flex: 1 }}><b>{label}</b><div className="muted" style={{ fontSize: 12.5 }}>{EXTRA_WHEN[kind]}</div></div>
+          {have[kind] ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} />
+            : pending === kind ? <span className="muted" style={{ fontSize: 12.5 }}>{isExtraWorking(job) ? "만드는 중…" : "대기"}</span>
+            : <button type="button" className="btn-ghost small" onClick={add(kind)} disabled={busy || Boolean(pending) || n >= (job.maxExtras || 3)}>만들기</button>}
+        </div>
+      ))}
+      {pending && <span className="muted" style={{ fontSize: 12.5 }}>{job.step} · 끝나면 알림으로 알려 드려요</span>}
+      {job.error && !pending && <span className="error-text" style={{ fontSize: 12.5 }}>{job.step}</span>}
+    </div>
   );
 }
 

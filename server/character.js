@@ -31,7 +31,15 @@ const HAND_2D = "This is a hand-drawn crayon and colored-pencil picture-diary dr
 const MOUTH = "CRITICAL: the mouth (and tongue, if any) is completely frozen for the entire video — drawn identically in every single frame, no opening, no talking, no panting. ";
 const IDLE = "Calm, natural idle animation of this sitting puppy: the fluffy tail wags gently from side to side, the ears flick softly now and then, the head tilts slowly and curiously to one side, pauses, then slowly to the other side, two slow blinks, a gentle breathing rise and fall. Unhurried, never busy or jittery. Stays seated. Static camera. Seamless loop: the final frame matches the first frame exactly.";
 const THINK = "The puppy stays lying down with its chin resting on its paws the whole time. A cute 'thinking hard' moment: the big eyes roll up and to one side as if pondering, then slowly to the other side, the brows shift slightly, one ear twitches, then a slow squint and one blink, then back to looking up at the viewer. Body does not get up. Static camera. Seamless loop: the final frame matches the first frame exactly.";
-const motion = (style, kind) => (style === "hand" ? HAND_2D : "") + MOUTH + (kind === "idle" ? IDLE : THINK);
+// 부가 동작(정성 상품·플러스): 앉은 초록판(green) 또는 엎드린 판(lie)에서 한 편씩. 앱이 상황(기록 저장·밤·밥시간·산책)에 맞춰 튼다
+const EXTRAS = {
+  happy: { base: "green", label: "기쁨", text: "A cute 'overjoyed' gesture: the fluffy tail wags fast and wide, the whole body wiggles and bounces lightly in place with excitement, ears flap, eyes sparkle, two quick blinks; tiny happy hops on the spot but it never leaves the frame and never stands up fully. Static camera. Seamless loop: the final frame matches the first frame exactly." },
+  sleepy: { base: "lie", label: "졸림", text: "The puppy stays lying down with its chin on its paws. A sleepy moment: the eyes slowly get heavy and half-close, blink slowly twice, the head sinks a little lower, a gentle slow breathing rise and fall, one ear droops; then the eyes drift closed and softly open again. Very slow and calm. Static camera. Seamless loop: the final frame matches the first frame exactly." },
+  meal: { base: "green", label: "밥 기다림", text: "The puppy stays seated and looks down toward the floor just in front of it as if a food bowl is being set down: eyes wide and eager, ears perk forward, the tail wags quickly, the front paws shuffle in place with impatience, a small excited body wiggle. Nothing else appears in the frame. Static camera. Seamless loop: the final frame matches the first frame exactly." },
+  walk: { base: "green", label: "산책 가자", text: "The puppy stays seated but is clearly asking to go outside: it looks up at the viewer, lifts one front paw and taps the air twice, tilts its head, ears up, the tail sweeps side to side, a little bounce of excitement. Nothing else appears in the frame. Static camera. Seamless loop: the final frame matches the first frame exactly." },
+};
+const MAX_EXTRAS = 3; // 정성 상품 = 부가 동작 3편(베타는 코드 쓴 사람 모두 무료)
+const motion = (style, kind) => (style === "hand" ? HAND_2D : "") + MOUTH + (kind === "idle" ? IDLE : kind === "thinking" ? THINK : EXTRAS[kind].text);
 const DURATION = { "3d": { idle: 10, thinking: 5 }, hand: { idle: 5, thinking: 5 } }; // 3D idle은 분주하지 않게 10초(사용자 11/17)
 
 // 선물 코드(11/17, 사용자): 손 시험으로 이미 만든 세 마리는 코드를 넣는 순간 바로 적용(생성 없음). 파일은 앱 public/character/presets/<이름>/ (앱과 같은 출처라 CORS 걱정 없음).
@@ -87,7 +95,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
     return rows.reduce((s, r) => s + Number(r.cost || 0), 0);
   }
-  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs, error: j.error, createdAt: j.created_at, updatedAt: j.updated_at });
+  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs, error: j.error, extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
 
   // ---- 푸시 ----
   async function notify(endpoint, title, body) {
@@ -327,6 +335,10 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
         idle: publicUrl(await put("character-public", `${base}-idle.mp4`, idleMp4, "video/mp4")),
         thinking: publicUrl(await put("character-public", `${base}-thinking.mp4`, thinkMp4, "video/mp4")),
         poster: publicUrl(await put("character-public", `${base}-poster.png`, posterPng, "image/png")),
+        // 부가 동작을 나중에 만들 때 다시 쓰는 판(초록 배경). 공개 주소지만 경로가 uuid라 추측 불가
+        green: publicUrl(await put("character-public", `${base}-green.png`, green, "image/png")),
+        lie: publicUrl(await put("character-public", `${base}-lie.png`, lie, "image/png")),
+        extras: {},
         madeAt: nowIso(),
       };
       await update(j.id, { status: "done", outputs, step: "완성!" });
@@ -337,20 +349,62 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     }
   }
 
+  // 부가 동작 한 편(outputs.pendingExtra에 적힌 종류): 저장해 둔 판 → Runway 5초 → 키잉 → outputs.extras[kind]
+  async function doExtra(j) {
+    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); };
+    const kind = j.outputs?.pendingExtra; const ex = EXTRAS[kind];
+    if (!ex || !j.outputs?.[ex.base]) throw new Error("부가 동작 재료가 없어요");
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "mc-char-"));
+    try {
+      await update(j.id, { status: "extra", step: `"${ex.label}" 동작을 만드는 중 (5~8분)` });
+      const basePng = Buffer.from(await (await fetch(j.outputs[ex.base])).arrayBuffer());
+      const jpg = await toJpeg(basePng, path.join(tmp, kind));
+      const raw = await runway(jpg, motion(j.style, kind), 5, bump);
+      const mp4 = await keyVideo(raw, path.join(tmp, kind));
+      const url = publicUrl(await put("character-public", `${j.id}/v${j.regen || 0}-${j.picked}-${kind}.mp4`, mp4, "video/mp4"));
+      const { pendingExtra, ...rest } = j.outputs; void pendingExtra;
+      const outputs = { ...rest, extras: { ...(rest.extras || {}), [kind]: url } };
+      await update(j.id, { status: "done", outputs, step: "완성!" });
+      await notify(j.endpoint, `🐾 "${ex.label}" 동작이 생겼어요`, "홈 화면에서 상황에 맞춰 움직여요");
+    } finally {
+      fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
+    }
+  }
+  app.post("/api/character/jobs/:id/extra", async (req, res) => {
+    if (!gate(req, res)) return;
+    const j = await jobById(req.params.id).catch(() => null);
+    const kind = String(req.body?.kind || "");
+    if (!j || !(await hasAccess(j.pet_id, req.body?.token))) return bad(res, 404, "없어요");
+    if (!EXTRAS[kind]) return bad(res, 400, "없는 동작이에요");
+    if (j.status !== "done" || !j.outputs?.green) return bad(res, 409, "기본 캐릭터가 먼저 완성돼야 해요");
+    if (j.outputs.extras?.[kind]) return bad(res, 409, "이미 있는 동작이에요");
+    if (Object.keys(j.outputs.extras || {}).length >= MAX_EXTRAS) return bad(res, 409, `부가 동작은 ${MAX_EXTRAS}개까지예요`);
+    await update(j.id, { status: "extra-queued", step: "순서를 기다리는 중", outputs: { ...j.outputs, pendingExtra: kind } });
+    res.json({ job: view(await jobById(j.id)) });
+    setTimeout(tick, 500);
+  });
+
   // ---- 일꾼: 한 번에 하나씩(비용·Runway 동시 호출 제한) ----
   let busy = false;
   async function tick() {
     if (!ready || busy) return;
     busy = true;
     try {
-      const j = one(await db("character_jobs?status=in.(queued,picked)&order=created_at.asc&limit=1"));
+      const j = one(await db("character_jobs?status=in.(queued,picked,extra-queued)&order=updated_at.asc&limit=1"));
       if (!j) return;
       if ((await spentToday()) >= DAILY_CAP) { await update(j.id, { step: "오늘 만들 수 있는 양을 다 썼어요. 내일 이어서 만들어요" }); return; }
       try {
         if (j.status === "queued") await doSheet(j);
+        else if (j.status === "extra-queued") await doExtra(j);
         else await doRender(j);
       } catch (e) {
         console.error("[character] job", j.id, e.message);
+        if (j.status === "extra-queued") { // 부가 동작 실패는 기본 캐릭터를 건드리지 않는다
+          const { pendingExtra, ...rest } = j.outputs || {}; void pendingExtra;
+          await update(j.id, { status: "done", outputs: rest, error: String(e.message).slice(0, 200), step: "부가 동작을 만들지 못했어요. 다시 시도해 주세요" }).catch(() => {});
+          await notify(j.endpoint, "😿 부가 동작을 만들지 못했어요", "앱에서 다시 시도해 주세요");
+          return;
+        }
         await update(j.id, { status: "failed", error: String(e.message).slice(0, 200), step: "실패했어요" }).catch(() => {});
         await delPrivate(j.photos || []);
         await notify(j.endpoint, "😿 캐릭터 만들기가 실패했어요", "앱에서 다시 시도해 주세요. 사진은 지웠어요");
