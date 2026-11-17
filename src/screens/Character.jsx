@@ -121,7 +121,7 @@ function Form({ dog, job, st, setSt, act, busy }) {
             <img src={outputs.poster} alt="" style={{ width: 84, height: 84, objectFit: "contain" }} />
             <div style={{ flex: 1 }}>
               <b>{dog.name} 캐릭터가 홈 화면에 있어요</b>
-              <div className="muted" style={{ fontSize: 13 }}>{STYLE_LABEL[outputs.style]} · {String(outputs.madeAt).slice(0, 10)}</div>
+              <div className="muted" style={{ fontSize: 13 }}>{STYLE_LABEL[outputs.style]} · {outputs.preset ? "선물 코드로 받음" : String(outputs.madeAt).slice(0, 10)}</div>
             </div>
           </div>
           <button type="button" className="btn-ghost" onClick={() => (clearCharacterOutputs(dog.id), setSt((s) => ({ ...s })))}>기본 강아지로 돌리기</button>

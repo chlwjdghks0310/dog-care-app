@@ -34,6 +34,15 @@ const THINK = "The puppy stays lying down with its chin resting on its paws the 
 const motion = (style, kind) => (style === "hand" ? HAND_2D : "") + MOUTH + (kind === "idle" ? IDLE : THINK);
 const DURATION = { "3d": { idle: 10, thinking: 5 }, hand: { idle: 5, thinking: 5 } }; // 3D idle은 분주하지 않게 10초(사용자 11/17)
 
+// 선물 코드(11/17, 사용자): 손 시험으로 이미 만든 세 마리는 코드를 넣는 순간 바로 적용(생성 없음). 파일은 앱 public/character/presets/<이름>/ (앱과 같은 출처라 CORS 걱정 없음).
+// 서버가 켜질 때 character_invites에 없으면 넣는다(있으면 그대로). 가족 폰까지 쓰라고 3번.
+const PRESETS = {
+  "MC-GIFT-YEOREUM": { note: "선물: 여름이(그림일기)", style: "hand", dir: "yeoreum" },
+  "MC-GIFT-MALTESE": { note: "선물: 말티즈(그림일기)", style: "hand", dir: "maltese" },
+  "MC-GIFT-BLACK": { note: "선물: 검은 믹스견(3D)", style: "3d", dir: "black" },
+};
+const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.dir}/idle.mp4`, thinking: `/character/presets/${p.dir}/thinking.mp4`, poster: `/character/presets/${p.dir}/poster.png`, sheet: `/character/presets/${p.dir}/sheet.jpg`, madeAt: "2026-11-17T10:00:00.000Z", preset: p.dir });
+
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 const nowIso = () => new Date().toISOString();
 
@@ -120,7 +129,10 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const token = randomBytes(24).toString("hex");
     await db("character_access", { method: "POST", prefer: "resolution=merge-duplicates", body: { pet_id: petId, token_hash: sha(token), code, granted_at: nowIso() } });
     if (!already) await db(`character_invites?code=eq.${encodeURIComponent(code)}`, { method: "PATCH", body: { used: inv.used + 1 } });
-    res.json({ token });
+    // 선물 코드: 완성된 작업을 바로 넣어 앱이 다음 status 조회에서 홈 화면에 적용하게
+    const preset = PRESETS[code];
+    if (preset) await db("character_jobs", { method: "POST", body: { id: randomUUID(), pet_id: petId, style: preset.style, status: "done", step: "완성!", picked: 1, outputs: presetOutputs(preset), cost: 0 } });
+    res.json({ token, preset: Boolean(preset) });
   });
 
   // 사진 2~4장(앱이 캔버스로 다시 그려 EXIF 없이 JPEG로 보냄) + 그림체 + 동의 → 작업 등록
@@ -347,5 +359,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     }
   }
   if (ready) setInterval(tick, 20_000).unref();
+  // 선물 코드 등록(이미 있으면 건드리지 않음)
+  if (dbOk) db("character_invites", { method: "POST", prefer: "resolution=ignore-duplicates", body: Object.entries(PRESETS).map(([code, p]) => ({ code, note: p.note, max_uses: 3 })) }).catch((e) => console.error("[character] 선물 코드 등록:", e.message));
   return { tick };
 }
