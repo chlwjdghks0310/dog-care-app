@@ -401,12 +401,25 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     setTimeout(tick, 500);
   });
 
+  // 끊긴 작업 되살리기(11/18: 배포로 서버가 다시 켜지며 render 중이던 작업이 영영 멈춤): 켤 때 + 매번, 만드는 중 상태로 15분 넘게 갱신이 없으면 그 단계 처음으로 되돌린다
+  const BACK = { sheet: "queued", render: "picked", extra: "extra-queued" };
+  async function recoverStale(all = false) {
+    const cutoff = new Date(Date.now() - (all ? 0 : 15 * 60e3)).toISOString();
+    const rows = await db(`character_jobs?status=in.(sheet,render,extra)&updated_at=lt.${encodeURIComponent(cutoff)}&select=id,status,step`).catch(() => []);
+    for (const r of rows) {
+      console.log(`[character] 끊긴 작업 되살림 ${r.id} ${r.status} → ${BACK[r.status]}`);
+      await update(r.id, { status: BACK[r.status], step: "서버가 잠시 쉬었어요. 이 단계를 처음부터 다시 해요" }).catch(() => {});
+    }
+  }
+  if (ready) recoverStale(true).catch(() => {});
+
   // ---- 일꾼: 한 번에 하나씩(비용·Runway 동시 호출 제한) ----
   let busy = false;
   async function tick() {
     if (!ready || busy) return;
     busy = true;
     try {
+      await recoverStale();
       const j = one(await db("character_jobs?status=in.(queued,picked,extra-queued)&order=updated_at.asc&limit=1"));
       if (!j) return;
       if ((await spentToday()) >= DAILY_CAP) { await update(j.id, { step: "오늘 만들 수 있는 양을 다 썼어요. 내일 이어서 만들어요" }); return; }
