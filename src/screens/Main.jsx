@@ -32,7 +32,8 @@ import VoiceButton from "../components/VoiceButton";
 import { getTodaySummary } from "../services/todaySummary";
 import { getFirstSteps, markFirstSteps } from "../services/firstSteps";
 import { characterOutputs, getCharacter, refreshJob, isWorking } from "../services/character";
-import PawProgress from "../components/PawProgress";
+import PawProgress, { usePercent } from "../components/PawProgress";
+const Pct = ({ progress }) => `${usePercent(progress)}%`;
 import { getFeedingSettings } from "../services/feedingSettings";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
@@ -377,8 +378,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
         <DogAvatarVideo state={avatarState === "idle" ? idleState : avatarState} height={isChat ? CORNER_SIZE : "100%"} breed="pomeranian" custom={customAvatar} />
         {!isChat && isWorking(charJob) && (
           <button type="button" className="char-making" onClick={openCharacter} aria-label="캐릭터 만드는 중, 자세히 보기">
-            <span className="pawp-sm"><PawProgress progress={charJob.progress} size={46} stroke={4} /></span>
-            <span>캐릭터<br />만드는 중</span>
+            <PawProgress progress={charJob.progress} size={40} stroke={4} percent="none" />
+            <span>캐릭터 만드는 중<br /><b><Pct progress={charJob.progress} /></b></span>
           </button>
         )}
       </div>

@@ -206,7 +206,7 @@ function Extras({ dog, job, setSt, act, busy }) {
           <Ico name={EXTRA_ICO[kind] || "sparkles"} size={30} />
           <div className="px-feat-body"><div className="px-feat-title" style={{ fontSize: 15 }}>{label}</div><div className="px-feat-desc" style={{ fontSize: 13 }}>{EXTRA_WHEN[kind]}</div></div>
           {have[kind] ? <Ico name="check" size={22} style={{ color: "var(--accent-strong)", alignSelf: "center" }} />
-            : pending === kind ? <span className="pawp-sm" style={{ alignSelf: "center" }}><PawProgress progress={job.progress} size={44} stroke={4} label={`${label} 만드는 중`} /></span>
+            : pending === kind ? <span style={{ alignSelf: "center" }}><PawProgress progress={job.progress} size={40} stroke={4} percent="none" label={`${label} 만드는 중`} /></span>
             : <button type="button" className="btn-ghost small" style={{ alignSelf: "center" }} onClick={add(kind)} disabled={busy || Boolean(pending) || n >= max}>만들기</button>}
         </div>
       ))}
