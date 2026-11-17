@@ -33,3 +33,4 @@ avatar-sources/
 # Claude Code 스킬(로컬 에이전트 설정, 앱 코드 아님)
 .claude/
 skills-lock.json
+.remember/
