@@ -281,6 +281,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   return (
     <div
       className="screen"
+      data-chat={isChat ? "1" : undefined} // 채팅 중엔 당겨서 새로고침을 끈다(App PullToRefresh isBlocked) — 평소 홈에선 된다(11/18)
       style={{
         position: "relative",
         display: "flex",

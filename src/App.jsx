@@ -603,11 +603,11 @@ export default function App() {
           </div>
         ))}
       </div>
-      {/* 비서(채팅) 화면은 대화 스크롤과 겹치지 않게 빼고, 나머지 화면은 맨 위에서 당기면 새로고침 */}
+      {/* 채팅 중(대화 스크롤)일 때만 빼고, 홈·나머지 화면은 맨 위에서 당기면 새로고침(11/18: 오늘 탭도 평소엔 되게) */}
       <WhatsNew />
       {storageWarn && <div className="whats-new" role="alert" onClick={() => setStorageWarn(false)}><b>저장하지 못했어요</b> · 저장 공간이 부족하거나 개인정보 보호 모드예요. 설정 → 백업·로그인에서 백업해 두세요</div>}
       {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
-      <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => page.closest('[data-tab="main"]')} />
+      <PullToRefresh targetRef={pagerRef} onRefresh={handleRefresh} isBlocked={(page) => Boolean(page.querySelector('.screen[data-chat="1"]'))} />
       {refreshedAt && <div className="refreshed-pill rise-in" role="status">새로 불러왔어요 · {refreshedAt.toTimeString().slice(0, 5)}</div>}
       <BottomNav
         active={TABS[visibleIndex]?.key || pageKey}
