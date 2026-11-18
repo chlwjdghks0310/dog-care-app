@@ -3,11 +3,13 @@ import { createPortal } from "react-dom";
 import { useSwipeClose } from "../components/SwipeBack";
 import { todayKey } from "../utils/date";
 import Ico from "../components/Ico";
+import { useHelpTip } from "../components/HelpTip";
 import { markFirstSteps } from "../services/firstSteps";
 import { getVetNote, saveVetNote, buildVetSummary, summaryToText, SYMPTOMS, SECTIONS, PERIODS } from "../services/vetSummary";
 
 // 병원용 기록 — 위에서 이번 진료 메모와 넣을 항목을 고르고, 아래 정리본을 진료실에서 보여 주거나 읽어 준다.
 export default function VetSummary({ dog, onBack, backLabel = "← 병원으로" }) {
+  const [tip, panel] = useHelpTip("병원용 기록", "앱에 쌓인 기록과 메모를 수의사가 바로 읽을 수 있게 한 장으로 정리해요. 진료실에서 [보여 주기]를 누르거나 [읽어 주기]로 들려주세요."); // 11/18: 설명 문단 대신 ? 버튼(사용자)
   useEffect(() => markFirstSteps(dog.id, { vet: true }), [dog.id]); // 첫 걸음 ③ 병원용 기록 미리 보기
   const [note, setNote] = useState(() => getVetNote(dog.id));
   const [showing, setShowing] = useState(false);
@@ -72,10 +74,9 @@ export default function VetSummary({ dog, onBack, backLabel = "← 병원으로"
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
         {backLabel}
       </button>
-      <div className="h1">병원용 기록</div>
-      <p className="subtle" style={{ marginBottom: 16 }}>
-        앱에 쌓인 기록과 메모를 수의사가 바로 읽을 수 있게 정리했어요. 진료실에서 [보여 주기]를 누르거나 [읽어 주기]로 들려주세요.
-      </p>
+      <div className="h1" style={{ display: "flex", alignItems: "center", gap: 8 }}>병원용 기록{tip}</div>
+      {panel}
+      <div style={{ height: 12 }} />
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="h2">이번 진료 메모</div>

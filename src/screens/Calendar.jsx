@@ -109,10 +109,9 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
             <span className="care-guide-text">
               <span className="care-guide-sub">{nv ? `${nv.event.title} ${dDay(today, nv.date)} · 가기 전에` : "병원 가기 전에"}</span>
               <span className="care-guide-title">병원용 기록 한 장</span>
-              <span className="care-guide-desc">밥·변·컨디션·먹는 약·체중을 수의사가 바로 읽게 정리해요. 진료실에서 보여 주거나 읽어 주면 돼요.</span>
             </span>
+            <span className="care-guide-go vf-go">보여 주기 ›</span>
           </span>
-          <span className="care-guide-foot"><span className="faint">지금 증상·언제부터도 적을 수 있어요</span><span className="care-guide-go">보여 주기 ›</span></span>
         </button>
       ); })()}
       <div className="quick-actions" style={{ marginBottom: 14 }}>{/* 11/14: 색 상자 제거(사용자), 기록 타일과 같은 흰 타일 + 스티커 */}

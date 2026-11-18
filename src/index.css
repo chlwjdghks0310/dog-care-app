@@ -1957,3 +1957,10 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mr-note { margin-top: 10px; display: grid; gap: 8px; }
 .mr-note-text { margin: 0; font-size: 14.5px; line-height: 1.6; white-space: pre-line; }
 .mr-lock { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 22px 16px; }
+
+/* 병원 탭 맨 위 "병원용 기록 한 장" 카드(11/18): 설명 없이 한 줄 — 머리(D-day)·제목·[보여 주기]만 */
+.vet-front { padding: 12px 14px; gap: 0; }
+.vet-front .care-guide-top { align-items: center; }
+.vet-front .care-guide-title { font-size: 24px; }
+.vet-front .vf-go { align-self: center; white-space: nowrap; margin-left: auto; padding-left: 8px; }
+.vet-front .care-guide-text { flex: 1; min-width: 0; }
