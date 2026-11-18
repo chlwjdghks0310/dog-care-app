@@ -583,7 +583,7 @@ function VitalsCard({ dog, onOpenVital, onOpenWeight, onOpenMeds }) {
                   {value != null && <span className="vt-unit">{v.unit}</span>}
                 </span>
               )}
-              {!never && <span className={`vt-sub${flag ? " warn" : ""}`}>{flag ? `참고 범위 밖 · ${sub}` : sub}</span>}
+              {!never && <span className="vt-sub">{flag ? `참고 범위 밖 · ${sub}` : sub}</span>}{/* 11/18: 범위 밖은 글자만, 경고색 없음(판정처럼 보이지 않게) */}
             </button>
           );
         })}

@@ -69,7 +69,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight, onRecor
         )}
         {def.range && (
           <div className={`vd-range${flag ? " out" : ""}`}>
-            {flag && <b>{flag === "above" ? "참고 범위보다 높아요 · " : "참고 범위보다 낮아요 · "}</b>}
+            {flag && <span>{flag === "above" ? "참고 범위보다 높아요 · " : "참고 범위보다 낮아요 · "}</span>}
             참고 범위 {def.range[0]}~{def.range[1]}{unit}. {def.note}
           </div>
         )}
@@ -190,7 +190,7 @@ function TapCounter({ seconds, how, onResult }) {
   );
 }
 
-// 기록한 날만 그리는 그래프 — sum은 막대(하루 합계), point는 점과 선. 참고 범위는 옅은 띠.
+// 기록한 날만 그리는 그래프 — sum은 막대(하루 합계), point는 점과 선. 참고 범위는 옅은 회색 띠(11/18: 초록·경고색은 판정처럼 보여 중립색으로 — 원칙).
 function ValueChart({ rows, kind, unit, metric, range, from, to }) {
   const W = 320;
   const H = 150;
@@ -209,21 +209,21 @@ function ValueChart({ rows, kind, unit, metric, range, from, to }) {
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label={`${rows.length}일 기록 그래프`}>
-        {range && kind === "point" && <rect x={P.l} y={y(range[1])} width={W - P.l - P.r} height={Math.max(0, y(range[0]) - y(range[1]))} fill="var(--success)" opacity="0.12" />}
+        {range && kind === "point" && <rect x={P.l} y={y(range[1])} width={W - P.l - P.r} height={Math.max(0, y(range[0]) - y(range[1]))} fill="var(--text-faint)" opacity="0.12" />}
         <line x1={P.l} y1={H - P.b} x2={W - P.r} y2={H - P.b} stroke="var(--border)" />
         {kind === "sum"
           ? rows.map((r) => <rect key={r.date} x={x(r.date) - barW / 2} y={y(r.value)} width={barW} height={H - P.b - y(r.value)} rx="3" fill="var(--accent)" />)
           : (
             <>
               {rows.length > 1 && <path d={rows.map((r, i) => `${i ? "L" : "M"}${x(r.date).toFixed(1)},${y(r.value).toFixed(1)}`).join(" ")} fill="none" stroke="var(--accent)" strokeWidth="2" />}
-              {rows.map((r) => <circle key={r.date} cx={x(r.date)} cy={y(r.value)} r="3.5" fill={outOfRange(metric, r.value) ? "var(--warning)" : "var(--accent)"} />)}
+              {rows.map((r) => <circle key={r.date} cx={x(r.date)} cy={y(r.value)} r="3.5" fill={outOfRange(metric, r.value) ? "var(--surface)" : "var(--accent)"} stroke="var(--accent)" strokeWidth="1.5" />)}
             </>
           )}
         <text x={P.l} y={H - 6} fontSize="10" fill="var(--text-faint)">{md(from)}</text>
         <text x={W - P.r} y={H - 6} fontSize="10" fill="var(--text-faint)" textAnchor="end">{md(to)}</text>
       </svg>
       <p className="faint" style={{ textAlign: "center", margin: "4px 0 0" }}>
-        마지막 기록 {md(last.date)} {fmtValue(metric, last.value)}{unit}{kind === "point" && range ? " · 초록 띠 = 참고 범위" : ""}
+        마지막 기록 {md(last.date)} {fmtValue(metric, last.value)}{unit}{kind === "point" && range ? " · 회색 띠 = 참고 범위, 빈 점 = 범위 밖" : ""}
       </p>
     </div>
   );
