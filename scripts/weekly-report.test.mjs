@@ -23,7 +23,9 @@ set("dogcare-calendar-events-v1", { d1: { "2026-10-30": [{ id: "e1", title: "종
 const { buildWeeklyReport } = await import("../src/services/weeklyReport.js");
 const r = buildWeeklyReport(dog, "2026-10-27");
 assert.equal(r.from, "2026-10-21");
-assert.deepEqual(r.walk, { days: 2, minutes: 50 }, "지난주 산책은 빼고");
+assert.deepEqual({ days: r.walk.days, minutes: r.walk.minutes }, { days: 2, minutes: 50 }, "지난주 산책은 빼고");
+assert.equal(r.walk.dates.length, 2, "걸은 날짜 목록(요일 칸 그림용)");
+assert.equal(r.dates.length, 7, "이번 주 7일");
 assert.deepEqual(r.meal, { usual: 1, less: 1, more: 0 });
 assert.deepEqual(r.looseDays, ["2026-10-25"]);
 assert.deepEqual(r.symptoms, [{ date: "2026-10-23", kinds: ["구토"] }]);
