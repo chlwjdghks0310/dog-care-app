@@ -35,7 +35,7 @@ import { characterOutputs, getCharacter, refreshJob, isWorking } from "../servic
 import PawProgress, { usePercent } from "../components/PawProgress";
 const Pct = ({ progress }) => `${usePercent(progress)}%`;
 import { getFeedingSettings } from "../services/feedingSettings";
-import { WeekStamps } from "../components/Pieces";
+import { StampMoment } from "../components/Pieces";
 import { getDay } from "../services/dailyCheck";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
@@ -58,6 +58,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   const [typing, setTyping] = useState(false); // 입력창에 포커스 — 예시 문장을 이때만 펼친다(11/9)
   const [hop, setHop] = useState(false); // 하루 체크를 끝내면 강아지가 폴짝(모션 6곳 중 하나, 11/9)
   const hopNow = () => (setHop(true), setTimeout(() => setHop(false), 1100));
+  const [stampMoment, setStampMoment] = useState(false); // 하루 체크 끝 → 어두운 배경 위 스탬프 노트(도장 "쿵") 한 번
   const inputRef = useRef("");
   const inputElRef = useRef(null);
   // 입력칸은 글이 길어지면 5줄까지 늘어난다
@@ -326,7 +327,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
             </SpeechBubble>
           ) : !remoteState.remote && (dailyPending(dog.id) || dcOpen) ? (
             <SpeechBubble key="check">
-              <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && hopNow())} onSheetChange={setDcOpen} />
+              <DailyCheck dog={dog} onChange={() => (refresh((n) => n + 1), !dailyPending(dog.id) && (hopNow(), setStampMoment(true)))} onSheetChange={setDcOpen} />
               <HomeRow dog={dog} onOpen={onOpenGuide} outing={!getFirstSteps(dog.id).show && <OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
             </SpeechBubble>
           ) : notifyAskPending(dog.id) ? (
@@ -386,6 +387,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
           </button>
         )}
       </div>
+
+      {stampMoment && <StampMoment dogId={dog.id} onDone={() => setStampMoment(false)} />}
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}
 
@@ -627,8 +630,6 @@ function TodaySummary({ dog, onOpen, outing }) {
   const food = getFoodStock(dog);
   if (food && food.daysLeft <= 5) lines.push(["bowl", "rose", stockLabel(food)]);
   if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
-  const todayCheck = getDay(dog.id, todayKey());
-  const checkedToday = Boolean(todayCheck && todayCheck.status !== "unknown"); // 체크한 날엔 이번 주 스탬프 노트(발도장)
   return (
     <span className="summary">
       <span className="summary-open">
@@ -646,7 +647,6 @@ function TodaySummary({ dog, onOpen, outing }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
-      {checkedToday && <WeekStamps dogId={dog.id} />}
       <HomeRow dog={dog} onOpen={onOpen} outing={outing} />
     </span>
   );

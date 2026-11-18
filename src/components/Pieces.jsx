@@ -1,4 +1,6 @@
 import { getDay, daysThisMonth } from "../services/dailyCheck";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { md } from "../services/records";
 
@@ -51,7 +53,7 @@ export function WeekStamps({ dogId, today = todayKey() }) {
   return (
     <span className="stamps" role="img" aria-label={`이번 주 하루 체크 ${dates.filter(stamped).length}일, 이번 달 ${month}일`}>
       <img className="stamps-tape" src={PIECE("tape")} alt="" />
-      <span className="stamps-ttl">이번 주 하루 체크</span>
+      <span className="stamps-ttl">이번 주 하루 체크<small>이번 달 <b>{month}</b>번</small></span>
       <span className="stamps-week">
         {dates.map((d, i) => {
           const on = stamped(d), isToday = d === today, future = d > today;
@@ -65,7 +67,6 @@ export function WeekStamps({ dogId, today = todayKey() }) {
           );
         })}
       </span>
-      <span className="stamps-ft">이번 달 <b>{month}</b>번 찍었어 · 빠진 날은 그냥 비워 둬</span>
     </span>
   );
 }
@@ -172,5 +173,19 @@ export function SymptomTimeline({ rows, from, to }) {
       })}
       <g fontSize="8.5" fill="var(--text-faint)" textAnchor="middle"><text x="48" y={H - 2}>{md(from)}</text><text x="312" y={H - 2}>{to === todayKey() ? "오늘" : md(to)}</text></g>
     </svg>
+  );
+}
+
+// 하루 체크를 마친 순간: 화면을 어둡게 하고 스탬프 노트가 떠서 오늘 칸에 도장이 "쿵" 찍힌 뒤 사라진다(2.6초, 누르면 바로 닫힘). 노트 자체는 케어 탭에 산다
+export function StampMoment({ dogId, onDone }) {
+  const [out, setOut] = useState(false);
+  const done = useRef(onDone); done.current = onDone;
+  const close = () => { setOut(true); setTimeout(() => done.current(), 360); };
+  useEffect(() => { const t = setTimeout(close, 2600); return () => clearTimeout(t); }, []);
+  return createPortal(
+    <div className={`stamp-moment${out ? " out" : ""}`} onClick={close} role="status" aria-live="polite">
+      <WeekStamps dogId={dogId} />
+    </div>,
+    document.body,
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { todayKey } from "../utils/date";
-import { FoodJar } from "../components/Pieces";
+import { FoodJar, WeekStamps } from "../components/Pieces";
 import { formatAge } from "../utils/age";
 import { RoutineSheet } from "../components/OutingCard";
 import Ico from "../components/Ico";
@@ -91,10 +91,14 @@ function DailyRow({ dog, dateKey, onBack }) {
   if (!day || day.status === "unknown") return null;
   const text = day.status === "usual" ? "평소와 같았어요" : Object.entries(day.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ");
   return (
-    <div className="card dc-row" style={{ marginBottom: 14 }}>
-      <Ico name="check" size={18} className="cat-ico tone-teal" />
-      <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
-      <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), onBack())}>다시 고르기</button>
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="dc-row">
+        <Ico name="check" size={18} className="cat-ico tone-teal" />
+        <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), onBack())}>다시 고르기</button>
+      </div>
+      {/* 11/18 사용자: 스탬프 노트는 오늘 탭 말풍선이 아니라 여기(케어)에 — 오늘 탭 강아지가 작아지지 않게 */}
+      <WeekStamps dogId={dog.id} today={dateKey} />
     </div>
   );
 }
