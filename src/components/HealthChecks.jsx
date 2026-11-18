@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Ico from "./Ico";
 import { STOOL_COLORS, STOOL_SIGNS, CHECK_ITEMS, CHECK_LEVELS, stoolFromScore } from "../services/records";
 
 // 변 체크·컨디션 체크 — 보호자가 직접 고르는 칸(기록 고치기·변 체크·컨디션 체크 화면이 같이 쓴다).
@@ -14,6 +15,9 @@ const SHAPES = [
   { n: 6, label: "형태가 거의 없음", desc: "쌓인 모양은 있지만 형태가 없음", art: <><ellipse cx="20" cy="17" rx="17" ry="5" /><ellipse cx="18" cy="12" rx="9" ry="5" opacity=".8" /></> },
   { n: 7, label: "물 같음", desc: "덩어리 없이 물처럼 흐름", art: <><ellipse cx="20" cy="18" rx="18" ry="4" opacity=".6" /><path d="M12 4c2 3 3 5 0 6.5C9 9 10 7 12 4ZM27 6c2 3 3 5 0 6.5C24 11 25 9 27 6Z" /></> },
 ];
+
+// 색 칩 앞의 색 점(판정 아님 — 고르기 쉽게 실제 색만)
+const COLOR_DOT = { "갈색": "#8b5a2b", "노란색": "#e0b53c", "초록색": "#5f8f3e", "검은색": "#2b2622", "붉은색": "#b8403a", "회색·흰색": "linear-gradient(135deg, #e9e9e9 50%, #bdbdbd 50%)" };
 
 function Chips({ options, on, onTap, label }) {
   return (
@@ -51,24 +55,31 @@ export function StoolCheck({ data, onChange, flags }) {
   return (
     <>
       <div className="field">
-        <label id="sc-shape">변 모양 (1 딱딱함 ~ 7 물 같음 · 2가 가장 좋아요)</label>
+        <label id="sc-shape">변 모양</label>
         <StoolPhotos />
-        <div className="sc-list" role="group" aria-labelledby="sc-shape">
+        {/* 11/18 디자인: 세로 7줄 → 가로 눈금 한 줄(그림 + 번호, 2 아래 "가장 좋아요"), 고른 칸의 설명은 아래 한 상자에 */}
+        <div className="sc-scale" role="group" aria-labelledby="sc-shape">
           {SHAPES.map((s) => (
-            <button key={s.n} type="button" className={`sc-row${data.stoolScore === s.n ? " on" : ""}`} aria-pressed={data.stoolScore === s.n} onClick={() => pickScore(s.n)}>
+            <button key={s.n} type="button" className={`sc-step${data.stoolScore === s.n ? " on" : ""}`} aria-pressed={data.stoolScore === s.n} aria-label={`${s.n}점 ${s.label}`} onClick={() => pickScore(s.n)}>
               <svg className="sc-art" viewBox="0 0 40 24" aria-hidden="true" fill="currentColor">{s.art}</svg>
               <span className="sc-num">{s.n}</span>
-              <span className="sc-text">
-                <b>{s.label}</b>
-                <span>{s.desc}</span>
-              </span>
+              {s.n === 2 && <span className="sc-best">가장 좋아요</span>}
             </button>
           ))}
+        </div>
+        <div className="sc-pick" aria-live="polite">
+          {data.stoolScore ? <><b>{data.stoolScore}점 · {SHAPES[data.stoolScore - 1].label}</b><span>{SHAPES[data.stoolScore - 1].desc}</span></> : <span className="faint">눌러서 가장 비슷한 모양을 골라 주세요. 딱딱함 1 ← → 7 물 같음</span>}
         </div>
       </div>
       <div className="field">
         <label>색</label>
-        <Chips label="변 색" options={STOOL_COLORS} on={(o) => data.stoolColor === o} onTap={(o) => onChange({ stoolColor: data.stoolColor === o ? undefined : o })} />
+        <div className="chip-wrap" role="group" aria-label="변 색">
+          {STOOL_COLORS.map((o) => (
+            <button key={o} type="button" className={`seg sc-color${data.stoolColor === o ? " on" : ""}`} aria-pressed={data.stoolColor === o} onClick={() => onChange({ stoolColor: data.stoolColor === o ? undefined : o })}>
+              <i style={{ background: COLOR_DOT[o] }} aria-hidden="true" />{o}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="field">
         <label>보이는 것 (있으면 눌러 주세요)</label>
@@ -79,12 +90,22 @@ export function StoolCheck({ data, onChange, flags }) {
   );
 }
 
+const CK_ICO = { energy: "sparkles", appetite: "bowl", gait: "walk", breathing: "wind", vomitCough: "bandaid", behavior: "smiley" };
 export function ConditionCheck({ check = {}, onChange, flags }) {
+  const allUsual = CHECK_ITEMS.every((it) => check[it.key] === "평소 같음");
+  const doneCount = CHECK_ITEMS.filter((it) => check[it.key]).length;
   return (
     <>
+      {/* 11/18 디자인: 여섯 가지가 다 평소 같은 날이 대부분이라 한 번에 채우는 단추 + 항목마다 스티커로 눈에 띄게 */}
+      <div className="ck-all">
+        <button type="button" className={`seg${allUsual ? " on" : ""}`} aria-pressed={allUsual} onClick={() => onChange(allUsual ? {} : Object.fromEntries(CHECK_ITEMS.map((it) => [it.key, "평소 같음"])))}>
+          <Ico name="check" size={16} /> 여섯 가지 모두 평소 같음
+        </button>
+        <span className="faint">{doneCount ? `${doneCount}/6 골랐어요` : "다른 게 있으면 아래에서 하나씩"}</span>
+      </div>
       {CHECK_ITEMS.map((it) => (
-        <div key={it.key} className="field">
-          <label id={`ck-${it.key}`}>{it.label}</label>
+        <div key={it.key} className="field ck-item">
+          <label id={`ck-${it.key}`}><Ico name={CK_ICO[it.key]} size={20} sticker /> {it.label}</label>
           <div className="ck-row" role="group" aria-labelledby={`ck-${it.key}`}>
             {CHECK_LEVELS.map((lv, i) => {
               const on = check[it.key] === lv;
@@ -130,10 +151,10 @@ function StoolPhotos() {
           {PHOTOS.map((ph) => (
             <figure key={ph.src}>
               <img src={ph.src} alt={`${ph.n}점 예시: ${SHAPES[ph.n - 1].label}`} width="240" height="180" loading="lazy" className={ph.small ? "small" : undefined} />
-              <figcaption><b>{ph.n}점</b> {SHAPES[ph.n - 1].label}<small>{ph.credit}</small></figcaption>
+              <figcaption><b>{ph.n}점</b> {SHAPES[ph.n - 1].label}</figcaption>
             </figure>
           ))}
-          <p className="faint" style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12 }}>6은 연구 논문 사진이라 작아요. 길·병원에서 찍은 사진이라 마르거나 젖었을 수 있어요. 피가 섞였거나 물 같은 설사가 이어지면 사진보다 병원 연락이 먼저예요.</p>
+          <p className="faint" style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12 }}>6은 연구 논문 사진이라 작아요. 길·병원에서 찍은 사진이라 마르거나 젖었을 수 있어요. 피가 섞였거나 물 같은 설사가 이어지면 사진보다 병원 연락이 먼저예요. 사진 출처는 <a href="/licenses.txt" target="_blank" rel="noopener">licenses.txt</a>에 있어요.</p>
         </div>
       )}
     </div>

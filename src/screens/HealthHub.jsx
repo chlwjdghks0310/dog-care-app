@@ -1,14 +1,15 @@
 import Ico from "../components/Ico";
+import { useHelpTip } from "../components/HelpTip";
 export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) {
+  const [tip, panel] = useHelpTip("건강 체크", `${dog.name}의 상태를 직접 골라 기록해요. 기록은 병원용 기록에도 들어가요. AI 사진·영상 확인은 필요할 때만 쓰는 참고용이에요(하루 2번).`); // 11/18: 설명 문단 대신 ? 버튼
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
         ← 병원으로
       </button>
-      <div className="h1">건강 체크</div>
-      <p className="subtle" style={{ marginBottom: 16 }}>
-        {dog.name}의 상태를 직접 골라 기록해요. 기록은 병원용 기록에도 들어가요. AI 사진·영상 확인은 필요할 때만 쓰는 참고용이에요(하루 2번).
-      </p>
+      <div className="h1" style={{ display: "flex", alignItems: "center", gap: 8 }}>건강 체크{tip}</div>
+      {panel}
+      <div style={{ height: 12 }} />
 
       <button
         className="card"

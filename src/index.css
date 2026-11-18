@@ -1964,3 +1964,23 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .vet-front .care-guide-title { font-size: 24px; }
 .vet-front .vf-go { align-self: center; white-space: nowrap; margin-left: auto; padding-left: 8px; }
 .vet-front .care-guide-text { flex: 1; min-width: 0; }
+
+/* 변 체크 모양 눈금(11/18): 가로 7칸, 그림 + 번호, 2 아래 "가장 좋아요". 고른 칸 설명은 .sc-pick 한 상자 */
+.sc-scale { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 2px 0 8px; }
+.sc-step { position: relative; display: grid; justify-items: center; gap: 2px; padding: 8px 0 6px; border: 1.2px solid var(--border); border-radius: 12px 14px 11px 13px/13px 11px 14px 12px; background: var(--surface); color: var(--text-soft); min-height: 58px; }
+.sc-step .sc-art { width: 34px; height: 20px; }
+.sc-step .sc-num { width: 20px; height: 20px; font-size: 12px; background: transparent; color: var(--text-soft); border: 1.2px solid var(--border); }
+.sc-step.on { background: var(--warm-bg); border-color: var(--warm); color: var(--warm); }
+.sc-step.on .sc-art { color: var(--warm); } .sc-step.on .sc-num { background: var(--warm); border-color: var(--warm); color: #fff; }
+.sc-best { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); white-space: nowrap; font-size: 9.5px; font-weight: 800; color: var(--warm); }
+.sc-pick { min-height: 44px; margin-top: 14px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-2, var(--bg)); border: 1px dashed var(--border); font-size: 14px; line-height: 1.45; display: grid; gap: 2px; }
+.sc-pick b { color: var(--text); } .sc-pick span { color: var(--text-soft); font-size: 13px; }
+.sc-color { display: inline-flex; align-items: center; gap: 6px; }
+.sc-color i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .15); flex-shrink: 0; }
+/* 컨디션 체크(11/18): 한 번에 채우기 + 항목 스티커 */
+.ck-all { display: grid; gap: 6px; margin-bottom: 14px; }
+.ck-all .seg { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; font-size: 14.5px; }
+.ck-all .seg.on { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+.ck-all .faint { font-size: 12px; text-align: center; }
+.ck-item > label { display: flex; align-items: center; gap: 6px; }
+.ck-seg.on.lv0 { background: var(--success-bg); color: var(--success); border-color: var(--success); }

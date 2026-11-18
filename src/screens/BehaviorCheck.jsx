@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
 import Ico from "../components/Ico";
+import { useHelpTip } from "../components/HelpTip";
 import AskBox from "../components/AskBox";
 import { ConditionCheck } from "../components/HealthChecks";
 import { analyzeBehavior } from "../services/aiClient";
@@ -52,6 +53,7 @@ export default function BehaviorCheck({ dog, onBack }) {
   const [error, setError] = useState("");
   const [question, setQuestion] = useState("");
   const timer = useAnalysisTimer("dogcare-timing-video-v1", [35, 60]);
+  const [tip, panel] = useHelpTip("컨디션 체크", "여섯 가지를 평소 모습과 비교해 골라 기록해요. 기록은 병원용 기록에도 들어가요. 고른 내용으로 병원에 연락해 볼 신호만 알려 드리고, 진단은 하지 않아요."); // 11/18: 설명 문단 대신 ? 버튼
 
   function handleFileChange(e) {
     const f = e.target.files?.[0];
@@ -90,10 +92,9 @@ export default function BehaviorCheck({ dog, onBack }) {
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
         ← 건강 체크로
       </button>
-      <div className="h1">컨디션 체크</div>
-      <p className="faint" style={{ marginBottom: 16 }}>
-        여섯 가지를 평소 모습과 비교해 골라 기록해요. 기록은 '병원용 기록'에도 들어가요. 고른 내용으로 병원에 연락해 볼 신호만 알려 드리고, 진단은 하지 않아요.
-      </p>
+      <div className="h1" style={{ display: "flex", alignItems: "center", gap: 8 }}>컨디션 체크{tip}</div>
+      {panel}
+      <div style={{ height: 12 }} />
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="field">

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
 import Ico from "../components/Ico";
+import { useHelpTip } from "../components/HelpTip";
 import AskBox from "../components/AskBox";
 import { StoolCheck } from "../components/HealthChecks";
 import { analyzePhoto } from "../services/aiClient";
@@ -24,6 +25,7 @@ export default function HealthCheck({ dog, onBack }) {
   const [error, setError] = useState("");
   const [question, setQuestion] = useState("");
   const timer = useAnalysisTimer("dogcare-timing-stool-v1", [50, 60]);
+  const [tip, panel] = useHelpTip("변 체크", "눈으로 본 모양·색을 골라 기록해요. 기록은 병원용 기록에도 들어가요. 고른 내용으로 병원에 연락해 볼 신호만 알려 드리고, 진단은 하지 않아요."); // 11/18: 설명 문단 대신 ? 버튼
 
   const others = useMemo(() => getRecords(dog.id).filter((r) => r.type === "potty" && r.id !== id), [dog.id, id]);
   const flags = stoolFlags(data, others, at.slice(0, 10));
@@ -95,10 +97,9 @@ export default function HealthCheck({ dog, onBack }) {
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>
         ← 건강 체크로
       </button>
-      <div className="h1">변 체크</div>
-      <p className="faint" style={{ marginBottom: 16 }}>
-        눈으로 본 모양·색을 골라 기록해요. 기록은 '병원용 기록'에도 들어가요. 고른 내용으로 병원에 연락해 볼 신호만 알려 드리고, 진단은 하지 않아요.
-      </p>
+      <div className="h1" style={{ display: "flex", alignItems: "center", gap: 8 }}>변 체크{tip}</div>
+      {panel}
+      <div style={{ height: 12 }} />
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="field">

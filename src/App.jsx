@@ -95,11 +95,17 @@ export default function App() {
   // 뒤로 가면 보던 자리로(11/10): 세부 화면을 열면 탭 화면이 사라져 스크롤이 0으로 돌아가므로, 스크롤할 때마다 위치를 기억해 두고 돌아오면 되돌린다
   const scrollPosRef = useRef({});
   // 화면을 바꾸기 직전(아직 DOM이 그대로일 때) 모든 탭 페이지의 스크롤 위치를 저장한다
+  const tabRef = useRef("main");
+  tabRef.current = tab;
   const setTab = useCallback((next) => {
-    // 실제로 스크롤되는 건 페이지 안의 .screen(탭 화면)이라 그것부터 본다
-    for (const pg of document.querySelectorAll(".pager-page")) {
-      const el = [...pg.querySelectorAll(".screen"), pg].find((x) => x.scrollTop > 0);
-      if (el) scrollPosRef.current[pg.dataset.tab] = el.scrollTop;
+    // 실제로 스크롤되는 건 페이지 안의 .screen(탭 화면)이라 그것부터 본다.
+    // 세부 화면(병원용 기록 등)에서 나갈 땐 저장하지 않는다 — 그때 페이지 안의 .screen은 세부 화면이라, 그 스크롤이 탭 화면 자리로 잘못 저장돼
+    // 뒤로 가면 중간으로 떨어지던 문제(사용자 11/18). 탭 화면 자리는 세부 화면을 열 때 이미 저장돼 있다.
+    if (!PARENT_TAB[tabRef.current]) {
+      for (const pg of document.querySelectorAll(".pager-page")) {
+        const el = [...pg.querySelectorAll(".screen"), pg].find((x) => x.scrollTop > 0);
+        if (el) scrollPosRef.current[pg.dataset.tab] = el.scrollTop;
+      }
     }
     _setTab(next);
   }, []);
