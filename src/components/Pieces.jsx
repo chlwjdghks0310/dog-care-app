@@ -184,7 +184,10 @@ export function StampMoment({ dogId, onDone }) {
   useEffect(() => { const t = setTimeout(close, 2600); return () => clearTimeout(t); }, []);
   return createPortal(
     <div className={`stamp-moment${out ? " out" : ""}`} onClick={close} role="status" aria-live="polite">
-      <WeekStamps dogId={dogId} />
+      <div className="sm-box">
+        <span className="sm-cheer">잘했어요!!</span>
+        <WeekStamps dogId={dogId} />
+      </div>
     </div>,
     document.body,
   );
