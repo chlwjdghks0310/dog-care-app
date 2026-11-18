@@ -143,13 +143,13 @@ export function GrowthRuler({ days, startLabel }) {
   const label = (n) => (n % 365 === 0 ? `${n / 365}년` : `${n}일`);
   const x = 8 + pct * 304;
   return (
-    <svg viewBox="0 0 320 60" width="100%" style={{ maxWidth: 420, display: "block" }} role="img" aria-label={`함께한 지 ${days}일, ${label(next)}까지 ${next - days}일`}>
-      <rect x="8" y="26" width="304" height="10" rx="5" fill="var(--surface)" stroke="var(--ink, #47392e)" strokeWidth="1.3" />
-      <rect x="8" y="26" width={Math.max(10, pct * 304)} height="10" rx="5" fill="var(--warm-bg)" stroke="var(--warm)" strokeWidth="1" />
-      <g fill="none" stroke="var(--ink, #47392e)" strokeWidth="1.2"><line x1="8" y1="22" x2="8" y2="40" /><line x1="312" y1="22" x2="312" y2="40" /><line x1="160" y1="24" x2="160" y2="38" /></g>
-      <g fontSize="9" fill="var(--text-faint)"><text x="8" y="50">{prev === 0 && startLabel ? startLabel : label(prev)}</text>{prev < 365 && <text x="160" y="50" textAnchor="middle">{label(Math.round((prev + next) / 2))}</text>}<text x="312" y="50" textAnchor="end">{label(next)}</text></g>
-      <PawGlyph x={x - 11} y={0} s={0.85} />
-      <text x="160" y="59" fontSize="9.5" textAnchor="middle" fill="var(--text)" fontWeight="800">{days}일째 · {label(next)}까지 {next - days}일</text>
+    <svg viewBox="0 0 320 84" width="100%" style={{ display: "block" }} role="img" aria-label={`함께한 지 ${days}일, ${label(next)}까지 ${next - days}일`}>
+      <rect x="8" y="30" width="304" height="16" rx="8" fill="var(--surface)" stroke="var(--ink, #47392e)" strokeWidth="1.5" />
+      <rect x="8" y="30" width={Math.max(16, pct * 304)} height="16" rx="8" fill="var(--warm-bg)" stroke="var(--warm)" strokeWidth="1.2" />
+      <g fill="none" stroke="var(--ink, #47392e)" strokeWidth="1.4"><line x1="8" y1="24" x2="8" y2="52" /><line x1="312" y1="24" x2="312" y2="52" /><line x1="160" y1="27" x2="160" y2="49" /></g>
+      <g fontSize="11.5" fill="var(--text-faint)"><text x="8" y="65">{prev === 0 && startLabel ? startLabel : label(prev)}</text>{prev < 365 && <text x="160" y="65" textAnchor="middle">{label(Math.round((prev + next) / 2))}</text>}<text x="312" y="65" textAnchor="end">{label(next)}</text></g>
+      <PawGlyph x={x - 14} y={0} s={1.15} />
+      <text x="160" y="80" fontSize="12.5" textAnchor="middle" fill="var(--text)" fontWeight="800">{days}일째 · {label(next)}까지 {next - days}일</text>
     </svg>
   );
 }
