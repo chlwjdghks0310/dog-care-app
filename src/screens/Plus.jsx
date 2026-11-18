@@ -5,7 +5,7 @@ import { fetchStatus, redeem } from "../services/character";
 // 멍케어 플러스(11/17, 사용자 결정): 설정에 따로 있는 칸. 베타 동안은 결제 없이 플러스 코드로만 열리고, 막는 건 플러스 비서 하나뿐.
 // 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 스티커 아이콘을 기능마다 다르게(플러스=트로피 win, 비서=chatHeart, 캐릭터=video, 진료 정리=clipboard, 리포트=chart, 코드=lock),
 // 세로 한 줄 구성, 무료/플러스 차이는 작은 표로.
-export default function Plus({ dog, onOpenCharacter }) {
+export default function Plus({ dog, onOpenCharacter, onOpenMonth }) {
   const [st, setSt] = useState(null);
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
@@ -26,7 +26,7 @@ export default function Plus({ dog, onOpenCharacter }) {
         <Ico name="star" size={48} />
         <div>
           <div className="h1" style={{ margin: 0 }}>멍케어 플러스</div>
-          <p className="px-lead">{plus ? `${dog.name}는 플러스예요. 고마워요!` : "기록·수첩·가이드·가족 공유는 언제나 무료. 플러스는 우리 아이를 더 깊이 아는 두 가지를 더해요."}</p>
+          <p className="px-lead">{plus ? `${dog.name}는 플러스예요. 고마워요!` : "기록·수첩·가이드·가족 공유는 언제나 무료. 플러스는 세 가지를 더해요 — 플러스 비서, 한 달 리포트, 우리 아이 캐릭터."}</p>
         </div>
       </header>
       <div className="px-price">
@@ -45,16 +45,15 @@ export default function Plus({ dog, onOpenCharacter }) {
           <tr><td>기록 반영</td><td>✓</td><td>✓</td></tr>
         </tbody></table>
         <p className="px-note">둘 다 진단을 단정하거나 약 용량을 말하지 않아요. 응급 신호면 병원 안내가 먼저. 평균적인 답이 궁금하면 답 아래 ChatGPT 버튼을 그대로 쓸 수 있어요.</p>
+        <Feature ico="calendar" title="한 달 리포트" on={plus} tag="베타 동안 모두 열림" onClick={onOpenMonth}
+          desc="달력 한 장에 산책·증상·병원이 모이고, 체중 곡선과 지난달 비교까지. 플러스 비서가 그 달을 세 줄로 읽어 줘요. 이번 주 리포트는 계속 무료." />
       </section>
 
       <section className="px-card">
-        <div className="px-sec">들어갈 예정 <span className="px-dim">· 베타 동안은 모두 열려 있어요</span></div>
+        <div className="px-sec">플러스와 함께</div>
         <Feature ico="video" title="우리 아이 캐릭터" tag="곧 출시" onClick={onOpenCharacter}
-          desc="사진으로 만드는 움직이는 우리 아이. 기본(기다리기·고민하기)과 정성(부가 동작 3편)은 단품, 연간 플러스엔 기본 1번 포함." />
-        <Feature ico="clipboard" title="진료 정리·사진 확인 넉넉히" tag="지금 하루 3번 무료"
-          desc="영수증·처방전을 읽어 진료 기록으로, 변·피부 사진 확인 횟수를 늘려요." />
-        <Feature ico="chart" title="주간 리포트 해설" tag="준비 중"
-          desc="이번 주 기록을 비서가 읽고 잘한 것·지켜볼 것·다음 주 할 일 세 줄로." />
+          desc="사진으로 만드는 움직이는 우리 아이. 기본(기다리기·고민하기) 4,900원 · 정성(부가 동작 3편) 9,900원. 연간 플러스엔 기본 1번 포함, 정성 올리기·그림체 추가는 플러스 할인." />
+        <p className="px-note">그 밖의 것 — 하루 체크, 기록, 병원용 기록, 이상 신호, 알림, 이번 주 리포트, 월령별 가이드, 가족 공유, 여러 마리 — 는 계속 무료예요.</p>
       </section>
 
       {!plus && (

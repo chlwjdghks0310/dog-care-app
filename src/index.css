@@ -1930,3 +1930,30 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .cup-avg { position: absolute; left: 16%; right: 16%; border-top: 1.5px dashed var(--ink); opacity: .7; }
 .ringstat { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; } .ringstat svg { position: absolute; inset: 0; } .ringstat-in { position: relative; display: grid; place-items: center; }
 .wr-viz { display: block; margin: 2px 0; } .wr-num { font-family: var(--font-bubble); font-size: 24px; line-height: .95; font-weight: 700; color: var(--ink); } .wr-num small { font-family: inherit; font-size: 15px; color: var(--text-soft); font-weight: 400; }
+
+/* 한 달 리포트(플러스, 11/18): 달력 한 장 + 체중 곡선 + 칸 + 비서 세 줄 */
+.mr-head { display: flex; align-items: center; gap: 10px; }
+.mr-nav { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 22px; line-height: 1; display: grid; place-items: center; }
+.mr-nav:disabled { opacity: .3; }
+.px-badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: var(--warm-bg); color: var(--warm); vertical-align: middle; }
+.mr-cal { padding: 12px 10px 10px; }
+.mr-cal-dow, .mr-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.mr-cal-dow span { text-align: center; font-size: 11px; color: var(--text-faint); font-weight: 700; }
+.mr-cal-dow { margin-bottom: 4px; }
+.mr-cell { position: relative; aspect-ratio: 1; border-radius: 10px 12px 9px 11px/11px 9px 12px 10px; border: 1.2px dashed var(--border); display: grid; place-items: center; background: var(--surface); box-sizing: border-box; }
+.mr-cell.on { border: 1.2px solid var(--warm-bg); background: var(--warm-bg); }
+.mr-cell.future { opacity: .35; border-style: dotted; }
+.mr-cell i { position: absolute; top: 2px; left: 4px; font-style: normal; font-size: 9.5px; color: var(--text-faint); font-weight: 700; }
+.mr-cell .mr-paw { width: 20px; height: 20px; color: var(--warm); margin-top: 6px; }
+.mr-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--sky, #81abcc); }
+.mr-cell .mr-dot { position: absolute; right: 4px; bottom: 4px; }
+.mr-vet { font-family: var(--font-bubble); font-size: 14px; line-height: 1; color: var(--ink); font-weight: 700; }
+.mr-cell .mr-vet { position: absolute; right: 4px; top: 1px; }
+.mr-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 11.5px; color: var(--text-soft); }
+.mr-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.mr-legend svg { width: 14px; height: 14px; color: var(--warm); }
+.mr-legend .lg-on { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: var(--warm-bg); border: 1px solid var(--warm-bg); }
+.mr-coin { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1.4px solid var(--ink); background: var(--warm-bg); }
+.mr-note { margin-top: 10px; display: grid; gap: 8px; }
+.mr-note-text { margin: 0; font-size: 14.5px; line-height: 1.6; white-space: pre-line; }
+.mr-lock { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 22px 16px; }

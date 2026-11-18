@@ -31,6 +31,7 @@ import Budget from "./screens/Budget";
 import Medications from "./screens/Medications";
 import VetSummary from "./screens/VetSummary";
 import WeeklyReport from "./screens/WeeklyReport";
+import MonthlyReport from "./screens/MonthlyReport";
 import Records from "./screens/Records";
 import { dateAt } from "./services/records";
 import Gallery from "./screens/Gallery";
@@ -68,6 +69,7 @@ const PARENT_TAB = {
   weight: "profile",
   meds: "profile",
   report: "profile",
+  month: "profile", // 한 달 리포트(플러스, 11/18)
   vital: "profile",
 };
 // 세부 화면에서 뒤로 갔을 때(뒤로 버튼·오른쪽 스와이프) 돌아갈 화면
@@ -526,6 +528,7 @@ export default function App() {
         onOpenGallery={() => setTab("gallery")}
         onOpenVet={() => openVet("profile")}
         onOpenReport={() => setTab("report")}
+        onOpenMonth={() => setTab("month")}
         onOpenVital={(m) => (setVitalMetric(m), setTab("vital"))}
         onOpenRecords={(types) => (setRecordsOpts({ types }), setTab("records"))}
         onNewRecord={(type) => (type === "media" ? setTab("gallery") : (setRecordsOpts({ type, back: "profile" }), setTab("records-new")))}
@@ -544,7 +547,8 @@ export default function App() {
     meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("profile"))} />,
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
     vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
-    report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("report")} />,
+    report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("report")} onOpenMonth={() => setTab("month")} />,
+    month: () => <MonthlyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("profile")} onOpenPlus={() => (setTab("profile"), window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } })))} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} onRecord={(type) => (setRecordsOpts({ type, back: "vital" }), setTab("records-new"))} />,
   };
   // 새 기록: 종류 고르기에서 고른 기록이면 뒤로 = 종류 고르기로(복약·성장 추억과 같게, 11/7)

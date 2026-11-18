@@ -35,6 +35,7 @@ export async function fetchStatus(dogId) {
   const ep = await endpoint();
   const q = new URLSearchParams({ petId: dogId, ...(c.token && { token: c.token }), ...(ep && { endpoint: ep }) });
   const s = await call(`/status?${q}`);
+  if (typeof s.plus === "boolean" && Boolean(c.plus) !== s.plus) save(dogId, { plus: s.plus }); // 플러스 여부(services/plus.js가 읽음)
   if (s.job) save(dogId, { job: s.job, ...(["done", "extra-queued", "extra"].includes(s.job.status) && s.job.outputs && { outputs: s.job.outputs }) });
   return s;
 }

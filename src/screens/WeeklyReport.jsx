@@ -35,7 +35,7 @@ function AloneArc({ hours }) {
 }
 
 // 주간 리포트(일요일 밤 알림·프로필에서). 기록된 사실만 숫자로 — 좋다/나쁘다 판단은 하지 않는다.
-export default function WeeklyReport({ dog, onBack, onOpenVet }) {
+export default function WeeklyReport({ dog, onBack, onOpenVet, onOpenMonth }) {
   const r = useMemo(() => buildWeeklyReport(dog), [dog]);
   const symptomDates = new Set(r.symptoms.map((s) => s.date));
   const mealTotal = r.meal.usual + r.meal.less + r.meal.more;
@@ -100,6 +100,9 @@ export default function WeeklyReport({ dog, onBack, onOpenVet }) {
       <button type="button" className="btn-ghost report-btn" style={{ marginTop: 14 }} onClick={onOpenVet}>
         <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록으로 보기
       </button>
+      {onOpenMonth && <button type="button" className="btn-ghost report-btn" style={{ marginTop: 8 }} onClick={onOpenMonth}>
+        <Ico name="calendar" size={18} className="cat-ico tone-rose" /> 한 달 리포트 보기 <span className="px-badge">플러스</span>
+      </button>}
       <p className="faint" style={{ marginTop: 10 }}>적어 둔 기록을 그대로 센 숫자예요. 몸 상태를 판단한 결과가 아니에요.</p>
     </div>
   );

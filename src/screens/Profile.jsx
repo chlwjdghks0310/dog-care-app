@@ -64,7 +64,7 @@ const backupNote = () => (getSyncStatus().user ? "\n\n로그인 중이라 백업
 // 로그인 중이면 강아지마다 내 역할을 확인한다 — 가족으로 들어온 강아지는 "삭제" 대신 "나가기"(다른 가족의 기록은 그대로)
 const roleOf = (id) => (getSyncStatus().user ? myRole(id).catch(() => "unknown") : null); // unknown = 로그인했는데 확인 실패(오프라인 등)
 
-export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onOpenGuide, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
+export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onOpenReport, onOpenMonth, onOpenVital, onOpenRecords, onNewRecord, onOpenWeight, onOpenMeds, onOpenCalendar, onOpenGuide, onUpdateDog, onDeleteCurrent, onDeleteAll, onDogRegistered }) {
   const age = calculateAge(dog.birthDate);
   const [dark, setDarkState] = useState(isDark);
   const [notifPermission, setNotifPermission] = useState(getPermission());
@@ -255,7 +255,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
       <GalleryStrip dog={dog} onOpen={onOpenGallery} />
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
 
-      <HealthServices dog={dog} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} onOpenVital={onOpenVital} />
+      <HealthServices dog={dog} onOpenMeds={onOpenMeds} onOpenVet={onOpenVet} onOpenReport={onOpenReport} onOpenMonth={onOpenMonth} onOpenVital={onOpenVital} />
 
 
       {photoSheet && (
@@ -380,7 +380,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어 플러스">
-              <SettingsRow ico="star" title="멍케어 플러스" sub="플러스 비서 · 월 3,900원(베타 무료)" badge="베타" onClick={() => setSettingsSub("plus")} />
+              <SettingsRow ico="star" title="멍케어 플러스" sub="플러스 비서 · 한 달 리포트 · 캐릭터 · 월 3,900원(베타 무료)" badge="베타" onClick={() => setSettingsSub("plus")} />
               {/* 11/18 사용자: 캐릭터도 유료라 플러스 묶음 아래에 */}
               <SettingsRow ico="video" title="우리 아이 캐릭터" sub={characterOutputs(dog.id) ? `${dog.name} 캐릭터가 홈 화면에 있어요` : "사진으로 만드는 움직이는 캐릭터"} badge={characterOutputs(dog.id) ? "" : "곧 출시"} onClick={() => setSettingsSub("character")} />
             </SettingsGroup>
@@ -414,7 +414,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
             {["account", "family", "theme", "export", "ai", "character", "plus"].includes(settingsSub) && (
               <SettingsSub title={SUB_TITLES[settingsSub]} onBack={() => setSettingsSub(null)}>
                 {settingsSub === "character" && <Character dog={dog} />}
-                {settingsSub === "plus" && <Plus dog={dog} onOpenCharacter={() => setSettingsSub("character")} />}
+                {settingsSub === "plus" && <Plus dog={dog} onOpenCharacter={() => setSettingsSub("character")} onOpenMonth={() => (setSettingsSub(null), onOpenMonth?.())} />}
                 {settingsSub === "account" && <AccountCard />}
                 {settingsSub === "family" && <FamilyShare dog={dog} />}
                 {settingsSub === "theme" && <ThemeCard dark={dark} defaultOpen />}
@@ -643,7 +643,7 @@ const SERVICES = [
   { key: "daily", label: "산책·일상", ico: "walk", tone: "violet", types: ["daily"] },
 ];
 const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
-function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital }) {
+function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenMonth, onOpenVital }) {
   const [more, setMore] = useState(false);
   const [browse, setBrowse] = useState(null); // 보기 편한 기록 창(11/10: 기록 탭으로 넘어가지 않고 여기서 보기만)
   const [tip, help] = useHelpTip("건강 기록", "종류마다 마지막 기록이 한 줄로 보여요. 누르면 그 종류만 모아 볼 수 있어요. 새로 적거나 고치는 건 기록 탭에서 해요.");
@@ -688,6 +688,9 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital 
       </button>
       <button type="button" className="btn-ghost report-btn" style={{ marginTop: 8 }} onClick={onOpenReport}>
         <Ico name="chart" size={18} className="cat-ico tone-violet" /> 이번 주 리포트 — 지난 7일 기록 모아 보기
+      </button>
+      <button type="button" className="btn-ghost report-btn" style={{ marginTop: 8 }} onClick={onOpenMonth}>
+        <Ico name="calendar" size={18} className="cat-ico tone-rose" /> 한 달 리포트 — 달력·체중 곡선·지난달 비교 <span className="px-badge">플러스</span>
       </button>
     </div>
   );
