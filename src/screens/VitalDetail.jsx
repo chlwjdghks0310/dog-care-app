@@ -138,58 +138,6 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight, onRecor
   );
 }
 
-// 탭해서 세기: 정해진 초 동안 누른 횟수 × (60/초) = 1분 값
-function TapCounter({ seconds, how, onResult }) {
-  const [left, setLeft] = useState(null); // null = 대기
-  const [taps, setTaps] = useState(0);
-  const tapsRef = useRef(0);
-  const doneRef = useRef(onResult);
-  doneRef.current = onResult;
-  const running = left != null;
-  // 탭할 때마다 다시 그려져도 1초 간격이 밀리지 않게 시작할 때 한 번만 타이머를 건다
-  useEffect(() => {
-    if (!running) return;
-    const end = Date.now() + seconds * 1000;
-    const t = setInterval(() => {
-      const remain = Math.ceil((end - Date.now()) / 1000);
-      if (remain <= 0) {
-        clearInterval(t);
-        doneRef.current(Math.round(tapsRef.current * (60 / seconds)));
-        setLeft(null);
-      } else setLeft(remain);
-    }, 250);
-    return () => clearInterval(t);
-  }, [running, seconds]);
-
-  if (left == null)
-    return (
-      <div className="vd-counter">
-        <p className="faint" style={{ margin: "0 0 8px" }}>{how}</p>
-        <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={() => ((tapsRef.current = 0), setTaps(0), setLeft(seconds))}>
-          <Ico name="timer" size={17} /> {seconds}초 동안 탭해서 세기
-        </button>
-      </div>
-    );
-  return (
-    <div className="vd-counter">
-      <button
-        type="button"
-        className="vd-tap"
-        onClick={() => {
-          tapsRef.current += 1;
-          setTaps(tapsRef.current);
-        }}
-      >
-        <span className="vd-tap-n">{taps}</span>
-        <span>탭!</span>
-      </button>
-      <p className="subtle" style={{ textAlign: "center", margin: "8px 0 0" }}>
-        {left}초 남음 · <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => setLeft(null)}>그만</button>
-      </p>
-    </div>
-  );
-}
-
 // 기록한 날만 그리는 그래프 — sum은 막대(하루 합계), point는 점과 선. 참고 범위는 옅은 회색 띠(11/18: 초록·경고색은 판정처럼 보여 중립색으로 — 원칙).
 function ValueChart({ rows, kind, unit, metric, range, from, to }) {
   const W = 320;

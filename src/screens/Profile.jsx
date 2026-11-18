@@ -637,7 +637,6 @@ const SERVICES = [
   { key: "eat", label: "식사·배변", ico: "bowl", tone: "rose", types: ["meal", "potty"], add: "meal" },
   { key: "condition", label: "컨디션", ico: "smiley", tone: "violet", types: ["condition"] },
   { key: "daily", label: "산책·일상", ico: "walk", tone: "violet", types: ["daily"] },
-  { key: "report", label: "병원용 기록", ico: "clipboard", tone: "blue" },
 ];
 const MAIN_SERVICES = ["symptom", "meds", "vet", "eat"]; // 처음엔 자주 쓰는 4가지만
 function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital }) {
@@ -651,7 +650,6 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital 
   const subFor = (svc) => {
     if (svc.key === "meds")
       return meds.length === 0 ? "먹는 약이 없어요" : doses.length ? `오늘 ${doses.filter((d) => d.status === "done").length}/${doses.length} 먹였어요${check ? ` · 확인 필요 ${check}` : ""}` : `약 ${new Set(meds.map((m) => m.seriesId)).size}개 · 오늘은 없음`;
-    if (svc.key === "report") return "수의사에게 보여 줄 정리본";
     const last = groupVitalDays(filterTimeline(recs, { types: svc.types }), svc.types)[0];
     return last ? `${md(last.at.slice(0, 10))} · ${summarize(last)}` : "아직 기록이 없어요";
   };
@@ -665,9 +663,9 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenVital 
       {recs.length === 0 && meds.length === 0 && (
         <p className="first-hint">기록 탭 [＋ 새 기록]에서 적거나, 오늘 화면에서 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
       )}
-      {SERVICES.filter((svc) => svc.key !== "report" && (more || MAIN_SERVICES.includes(svc.key))).map((svc) => (
+      {SERVICES.filter((svc) => more || MAIN_SERVICES.includes(svc.key)).map((svc) => (
         <div key={svc.key} className="sv-row">
-          <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : svc.key === "report" ? onOpenVet() : setBrowse({ types: svc.types }))}>
+          <button type="button" className="sv-main" onClick={() => (svc.key === "meds" ? onOpenMeds() : setBrowse({ types: svc.types }))}>
             <span className={`sv-icon tone-${svc.tone}`} aria-hidden="true"><Ico name={svc.ico} size={20} sticker /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <span className="sv-label">{svc.label}</span>
