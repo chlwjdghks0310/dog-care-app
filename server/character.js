@@ -22,7 +22,7 @@ const MAX_REGEN = 2; // 후보 다시 뽑기 횟수(기본 상품 조건)
 // ---- 지시문(손 시험 확정본) ----
 const STYLE = {
   "3d": "a 3D animated feature-film character in the style of modern American CG animal comedies: big round head with oversized expressive glossy eyes, small chubby body, exaggerated cute proportions, soft stylized fur with gentle sculpted clumps (NOT photoreal, NOT a plush toy), a charming closed-mouth smile, bright cheerful three-point lighting, clean plain very light blue-white background, no text, no props, full body sitting facing the camera, centered and filling about 80% of the image height",
-  hand: "a child's picture-diary drawing made with wax crayons and colored pencils on cream drawing paper, exactly like the style reference images: visible crayon strokes and paper grain, slightly wobbly hand-drawn pencil outlines, warm and cute, NOT flat vector, NOT clean digital lines, no text, no sun, no grass, no doodles, no drawn frame or border, full body sitting facing the camera, centered and filling about 80% of the image height",
+  hand: "a child's picture-diary drawing made with wax crayons and colored pencils on cream drawing paper, exactly like the style reference images: visible crayon strokes and paper grain, slightly wobbly hand-drawn pencil outlines, warm and cute, NOT flat vector, NOT clean digital lines, no text, no sun, no grass, no doodles, no drawn frame or border, mouth closed (no tongue out — keeps the mouth still in animation), full body sitting facing the camera, centered and filling about 80% of the image height",
 };
 const IDENTITY = "The first photos are all the SAME real dog. Keep this exact dog's identity: breed, size impression, body shape, ear shape and set, eye color, muzzle (including any grey hairs), and the coat colors EXACTLY as in the photos. If the photos show a solid single-color coat, draw a solid single-color coat — do NOT invent markings, eyebrows, tan points or patches that are not in the photos. Do not change the breed. Do not add collars, leashes, bows, hair clips, clothes or props even if the photos have them.";
 const GREEN = "Redraw this exact image with ONLY one change: replace the entire background with a flat, uniform, pure bright green (#00FF00) chroma-key screen. Keep the character pixel-identical: same pose, size, position, colors, lighting, outline and shadow under it. No green tint or reflection on the character, no text, nothing else.";
@@ -56,12 +56,13 @@ const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.di
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 const nowIso = () => new Date().toISOString();
 
-export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDevices, sendPush, tooMany }) {
+export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDevices, sendPush, tooMany, fakeAi, quiet }) {
   const geminiKey = process.env.CHARACTER_GEMINI_API_KEY || process.env.GEMINI_API_KEY; // 유료 등급 키(사진이 학습에 안 쓰이게)
   const runwayKey = process.env.RUNWAY_API_KEY;
-  const ready = Boolean(dbOk && geminiKey && runwayKey && ffmpegPath);
+  const ready = Boolean(dbOk && (geminiKey || fakeAi) && runwayKey && ffmpegPath);
   const isOpen = () => process.env.CHARACTER_OPEN === "1";
-  const ai = geminiKey ? new GoogleGenAI({ apiKey: geminiKey }) : null;
+  const ai = fakeAi || (geminiKey ? new GoogleGenAI({ apiKey: geminiKey }) : null); // fakeAi: scripts/character-dry.test.mjs(돈 안 쓰는 모의 시험)만
+  if (quiet) console.log = () => {};
   console.log(`[character] ${ready ? "준비됨" : "꺼짐"} (db ${dbOk ? "ok" : "x"} · gemini ${geminiKey ? "ok" : "x"} · runway ${runwayKey ? "ok" : "x"} · ffmpeg ${ffmpegPath ? "ok" : "x"}) · 문 ${isOpen() ? "열림" : "초대 코드만"}`);
 
   // ---- 저장소(Supabase Storage REST) ----
@@ -81,7 +82,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
 
   // ---- 표 ----
   const one = (rows) => (Array.isArray(rows) ? rows[0] : null);
-  const jobsOf = (petId) => db(`character_jobs?pet_id=eq.${encodeURIComponent(petId)}&order=created_at.desc&limit=1`);
+  const jobsOf = (petId) => db(`character_jobs?pet_id=eq.${encodeURIComponent(petId)}&status=neq.ledger&order=created_at.desc&limit=1`);
   const jobById = (id) => db(`character_jobs?id=eq.${encodeURIComponent(id)}`).then(one);
   const update = (id, patch) => db(`character_jobs?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: { ...patch, updated_at: nowIso() } });
   // 이 강아지가 쓴 코드(토큰이 맞을 때만). 멍케어 플러스 코드(MC-PLUS-*)는 캐릭터 + 플러스 비서를 함께 연다(11/17)
@@ -97,9 +98,19 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
     return rows.reduce((s, r) => s + Number(r.cost || 0), 0);
   }
-  // 오늘 쓴 영상 크레딧(메모리 — 서버가 다시 켜지면 0부터; 돈 한도는 위 spentToday가 막는다)
-  let videoDay = "", videoUsed = 0;
-  const videoToday = () => { const d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); if (d !== videoDay) { videoDay = d; videoUsed = 0; } return videoUsed; };
+  // 오늘 쓴 영상 크레딧 장부(11/18): character_jobs에 하루 한 행(status "ledger", pet_id "__ledger__", regen 칸 = 크레딧). 서버가 다시 켜져도 이어진다
+  const kstDate = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const ledgerId = (d) => `00000000-0000-4000-8000-${d.replace(/-/g, "")}0000`.slice(0, 36);
+  async function videoToday() {
+    const row = one(await db(`character_jobs?id=eq.${ledgerId(kstDate())}&select=regen`).catch(() => []));
+    return Number(row?.regen || 0);
+  }
+  async function videoCharge(cr) {
+    const id = ledgerId(kstDate());
+    const cur = await videoToday();
+    if (cur === 0) await db("character_jobs", { method: "POST", prefer: "resolution=ignore-duplicates", body: { id, pet_id: "__ledger__", style: "hand", status: "ledger", step: `영상 크레딧 장부 ${kstDate()}`, regen: 0 } }).catch(() => {});
+    await db(`character_jobs?id=eq.${id}`, { method: "PATCH", body: { regen: cur + cr, updated_at: nowIso() } }).catch(() => {});
+  }
   // 진행도(11/18, 사용자: 발바닥 둘레 원형 게이지): 단계마다 [지금 값, 다음 값, 보통 걸리는 초]. 앱이 updated_at부터 흐른 시간으로 그 사이를 채운다
   function progressOf(j) {
     const s = j.step || "";
@@ -108,7 +119,14 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
       j.status === "queued" ? [0.02, 0.06, 60]
       : j.status === "sheet" ? (m ? [0.06 + 0.2 * Number(m[1]), 0.06 + 0.2 * (Number(m[1]) + 1), 70] : [0.06, 0.26, 70])
       : j.status === "picked" ? [0.02, 0.08, 60]
-      : j.status === "render" ? (/엎드린/.test(s) ? [0.18, 0.28, 45] : /영상 2편/.test(s) ? [0.28, 0.86, 360] : /배경 지우는 중 1/.test(s) ? [0.86, 0.91, 70] : /배경 지우는 중 2/.test(s) ? [0.91, 0.95, 70] : /저장/.test(s) ? [0.95, 0.98, 40] : [0.08, 0.18, 45])
+      : j.status === "render" ? (
+          /엎드린/.test(s) ? [0.18, 0.28, 45]
+          : /기다리기 영상을 만드는/.test(s) ? [0.28, 0.56, 240]
+          : /기다리기 영상 배경/.test(s) ? [0.56, 0.62, 60]
+          : /고민 중 영상을 만드는/.test(s) ? [0.62, 0.9, 240]
+          : /고민 중 영상 배경/.test(s) ? [0.9, 0.95, 60]
+          : /저장/.test(s) ? [0.95, 0.98, 40]
+          : [0.08, 0.18, 45])
       : j.status === "extra-queued" ? [0.02, 0.1, 60]
       : j.status === "extra" ? [0.1, 0.92, 300]
       : null;
@@ -211,7 +229,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const j = await jobById(req.params.id).catch(() => null);
     if (!j || !(await hasAccess(j.pet_id, req.body?.token))) return bad(res, 404, "없어요");
     if (j.status !== "failed" || !j.picked || !(j.candidates || []).length) return bad(res, 409, "영상 단계만 다시 할 수 있는 작업이 아니에요");
-    await update(j.id, { status: "picked", error: null, step: "순서를 기다리는 중" });
+    const retries = Number(j.outputs?.retries || 0);
+    if (retries >= 2) return bad(res, 409, "다시 만들기는 2번까지예요. 운영자(의견 보내기)에게 알려 주시면 확인할게요");
+    await update(j.id, { status: "picked", error: null, step: "순서를 기다리는 중", outputs: { ...(j.outputs || {}), retries: retries + 1 } });
     res.json({ job: view(await jobById(j.id)) });
     setTimeout(tick, 500);
   });
@@ -267,21 +287,28 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   async function runwayCredits() {
     try { const r = await fetch(`${RUNWAY}/v1/organization`, { headers: RUNWAY_H(), signal: AbortSignal.timeout(10000) }); const j = await r.json(); return Number(j.creditBalance ?? -1); } catch { return -1; }
   }
-  async function runway(jpegBuf, promptText, duration, addCost) {
-    if (videoToday() + duration * 9 > VIDEO_DAILY_CR) throw Object.assign(new Error(`오늘 영상 한도(${VIDEO_DAILY_CR}크레딧)에 닿았어요. 내일 이어서 만들어요`), { wait: true });
-    videoUsed += duration * 9;
+  // resume: 요청 직후 Runway 작업 번호를 DB에 적어 두고(set), 다시 시작할 땐 새로 요청하지 않고 그 번호의 결과를 받는다(get) — 청구됐는데 결과를 잃는 일 방지(11/18)
+  async function runway(jpegBuf, promptText, duration, addCost, resume) {
     const H = RUNWAY_H();
-    const uri = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
-    const r = await fetch(`${RUNWAY}/v1/image_to_video`, { method: "POST", headers: H, body: JSON.stringify({ model: "kling3.0_standard", ratio: "960:960", duration, audio: false, promptImage: [{ uri, position: "first" }, { uri, position: "last" }], promptText }) });
-    const t = await r.json();
-    if (!r.ok || !t.id) throw new Error(`영상 요청 실패 ${r.status}`);
-    for (let i = 0; i < 72; i++) { // 최대 6분, 5초 간격
-      await new Promise((ok) => setTimeout(ok, 5000));
-      const s = await (await fetch(`${RUNWAY}/v1/tasks/${t.id}`, { headers: H })).json();
+    let taskId = resume?.get?.() || null;
+    if (!taskId) {
+      if ((await videoToday()) + duration * 9 > VIDEO_DAILY_CR) throw Object.assign(new Error(`오늘 영상 한도(${VIDEO_DAILY_CR}크레딧)에 닿았어요. 내일 이어서 만들어요`), { wait: true });
+      const uri = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
+      const r = await fetch(`${RUNWAY}/v1/image_to_video`, { method: "POST", headers: H, body: JSON.stringify({ model: "kling3.0_standard", ratio: "960:960", duration, audio: false, promptImage: [{ uri, position: "first" }, { uri, position: "last" }], promptText }) });
+      const t = await r.json();
+      if (!r.ok || !t.id) throw new Error(`영상 요청 실패 ${r.status}`);
+      taskId = t.id;
+      await videoCharge(duration * 9);
+      await resume?.set?.(taskId);
+    } else console.log("[character] Runway 작업 이어받기", taskId);
+    for (let i = 0; i < 96; i++) { // 최대 8분, 5초 간격(모의 시험은 CHARACTER_POLL_MS로 짧게)
+      await new Promise((ok) => setTimeout(ok, Number(process.env.CHARACTER_POLL_MS || 5000)));
+      const s = await (await fetch(`${RUNWAY}/v1/tasks/${taskId}`, { headers: H })).json();
+      if (s.status === "FAILED" && /not found|404/i.test(JSON.stringify(s))) { await resume?.set?.(null); throw new Error("영상 작업을 찾지 못했어요"); }
       if (s.status === "SUCCEEDED") { await addCost((s.cost?.credits ?? duration * 9) / 100); return Buffer.from(await (await fetch(s.output[0])).arrayBuffer()); }
-      if (["FAILED", "CANCELLED"].includes(s.status)) throw new Error(`영상 실패: ${s.failureCode || s.status}`);
+      if (["FAILED", "CANCELLED"].includes(s.status)) { await resume?.set?.(null); throw new Error(`영상 실패: ${s.failureCode || s.status}`); }
     }
-    throw new Error("영상이 6분 넘게 안 끝났어요");
+    throw new Error("영상이 8분 넘게 안 끝났어요");
   }
   // 초록 빼기 → 720px stacked(위 색·아래 알파) mp4. 포스터는 첫 프레임 투명 PNG 512px
   // 끝의 format=rgba: ffmpeg 6.0(ffmpeg-static)은 scale 뒤에 알파를 떨어뜨려 alphaextract가 "Requested planes not available"로 죽는다(11/17 첫 서버 시험)
@@ -323,11 +350,11 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const refs = await styleRefs(j.style);
     const refNote = refs.length ? `The last ${refs.length} images are STYLE references only (not this dog): copy their art style, line quality, colors and background, not their subject or breed.\n\nDraw this dog as a character in that style: ` : "Draw this dog as a character: ";
     const prompt = `${IDENTITY}\n\n${refNote}${STYLE[j.style]}. One character only, square image.`;
-    const out = [];
-    for (let i = 1; i <= 4; i++) {
+    const out = (j.candidates || []).filter((c) => c.includes(`/cand-${j.regen || 0}-`)); // 다시 시작하면 만든 장수부터
+    for (let i = out.length + 1; i <= 4; i++) {
       const buf = await gen([...photos, ...refs, { text: prompt + (i > 1 ? ` Variation ${i}: a slightly different but equally faithful interpretation.` : "") }], bump);
       out.push(await put("character-public", `${j.id}/cand-${j.regen || 0}-${i}.png`, buf, "image/png"));
-      await update(j.id, { step: `설정화 후보 ${i}/4 완성` });
+      await update(j.id, { candidates: out, step: `설정화 후보 ${i}/4 완성` });
     }
     await update(j.id, { status: "pick", candidates: out, step: "후보 4장이 나왔어요. 하나 골라 주세요" });
     await notify(j.endpoint, "🐾 캐릭터 후보가 나왔어요", "4장 중 가장 닮은 아이를 골라 주세요");
@@ -367,7 +394,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
           return;
         }
         await update(j.id, { step: `${label} 영상을 만드는 중 (${DURATION[j.style][kind]}초, 3~5분)` });
-        const raw = await runway(await toJpeg(png, path.join(tmp, kind)), motion(j.style, kind), DURATION[j.style][kind], bump);
+        made.tasks = made.tasks || {};
+        const resume = { get: () => made.tasks[kind] || null, set: async (id) => { made.tasks[kind] = id; await savePartial(); } };
+        const raw = await runway(await toJpeg(png, path.join(tmp, kind)), motion(j.style, kind), DURATION[j.style][kind], bump, resume);
         await update(j.id, { step: `${label} 영상 배경 지우는 중` });
         const mp4 = await keyVideo(raw, path.join(tmp, kind));
         made[kind] = publicUrl(await put("character-public", `${base}-${kind}.mp4`, mp4, "video/mp4"));
@@ -394,10 +423,11 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
       await update(j.id, { status: "extra", step: `"${ex.label}" 동작을 만드는 중 (5~8분)` });
       const basePng = Buffer.from(await (await fetch(j.outputs[ex.base])).arrayBuffer());
       const jpg = await toJpeg(basePng, path.join(tmp, kind));
-      const raw = await runway(jpg, motion(j.style, kind), 5, bump);
+      const resume = { get: () => j.outputs.extraTask || null, set: async (id) => { j.outputs.extraTask = id; await update(j.id, { outputs: { ...j.outputs } }); } };
+      const raw = await runway(jpg, motion(j.style, kind), 5, bump, resume);
       const mp4 = await keyVideo(raw, path.join(tmp, kind));
       const url = publicUrl(await put("character-public", `${j.id}/v${j.regen || 0}-${j.picked}-${kind}.mp4`, mp4, "video/mp4"));
-      const { pendingExtra, ...rest } = j.outputs; void pendingExtra;
+      const { pendingExtra, extraTask, ...rest } = j.outputs; void pendingExtra; void extraTask;
       const outputs = { ...rest, extras: { ...(rest.extras || {}), [kind]: url } };
       await update(j.id, { status: "done", outputs, step: "완성!" });
       await notify(j.endpoint, `🐾 "${ex.label}" 동작이 생겼어요`, "홈 화면에서 상황에 맞춰 움직여요");
@@ -464,9 +494,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
       busy = false;
     }
   }
-  if (ready) setInterval(tick, 20_000).unref();
+  if (ready && !quiet) setInterval(tick, 20_000).unref();
   // 선물 코드·멍케어 플러스 코드 등록(이미 있으면 건드리지 않음). 플러스 코드 = 플러스 비서(하루 50번·긴 답) + 캐릭터 만들기
   const PLUS_CODES = ["MC-PLUS-A7KQ", "MC-PLUS-B3ZM", "MC-PLUS-C9RX", "MC-PLUS-D2WH", "MC-PLUS-E6NT"];
   if (dbOk) db("character_invites", { method: "POST", prefer: "resolution=ignore-duplicates", body: [...Object.entries(PRESETS).map(([code, p]) => ({ code, note: p.note, max_uses: 3 })), ...PLUS_CODES.map((code) => ({ code, note: "멍케어 플러스(베타)", max_uses: 3 }))] }).catch((e) => console.error("[character] 코드 등록:", e.message));
-  return { tick, accessCode, isPlusCode };
+  return { tick, accessCode, isPlusCode, recoverStale };
 }
