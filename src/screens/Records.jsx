@@ -7,6 +7,7 @@ import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
 import RecordsBrowser from "../components/RecordsBrowser";
+import { SymptomTimeline } from "../components/Pieces";
 import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotals } from "../services/records";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
@@ -102,7 +103,8 @@ function Trends({ dog, items, onAdd, onPick }) {
   const prev = weights.at(-2);
   const symptoms = inPeriod.filter((r) => r.type === "symptom");
   const kindCount = {};
-  for (const s of symptoms) for (const k of s.data?.kinds || []) (kindCount[k] ||= []).push(md(s.at.slice(0, 10)));
+  for (const s of symptoms) for (const k of s.data?.kinds || []) (kindCount[k] ||= []).push(s.at.slice(0, 10)); // 날짜 키 그대로(타임라인·글자 둘 다 씀)
+  const fromKey = toDateKey(addDays(new Date(`${todayKey()}T00:00:00`), -(days - 1)));
   const observed = inPeriod.filter((r) => r.source === "record").length;
 
   return (
@@ -140,9 +142,13 @@ function Trends({ dog, items, onAdd, onPick }) {
         {symptoms.length === 0 ? (
           <p className="subtle" style={{ margin: 0 }}>최근 {days}일 기록된 증상이 없습니다.</p>
         ) : (
-          Object.entries(kindCount).map(([k, dates]) => (
-            <div key={k} className="vet-line">{k} {dates.length}번 <span className="faint">({dates.join(", ")})</span></div>
-          ))
+          <>
+            {/* 11/18 그림화: 기간 축 위에 그날 점(색 하나) — "언제 몰렸나"가 보이게. 숫자는 아래 줄에 */}
+            <SymptomTimeline rows={Object.entries(kindCount).slice(0, 5).map(([k, dates]) => ({ label: k, dates }))} from={fromKey} to={todayKey()} />
+            {Object.entries(kindCount).map(([k, dates]) => (
+              <div key={k} className="vet-line">{k} {dates.length}번 <span className="faint">({dates.map(md).join(", ")})</span></div>
+            ))}
+          </>
         )}
       </section>
 

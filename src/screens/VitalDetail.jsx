@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { todayKey, toDateKey, addDays } from "../utils/date";
+import { WaterCup } from "../components/Pieces";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
 import { VITAL_TIPS } from "../data/vitalTips";
 import InfoAccordionItem from "../components/InfoAccordion";
@@ -54,9 +55,12 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight, onRecor
       <div className="card vd-now">
         <div className="faint">{def.kind === "sum" ? "오늘 합계" : latest ? `최근 · ${md(latest.at.slice(0, 10))} ${latest.at.slice(11)}` : "최근"}</div>
         {headline != null ? (
-          <div className="vd-big">
-            {fmtValue(metric, headline)}
-            <span className="vd-unit">{unit}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {metric === "water" && <WaterCup today={headline} avg={avg7 || 0} size={56} />}
+            <div className="vd-big">
+              {fmtValue(metric, headline)}
+              <span className="vd-unit">{unit}</span>
+            </div>
           </div>
         ) : (
           <div className="vd-none">{def.kind === "sum" ? "오늘은 아직 기록이 없어요" : "아직 기록이 없어요"}</div>

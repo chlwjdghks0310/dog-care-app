@@ -86,7 +86,9 @@ export function BackCheckSheet({ dog, alone, onClose }) {
 export function dailySummaryLines(dogId, today = todayKey()) {
   const d = getDay(dogId, today);
   if (!d || d.status === "unknown") return []; // '기억 안 나요'엔 picks가 없다
-  const lines = [["check", "teal", d.status === "usual" ? `오늘은 평소와 같았어 · 이번 달 ${daysThisMonth(dogId, today)}일째 함께 봤어` : `오늘 다른 점: ${Object.entries(d.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}`]];
+  // "이번 달 N일째"는 말풍선 아래 스탬프 노트(components/Pieces WeekStamps)가 그림으로 보여 준다(11/18)
+  const lines = [["check", "teal", d.status === "usual" ? "오늘은 평소와 같았어" : `오늘 다른 점: ${Object.entries(d.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ")}`]];
+  void daysThisMonth;
   for (const r of runsOf(dogId, today).filter((x) => !["meal", "stool"].includes(x.item.id))) lines.push(["alert", "rose", `${r.item.label} 평소와 다른 날 ${r.days}일째 · 병원용 기록에 모여 있어`]);
   return lines;
 }

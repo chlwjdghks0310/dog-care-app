@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { todayKey } from "../utils/date";
+import { FoodJar } from "../components/Pieces";
 import { formatAge } from "../utils/age";
 import { RoutineSheet } from "../components/OutingCard";
 import Ico from "../components/Ico";
@@ -58,8 +59,8 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
       {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
 
       {food && food.daysLeft <= 7 && (
-        <button type="button" className="food-alert" onClick={onOpenFeeding}>
-          <Ico name="bowl" size={18} />
+        <button type="button" className="food-alert" onClick={onOpenFeeding} style={{ alignItems: "center", gap: 12 }}>
+          <FoodJar stock={food} size={44} ticks={false} />
           <span><b>{stockLabel(food)}</b> {food.daysLeft > 0 ? "· 지금 주문하면 넉넉해요" : "· 새 봉투를 뜯었으면 눌러서 알려 주세요"}</span>
         </button>
       )}

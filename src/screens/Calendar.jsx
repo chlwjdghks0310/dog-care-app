@@ -1,3 +1,4 @@
+import { RingStat } from "../components/Pieces";
 import { useEffect, useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
 import { todayKey, toDateKey, formatKoreanDate, addDays } from "../utils/date";
@@ -142,7 +143,10 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
                     </span>
                   )}
                 </span>
-                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`}>{dDay(today, o.date)}</span>
+                <span className={`up-dday${dDay(today, o.date) === "오늘" ? " today" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <RingStat pct={1 - Math.min(30, Math.max(0, (new Date(`${o.date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000)) / 30} size={26} stroke={3.5}>{k && <Ico name={k.ico} size={12} sticker />}</RingStat>
+                  {dDay(today, o.date)}
+                </span>
               </button>
             );
           })}

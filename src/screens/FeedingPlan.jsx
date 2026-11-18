@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
+import { FoodJar, Spoons } from "../components/Pieces";
 import { getFeedingPlan, SOAK_WATER_TEMP, SOAK_DURATION } from "../data/feedingGuide";
 import { getFeedingSettings, saveFeedingSettings } from "../services/feedingSettings";
 import { josa } from "../utils/text";
@@ -147,12 +148,18 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="h2">급여 계획</div>
-        <p className="subtle">
-          하루 총 급여량: <strong>{plan.dailyGrams}g</strong> (약 {plan.dailyKcal}kcal), 하루 {plan.mealsPerDay}끼 기준
-        </p>
-        <p className="subtle">
-          한 끼: <strong>{plan.gramsPerMeal}g</strong> (약 {plan.tablespoonsPerMeal}큰술)
-        </p>
+        {/* 11/18 그림화: 그릇 + 한 끼 g, 큰술은 계량숟가락 그림 개수로 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "4px 0 8px" }}>
+          <img src="/pieces/bowl.png" alt="" style={{ width: 72, flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div className="wr-num" style={{ fontSize: 28 }}>한 끼 {plan.gramsPerMeal}g</div>
+            <div className="subtle" style={{ margin: 0 }}>하루 {plan.mealsPerDay}끼 · {plan.dailyGrams}g · 약 {plan.dailyKcal}kcal</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+          <Spoons n={plan.tablespoonsPerMeal} size={48} />
+          <span style={{ fontFamily: "var(--font-bubble)", fontSize: 18, color: "var(--ink)" }}>= 밥숟가락 {plan.tablespoonsPerMeal}개</span>
+        </div>
         {plan.usedDefaultKcal && (
           <p className="faint">사료 열량을 직접 입력하지 않아 평균치로 계산했어요. 실제 제품 급여 가이드와 비교해보세요.</p>
         )}
@@ -165,9 +172,13 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }
       <div className="section">
         <div className="h2"><Ico name="bowl" size={18} /> 사료 남은 양</div>
         {stock ? (
-          <p style={{ margin: "4px 0 6px", fontSize: 16 }}>
-            <b>{stockLabel(stock)}</b> <span className="subtle">({Number(stock.runOut.slice(5, 7))}/{Number(stock.runOut.slice(8, 10))}쯤 · 하루 {stock.dailyGrams}g 기준)</span>
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "6px 0 10px" }}>
+            <FoodJar stock={stock} size={92} />
+            <div style={{ minWidth: 0 }}>
+              <div className="wr-num" style={{ fontSize: 28 }}>{stock.daysLeft > 0 ? `${stock.daysLeft}일분` : "다 떨어졌어요"}</div>
+              <div className="subtle" style={{ margin: 0 }}>하루 {stock.dailyGrams}g씩 줄어요 · {Number(stock.runOut.slice(5, 7))}/{Number(stock.runOut.slice(8, 10))}쯤 비어요</div>
+            </div>
+          </div>
         ) : (
           <p className="subtle">새 봉투를 뜯을 때 무게를 알려 주면, 떨어지기 5일 전 점심에 알려 드려요.</p>
         )}

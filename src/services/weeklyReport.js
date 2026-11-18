@@ -16,8 +16,10 @@ export function buildWeeklyReport(dog, today = todayKey()) {
   const dayOf = (r) => r.at.slice(0, 10);
 
   const walkRecs = recs.filter((r) => (r.type === "vital" && r.data?.metric === "walk") || (r.type === "daily" && r.data?.kind === "산책"));
+  const walkDates = [...new Set(walkRecs.map(dayOf))].sort(); // 요일 칸에 발도장(11/18 그림화)
   const walk = {
-    days: new Set(walkRecs.map(dayOf)).size,
+    days: walkDates.length,
+    dates: walkDates,
     minutes: walkRecs.reduce((s, r) => s + (Number(r.type === "vital" ? r.data.value : r.data.minutes) || 0), 0),
   };
   const meals = recs.filter((r) => r.type === "meal" && r.data?.appetite);
@@ -42,7 +44,8 @@ export function buildWeeklyReport(dog, today = todayKey()) {
 
   const next = getOccurrences(dog.id, key(today, 1), key(today, 7)).filter((o) => o.isStart).map((o) => ({ date: o.date, title: o.event.title, time: o.event.time }));
   const records = recs.length + ws.filter((w) => inWeek(w.measuredAt)).length;
-  return { from, to: today, records, walk, meal, looseDays, symptoms, weight, checklist: { done, total }, next, food: getFoodStock(dog, today), alone: aloneSummary(from, key(today, -1)) }; // 혼자 있던 시간은 끝난 날(어제까지)만
+  const dates = Array.from({ length: 7 }, (_, i) => key(from, i)); // 이번 주 7일(그림 칸 순서)
+  return { from, to: today, dates, records, walk, meal, looseDays, symptoms, weight, checklist: { done, total }, next, food: getFoodStock(dog, today), alone: aloneSummary(from, key(today, -1)) }; // 혼자 있던 시간은 끝난 날(어제까지)만
 }
 
 // 일요일 밤 리포트 알림 시각(고정) — 바꾸려면 여기만

@@ -28,6 +28,7 @@
   --warm: #bb5a1a; /* 아이콘·버튼 바탕용 — 흰 글자 4.57:1, 흰 바탕 위 아이콘 4.57:1(11/9 대비 확인) */
   --warm-strong: #9c4f1b; /* 작은 글자용(흰 바탕 6.3:1) */
   --warm-bg: #fdeee2;
+  --sky: #81abcc; --ink: #47392e; /* 숫자→그림 조각(components/Pieces.jsx) */
   --danger-bg: #fbeae6;
   --warning: #c98a2e;
   --warning-bg: #faf0dd;
@@ -86,6 +87,7 @@
   --warm: #f2a46f;
   --warm-strong: #f7bf93;
   --warm-bg: #3a281c;
+  --sky: #7d9bb8; --ink: #ddd5c9;
   color-scheme: dark;
 }
 
@@ -1885,3 +1887,33 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 @keyframes pawp-bump { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
 .pawp.bump { animation: pawp-bump .45s ease-out; }
 .pawp-bump-host.bump .pawp { animation: pawp-bump .45s ease-out; }
+
+/* 숫자를 그림으로(components/Pieces.jsx, 11/18) */
+.stamps { display: block; position: relative; margin: 6px 0 2px; padding: 10px 10px 8px; border: 1.4px solid var(--ink); border-radius: 12px 16px 10px 14px/14px 10px 16px 12px; background: var(--surface) repeating-linear-gradient(0deg, transparent 0 21px, var(--border) 21px 22px); text-align: left; }
+.stamps-tape { position: absolute; top: -11px; right: 12px; width: 64px; transform: rotate(6deg); pointer-events: none; }
+.stamps-ttl { display: block; font-family: var(--font-bubble); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0 0 4px 2px; padding-right: 70px; line-height: 1.1; }
+.stamps-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.stamp-day { display: grid; justify-items: center; gap: 2px; }
+.stamp-day.future { opacity: .45; }
+.stamp-slot { width: 32px; height: 32px; border-radius: 50%; border: 1.4px dashed var(--border); background: var(--surface); display: grid; place-items: center; box-sizing: border-box; }
+.stamp-slot.on { border: 1.4px solid var(--warm-bg); background: var(--warm-bg); }
+.stamp-slot svg { width: 21px; height: 21px; color: var(--warm); display: block; }
+.stamp-slot.today { border: 1.4px dashed var(--warm); animation: stamp-beckon 1.6s ease-in-out infinite; }
+.stamp-slot.today.stamped { border: 1.4px solid var(--warm); animation: stamp-press .5s ease-out both; }
+.stamp-slot.today.stamped svg { animation: stamp-in .45s cubic-bezier(.2,.9,.3,1.3) both; }
+.stamp-lab { font-size: 10.5px; color: var(--text-faint); } .stamp-lab.today { color: var(--warm); font-weight: 800; }
+.stamps-ft { display: block; margin-top: 6px; font-size: 12px; color: var(--text-faint); } .stamps-ft b { font-family: var(--font-bubble); font-size: 16px; color: var(--ink); }
+@keyframes stamp-beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes stamp-in { 0% { transform: scale(2.2) rotate(-16deg); opacity: 0; } 60% { transform: scale(.9) rotate(2deg); opacity: 1; } 80% { transform: scale(1.04) rotate(-1deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes stamp-press { 0% { box-shadow: none; } 40% { box-shadow: 0 0 0 3px var(--warm-bg); } 100% { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .stamp-slot.today, .stamp-slot.today.stamped, .stamp-slot.today.stamped svg { animation: none; } }
+.jar { position: relative; display: inline-block; flex-shrink: 0; }
+.jar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: clip-path .8s ease; }
+.jar-ticks { position: absolute; left: 100%; top: 0; bottom: 0; width: 70px; font-size: 10.5px; color: var(--text-faint); }
+.jar-ticks i { position: absolute; left: 0; transform: translateY(-50%); display: flex; align-items: center; gap: 4px; white-space: nowrap; font-style: normal; }
+.jar-ticks i::before { content: ""; width: 9px; height: 1.3px; background: var(--ink); display: inline-block; }
+.spoons { display: inline-flex; gap: 2px; align-items: flex-end; flex-wrap: wrap; } .spoons img { height: auto; display: block; }
+.cup { position: relative; display: inline-block; flex-shrink: 0; } .cup img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: clip-path .8s ease; }
+.cup-avg { position: absolute; left: 16%; right: 16%; border-top: 1.5px dashed var(--ink); opacity: .7; }
+.ringstat { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; } .ringstat svg { position: absolute; inset: 0; } .ringstat-in { position: relative; display: grid; place-items: center; }
+.wr-viz { display: block; margin: 2px 0; } .wr-num { font-family: var(--font-bubble); font-size: 24px; line-height: .95; font-weight: 700; color: var(--ink); } .wr-num small { font-family: inherit; font-size: 15px; color: var(--text-soft); font-weight: 400; }

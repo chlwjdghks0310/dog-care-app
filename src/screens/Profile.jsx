@@ -40,6 +40,7 @@ import DogRegister from "./DogRegister";
 import Character from "./Character";
 import Plus from "./Plus";
 import { characterOutputs } from "../services/character";
+import { RingStat, GrowthRuler } from "../components/Pieces";
 import { getSyncStatus, onSyncStatus } from "../services/sync";
 import { isTrackingOff, setTrackingOff } from "../services/analytics";
 import { supabase } from "../services/supabase";
@@ -213,6 +214,8 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               {dog.weight ? <span className="chip quiet">{dog.weight}kg</span> : null}
               {dog.neutered && <span className="chip quiet">중성화</span>}
             </div>
+            {/* 11/18 그림화: 함께한 날을 다음 기념일(100일·1년·생일)까지 차는 자로 */}
+            {togetherDays(dog) > 0 && <div style={{ margin: "8px 0 2px" }}><GrowthRuler days={togetherDays(dog)} startLabel={dog.adoptionDate ? `입양 ${md(dog.adoptionDate)}` : `태어난 날`} /></div>}
             <FamilyBadge dogId={dog.id} />
           </div>
 
@@ -615,9 +618,9 @@ function MedsTile({ dog, today, onOpen, editing, on, onToggle }) {
         {editing && <span className="vt-check" aria-hidden="true">{on ? "✓" : ""}</span>}
       </span>
       {doses.length ? (
-        <span className="vt-value">
-          {done}/{doses.length}
-          <span className="vt-unit">회</span>
+        <span className="vt-value" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <RingStat pct={done / doses.length} size={30} stroke={4}><Ico name="pill" size={13} sticker /></RingStat>
+          <span>{done}/{doses.length}<span className="vt-unit">회</span></span>
         </span>
       ) : hasMeds ? (
         <span className="vt-value">—</span>

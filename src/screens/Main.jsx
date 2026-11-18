@@ -35,6 +35,8 @@ import { characterOutputs, getCharacter, refreshJob, isWorking } from "../servic
 import PawProgress, { usePercent } from "../components/PawProgress";
 const Pct = ({ progress }) => `${usePercent(progress)}%`;
 import { getFeedingSettings } from "../services/feedingSettings";
+import { WeekStamps } from "../components/Pieces";
+import { getDay } from "../services/dailyCheck";
 
 // 첫 화면 = 말로 기록하기(2026-11, AI 질문 답변은 끝냄). 보호자가 한 말 → 가장 가벼운 AI가 기록으로 바꿈 → 앱이 확인 후 저장.
 // 질문이면 AI를 부르지 않고, 응급 단어면 응급 카드, 아니면 우리 정보 카드·가이드북에서 찾아 보여 준다(src/services/infoSearch.js).
@@ -625,6 +627,8 @@ function TodaySummary({ dog, onOpen, outing }) {
   const food = getFoodStock(dog);
   if (food && food.daysLeft <= 5) lines.push(["bowl", "rose", stockLabel(food)]);
   if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
+  const todayCheck = getDay(dog.id, todayKey());
+  const checkedToday = Boolean(todayCheck && todayCheck.status !== "unknown"); // 체크한 날엔 이번 주 스탬프 노트(발도장)
   return (
     <span className="summary">
       <span className="summary-open">
@@ -642,6 +646,7 @@ function TodaySummary({ dog, onOpen, outing }) {
       ) : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
+      {checkedToday && <WeekStamps dogId={dog.id} />}
       <HomeRow dog={dog} onOpen={onOpen} outing={outing} />
     </span>
   );
