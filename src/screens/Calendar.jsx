@@ -101,6 +101,20 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         <div className="h1" style={{ margin: 0 }}>병원</div>
         <button type="button" className="btn-primary small" onClick={() => setSheet({ start: selectedDateKey < today ? today : selectedDateKey })}>＋ 일정</button>
       </div>
+      {/* 11/18 병원용 기록 앞세우기(Gemini 점검 → 사용자 결정): 작은 타일 대신 맨 위 큰 카드. 다음 병원 일정이 있으면 그 D-day를 머리에 */}
+      {(() => { const nv = upcoming.find((o) => isVisitEvent(o.event)); return (
+        <button type="button" className="care-guide vet-front" onClick={onOpenVet}>
+          <span className="care-guide-top">
+            <span className="care-guide-ico"><Ico name="clipboard" size={34} sticker /></span>
+            <span className="care-guide-text">
+              <span className="care-guide-sub">{nv ? `${nv.event.title} ${dDay(today, nv.date)} · 가기 전에` : "병원 가기 전에"}</span>
+              <span className="care-guide-title">병원용 기록 한 장</span>
+              <span className="care-guide-desc">밥·변·컨디션·먹는 약·체중을 수의사가 바로 읽게 정리해요. 진료실에서 보여 주거나 읽어 주면 돼요.</span>
+            </span>
+          </span>
+          <span className="care-guide-foot"><span className="faint">지금 증상·언제부터도 적을 수 있어요</span><span className="care-guide-go">보여 주기 ›</span></span>
+        </button>
+      ); })()}
       <div className="quick-actions" style={{ marginBottom: 14 }}>{/* 11/14: 색 상자 제거(사용자), 기록 타일과 같은 흰 타일 + 스티커 */}
         <button className="quick-tile" onClick={() => setDocOpen(true)}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="camera" size={24} sticker /></span>
@@ -109,10 +123,6 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
         <button className="quick-tile" onClick={onOpenHealth}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="scan" size={24} sticker /></span>
           <span className="quick-tile-label">건강 체크</span>
-        </button>
-        <button className="quick-tile" onClick={onOpenVet}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="clipboard" size={24} sticker /></span>
-          <span className="quick-tile-label">병원용 기록</span>
         </button>
       </div>
 

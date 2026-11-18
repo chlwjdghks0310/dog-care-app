@@ -58,7 +58,8 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   const [typing, setTyping] = useState(false); // 입력창에 포커스 — 예시 문장을 이때만 펼친다(11/9)
   const [hop, setHop] = useState(false); // 하루 체크를 끝내면 강아지가 폴짝(모션 6곳 중 하나, 11/9)
   const hopNow = () => (setHop(true), setTimeout(() => setHop(false), 1100));
-  const [stampMoment, setStampMoment] = useState(false); // 하루 체크 끝 → 어두운 배경 위 스탬프 노트(도장 "쿵") 한 번
+  const [stampMoment, setStampMoment] = useState(false);
+  const [vetPreview, setVetPreview] = useState(false); // 첫 걸음 ① 병원용 기록 미리 보기(예시로 채운 한 장) // 하루 체크 끝 → 어두운 배경 위 스탬프 노트(도장 "쿵") 한 번
   const inputRef = useRef("");
   const inputElRef = useRef(null);
   // 입력칸은 글이 길어지면 5줄까지 늘어난다
@@ -340,7 +341,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
                 dog={dog}
                 onWeight={onOpenWeight}
                 onUsual={() => setUsualOpen(true)}
-                onVet={onOpenVet}
+                onVet={() => setVetPreview(true)}
                 onLater={() => (markFirstSteps(dog.id, { dismissed: true }), refresh((n) => n + 1))}
               />
             </SpeechBubble>
@@ -389,6 +390,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       </div>
 
       {stampMoment && <StampMoment dogId={dog.id} onDone={() => setStampMoment(false)} />}
+      {vetPreview && <VetPreviewSheet dog={dog} onClose={() => (markFirstSteps(dog.id, { vet: true }), setVetPreview(false), refresh((n) => n + 1))} onOpenVet={() => (markFirstSteps(dog.id, { vet: true }), setVetPreview(false), onOpenVet())} />}
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}
 
@@ -652,14 +654,51 @@ function TodaySummary({ dog, onOpen, outing }) {
   );
 }
 
+// 첫 걸음 ① 병원용 기록 미리 보기: 기록이 없는 첫날엔 진짜 화면이 "기록 없음"뿐이라, 예시 강아지로 채운 한 장을 먼저 보여 준다(11/18)
+function VetPreviewSheet({ dog, onClose, onOpenVet }) {
+  const secs = [
+    ["보호자 메모", ["지금 보이는 증상: 구토 · 그저께 아침부터", "여쭤볼 것: 공복 구토가 이어지면 밥 시간을 바꿔야 할까요?"], true],
+    ["증상 기록 (최근 30일)", ["11/16 07:40 구토 · 아침 공복에 노란 거품, 그 뒤 밥은 먹음", "11/17 06:50 구토 · 양 적음"]],
+    ["체중", ["최근: 2.4kg (11/17)", "변화: 10/19 2.5kg → 2.4kg (-0.1kg)"]],
+    ["식사·배변·컨디션 (하루 체크, 최근 30일)", ["평소 26일 · 다른 날 4일(밥 2, 변 2)", "식욕: 평소보다 적음 2번(11/16, 11/17)", "대변: 무름 1번(11/16)"]],
+    ["먹는 약", ["심장사상충 예방약 · 매달 1일 · 마지막 11/1"]],
+  ];
+  return createPortal(
+    <div className="es-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="es-sheet" role="dialog" aria-label="병원용 기록 미리 보기">
+        <div className="es-top">
+          <button type="button" className="es-x" aria-label="닫기" onClick={onClose}>✕</button>
+          <div className="es-title">병원 갈 때 이 한 장을 보여 줘요</div>
+          <span style={{ width: 36 }} />
+        </div>
+        <div className="es-scroll" style={{ padding: "4px 16px 20px" }}>
+          <p className="subtle" style={{ margin: "0 0 10px" }}>하루 체크와 기록이 모여 이렇게 정리돼요. 아래는 <b>예시 강아지</b>의 기록이에요.</p>
+          <div className="card vet-doc">
+            <div className="vet-doc-head"><span>보리 병원용 기록</span><span className="faint">예시</span></div>
+            {secs.map(([t, lines, note]) => (
+              <section key={t} className={`vet-sec${note ? " note" : ""}`}>
+                <div className="vet-sec-title">{t}</div>
+                {lines.map((l) => <div key={l} className="vet-line">{l}</div>)}
+              </section>
+            ))}
+          </div>
+          <button type="button" className="btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={onOpenVet}><Ico name="clipboard" size={18} /> {dog.name} 기록으로 열어 보기</button>
+          <p className="faint" style={{ margin: "8px 0 0", textAlign: "center" }}>오늘부터 쌓이는 기록이 그대로 들어가요. 병원 탭 맨 위에서 언제든 열 수 있어요.</p>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 // 처음 쓰는 사람: 말풍선이 "첫 걸음 3가지"를 말한다. 한 것은 ✓(실제 기록으로 판단), 누르면 그 화면으로
 // 첫 걸음(병원 수첩에 맞춤, 11/7): 몸무게 · 평소 모습(다른 날과 비교할 기준) · 병원용 기록 미리 보기(이렇게 쌓여요)
 function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
   const { steps } = getFirstSteps(dog.id);
   const items = [
+    ["vet", "clipboard", "rose", "병원용 기록 미리 보기", onVet], // 11/18: 맨 앞으로(앱의 주인공 — Gemini 점검 → 사용자 결정)
     ["weight", "scales", "blue", "지금 몸무게 적기", onWeight],
     ["usual", "pencil", "teal", "평소 모습 적어 두기", onUsual],
-    ["vet", "clipboard", "rose", "병원용 기록 미리 보기", onVet],
   ];
   return (
     <span className="summary">

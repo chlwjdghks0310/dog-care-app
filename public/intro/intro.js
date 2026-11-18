@@ -25,9 +25,9 @@ document.documentElement.classList.add("js"); // JS가 있을 때만 패널을 �
   var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute("aria-controls")); });
   if (!hero || !demo || !tabs.length) return;
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var current = 0;
+  var current = Math.max(0, tabs.findIndex(function (t) { return t.getAttribute("aria-selected") === "true"; })); // 11/18: 병원 탭부터(병원용 기록 앞세우기)
   var timer = null;
-  demo.dataset.cur = "assistant";
+  demo.dataset.cur = tabs[current].id.slice(4);
 
   function select(i, focus) {
     current = (i + tabs.length) % tabs.length;
