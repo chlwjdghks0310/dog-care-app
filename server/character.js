@@ -40,7 +40,9 @@ const EXTRAS = {
 };
 const MAX_EXTRAS = 3; // 정성 상품 = 부가 동작 3편(베타는 코드 쓴 사람 모두 무료)
 const motion = (style, kind) => (style === "hand" ? HAND_2D : "") + MOUTH + (kind === "idle" ? IDLE : kind === "thinking" ? THINK : EXTRAS[kind].text);
-const DURATION = { "3d": { idle: 10, thinking: 5 }, hand: { idle: 5, thinking: 5 } }; // 3D idle은 분주하지 않게 10초(사용자 11/17)
+const DURATION = { "3d": { idle: 5, thinking: 5 }, hand: { idle: 5, thinking: 5 } }; // 11/18: 3D idle도 5초(10초는 크레딧 2배 — 느긋한 지시문으로 5초면 충분)
+const VIDEO_DAILY_CR = Number(process.env.CHARACTER_VIDEO_DAILY_CREDITS || 450); // 하루 영상 크레딧 한도(10편) — 11/18 비용 점검
+const VIDEO_PRICE_PER_CR = 0.01;
 
 // 선물 코드(11/17, 사용자): 손 시험으로 이미 만든 세 마리는 코드를 넣는 순간 바로 적용(생성 없음). 파일은 앱 public/character/presets/<이름>/ (앱과 같은 출처라 CORS 걱정 없음).
 // 서버가 켜질 때 character_invites에 없으면 넣는다(있으면 그대로). 가족 폰까지 쓰라고 3번.
@@ -95,6 +97,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
     return rows.reduce((s, r) => s + Number(r.cost || 0), 0);
   }
+  // 오늘 쓴 영상 크레딧(메모리 — 서버가 다시 켜지면 0부터; 돈 한도는 위 spentToday가 막는다)
+  let videoDay = "", videoUsed = 0;
+  const videoToday = () => { const d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); if (d !== videoDay) { videoDay = d; videoUsed = 0; } return videoUsed; };
   // 진행도(11/18, 사용자: 발바닥 둘레 원형 게이지): 단계마다 [지금 값, 다음 값, 보통 걸리는 초]. 앱이 updated_at부터 흐른 시간으로 그 사이를 채운다
   function progressOf(j) {
     const s = j.step || "";
@@ -263,6 +268,8 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     try { const r = await fetch(`${RUNWAY}/v1/organization`, { headers: RUNWAY_H(), signal: AbortSignal.timeout(10000) }); const j = await r.json(); return Number(j.creditBalance ?? -1); } catch { return -1; }
   }
   async function runway(jpegBuf, promptText, duration, addCost) {
+    if (videoToday() + duration * 9 > VIDEO_DAILY_CR) throw Object.assign(new Error(`오늘 영상 한도(${VIDEO_DAILY_CR}크레딧)에 닿았어요. 내일 이어서 만들어요`), { wait: true });
+    videoUsed += duration * 9;
     const H = RUNWAY_H();
     const uri = `data:image/jpeg;base64,${jpegBuf.toString("base64")}`;
     const r = await fetch(`${RUNWAY}/v1/image_to_video`, { method: "POST", headers: H, body: JSON.stringify({ model: "kling3.0_standard", ratio: "960:960", duration, audio: false, promptImage: [{ uri, position: "first" }, { uri, position: "last" }], promptText }) });
@@ -439,7 +446,8 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
         else if (j.status === "extra-queued") await doExtra(j);
         else await doRender(j);
       } catch (e) {
-        console.error("[character] job", j.id, e.message);
+        if (!e.wait) console.error("[character] job", j.id, e.message);
+        if (e.wait) { await update(j.id, { status: j.status === "render" || j.status === "picked" ? "picked" : j.status === "extra" ? "extra-queued" : "queued", step: e.message }).catch(() => {}); return; }
         if (j.status === "extra-queued") { // 부가 동작 실패는 기본 캐릭터를 건드리지 않는다
           const { pendingExtra, ...rest } = j.outputs || {}; void pendingExtra;
           await update(j.id, { status: "done", outputs: rest, error: String(e.message).slice(0, 200), step: "부가 동작을 만들지 못했어요. 다시 시도해 주세요" }).catch(() => {});
