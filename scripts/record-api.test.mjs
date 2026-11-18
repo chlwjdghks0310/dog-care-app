@@ -49,7 +49,13 @@ try {
   r = await (await post("/api/record", { text: "사료 샀어 얼마였더라" })).json();
   assert.equal(r.reply, "얼마 썼는지 알려 주면 바로 적어 둘게!", "빠진 정보는 되묻기");
 
-  assert.equal((await post("/api/ask", { question: "hi" })).status, 410, "질문 답변은 끝남");
+  // 11/17 멍케어 비서 재도입: 글이 없으면 400, 있으면 무료 비서(tier free)가 답한다
+  assert.equal((await post("/api/ask", { question: "hi" })).status, 400, "질문 글이 없으면 400");
+  const ask = await post("/api/ask", { text: "물을 많이 마셔요", petId: "dog-test" });
+  assert.equal(ask.status, 200, "무료 비서 답");
+  const askBody = await ask.json();
+  assert.equal(askBody.tier, "free");
+  assert.equal(typeof askBody.answer, "string");
   assert.equal((await post("/api/record", { text: "" })).status, 400);
 
   // AI 상태 확인: 변 사진 2번까지, 3번째는 429(같은 기기). 다른 기기는 따로 센다
