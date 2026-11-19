@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "../services/toast";
 import { todayKey } from "../utils/date";
-import { FoodJar, WeekStamps } from "../components/Pieces";
+import { FoodJar, WeekStamps, StampRewards } from "../components/Pieces";
 import { formatAge } from "../utils/age";
 import { RoutineSheet } from "../components/OutingCard";
 import Ico from "../components/Ico";
@@ -16,7 +16,7 @@ import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 
 // 체중 체크·약 관리는 프로필의 건강 수치에서 한다(체크리스트는 오늘의 케어 일과만).
-export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenGuide, onOpenPuppy }) {
+export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenGuide, onOpenPuppy, onOpenCharacter }) {
   const stage = useMemo(() => getStage(dog), [dog]); // 월령별 가이드 띠(11/15)
   const [routineOpen, setRoutineOpen] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
@@ -78,7 +78,7 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
         </button>
       )}
 
-      <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} />
+      <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} onOpenCharacter={onOpenCharacter} />
 
       <button type="button" className="care-feed" onClick={onOpenFeeding}>
         <img src="/pieces/bowl.png" alt="" width="56" height="56" />
@@ -103,7 +103,7 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
 }
 
 // 오늘 하루 체크 결과 — 잘못 눌렀으면 [다시 고르기](체크와 체크로 만든 기록을 지우고 오늘 탭 말풍선이 다시 물어본다)
-function DailyRow({ dog, dateKey, onBack }) {
+function DailyRow({ dog, dateKey, onBack, onOpenCharacter }) {
   const [day, setDay] = useState(() => getDay(dog.id, dateKey));
   if (!day || day.status === "unknown") return null;
   const text = day.status === "usual" ? "평소와 같았어요" : Object.entries(day.picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id).label} ${l}`).join(", ");
@@ -116,6 +116,7 @@ function DailyRow({ dog, dateKey, onBack }) {
       </div>
       {/* 11/18 사용자: 스탬프 노트는 오늘 탭 말풍선이 아니라 여기(케어)에 — 오늘 탭 강아지가 작아지지 않게 */}
       <WeekStamps dogId={dog.id} today={dateKey} />
+      <StampRewards dogId={dog.id} today={dateKey} onOpenCharacter={onOpenCharacter} />
     </div>
   );
 }

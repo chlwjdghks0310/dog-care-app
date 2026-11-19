@@ -1910,10 +1910,10 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .stamp-slot.today.stamped svg { animation: stamp-in .45s cubic-bezier(.2,.9,.3,1.3) both; }
 .stamp-lab { font-size: 10.5px; color: var(--text-faint); } .stamp-lab.today { color: var(--warm); font-weight: 800; }
 /* 하루 체크 끝 "도장 순간": 어두운 배경 + 노트가 톡 뜨고 0.45초 뒤 도장, 2.6초 뒤 사라짐 */
-.stamp-moment { position: fixed; inset: 0; z-index: 130; display: grid; justify-items: center; align-content: start; padding: calc(env(safe-area-inset-top, 0px) + 15vh) 24px 24px; background: rgba(28, 22, 16, .52); animation: sm-in .3s ease both; }
+.stamp-moment { position: fixed; inset: 0; z-index: 130; display: grid; justify-items: center; align-content: start; padding: calc(env(safe-area-inset-top, 0px) + 15vh) 24px 24px; background: rgba(28, 22, 16, .62); animation: sm-in .3s ease both; }
 .stamp-moment.out { animation: sm-out .36s ease both; pointer-events: none; }
 .stamp-moment .sm-box { width: min(340px, 100%); display: grid; gap: 10px; justify-items: center; animation: pop-in .4s cubic-bezier(.2,.9,.3,1.2) both; }
-.stamp-moment .sm-cheer { font-family: var(--font-bubble); font-size: 34px; font-weight: 700; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .35); line-height: 1; transform: rotate(-3deg); }
+.stamp-moment .sm-cheer { font-family: var(--font-bubble); font-size: 34px; font-weight: 700; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, .55), 0 0 18px rgba(0, 0, 0, .5); line-height: 1; transform: rotate(-3deg); padding: 2px 14px; border-radius: 999px; background: rgba(28, 22, 16, .45); }
 .stamp-moment .stamps { width: 100%; margin: 0; padding: 16px 16px 14px; box-shadow: 0 18px 40px rgba(0, 0, 0, .28); }
 .stamp-moment .stamps-tape { width: 78px; top: -14px; right: 16px; }
 .stamp-moment .stamps-ttl { font-size: 20px; margin-bottom: 8px; } .stamp-moment .stamps-ttl small { font-size: 12.5px; }
@@ -2024,3 +2024,15 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .hub-tile .quick-tile-label { font-size: 15px; font-weight: 800; }
 .hub-sub { font-size: 12px; color: var(--text-soft); line-height: 1.35; }
 .chat-suggest .record-example { gap: 7px; }
+
+/* 스탬프 상품(11/19): 배지 동그라미 + 세 단계 */
+.badge-coin { display: inline-grid; place-items: center; border-radius: 50%; border: 1.4px dashed var(--border); color: var(--text-faint); background: var(--surface); box-sizing: border-box; }
+.badge-coin.on { border: 1.4px solid var(--warm); background: var(--warm-bg); color: var(--warm); }
+.rewards { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); display: grid; gap: 8px; }
+.rewards-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12.5px; }
+.rewards-ttl { font-family: var(--font-bubble); font-size: 17px; color: var(--ink); } .rewards-ttl b { font-size: 20px; }
+.rewards-row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.rewards-tiers { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 12.5px; color: var(--text-soft); }
+.rewards-tiers li { display: flex; align-items: center; gap: 6px; text-align: left; } .rewards-tiers li > span:not(.ico-sk) { flex: 1; min-width: 0; } .rewards-tiers li .ico-sk, .rewards-tiers li > svg { flex: 0 0 auto; }
+.rewards-tiers li.got { color: var(--text); } .rewards-tiers li.got > svg:first-child, .rewards-tiers li.got .ico-sk { color: var(--warm); }
+.rewards-tiers .btn-ghost.small { padding: 4px 10px; min-height: 28px; font-size: 12.5px; }

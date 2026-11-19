@@ -9,6 +9,7 @@ import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pi
 // 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 캐릭터=video 스티커, 단계마다 다른 스티커(사진 image·고르기 tap·홈 house), 부가 동작도 각각(party·moon·meal·walk)
 const SAMPLE = { "3d": "/character/sample-3d.jpg", hand: "/character/sample-hand.jpg" };
 const EXTRA_ICO = { happy: "party", sleepy: "moon", meal: "bowl", walk: "walk" };
+import { rewardsOf, claimExtra } from "../services/stamps";
 const EXTRA_WHEN = { happy: "기록을 저장하면 6초 동안", sleepy: "밤 10시~아침 6시, 가만히 있을 때", meal: "밥 시간 30분 전후", walk: "산책 시간(곧)" };
 
 export default function Character({ dog }) {
@@ -197,10 +198,12 @@ function Extras({ dog, job, setSt, act, busy }) {
   const pending = job.outputs?.pendingExtra;
   const n = Object.keys(have).length;
   const max = job.maxExtras || 3;
-  const add = (kind) => act(async () => { const j = await addExtra(dog.id, kind); setSt((s) => ({ ...s, job: j })); });
+  const reward = rewardsOf(dog.id); // 스탬프 배지 5개 = 부가 동작 1편(11/19)
+  const add = (kind) => act(async () => { const j = await addExtra(dog.id, kind); if (reward.extrasLeft > 0) claimExtra(dog.id); setSt((s) => ({ ...s, job: j })); });
   return (
     <div style={{ display: "grid", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
       <div className="px-sec">부가 동작 {n}/{max} <span className="px-dim">· 상황에 맞춰 홈 화면에서 움직여요</span></div>
+      {reward.extrasLeft > 0 && <p className="px-note" style={{ margin: 0 }}>🏅 하루 체크 배지 {reward.badges}개 — 부가 동작 {reward.extrasLeft}편을 받을 수 있어요. 아래에서 골라 [만들기]</p>}
       {Object.entries(job.extras || {}).map(([kind, label]) => (
         <div key={kind} className="px-feat">
           <Ico name={EXTRA_ICO[kind] || "sparkles"} size={30} />

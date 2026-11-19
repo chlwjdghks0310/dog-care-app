@@ -517,6 +517,7 @@ export default function App() {
         onOpenInfo={() => setTab("info")}
         onOpenGuide={() => setTab("guide")}
         onOpenPuppy={() => setTab("puppy")}
+        onOpenCharacter={() => (setTab("profile"), setTimeout(() => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "character" } })), 350))}
       />
     ),
     guide: () => <StageGuide dog={dog} onBack={() => setTab("care")} />,

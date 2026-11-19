@@ -421,7 +421,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "mc-char-"));
     try {
       await update(j.id, { status: "extra", step: `"${ex.label}" 동작을 만드는 중 (5~8분)` });
-      const basePng = Buffer.from(await (await fetch(j.outputs[ex.base])).arrayBuffer());
+      const baseRes = await fetch(j.outputs[ex.base]);
+      if (!baseRes.ok) throw new Error(`재료 그림을 못 불러왔어요(${baseRes.status})`);
+      const basePng = Buffer.from(await baseRes.arrayBuffer());
       const jpg = await toJpeg(basePng, path.join(tmp, kind));
       const resume = { get: () => j.outputs.extraTask || null, set: async (id) => { j.outputs.extraTask = id; await update(j.id, { outputs: { ...j.outputs } }); } };
       const raw = await runway(jpg, motion(j.style, kind), 5, bump, resume);
@@ -429,7 +431,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
       const url = publicUrl(await put("character-public", `${j.id}/v${j.regen || 0}-${j.picked}-${kind}.mp4`, mp4, "video/mp4"));
       const { pendingExtra, extraTask, ...rest } = j.outputs; void pendingExtra; void extraTask;
       const outputs = { ...rest, extras: { ...(rest.extras || {}), [kind]: url } };
-      await update(j.id, { status: "done", outputs, step: "완성!" });
+      await update(j.id, { status: "done", outputs, step: "완성!", error: null });
       await notify(j.endpoint, `🐾 "${ex.label}" 동작이 생겼어요`, "홈 화면에서 상황에 맞춰 움직여요");
     } finally {
       fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
@@ -444,7 +446,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     if (j.status !== "done" || !j.outputs?.green) return bad(res, 409, "기본 캐릭터가 먼저 완성돼야 해요");
     if (j.outputs.extras?.[kind]) return bad(res, 409, "이미 있는 동작이에요");
     if (Object.keys(j.outputs.extras || {}).length >= MAX_EXTRAS) return bad(res, 409, `부가 동작은 ${MAX_EXTRAS}개까지예요`);
-    await update(j.id, { status: "extra-queued", step: "순서를 기다리는 중", outputs: { ...j.outputs, pendingExtra: kind } });
+    await update(j.id, { status: "extra-queued", step: "순서를 기다리는 중", error: null, outputs: { ...j.outputs, pendingExtra: kind } });
     res.json({ job: view(await jobById(j.id)) });
     setTimeout(tick, 500);
   });

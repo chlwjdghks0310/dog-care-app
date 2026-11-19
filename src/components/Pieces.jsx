@@ -1,8 +1,10 @@
 import { getDay, daysThisMonth } from "../services/dailyCheck";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Ico from "./Ico";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { md } from "../services/records";
+import { rewardsOf, badgeEarnedToday, BADGE_DAYS, EXTRA_PER, DISCOUNT_AT } from "../services/stamps";
 
 // 숫자를 그림으로(11/18 시안 2차 확정): 발도장 주간 줄·스탬프 노트·사료통·숟가락·물컵·원·성장 자·증상 타임라인.
 // 원칙: 그림은 "얼마나 찼나"만 말한다(좋다/나쁘다 색 없음). 숫자는 옆에 작게 남긴다. 조각 그림은 public/pieces/(앱 스티커 톤, Gemini).
@@ -192,10 +194,43 @@ export function StampMoment({ dogId, onDone }) {
   return createPortal(
     <div className={`stamp-moment${out ? " out" : ""}`} onClick={close} role="status" aria-live="polite">
       <div className="sm-box">
-        <span className="sm-cheer">잘했어요!!</span>
+        <span className="sm-cheer">{badgeEarnedToday(dogId) ? `${BADGE_DAYS}일 연속! 배지 획득` : "잘했어요!!"}</span>
         <WeekStamps dogId={dogId} />
       </div>
     </div>,
     document.body,
+  );
+}
+
+// 배지 하나(발도장 동그라미). on=딴 것, 아니면 점선
+export function Badge({ on = true, size = 26 }) {
+  return (
+    <span className={`badge-coin${on ? " on" : ""}`} style={{ width: size, height: size }} aria-hidden="true">
+      <svg viewBox="0 0 24 24" width={size * 0.66} height={size * 0.66}><PawGlyph stroke="currentColor" width={2.2} /></svg>
+    </span>
+  );
+}
+
+// 스탬프 상품(11/19 사용자 결정): 7일 연속 = 배지 1 · 배지 5 = 부가 동작 1편 · 배지 10 = 정성 캐릭터 할인. 케어 탭 하루 체크 카드 아래
+export function StampRewards({ dogId, onOpenCharacter, today = todayKey() }) {
+  const r = rewardsOf(dogId, today);
+  const next = r.badges + 1; // 다음 배지를 채우는 줄(최대 10칸 보이기)
+  const slots = Math.max(DISCOUNT_AT, Math.ceil(next / 5) * 5);
+  return (
+    <div className="rewards">
+      <div className="rewards-top">
+        <span className="rewards-ttl">배지 <b>{r.badges}</b>개</span>
+        <span className="faint">{r.streak > 0 ? `${r.streak}일째 이어지는 중 · 다음 배지까지 ${r.toNext}일` : `${BADGE_DAYS}일 연속 체크하면 배지 하나`}</span>
+      </div>
+      <div className="rewards-row" aria-label={`배지 ${r.badges}개`}>
+        {Array.from({ length: Math.min(slots, 10) }, (_, i) => <Badge key={i} on={i < r.badges} size={24} />)}
+        {r.badges > 10 && <small className="faint">+{r.badges - 10}</small>}
+      </div>
+      <ul className="rewards-tiers">
+        <li className={r.badges >= 1 ? "got" : ""}><Ico name="check" size={14} /> <span>{BADGE_DAYS}일 연속 체크 → 배지 1개</span></li>
+        <li className={r.extrasEarned > 0 ? "got" : ""}><Ico name="party" size={14} sticker /> <span>배지 {EXTRA_PER}개 → 캐릭터 부가 동작 1편{r.extrasLeft > 0 ? ` · ${r.extrasLeft}편 받을 수 있어요` : r.extrasEarned ? " · 받았어요" : ` · ${r.toExtra}개 남음`}</span>{r.extrasLeft > 0 && onOpenCharacter && <button type="button" className="btn-ghost small" onClick={onOpenCharacter}>받기</button>}</li>
+        <li className={r.discount ? "got" : ""}><Ico name="video" size={14} sticker /> <span>배지 {DISCOUNT_AT}개 → 정성 캐릭터 할인{r.discount ? " · 할인권 있어요(결제 열리면 써요)" : ` · ${r.toDiscount}개 남음`}</span></li>
+      </ul>
+    </div>
   );
 }

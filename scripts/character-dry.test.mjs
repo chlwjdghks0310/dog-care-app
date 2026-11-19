@@ -225,6 +225,40 @@ const pass = (name) => console.error("  ✓", name);
   pass("⑥ 후보는 한 장마다 저장돼 끊겨도 남은 장만 그림");
 }
 
+// ⑦ 부가 동작(정성·스탬프 보상): 완성된 작업에 1편 → 영상 1번만 더, 같은 동작 중복 409, 실패해도 기본은 그대로·다시 요청하면 지난 오류 지움
+{
+  const pet = "dog-a";
+  const token = (await post("/redeem", { code: "MC-PLUS-A7KQ", petId: pet })).body.token;
+  const row = tables.character_jobs.find((r) => r.pet_id === pet);
+  const before = world.posts;
+  const r = await post(`/jobs/${row.id}/extra`, { kind: "happy", token });
+  assert.equal(r.status, 200, JSON.stringify(r.body)); assert.equal(r.body.job.status, "extra-queued");
+  await drain(3);
+  let j = await job(pet, token);
+  assert.equal(j.status, "done", j.step); assert.ok(j.outputs.extras?.happy, "기쁨 영상"); assert.equal(world.posts - before, 1, "영상 요청 1번");
+  assert.equal(pushes.at(-1), '🐾 "기쁨" 동작이 생겼어요');
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "happy", token })).status, 409, "같은 동작은 또 못 만듦");
+  // 재료 그림을 못 불러오면: 기본 캐릭터는 그대로 done, 오류만 적힘
+  const green = row.outputs.green;
+  row.outputs.green = green.replace(/green\.png$/, "gone.png");
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "walk", token })).status, 200);
+  await drain(2);
+  j = await job(pet, token);
+  assert.equal(j.status, "done"); assert.ok(!j.outputs.extras?.walk); assert.match(j.step, /만들지 못했어요/); assert.ok(j.outputs.idle, "기본 영상은 그대로");
+  assert.equal(pushes.at(-1), "😿 부가 동작을 만들지 못했어요");
+  // 고친 뒤 다시 요청 → 지난 오류 지워지고 완성
+  row.outputs.green = green;
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "walk", token })).status, 200);
+  assert.equal(tables.character_jobs.find((x) => x.id === row.id).error, null, "다시 요청하면 지난 오류 지움");
+  await drain(3);
+  j = await job(pet, token);
+  assert.ok(j.outputs.extras?.walk, "산책 영상"); assert.equal(j.status, "done");
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "sleepy", token })).status, 200); await drain(3);
+  const fourth = await post(`/jobs/${row.id}/extra`, { kind: "meal", token });
+  assert.equal(fourth.status, 409); assert.match(fourth.body.error, /3개까지/);
+  pass("⑦ 부가 동작: 1편마다 영상 1번, 중복·4편째 409, 실패해도 기본 유지, 재요청 때 오류 지움");
+}
+
 server.close();
 await fs.rm(tmp, { recursive: true, force: true });
 console.error("character-dry ok");
