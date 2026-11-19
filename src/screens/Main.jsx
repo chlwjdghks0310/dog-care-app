@@ -746,7 +746,24 @@ function AssistantAnswer({ dog, said }) {
       {!plus && <button type="button" className="link-btn" onClick={openPlus}>더 자세한 답은 멍케어 플러스에서</button>}
       {plus && !more && (res.detailLeft > 0 ? <button type="button" className="btn-ghost small asst-more" onClick={askMore}><Ico name="chatHeart" size={15} /> 자세히 듣기 <span className="faint">· 오늘 {res.detailLeft}번 남음</span></button> : <span className="faint">오늘 자세한 답 횟수를 다 썼어요. 빠른 답은 계속 들을 수 있어요.</span>)}
       {more === "loading" && <p className="faint" style={{ margin: 0 }}><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={14} /></span>기록을 읽고 자세히 적는 중이에요…</p>}
-      {more && more !== "loading" && (more.error ? <p className="error-text" style={{ margin: 0 }}>{more.error}</p> : <div className="asst-detail"><span className="chip">자세히</span><div className="asst-body">{more.answer}</div></div>)}
+      {more && more !== "loading" && (more.error ? <p className="error-text" style={{ margin: 0 }}>{more.error}</p> : <DetailAnswer a={more} />)}
+    </div>
+  );
+}
+
+// 자세한 답을 다섯 칸으로(11/20 사용자: "체계적으로 가독성 있게"): 결론 → 집에서 확인할 것(체크 목록) → 생각해 볼 이유(번호) → 병원 신호(살구 상자) → 병원에서 할 말(말풍선). 틀이 깨지면 원문 그대로
+function DetailAnswer({ a }) {
+  const s = a.sections;
+  if (!s || !(s.conclusion || s.checks?.length)) return <div className="asst-detail"><span className="chip">자세히</span><div className="asst-body">{a.answer}</div></div>;
+  return (
+    <div className="asst-detail">
+      <span className="chip">자세히</span>
+      {s.conclusion && <div className="ad-sec ad-con"><Ico name="idea" size={18} sticker /><div><b>결론</b><p>{s.conclusion}</p></div></div>}
+      {s.checks?.length > 0 && <div className="ad-sec"><Ico name="checklist" size={18} sticker /><div><b>집에서 확인할 것</b><ul className="ad-check">{s.checks.map((c, i) => <li key={i}>{c}</li>)}</ul></div></div>}
+      {s.reasons?.length > 0 && <div className="ad-sec"><Ico name="search" size={18} sticker /><div><b>생각해 볼 이유</b><ol className="ad-reasons">{s.reasons.map((c, i) => <li key={i}>{c}</li>)}</ol></div></div>}
+      {s.signs && <div className="ad-sec ad-sign"><Ico name="stethoscope" size={18} sticker /><div><b>병원에 가야 할 신호</b><p>{s.signs}</p></div></div>}
+      {s.say && <div className="ad-say"><Ico name="chatHeart" size={16} sticker /><span>병원에서 이렇게 말해 보세요 — “{s.say}”</span></div>}
+      <span className="faint" style={{ fontSize: 11.5 }}>진단이 아니에요. 약 용량·횟수는 수의사에게 물어보세요.</span>
     </div>
   );
 }

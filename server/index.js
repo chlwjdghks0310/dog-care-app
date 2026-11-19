@@ -773,8 +773,27 @@ const ASK_RULES_FREE = `너는 강아지 돌봄 앱 "멍케어"의 비서다. �
 병원에 물어볼 것: (병원에 가면 이렇게 말하라는 한 문장. 병원 갈 필요가 없어 보이면 "지금은 지켜봐도 돼요. ~하면 병원에 물어보세요")
 규칙: 진단을 단정하지 않는다(병 이름을 "~일 수 있어요"로 하나만). 약 이름·용량·횟수는 절대 말하지 않는다(그건 "병원에 물어볼 것"으로). 호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함 같은 응급 신호면 첫 줄을 "지금 할 일: 지금 바로 동물병원(야간이면 24시 병원)으로 가세요."로 쓴다. 해요체, 이모지 없음.`;
 const ASK_RULES_PLUS = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록(체중·접종·약·최근 하루 체크)을 아는 상태에서 보호자의 질문에 친절하고 구체적으로 답한다.
-구성: ① 한 줄 결론 ② 집에서 지금 확인·해 볼 것(기록 근거가 있으면 날짜·수치로 짚기) ③ 생각해 볼 수 있는 이유 2~4가지(흔한 것부터, 각각 구별 포인트) ④ 병원에 가야 하는 신호와 병원에서 할 말. 8~14줄, 소제목은 "·"로 시작하는 줄로.
-규칙: 진단을 단정하지 않는다(순위·확률 표현 금지). 약 이름은 설명해도 되지만 용량·횟수·투약 변경은 절대 말하지 않는다(수의사에게). 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 첫 줄에 "지금 바로 동물병원(야간이면 24시)"을 쓴다. 해요체, 이모지 없음, 마크다운 기호(#, **) 없음.`;
+반드시 아래 다섯 칸 형식 그대로 답한다(칸 제목은 바꾸지 않고, 칸마다 줄을 바꾼다. 다른 말·인사·마크다운 금지):
+결론: (한 문장. 지금 상황을 한 줄로)
+집에서 확인할 것:
+- (해 볼 것 하나, 한 문장. 기록에 근거가 있으면 날짜·수치로 짚기)
+- (2~3개)
+생각해 볼 이유:
+- (흔한 것부터, "이름 — 구별 포인트" 꼴, 2~4개)
+병원에 가야 할 신호: (한두 문장. 이게 보이면 병원)
+병원에서 할 말: (보호자가 수의사에게 그대로 말할 한 문장, 따옴표 없이)
+규칙: 진단을 단정하지 않는다(순위·확률 표현 금지). 약 이름은 설명해도 되지만 용량·횟수·투약 변경은 절대 말하지 않는다(수의사에게). 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 "결론:"에 "지금 바로 동물병원(야간이면 24시)"을 쓴다. 해요체, 이모지 없음.`;
+
+// 한 달 리포트 해설처럼 "한 문단"이 어울리는 자리용(다섯 칸 틀 대신)
+const ASK_RULES_PARA = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록을 아는 상태에서, 보호자가 준 요약을 읽고 따뜻하고 구체적인 한 문단(3~4문장)으로 답한다. 잘한 것 → 지켜볼 것 → 다음 달 해 볼 것 순서. 진단을 단정하지 않고(순위·확률 표현 금지), 약 용량·횟수는 말하지 않는다. 해요체, 이모지·마크다운 없음.`;
+
+// 자세한 답을 칸으로 나눈다(틀이 어긋나면 비워 두고 원문은 answer로)
+function splitDetail(text) {
+  const grab = (label, next) => { const m = text.match(new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n(?:${next})\\s*:|$)`)); return m ? m[1].trim() : ""; };
+  const bullets = (s) => s.split("\n").map((l) => l.replace(/^[-·•]\s*/, "").trim()).filter(Boolean);
+  const labels = "결론|집에서 확인할 것|생각해 볼 이유|병원에 가야 할 신호|병원에서 할 말";
+  return { conclusion: grab("결론", labels), checks: bullets(grab("집에서 확인할 것", labels)), reasons: bullets(grab("생각해 볼 이유", labels)), signs: grab("병원에 가야 할 신호", labels), say: grab("병원에서 할 말", labels) };
+}
 app.post("/api/ask", async (req, res) => {
   if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 물어봐 주세요." });
   const { dogContext, text, petId, token, detail: wantDetail } = req.body || {};
@@ -785,6 +804,7 @@ app.post("/api/ask", async (req, res) => {
   const tier = plus ? "plus" : "free";
   // 11/20 두 단계: 누구나 먼저 빠른 답(Haiku 두 줄). 플러스는 그 아래 [자세히]를 누를 때만 Sonnet(하루 20번) — 원가를 1/3 아래로
   const detail = Boolean(wantDetail);
+  const para = detail && req.body?.format === "paragraph"; // 한 달 리포트 해설
   if (detail && !plus) return res.status(403).json({ error: "자세한 답은 멍케어 플러스에서 들을 수 있어요.", tier, left: 0 });
   const { k, g, n, all } = askCount(pet);
   const dk = `${k}|detail`; const dn = askUsed.get(dk) || 0;
@@ -798,7 +818,7 @@ app.post("/api/ask", async (req, res) => {
       // Sonnet 5.5는 thinking "disabled"를 거절(400) → Sonnet엔 생략, Haiku만 끈다(11/20)
       ...(detail ? {} : { thinking: { type: "disabled" } }),
       output_config: { effort: detail ? "medium" : "low" },
-      system: [{ type: "text", text: detail ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
+      system: [{ type: "text", text: para ? ASK_RULES_PARA : detail ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
       messages: [{ role: "user", content: q }],
     });
     logCache(response);
@@ -807,7 +827,7 @@ app.post("/api/ask", async (req, res) => {
     const answer = claudeText(response).trim();
     const todo = answer.match(/지금 할 일:\s*([\s\S]*?)(?=\n병원에 물어볼 것:|$)/)?.[1]?.trim() || "";
     const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
-    res.json({ tier, detail, answer, todo, vet, left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
+    res.json({ tier, detail, answer, todo, vet, ...(detail && !para ? { sections: splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
   } catch (err) {
     console.error("[server] ask error:", err.status, err.message);
     res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });
