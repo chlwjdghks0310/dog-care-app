@@ -5,6 +5,7 @@ import { daysInRange } from "./dailyCheck";
 import { md, getTimeline } from "./records";
 import { josa } from "../utils/text";
 import { toDateKey } from "../utils/date";
+import { characterOutputs } from "./character";
 
 export function weeklyCardStats(dog, today) {
   const r = buildWeeklyReport(dog, today);
@@ -44,6 +45,22 @@ export function togetherCardStats(dog, today) {
 }
 
 export const drawWeeklyCard = (dog, today) => drawCard(dog, weeklyCardStats(dog, today));
+// 한 달 카드(11/20): 캐릭터 포스터가 있으면 그걸, 없으면 사진. 건강 정보는 안 넣는다(산책·하루 체크·배지·기록 수)
+export function monthCardStats(dog, r) {
+  const m = Number(r.month.slice(5, 7));
+  return {
+    title: `${m}월의 ${dog.name}`,
+    range: `${md(r.from)} ~ ${md(r.to)}`,
+    image: characterOutputs(dog.id)?.poster || dog.photo || "/intro/img/dog-yeoreum-sit.png",
+    rows: [
+      ["산책", r.walk.days ? `${r.walk.days}일${r.walk.minutes ? ` · ${r.walk.minutes}분` : ""}` : "—"],
+      ["하루 체크", `${r.checkDays.length}일`],
+      ["7일 연속 배지", r.streaks ? `${r.streaks}개` : "—"],
+      ["남긴 기록", `${r.records}개`],
+    ],
+  };
+}
+export const drawMonthCard = (dog, r) => drawCard(dog, monthCardStats(dog, r));
 export const drawTogetherCard = (dog, today) => drawCard(dog, togetherCardStats(dog, today));
 
 async function drawCard(dog, s) {
@@ -56,7 +73,7 @@ async function drawCard(dog, s) {
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   // 사진(없으면 멍케어 강아지 그림)
   try {
-    const img = await loadImg(dog.photo || "/intro/img/dog-yeoreum-sit.png");
+    const img = await loadImg(s.image || dog.photo || "/intro/img/dog-yeoreum-sit.png");
     const R = 220, cx = W / 2, cy = 330;
     g.save(); g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fillStyle = "#fff"; g.fill(); g.clip();
     const k = Math.max((R * 2) / img.width, (R * 2) / img.height);

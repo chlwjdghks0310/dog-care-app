@@ -46,7 +46,7 @@ export default function Plus({ dog, onOpenCharacter, onOpenMonth }) {
         </tbody></table>
         <p className="px-note">둘 다 진단을 단정하거나 약 용량을 말하지 않아요. 응급 신호면 병원 안내가 먼저. 평균적인 답이 궁금하면 답 아래 ChatGPT 버튼을 그대로 쓸 수 있어요.</p>
         <Feature ico="calendar" title="한 달 리포트" on={plus} tag="베타 동안 모두 열림" onClick={onOpenMonth}
-          desc="달력 한 장에 산책·증상·병원이 모이고, 체중 곡선과 지난달 비교까지. 플러스 비서가 그 달을 세 줄로 읽어 줘요. 이번 주 리포트는 계속 무료." />
+          desc="지난달과 달라진 점 세 줄, 증상 난 날 앞뒤 겹쳐 보기, 달력 한 장, 체중 흐름, 이 달 자랑 카드. 플러스 비서가 그 달을 한 문단으로 읽어 줘요. 이번 주 리포트는 계속 무료." />
       </section>
 
       <section className="px-card">
