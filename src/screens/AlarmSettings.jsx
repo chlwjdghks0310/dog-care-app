@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Empty from "../components/Empty";
 import { useHelpTip } from "../components/HelpTip";
 import { todayKey } from "../utils/date";
 import {
@@ -174,7 +175,7 @@ export default function AlarmSettings({ dog, onBack }) {
       <div className="card">
         <div className="h2">등록된 알람</div>
         {schedules.length === 0 ? (
-          <p className="subtle">아직 등록된 알람이 없어요.</p>
+          <Empty ico="alarm" compact>아직 등록된 알람이 없어요.</Empty>
         ) : (
           schedules.map((alarm) => (
             <div

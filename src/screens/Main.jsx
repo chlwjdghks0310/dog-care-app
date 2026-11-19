@@ -42,7 +42,8 @@ import { getDay } from "../services/dailyCheck";
 // 질문이면 AI를 부르지 않고, 응급 단어면 응급 카드, 아니면 우리 정보 카드·가이드북에서 찾아 보여 준다(src/services/infoSearch.js).
 // 예시는 누르면 보내지 않고 입력칸에 채운다(예시를 눌렀다고 가짜 기록이 생기지 않게)
 // 한 문장에 여러 가지를 말해도 된다는 걸 보여 주는 예시(사용자 요청 11/7) — 실제 기록처럼 보이지 않게 누르면 입력칸에만 들어간다
-const RECORD_EXAMPLES = ["아침에 노란 토 한 번 하고 밥은 반만 먹었어", "저녁 산책 40분 했는데 변이 좀 물렀어", "오늘 병원에서 귀 진료 3만 5천 원, 2주 뒤에 다시 오래", "다음 주 토요일 오전 11시 미용 예약 넣어 줘", "몸무게 3.2kg 재고 간식 두 개 줬어"];
+// 11/19: 연필 아이콘 5개 → 문장마다 다른 스티커(AI티 줄이기)
+const RECORD_EXAMPLES = [["bandaid", "아침에 노란 토 한 번 하고 밥은 반만 먹었어"], ["walk", "저녁 산책 40분 했는데 변이 좀 물렀어"], ["stethoscope", "오늘 병원에서 귀 진료 3만 5천 원, 2주 뒤에 다시 오래"], ["calendar", "다음 주 토요일 오전 11시 미용 예약 넣어 줘"], ["scales", "몸무게 3.2kg 재고 간식 두 개 줬어"]];
 const IDLE_HEIGHT = 360; // 11/11: 칩 두 줄을 말풍선으로 옮기고 강아지를 키움(290→360)
 const CORNER_SIZE = 76;
 // 기록 중 왼쪽 위 강아지: 노치/상태바(safe-area-inset-top) 바로 아래까지 올려 기록 칸을 넓게
@@ -492,9 +493,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       {/* 예시 문장은 입력창을 누를 때만(11/9) — 채팅 중엔 읽는 동안만 접힘 */}
       <div className={`collapse-y${(isChat ? reading : !(typing || input)) ? " collapsed" : ""}`}><div>
         <div className="chat-suggest" style={{ marginTop: 12 }} aria-label="이렇게 말해 보세요">
-          {RECORD_EXAMPLES.map((q) => (
+          {RECORD_EXAMPLES.map(([ico, q]) => (
             <button key={q} type="button" className="record-example" disabled={pending} onMouseDown={(e) => e.preventDefault()} onClick={() => (setInput(q), inputElRef.current?.focus())}>
-              <Ico name="pencil" size={14} /> {q}
+              <Ico name={ico} size={18} sticker /> {q}
             </button>
           ))}
         </div>

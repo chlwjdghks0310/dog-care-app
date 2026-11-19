@@ -127,7 +127,7 @@ export default function BehaviorCheck({ dog, onBack }) {
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="h2"><Ico name="scan" size={18} /> AI로 영상 보기 (선택 · 하루 2번)</div>
         <p className="faint" style={{ marginTop: 0 }}>
-          영상 속 자세·걸음걸이·호흡을 AI가 참고용으로 설명해 줘요. 영상만으로는 한계가 있어 진단을 대신하지 않아요. 영상은 분석을 위해 서버를 거쳐 Google Gemini API로 전송되고, 결과는 저장되지 않아요.
+          영상 속 자세·걸음걸이·호흡을 AI가 참고용으로 설명해 줘요. 영상은 서버를 거쳐 Google Gemini API로 전송되고, 결과는 저장되지 않아요.
         </p>
         {videoUrl ? (
           <video src={videoUrl} controls style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />

@@ -33,7 +33,6 @@ import { hasAIConsent } from "../services/aiConsent";
 import FamilyShare, { FamilyBadge } from "../components/FamilyShare";
 import { useSwipeClose } from "../components/SwipeBack";
 import Ico from "../components/Ico";
-import { getStage } from "../services/stageGuide";
 import Help from "./Help";
 import Contact from "./Contact";
 import Feedback from "./Feedback";
@@ -252,7 +251,6 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
       </div>
 
       <UpcomingCard dog={dog} onOpenCalendar={onOpenCalendar} />
-      <GuideEntry dog={dog} onOpen={onOpenGuide} />
 
       <GalleryStrip dog={dog} onOpen={onOpenGallery} />
       <VitalsCard dog={dog} onOpenVital={onOpenVital} onOpenWeight={onOpenWeight} onOpenMeds={onOpenMeds} />
@@ -483,20 +481,7 @@ function HealthLines({ dog, onEdit }) {
   );
 }
 
-// 월령별 가이드 입구(11/15): 지금 시기 한 줄 + 보기
-function GuideEntry({ dog, onOpen }) {
-  const st = getStage(dog);
-  return (
-    <button type="button" className="mg-band" style={{ marginBottom: 14 }} onClick={onOpen}>
-      <span className="mg-band-ico"><Ico name={st.ico} size={24} /></span>
-      <span className="mg-band-body">
-        <span className="mg-band-sub">지금은 {st.name} · {st.rangeLabel}</span>
-        <span className="mg-band-title">월령별 가이드 · 간식·장난감·산책·건강을 시기에 맞게</span>
-      </span>
-      <span className="mg-band-go">보기 ›</span>
-    </button>
-  );
-}
+// 월령별 가이드 입구 띠는 11/19에 뺌(오늘 말풍선·케어 탭에 이미 있어 세 번째 입구는 AI티만 더함)
 
 function UpcomingCard({ dog, onOpenCalendar }) {
   const today = todayKey();

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Empty from "../components/Empty";
 import { calculateAge, formatAge } from "../utils/age";
 import { formatKoreanDate, toDateKey, addDays, pad2 } from "../utils/date";
 import { getWeightRecords, addWeightRecord, updateWeightRecord, deleteWeightRecord, getWeightChangeAdvice } from "../services/weightLog";
@@ -219,8 +220,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
       <div className="card" style={{ marginBottom: 14 }}>
         {!latest ? (
           <>
-            <p className="subtle" style={{ marginBottom: 12 }}>아직 체중 기록이 없어요. 첫 체중을 기록해 보세요.</p>
-            <button className="btn-primary" onClick={openAddForm}>체중 기록하기</button>
+            <Empty ico="scales" action="체중 기록하기" onAction={openAddForm}>아직 체중 기록이 없어요. 첫 체중을 적어 두면 변화를 같이 봐요.</Empty>
           </>
         ) : (
           <>

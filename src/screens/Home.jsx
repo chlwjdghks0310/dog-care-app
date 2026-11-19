@@ -7,6 +7,9 @@ import { RoutineSheet } from "../components/OutingCard";
 import Ico from "../components/Ico";
 import PuppyCard from "../components/PuppyCard";
 import { getFoodStock, stockLabel } from "../services/foodStock";
+import { getFeedingPlan } from "../data/feedingGuide";
+import { getFeedingSettings } from "../services/feedingSettings";
+import { calculateAge } from "../utils/age";
 import { getStage, getFit } from "../services/stageGuide";
 import { getDay, clearDay, ITEMS } from "../services/dailyCheck";
 import { markCheckedIn } from "../services/routine";
@@ -29,6 +32,15 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
 
   const food = useMemo(() => getFoodStock(dog), [dog]);
   const fit = useMemo(() => getFit(dog, stage).slice(0, 2), [dog, stage]);
+  // 11/19 사료 계산기 큰 타일: 한 끼 g · 다음 밥 시각(같은 모양 타일 3개 → 큰 것 하나 + 작은 둘)
+  const feed = useMemo(() => {
+    const st = getFeedingSettings(dog.id);
+    const plan = dog.weight ? getFeedingPlan(dog, calculateAge(dog.birthDate).ageInWeeks, { stoolCondition: st.stoolCondition, kcalPer100g: st.kcalPer100g || undefined }) : null;
+    const now = new Date(); const hm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const times = [...(st.times || [])].sort(); const next = times.find((t) => t > hm) || times[0];
+    const perMeal = plan && plan.mealsPerDay ? Math.round(plan.dailyGrams / plan.mealsPerDay) : null;
+    return { perMeal, meals: plan?.mealsPerDay, next, tomorrow: next && !times.some((t) => t > hm) };
+  }, [dog, dateKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="screen">
@@ -68,11 +80,15 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
 
       <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} />
 
-      <div className="quick-actions" style={{ marginBottom: 14 }}>
-        <button className="quick-tile" onClick={onOpenFeeding}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="bowl" size={24} /></span>
-          <span className="quick-tile-label">사료 계산기</span>
-        </button>
+      <button type="button" className="care-feed" onClick={onOpenFeeding}>
+        <img src="/pieces/bowl.png" alt="" width="56" height="56" />
+        <span className="care-feed-body">
+          <b>사료 계산기</b>
+          <span>{feed.perMeal ? `한 끼 ${feed.perMeal}g · 하루 ${feed.meals}끼` : "몸무게를 적으면 한 끼 양을 계산해요"}{feed.next ? ` · ${feed.tomorrow ? "내일" : "다음"} ${feed.next}` : ""}</span>
+        </span>
+        <span className="care-feed-go">›</span>
+      </button>
+      <div className="quick-actions two" style={{ marginBottom: 14 }}>
         <button className="quick-tile" onClick={onOpenAlarms}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
           <span className="quick-tile-label">알림·알람</span>

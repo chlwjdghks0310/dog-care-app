@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Empty from "../components/Empty";
 import Ico from "../components/Ico";
 import { GUIDE_AREAS, GUIDE_CARDS, LATER_STAGES } from "../data/stageGuide";
 import { STAGES, getStage, getFit, stageRangeLabel } from "../services/stageGuide";
@@ -108,7 +109,7 @@ export default function StageGuide({ dog, onBack }) {
           <ul className="mg-topics">{later.topics.map((t, i) => <li key={i}>{t}</li>)}</ul>
         </section>
       ) : (
-        <p className="subtle">이 시기의 카드가 아직 없어요.</p>
+        <Empty ico="book" compact>이 시기의 카드는 준비 중이에요.</Empty>
       )}
 
       <AskMore dog={dog} st={st} />

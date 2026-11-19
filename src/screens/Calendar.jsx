@@ -1,4 +1,5 @@
 import { RingStat } from "../components/Pieces";
+import Empty from "../components/Empty";
 import { toast, toastLater } from "../services/toast";
 import { useEffect, useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
@@ -131,9 +132,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
 
       <div className="h2" style={{ margin: "0 2px 8px" }}>다가오는 병원·접종·약</div>
       {upcoming.length === 0 ? (
-        <div className="card subtle" style={{ marginBottom: 14 }}>
-          앞으로 90일 안에 병원·접종·약 일정이 없어요. [＋ 일정]으로 넣어 두면 미리 알려 드려요.
-        </div>
+        <Empty ico="calendar" style={{ marginBottom: 14 }} action="＋ 일정 넣기" onAction={() => setSheet({ start: today })}>앞으로 90일 안에 병원·접종·약 일정이 없어요. 넣어 두면 전날 저녁에 알려 드려요.</Empty>
       ) : (
         <div className="up-list">
           {upcoming.map((o) => {

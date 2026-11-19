@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Empty from "./Empty";
 import { createPortal } from "react-dom";
 import { useSheetSwipe } from "./SwipeBack";
 import Ico from "./Ico";
@@ -83,9 +84,7 @@ export default function RecordsBrowser({ dog, items, initialTypes = [], initialD
           </div>
 
           {shown.length === 0 ? (
-            <div className="card subtle" style={{ textAlign: "center" }}>
-              {items.length === 0 ? "아직 기록이 없어요. 기록 탭 [＋ 새 기록]으로 첫 기록을 남겨 보세요." : "조건에 맞는 기록이 없어요."}
-            </div>
+            <Empty ico={items.length === 0 ? "note" : "search"}>{items.length === 0 ? "아직 기록이 없어요. 기록 탭 [＋ 새 기록]으로 첫 기록을 남겨 보세요." : "조건에 맞는 기록이 없어요."}</Empty>
           ) : (
             <div className="rec-list">
               {shown.slice(0, limit).map((r, i) => (

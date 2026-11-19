@@ -135,7 +135,7 @@ export default function HealthCheck({ dog, onBack }) {
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="h2"><Ico name="scan" size={18} /> AI로 자세히 보기 (선택 · 하루 2번)</div>
         <p className="faint" style={{ marginTop: 0 }}>
-          위에 넣은 사진을 AI가 대변 점수표 같은 자료를 바탕으로 참고용으로 설명해 줘요. 사진만으로는 한계가 있어 진단을 대신하지 않아요. 결과는 저장되지 않아요.
+          위에 넣은 사진을 AI가 대변 점수표 같은 자료를 바탕으로 참고용으로 설명해 줘요. 결과는 저장되지 않아요.
         </p>
         <AskBox value={question} onChange={setQuestion} examples={["언제부터 지켜봐야 해?", "사료를 바꿔야 할까?", "어제보다 묽어졌어", "병원 가기 전에 뭘 확인해?"]} />
         <button className="btn-ghost" style={{ width: "100%" }} onClick={handleSubmit} disabled={!file || pending}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Empty from "../components/Empty";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { WaterCup } from "../components/Pieces";
 import { VITAL, fmtValue, outOfRange } from "../data/vitals";
@@ -101,7 +102,7 @@ export default function VitalDetail({ dog, metric, onBack, onOpenWeight, onRecor
       <div className="card">
         <div className="h2">기록</div>
         {entries.length === 0 ? (
-          <p className="subtle" style={{ margin: 0 }}>아직 기록이 없어요. 기록 탭에서 적으면 여기에 모여요.</p>
+          <Empty ico="note" compact>아직 기록이 없어요. 기록 탭에서 적으면 여기에 모여요.</Empty>
         ) : (
           [...daily].reverse().slice(0, 30).map((d) => (
             <div key={d.date} className="vd-day">

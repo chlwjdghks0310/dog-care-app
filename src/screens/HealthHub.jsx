@@ -11,23 +11,20 @@ export default function HealthHub({ dog, onOpenStool, onOpenBehavior, onBack }) 
       {panel}
       <div style={{ height: 12 }} />
 
-      <button
-        className="card"
-        onClick={onOpenStool}
-        style={{ display: "block", width: "100%", textAlign: "left", marginBottom: 12, border: "1px solid var(--border)" }}
-      >
-        <div className="h2"><Ico name="camera" size={20} /> 변 체크</div>
-        <p className="subtle">모양(1~7)·색·보이는 것을 골라 기록해요. AI 사진 확인은 선택이에요.</p>
-      </button>
-
-      <button
-        className="card"
-        onClick={onOpenBehavior}
-        style={{ display: "block", width: "100%", textAlign: "left", border: "1px solid var(--border)" }}
-      >
-        <div className="h2"><Ico name="video" size={20} /> 컨디션 체크</div>
-        <p className="subtle">기운·식욕·걸음걸이 등 여섯 가지를 평소와 비교해 기록해요. AI 영상 보기는 선택이에요.</p>
-      </button>
+      {/* 11/19: 글 카드 2장 → 큰 그림 타일 2개(AI티 줄이기) */}
+      <div className="quick-actions two hub-tiles">
+        <button type="button" className="quick-tile hub-tile" onClick={onOpenStool}>
+          <Ico name="toilet" size={52} sticker />
+          <span className="quick-tile-label">변 체크</span>
+          <span className="hub-sub">모양 1~7 · 색 · 보이는 것</span>
+        </button>
+        <button type="button" className="quick-tile hub-tile" onClick={onOpenBehavior}>
+          <Ico name="smiley" size={52} sticker />
+          <span className="quick-tile-label">컨디션 체크</span>
+          <span className="hub-sub">기운·식욕·걸음 등 여섯 가지</span>
+        </button>
+      </div>
+      <p className="faint" style={{ marginTop: 12 }}>둘 다 보호자가 직접 고르는 기록이에요. AI 사진·영상 확인은 각 화면 아래에서 필요할 때만(하루 2번).</p>
     </div>
   );
 }
