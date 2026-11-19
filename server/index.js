@@ -536,9 +536,27 @@ function claudeText(response) {
 
 // 웹 검색이 서버 쪽 반복 한도에 걸리면 pause_turn으로 멈춘다 — 이어서 마저 답하게 한다.
 // onText가 있으면 스트리밍으로 받아 글자가 만들어지는 대로 넘긴다(채팅 화면에 바로 보이게)
+// 11/19: 새 Anthropic 계정 키로 바꾼 뒤 플러스 비서가 502 — fallback 베타(server-side-fallback)를 계정이 거절하면 400이 난다.
+// 그럴 땐 베타 없이 한 번 더 보내고, 그 뒤로는 이 프로세스에서 베타를 붙이지 않는다(기능 손실은 과부하 때 자동 대체 모델뿐).
+let fallbackBetaOk = true;
+const stripBeta = ({ betas, fallbacks, ...rest }) => (void betas, void fallbacks, rest);
+const betaRejected = (err) => err?.status === 400 && /beta|fallback/i.test(String(err?.message || ""));
+async function createMsg(params) {
+  const p = fallbackBetaOk ? params : stripBeta(params);
+  try {
+    return await client.beta.messages.create(p);
+  } catch (err) {
+    if (fallbackBetaOk && params.betas && betaRejected(err)) {
+      console.error("[server] fallback 베타 거절됨 → 베타 없이 재시도:", err.message);
+      fallbackBetaOk = false;
+      return client.beta.messages.create(stripBeta(params));
+    }
+    throw err;
+  }
+}
 async function callClaude(params, messages, onText) {
-  if (!onText) return client.beta.messages.create({ ...params, messages });
-  const stream = client.beta.messages.stream({ ...params, messages });
+  if (!onText) return createMsg({ ...params, messages });
+  const stream = client.beta.messages.stream({ ...(fallbackBetaOk ? params : stripBeta(params)), messages });
   for await (const ev of stream) if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") onText(ev.delta.text);
   return stream.finalMessage();
 }
@@ -768,7 +786,7 @@ app.post("/api/ask", async (req, res) => {
   if (all >= ASK_GLOBAL_LIMIT) return res.status(429).json({ error: "오늘은 비서가 쉬어야 해요. 내일 다시 물어봐 주세요.", tier, left: 0 });
   if (n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? "오늘 플러스 비서 횟수(50번)를 다 썼어요. 내일 다시 물어봐 주세요." : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
   try {
-    const response = await client.beta.messages.create({
+    const response = await createMsg({
       ...(plus ? FAST_MODEL : { model: RECORD_MODEL }), // 플러스 월 3,900원(사용자 11/18) → 원가 안전하게 Sonnet(답 1개 ≈ ₩16~25)
       max_tokens: plus ? 1200 : 300,
       thinking: { type: "disabled" },
@@ -783,8 +801,8 @@ app.post("/api/ask", async (req, res) => {
     const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
     res.json({ tier, answer, todo, vet, left: ASK_LIMIT[tier] - n - 1 });
   } catch (err) {
-    console.error("[server] ask error:", err.message);
-    res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier });
+    console.error("[server] ask error:", err.status, err.message);
+    res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });
   }
 });
 
@@ -803,7 +821,7 @@ app.post("/api/record", async (req, res) => {
   const said = typeof text === "string" ? text.trim().slice(0, 500) : "";
   if (!said) return res.status(400).json({ error: "기록할 내용을 적어 주세요." });
   try {
-    const response = await client.beta.messages.create({
+    const response = await createMsg({
       model: RECORD_MODEL,
       max_tokens: 2000,
       thinking: { type: "disabled" },
@@ -994,7 +1012,7 @@ app.post("/api/food-label", async (req, res) => {
   foodHits.set(req.ip, [...hits, now]);
   const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
   try {
-    const response = await client.beta.messages.create({
+    const response = await createMsg({
       ...FAST_MODEL,
       max_tokens: 2000,
       output_config: { effort: "low" },
@@ -1049,7 +1067,7 @@ app.post("/api/vet-doc", async (req, res) => {
   const said = typeof text === "string" ? text.slice(0, 2000).trim() : "";
   if (!imgs.length && !said) return res.status(400).json({ error: "사진이나 들은 설명이 필요해요." });
   try {
-    const response = await client.beta.messages.create({
+    const response = await createMsg({
       ...FAST_MODEL,
       max_tokens: 2500,
       output_config: { effort: "low" },
@@ -1116,7 +1134,7 @@ app.post("/api/quick-stool", async (req, res) => {
   const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
 
   try {
-    const response = await client.beta.messages.create({
+    const response = await createMsg({
       ...FAST_MODEL,
       max_tokens: 1500,
       output_config: { effort: "low" },

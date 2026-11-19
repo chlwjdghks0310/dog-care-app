@@ -74,7 +74,7 @@ export async function askAssistant(dog, text, { signal } = {}) {
     signal,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || "비서가 답을 만들지 못했어요."), { status: res.status, tier: data.tier });
+  if (!res.ok) throw Object.assign(new Error((data.error || "비서가 답을 만들지 못했어요.") + (data.detail ? ` (원인: ${data.detail})` : "")), { status: res.status, tier: data.tier });
   return { tier: data.tier === "plus" ? "plus" : "free", answer: String(data.answer || ""), todo: String(data.todo || ""), vet: String(data.vet || ""), left: Number(data.left ?? 0) };
 }
 
