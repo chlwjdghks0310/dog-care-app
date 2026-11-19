@@ -789,7 +789,8 @@ app.post("/api/ask", async (req, res) => {
     const response = await createMsg({
       ...(plus ? FAST_MODEL : { model: RECORD_MODEL }), // 플러스 월 3,900원(사용자 11/18) → 원가 안전하게 Sonnet(답 1개 ≈ ₩16~25)
       max_tokens: plus ? 1200 : 300,
-      thinking: { type: "disabled" },
+      // 11/20: Sonnet 5.5는 thinking "disabled"를 거절해(400) 플러스 비서가 통째로 실패했다 → 플러스는 thinking 생략(다른 Sonnet 호출과 같게), 무료 Haiku만 끈다
+      ...(plus ? {} : { thinking: { type: "disabled" } }),
       output_config: { effort: plus ? "medium" : "low" },
       system: [{ type: "text", text: plus ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
       messages: [{ role: "user", content: q }],
