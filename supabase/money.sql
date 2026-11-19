@@ -48,7 +48,7 @@ begin
       'period_usd', coalesce((select sum(cost) from character_jobs where status <> 'ledger' and (created_at at time zone 'Asia/Seoul')::date >= p_from), 0),
       'month_usd', coalesce((select sum(cost) from character_jobs where status <> 'ledger' and (created_at at time zone 'Asia/Seoul')::date >= m_from), 0),
       'daily', (select coalesce(json_agg(r order by r.day), '[]') from (
-        select (created_at at time zone 'Asia/Seoul')::date day, coalesce(sum(cost), 0) usd, count(*) jobs
+        select (created_at at time zone 'Asia/Seoul')::date as day, coalesce(sum(cost), 0) usd, count(*) jobs
         from character_jobs where status <> 'ledger' and (created_at at time zone 'Asia/Seoul')::date >= p_from group by 1) r),
       'jobs', (select count(*) from character_jobs where status <> 'ledger'),
       'done', (select count(*) from character_jobs where status = 'done'),
