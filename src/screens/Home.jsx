@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "../services/toast";
 import { todayKey } from "../utils/date";
 import { FoodJar, WeekStamps } from "../components/Pieces";
 import { formatAge } from "../utils/age";
@@ -95,7 +96,7 @@ function DailyRow({ dog, dateKey, onBack }) {
       <div className="dc-row">
         <Ico name="check" size={18} className="cat-ico tone-teal" />
         <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
-        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), onBack())}>다시 고르기</button>
+        <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), toast("오늘 하루 체크를 지웠어요 · 다시 골라 주세요"), onBack())}>다시 고르기</button>
       </div>
       {/* 11/18 사용자: 스탬프 노트는 오늘 탭 말풍선이 아니라 여기(케어)에 — 오늘 탭 강아지가 작아지지 않게 */}
       <WeekStamps dogId={dog.id} today={dateKey} />

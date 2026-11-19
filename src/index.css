@@ -1984,3 +1984,14 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .ck-all .faint { font-size: 12px; text-align: center; }
 .ck-item > label { display: flex; align-items: center; gap: 6px; }
 .ck-seg.on.lv0 { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+
+/* 공용 토스트(11/19): 아래 탭 바로 위 알약 한 줄. 되돌리기 같은 단추가 붙을 수 있다 */
+.toast-wrap { position: fixed; left: 16px; right: 16px; bottom: calc(var(--nav-h, 80px) + env(safe-area-inset-bottom, 0px) + 12px); z-index: 125; display: flex; justify-content: center; pointer-events: none; }
+.toast { display: inline-flex; align-items: center; gap: 8px; max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 999px; background: var(--ink, #47392e); color: #fff; font-size: 14px; font-weight: 700; line-height: 1.35; box-shadow: 0 10px 28px rgba(0, 0, 0, .22); pointer-events: none; }
+.toast .ico-sk, .toast svg { flex-shrink: 0; color: var(--warm, #f6b78a); }
+.toast span { min-width: 0; }
+.toast.has-action { pointer-events: auto; padding-right: 8px; }
+.toast button { margin-left: 4px; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--warm, #f6b78a); color: var(--ink, #47392e); font: inherit; font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+:root[data-theme="dark"] .toast, .dark .toast { background: #f4ede4; color: #2b2622; }
+:root[data-theme="dark"] .toast button, .dark .toast button { background: #c98a5e; color: #fff; }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

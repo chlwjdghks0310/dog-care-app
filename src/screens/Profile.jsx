@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { toast, toastLater } from "../services/toast";
 import RecordsBrowser from "../components/RecordsBrowser";
 import { getTimeline } from "../services/records";
 import { useHelpTip } from "../components/HelpTip";
@@ -144,6 +145,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
     });
     onUpdateDog?.(updated);
     setEditing(false);
+    toast("프로필을 저장했어요");
   }
 
   async function handleEnableNotifications() {
@@ -376,7 +378,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               {getDogs().map((d) => (
                 <SettingsRow key={d.id} ico={d.photo ? <img src={d.photo} alt="" /> : "dog"} title={d.name} sub={[d.breed, d.birthDate && formatAge(calculateAge(d.birthDate))].filter(Boolean).join(" · ") || "정보 없음"} right={d.id === dog.id ? <Ico name="check" size={20} style={{ color: "var(--accent-strong)" }} /> : null} onClick={() => d.id !== dog.id && onUpdateDog?.(d)} />
               ))}
-              <SettingsRow ico="house" title={`${dog.name}는 가족(본가) 집에 있어요`} sub="켜면 하루 체크 대신 가족 초대·소식 받기로 바뀌어요" right={<input type="checkbox" role="switch" className="switch" checked={dog.living === "family"} onChange={(e) => onUpdateDog?.(saveDog({ ...dog, living: e.target.checked ? "family" : "together" }))} aria-label="가족 집에 있어요" />} />
+              <SettingsRow ico="house" title={`${dog.name}는 가족(본가) 집에 있어요`} sub="켜면 하루 체크 대신 가족 초대·소식 받기로 바뀌어요" right={<input type="checkbox" role="switch" className="switch" checked={dog.living === "family"} onChange={(e) => (onUpdateDog?.(saveDog({ ...dog, living: e.target.checked ? "family" : "together" })), toast(e.target.checked ? `${dog.name}는 가족 집에 있는 걸로 바꿨어요` : "함께 사는 걸로 바꿨어요", { ico: "house" }))} aria-label="가족 집에 있어요" />} />
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어 플러스">
@@ -851,10 +853,12 @@ function ExportCard({ dog, onOpenVet }) {
   }
   async function runBackup() {
     setMsg("");
+    toast("백업 파일을 만드는 중이에요…", { ico: "clipboard", ms: 2500 });
     const text = await backupJson().catch(() => null);
     if (!text) return setMsg("내보내지 못했어요. 다시 시도해 주세요.");
     try {
       await shareFile(text, `멍케어-백업-${day}.json`, "application/json");
+      toast("백업 파일을 보냈어요");
     } catch (err) {
       if (err.name === "NotAllowedError") setBackup(text);
       else if (err.name !== "AbortError") setMsg("내보내지 못했어요. 다시 시도해 주세요.");
@@ -904,5 +908,5 @@ function GalleryStrip({ dog, onOpen }) {
 // 설정: 퍼피 100일 카드 켜고 끄기(오늘 탭 카드에서 숨겼을 때 다시 켜는 곳). 진행 기록은 지우지 않는다
 function PuppyToggle({ dog }) {
   const [on, setOn] = useState(() => !getPuppyProgress(dog.id).hidden);
-  return <SettingsRow ico="paw" title="퍼피 100일 카드" sub="오늘 탭에 하루 5분 과제(1살 아래) · 꺼도 기록은 남아요" right={<input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked))} aria-label="퍼피 100일 카드" />} />;
+  return <SettingsRow ico="paw" title="퍼피 100일 카드" sub="오늘 탭에 하루 5분 과제(1살 아래) · 꺼도 기록은 남아요" right={<input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked), toast(e.target.checked ? "퍼피 100일 카드를 켰어요" : "퍼피 100일 카드를 껐어요 · 기록은 남아요", { ico: "paw" }))} aria-label="퍼피 100일 카드" />} />;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast, toastLater } from "../services/toast";
 import { createPortal } from "react-dom";
 import { useSwipeClose } from "../components/SwipeBack";
 import { todayKey } from "../utils/date";
@@ -23,6 +24,7 @@ export default function VetSummary({ dog, onBack, backLabel = "← 병원으로"
     const next = { ...note, ...patch };
     setNote(next);
     saveVetNote(dog.id, next);
+    toastLater("메모를 저장했어요 · 병원용 기록에 들어가요");
   }
   const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 

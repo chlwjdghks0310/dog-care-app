@@ -52,7 +52,7 @@ export default function StageGuide({ dog, onBack }) {
       </div>
 
       {/* 지금(또는 보고 있는) 시기 카드 */}
-      <section className={`card mg-hero${isNow ? "" : " peek"}`}>
+      <section key={view} className={`card mg-hero pop-in${isNow ? "" : " peek"}`}>
         <div className="mg-hero-top">
           <span className="mg-hero-ico"><Ico name={viewing.ico} size={30} /></span>
           <div style={{ minWidth: 0 }}>

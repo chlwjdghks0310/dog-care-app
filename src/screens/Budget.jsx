@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast, toastLater } from "../services/toast";
 import { useHelpTip } from "../components/HelpTip";
 import MonthGrid from "../components/MonthGrid";
 import { todayKey, formatKoreanDate } from "../utils/date";
@@ -77,6 +78,7 @@ export default function Budget({ dog, onBack }) {
     setAllowance(dog.id, monthPrefix, amount);
     setAllowanceState(amount);
     setAllowanceText(null);
+    toast(amount ? "이번 달 용돈을 저장했어요" : "용돈을 지웠어요", { ico: "wallet" });
   }
   const monthExpenses = useMemo(() => expenses.filter((e) => e.date.startsWith(monthPrefix)), [expenses, monthPrefix]);
   const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -118,6 +120,7 @@ export default function Budget({ dog, onBack }) {
   const startEdit = (e) => setSheet({ id: e.id, title: e.title, amount: e.amount, categoryId: categoryById(e.categoryId).id === "unknown" ? "" : categoryById(e.categoryId).id, date: e.date, memo: e.memo, items: e.items, claim: e.claim, claimPaid: e.claimPaid, recordId: e.recordId });
   const openAdd = (extra = {}) => setSheet({ date: selectedDateKey > today ? today : selectedDateKey, ...extra });
   function handleSheetSaved(list, date) {
+    toast(list.length < expenses.length ? "지출을 지웠어요" : "지출을 저장했어요", { ico: "wallet" });
     setExpenses(list);
     setSheet(null);
     setSelectedDateKey(date);

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { toast, toastLater } from "../services/toast";
 import { deleteWeightRecord, getWeightRecords } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import WeightChart from "../components/WeightChart";
@@ -8,7 +9,7 @@ import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
 import RecordsBrowser from "../components/RecordsBrowser";
 import { SymptomTimeline } from "../components/Pieces";
-import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotals } from "../services/records";
+import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotals, getRecords, saveRecord } from "../services/records";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"]];
@@ -40,12 +41,15 @@ export default function Records({ dog, startNew, startType, prefill, onBack, bac
   function handleDelete(rec) {
     const linked = rec.links?.eventId || rec.links?.alarmId;
     if (!confirm(`이 기록을 지울까요?${linked ? "\n이 기록으로 만든 일정·알림도 같이 지워져요." : ""}`)) return;
+    const orig = rec.source === "weight" ? null : getRecords(dog.id).find((r) => r.id === rec.id); // 되돌리기용 원본
     try {
       if (rec.source === "weight") deleteWeightRecord(dog.id, rec.id);
       else deleteRecord(dog.id, rec.id);
       if (rec.links?.alarmId) syncPushAlarms();
       reload();
-      setNotice("지웠어요.");
+      setNotice("");
+      if (rec.source === "weight") toast("체중 기록을 지웠어요", { ico: "trash" });
+      else toast("기록을 지웠어요", { ico: "trash", action: orig ? "되돌리기" : undefined, onAction: () => { try { saveRecord(dog.id, { ...orig, links: undefined }); reload(); toast("되돌렸어요"); } catch (e) { toast(e.message, { ico: "alert" }); } } });
     } catch (err) {
       setNotice(err.message);
     }
@@ -86,8 +90,10 @@ export default function Records({ dog, startNew, startType, prefill, onBack, bac
         />
       )}
 
+      <div key={form ? "form" : view} className="pop-in" style={{ display: "contents" }}>
       {!form && view === "cal" && <RecordCalendar key={calDate || ""} dog={dog} items={items} initialDate={calDate} onChanged={reload} onAdd={(date) => (onNew ? onNew(date) : setForm({ initial: null, prefill: { at: dateAt(date) } }))} onShowAll={() => setBrowse({})} />}
       {!form && view === "trend" && <Trends dog={dog} items={items} onPick={(t, d) => setBrowse({ types: [t], days: d })} onAdd={() => (onNew ? onNew() : setForm({ initial: null }))} />}
+      </div>
     </div>
   );
 }

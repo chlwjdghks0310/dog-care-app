@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast, toastLater } from "../services/toast";
 import { calculateAge, formatAge } from "../utils/age";
 import { FoodJar, Spoons } from "../components/Pieces";
 import { getFeedingPlan, SOAK_WATER_TEMP, SOAK_DURATION } from "../data/feedingGuide";
@@ -61,6 +62,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }
   function saveNow(patch) {
     setSettings((s) => ({ ...s, ...patch }));
     saveFeedingSettings(dog.id, { ...getFeedingSettings(dog.id), ...patch });
+    toastLater("저장했어요 · 급여량을 다시 계산했어요", { ico: "bowl" });
   }
 
   // 사료 남은 양: 봉투 무게 + 뜯은 날 → 하루 급여량으로 며칠 남았는지 어림(떨어지기 5일 전 점심에 알림)
@@ -72,6 +74,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }
     openNewBag(dog.id, grams);
     setSettings(getFeedingSettings(dog.id));
     syncPushAlarms();
+    toast(`새 봉투 ${Number(bagKg)}kg 기록했어요 · 떨어지기 5일 전에 알려 드려요`, { ico: "bowl", ms: 2600 });
   }
 
   const soakLabel = plan.soak.needed === true ? "필요" : plan.soak.needed === "optional" ? "선택" : "불필요";
@@ -222,6 +225,7 @@ function FoodCard({ dog, settings, onUse }) {
   const [error, setError] = useState("");
 
   async function search(q = name) {
+    toast("사료 정보를 찾는 중이에요… 10~20초 걸려요", { ico: "search", ms: 3000 });
     if (!q.trim() || busy) return;
     setBusy(true);
     setError("");

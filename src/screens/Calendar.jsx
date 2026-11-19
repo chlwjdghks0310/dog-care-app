@@ -1,4 +1,5 @@
 import { RingStat } from "../components/Pieces";
+import { toast, toastLater } from "../services/toast";
 import { useEffect, useMemo, useState } from "react";
 import { calculateAge, formatAge } from "../utils/age";
 import { todayKey, toDateKey, formatKoreanDate, addDays } from "../utils/date";
@@ -90,7 +91,10 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
   const recLine = (r) => (r.type === "vet" ? summarize(r) : `${r.data.kind}${r.data.title ? ` ${r.data.title}` : ""}`);
 
   function handleSheetSaved(start) {
-    setEvents(getEventsByDog(dog.id));
+    const next = getEventsByDog(dog.id);
+    const count = (ev) => Object.values(ev || {}).flat().length;
+    toast(count(next) < count(events) ? "일정을 지웠어요" : typeof start === "string" ? "일정을 저장했어요 · 알림도 맞춰 뒀어요" : "일정을 바꿨어요", { ico: "calendar" });
+    setEvents(next);
     setSheet(null);
     setSelectedDateKey(start);
   }

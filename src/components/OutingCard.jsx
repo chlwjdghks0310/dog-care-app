@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "../services/toast";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { outingState, leaveNow, backNow, durationLabel, getRoutine, saveRoutine, DEFAULT_ROUTINE, routineAsked, markRoutineAsked } from "../services/routine";
@@ -64,6 +65,7 @@ export function RoutineSheet({ onClose, ask }) {
   function save() {
     saveRoutine(r);
     syncPushAlarms();
+    toast("평소 외출 시간을 저장했어요", { ico: "house" });
     onClose();
   }
   return createPortal(
