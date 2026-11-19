@@ -785,7 +785,17 @@ const ASK_RULES_PLUS = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비
 규칙: 진단을 단정하지 않는다(순위·확률 표현 금지). 약 이름은 설명해도 되지만 용량·횟수·투약 변경은 절대 말하지 않는다(수의사에게). 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 "결론:"에 "지금 바로 동물병원(야간이면 24시)"을 쓴다. 해요체, 이모지 없음.`;
 
 // 한 달 리포트 해설처럼 "한 문단"이 어울리는 자리용(다섯 칸 틀 대신)
-const ASK_RULES_PARA = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록을 아는 상태에서, 보호자가 준 요약을 읽고 따뜻하고 구체적인 한 문단(3~4문장)으로 답한다. 잘한 것 → 지켜볼 것 → 다음 달 해 볼 것 순서. 진단을 단정하지 않고(순위·확률 표현 금지), 약 용량·횟수는 말하지 않는다. 해요체, 이모지·마크다운 없음.`;
+const ASK_RULES_PARA = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록을 아는 상태에서, 보호자가 준 한 달 요약을 읽고 답한다.
+반드시 아래 세 칸 형식 그대로(칸 제목은 바꾸지 않고, 칸마다 한두 문장, 다른 말·인사·마크다운 금지):
+잘한 것: (요약 속 숫자를 하나 짚어 칭찬. 예: 산책이 5일에서 12일로 늘었어요)
+지켜볼 것: (겹쳐 보기나 달라진 것 중 눈여겨볼 하나. 원인 단정 금지)
+다음 달 할 일: (집에서 해 볼 구체적인 행동 하나)
+규칙: 진단을 단정하지 않고(순위·확률 표현 금지), 약 용량·횟수는 말하지 않는다. 해요체, 이모지 없음.`;
+function splitMonth(text) {
+  const grab = (label, next) => { const m = text.match(new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n(?:${next})\\s*:|$)`)); return m ? m[1].trim() : ""; };
+  const labels = "잘한 것|지켜볼 것|다음 달 할 일";
+  return { good: grab("잘한 것", labels), watch: grab("지켜볼 것", labels), next: grab("다음 달 할 일", labels) };
+}
 
 // 자세한 답을 칸으로 나눈다(틀이 어긋나면 비워 두고 원문은 answer로)
 function splitDetail(text) {
@@ -827,7 +837,7 @@ app.post("/api/ask", async (req, res) => {
     const answer = claudeText(response).trim();
     const todo = answer.match(/지금 할 일:\s*([\s\S]*?)(?=\n병원에 물어볼 것:|$)/)?.[1]?.trim() || "";
     const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
-    res.json({ tier, detail, answer, todo, vet, ...(detail && !para ? { sections: splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
+    res.json({ tier, detail, answer, todo, vet, ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
   } catch (err) {
     console.error("[server] ask error:", err.status, err.message);
     res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });

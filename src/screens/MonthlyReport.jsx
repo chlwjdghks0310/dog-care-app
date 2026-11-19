@@ -223,18 +223,19 @@ function MiniStats({ r }) {
 function AssistantNote({ dog, r, plus, onOpenPlus }) {
   const saved = readJSON(NOTE_KEY, {})[dog.id]?.[r.month];
   const [note, setNote] = useState(saved?.text || "");
+  const [sections, setSections] = useState(saved?.sections || null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  useEffect(() => { setNote(readJSON(NOTE_KEY, {})[dog.id]?.[r.month]?.text || ""); setErr(""); }, [dog.id, r.month]);
+  useEffect(() => { const v = readJSON(NOTE_KEY, {})[dog.id]?.[r.month]; setNote(v?.text || ""); setSections(v?.sections || null); setErr(""); }, [dog.id, r.month]);
   async function ask() {
     setBusy(true); setErr("");
     try {
       const a = await askAssistant(dog, monthDigest(dog, r), { detail: true, format: "paragraph" });
       const text = a.answer || [a.todo, a.vet].filter(Boolean).join("\n");
       const all = readJSON(NOTE_KEY, {});
-      all[dog.id] = { ...(all[dog.id] || {}), [r.month]: { text, at: new Date().toISOString() } };
+      all[dog.id] = { ...(all[dog.id] || {}), [r.month]: { text, sections: a.sections || null, at: new Date().toISOString() } };
       writeJSON(NOTE_KEY, all);
-      setNote(text);
+      setNote(text); setSections(a.sections || null);
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
   return (
@@ -244,7 +245,16 @@ function AssistantNote({ dog, r, plus, onOpenPlus }) {
         {!plus ? (
           <span className="subtle">플러스면 비서가 이 달을 한 문단으로 읽어 줘요. {onOpenPlus && <button type="button" className="link-btn" style={{ margin: 0 }} onClick={onOpenPlus}>플러스 보기</button>}</span>
         ) : note ? (
-          <><span className="mr-note-text">{note}</span><button type="button" className="link-btn" style={{ margin: 0 }} disabled={busy} onClick={ask}>{busy ? "읽는 중…" : "다시 읽어 주기"}</button></>
+          <>
+            {sections && (sections.good || sections.watch || sections.next) ? (
+              <div className="mr-three">
+                {sections.good && <div className="mr-three-i"><Ico name="party" size={20} sticker /><div><b>잘한 것</b><p>{sections.good}</p></div></div>}
+                {sections.watch && <div className="mr-three-i watch"><Ico name="search" size={20} sticker /><div><b>지켜볼 것</b><p>{sections.watch}</p></div></div>}
+                {sections.next && <div className="mr-three-i next"><Ico name="checklist" size={20} sticker /><div><b>다음 달 할 일</b><p>{sections.next}</p></div></div>}
+              </div>
+            ) : <span className="mr-note-text">{note}</span>}
+            <button type="button" className="link-btn" style={{ margin: 0 }} disabled={busy} onClick={ask}>{busy ? "읽는 중…" : "다시 읽어 주기"}</button>
+          </>
         ) : (
           <button type="button" className="btn-ghost small" disabled={busy || r.records < 3} onClick={ask}>{busy ? "읽는 중…" : r.records < 3 ? "기록이 3개 넘으면 읽어 줘요" : "플러스 비서가 이 달 읽어 주기"}</button>
         )}

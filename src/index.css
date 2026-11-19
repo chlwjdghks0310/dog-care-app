@@ -2076,3 +2076,11 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .ad-check { list-style: none; padding-left: 0; } .ad-check li { position: relative; padding-left: 20px; } .ad-check li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 10px; height: 10px; border: 1.6px solid var(--accent-strong); border-radius: 3px; }
 .ad-sign { background: var(--warm-bg); } .ad-sign b { color: var(--warm); }
 .ad-say { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; line-height: 1.5; color: var(--text-soft); padding: 6px 2px 0; } .ad-say .ico-sk { flex: 0 0 auto; }
+
+/* 한 달 비서 세 칸(11/20): 잘한 것 · 지켜볼 것 · 다음 달 할 일 */
+.mr-three { display: grid; gap: 6px; }
+.mr-three-i { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 12px; background: var(--surface); }
+.mr-three-i > .ico-sk { flex: 0 0 auto; margin-top: 1px; } .mr-three-i > div { flex: 1; min-width: 0; }
+.mr-three-i b { display: block; font-size: 12.5px; color: var(--accent-strong); margin-bottom: 2px; } .mr-three-i p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--text); }
+.mr-three-i.watch { background: var(--warm-bg); } .mr-three-i.watch b { color: var(--warm); }
+.mr-three-i.next b { color: var(--success, var(--accent-strong)); }
