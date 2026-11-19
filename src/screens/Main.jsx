@@ -717,15 +717,17 @@ function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
   );
 }
 
-// 멍케어 비서(11/17 재도입): 우리 아이 기록을 아는 답. 무료는 두 칸(지금 할 일 / 병원에 물어볼 것), 플러스는 자세한 답. 응급은 위 응급 카드가 대신한다.
+// 멍케어 비서(11/17 재도입 → 11/20 두 단계): 누구나 먼저 빠른 답 두 칸(지금 할 일 / 병원에 물어볼 것, Haiku). 플러스는 그 아래 [자세히 듣기](Sonnet, 하루 20번). 응급은 위 응급 카드가 대신한다.
 function AssistantAnswer({ dog, said }) {
-  const [res, setRes] = useState(null); // { tier, answer, todo, vet, left } | { error, status }
+  const [res, setRes] = useState(null); // { tier, answer, todo, vet, left, detailLeft } | { error, status }
+  const [more, setMore] = useState(null); // 자세한 답 { answer, left } | { error } | "loading"
   useEffect(() => {
     const controller = new AbortController();
-    setRes(null);
+    setRes(null); setMore(null);
     askAssistant(dog, said, { signal: controller.signal }).then(setRes).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
     return () => controller.abort();
   }, [dog.id, said]);
+  const askMore = () => { setMore("loading"); askAssistant(dog, said, { detail: true }).then(setMore).catch((e) => setMore({ error: e.message })); };
   const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
   if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name} 기록을 보고 생각하는 중…</p>;
   if (res.error) return <p className="info-lead">{res.error}</p>;
@@ -733,15 +735,18 @@ function AssistantAnswer({ dog, said }) {
   return (
     <div className="asst">
       <div className="asst-head"><span className="chip">{plus ? "플러스 비서" : "멍케어 비서"}</span><span className="faint">오늘 {Math.max(0, res.left)}번 더 물어볼 수 있어요</span></div>
-      {plus || !(res.todo || res.vet) ? (
-        <div className="asst-body">{res.answer}</div>
-      ) : (
+      {res.todo || res.vet ? (
         <>
           <div className="asst-row"><b>지금 할 일</b><div>{res.todo}</div></div>
           <div className="asst-row"><b>병원에 물어볼 것</b><div>{res.vet}</div></div>
         </>
+      ) : (
+        <div className="asst-body">{res.answer}</div>
       )}
       {!plus && <button type="button" className="link-btn" onClick={openPlus}>더 자세한 답은 멍케어 플러스에서</button>}
+      {plus && !more && (res.detailLeft > 0 ? <button type="button" className="btn-ghost small asst-more" onClick={askMore}><Ico name="chatHeart" size={15} /> 자세히 듣기 <span className="faint">· 오늘 {res.detailLeft}번 남음</span></button> : <span className="faint">오늘 자세한 답 횟수를 다 썼어요. 빠른 답은 계속 들을 수 있어요.</span>)}
+      {more === "loading" && <p className="faint" style={{ margin: 0 }}><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={14} /></span>기록을 읽고 자세히 적는 중이에요…</p>}
+      {more && more !== "loading" && (more.error ? <p className="error-text" style={{ margin: 0 }}>{more.error}</p> : <div className="asst-detail"><span className="chip">자세히</span><div className="asst-body">{more.answer}</div></div>)}
     </div>
   );
 }

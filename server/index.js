@@ -762,7 +762,8 @@ const character = mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_
 //   무료: 가장 가벼운 모델, 두 칸 고정 답(지금 할 일 / 병원에 물어볼 것), 하루 5번
 //   플러스(MC-PLUS 코드): 큰 모델, 자세한 답, 하루 50번
 // 둘 다: 진단 단정 ✗, 약 용량 ✗, 응급 신호면 병원 먼저. 사용 횟수는 메모리(서버가 다시 켜지면 0부터 — 비용이 싸서 괜찮다).
-const ASK_LIMIT = { free: 5, plus: 50 };
+const ASK_LIMIT = { free: 5, plus: 50 }; // 빠른 답(Haiku, 두 줄)
+const ASK_DETAIL_LIMIT = 20; // 11/20 사용자: [자세히](Sonnet)는 플러스만 하루 20번 — 1답 ≈ ₩20, 최악 사용자 손실을 연 −11만 원 선에서 막는다
 const ASK_GLOBAL_LIMIT = 3000; // 하루 전체(비용 안전장치)
 const askUsed = new Map(); // `${day}|${petId}` → n, `${day}|*` → 전체
 const askCount = (petId) => { const d = kstDay(); const k = `${d}|${petId}`; const g = `${d}|*`; return { k, g, n: askUsed.get(k) || 0, all: askUsed.get(g) || 0 }; };
@@ -776,31 +777,37 @@ const ASK_RULES_PLUS = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비
 규칙: 진단을 단정하지 않는다(순위·확률 표현 금지). 약 이름은 설명해도 되지만 용량·횟수·투약 변경은 절대 말하지 않는다(수의사에게). 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 첫 줄에 "지금 바로 동물병원(야간이면 24시)"을 쓴다. 해요체, 이모지 없음, 마크다운 기호(#, **) 없음.`;
 app.post("/api/ask", async (req, res) => {
   if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 물어봐 주세요." });
-  const { dogContext, text, petId, token } = req.body || {};
+  const { dogContext, text, petId, token, detail: wantDetail } = req.body || {};
   const q = typeof text === "string" ? text.trim().slice(0, 600) : "";
   const pet = typeof petId === "string" && petId ? petId.slice(0, 80) : req.ip;
   if (!q) return res.status(400).json({ error: "질문을 적어 주세요." });
   const plus = character.isPlusCode(await character.accessCode(pet, token));
   const tier = plus ? "plus" : "free";
+  // 11/20 두 단계: 누구나 먼저 빠른 답(Haiku 두 줄). 플러스는 그 아래 [자세히]를 누를 때만 Sonnet(하루 20번) — 원가를 1/3 아래로
+  const detail = Boolean(wantDetail);
+  if (detail && !plus) return res.status(403).json({ error: "자세한 답은 멍케어 플러스에서 들을 수 있어요.", tier, left: 0 });
   const { k, g, n, all } = askCount(pet);
+  const dk = `${k}|detail`; const dn = askUsed.get(dk) || 0;
   if (all >= ASK_GLOBAL_LIMIT) return res.status(429).json({ error: "오늘은 비서가 쉬어야 해요. 내일 다시 물어봐 주세요.", tier, left: 0 });
-  if (n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? "오늘 플러스 비서 횟수(50번)를 다 썼어요. 내일 다시 물어봐 주세요." : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
+  if (detail && dn >= ASK_DETAIL_LIMIT) return res.status(429).json({ error: `오늘 자세한 답 횟수(${ASK_DETAIL_LIMIT}번)를 다 썼어요. 빠른 답은 계속 들을 수 있어요.`, tier, left: 0, detail: true });
+  if (!detail && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 비서 횟수(${ASK_LIMIT.plus}번)를 다 썼어요. 내일 다시 물어봐 주세요.` : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
   try {
     const response = await createMsg({
-      ...(plus ? FAST_MODEL : { model: RECORD_MODEL }), // 플러스 월 3,900원(사용자 11/18) → 원가 안전하게 Sonnet(답 1개 ≈ ₩16~25)
-      max_tokens: plus ? 1200 : 300,
-      // 11/20: Sonnet 5.5는 thinking "disabled"를 거절해(400) 플러스 비서가 통째로 실패했다 → 플러스는 thinking 생략(다른 Sonnet 호출과 같게), 무료 Haiku만 끈다
-      ...(plus ? {} : { thinking: { type: "disabled" } }),
-      output_config: { effort: plus ? "medium" : "low" },
-      system: [{ type: "text", text: plus ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
+      ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩3)
+      max_tokens: detail ? 1200 : 300,
+      // Sonnet 5.5는 thinking "disabled"를 거절(400) → Sonnet엔 생략, Haiku만 끈다(11/20)
+      ...(detail ? {} : { thinking: { type: "disabled" } }),
+      output_config: { effort: detail ? "medium" : "low" },
+      system: [{ type: "text", text: detail ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
       messages: [{ role: "user", content: q }],
     });
     logCache(response);
-    askUsed.set(k, n + 1); askUsed.set(g, all + 1);
+    if (detail) askUsed.set(dk, dn + 1); else askUsed.set(k, n + 1);
+    askUsed.set(g, all + 1);
     const answer = claudeText(response).trim();
     const todo = answer.match(/지금 할 일:\s*([\s\S]*?)(?=\n병원에 물어볼 것:|$)/)?.[1]?.trim() || "";
     const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
-    res.json({ tier, answer, todo, vet, left: ASK_LIMIT[tier] - n - 1 });
+    res.json({ tier, detail, answer, todo, vet, left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
   } catch (err) {
     console.error("[server] ask error:", err.status, err.message);
     res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });

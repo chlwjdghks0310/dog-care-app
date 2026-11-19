@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
+import { useHelpTip } from "../components/HelpTip";
 import PawProgress from "../components/PawProgress";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
 import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
@@ -199,10 +200,12 @@ function Extras({ dog, job, setSt, act, busy }) {
   const n = Object.keys(have).length;
   const max = job.maxExtras || 3;
   const reward = rewardsOf(dog.id); // 스탬프 배지 5개 = 부가 동작 1편(11/19)
+  const [tip, panel] = useHelpTip("부가 동작", "기본 캐릭터는 기다리기(꼬리·귀·고개 움직임)와 고민하기(엎드려 눈 굴림) 두 편이에요. 부가 동작은 네 가지 중 세 편까지: 기쁨 — 기록을 저장하면 6초 동안 몸을 흔들어요 · 졸림 — 밤 10시~아침 6시엔 꾸벅 졸아요 · 밥 기다림 — 사료 계산기 밥 시간 30분 전후에 그릇 쪽을 봐요 · 산책 가자 — 산책 시간이 되면 목줄을 기다려요(곧). 한 편마다 5초 영상을 새로 만들어 5~8분 걸리고, 실패해도 기본 캐릭터는 그대로예요. 정성 상품엔 3편이 들어 있고, 하루 체크 배지 5개마다 1편을 받아요."); // 11/20 사용자: 뭐가 있는지 글로
   const add = (kind) => act(async () => { const j = await addExtra(dog.id, kind); if (reward.extrasLeft > 0) claimExtra(dog.id); setSt((s) => ({ ...s, job: j })); });
   return (
     <div style={{ display: "grid", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-      <div className="px-sec">부가 동작 {n}/{max} <span className="px-dim">· 상황에 맞춰 홈 화면에서 움직여요</span></div>
+      <div className="px-sec" style={{ display: "flex", alignItems: "center", gap: 6 }}>부가 동작 {n}/{max} <span className="px-dim">· 상황에 맞춰 홈 화면에서 움직여요</span>{tip}</div>
+      {panel}
       {reward.extrasLeft > 0 && <p className="px-note" style={{ margin: 0 }}>🏅 하루 체크 배지 {reward.badges}개 — 부가 동작 {reward.extrasLeft}편을 받을 수 있어요. 아래에서 골라 [만들기]</p>}
       {Object.entries(job.extras || {}).map(([kind, label]) => (
         <div key={kind} className="px-feat">

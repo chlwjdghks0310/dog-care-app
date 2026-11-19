@@ -31,17 +31,17 @@ export default function Plus({ dog, onOpenCharacter, onOpenMonth }) {
       </header>
       <div className="px-price">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}><span className="px-dim">정식 가격(예정)</span><span className="chip">지금은 베타 무료</span></div>
-        <div style={{ width: "100%" }}><b>월 3,900원</b> <span className="px-dim">또는</span> <b>연 29,000원</b> <span className="px-dim">(연간엔 기본 캐릭터 1번 포함)</span></div>
+        <div style={{ width: "100%" }}><b>월 3,900원</b> <span className="px-dim">또는</span> <b>연 38,900원</b> <span className="px-dim">(연간엔 기본 캐릭터 1번 포함)</span></div>
       </div>
 
       <section className="px-card">
         <div className="px-sec">지금 플러스에만</div>
         <Feature ico="chatHeart" title="플러스 비서" on={plus}
-          desc="질문하면 체중·접종·약·하루 체크 기록을 근거로 답해요." />
+          desc="질문하면 체중·접종·약·하루 체크 기록을 근거로 답해요. 빠른 답 아래 [자세히 듣기]를 누르면 결론·확인할 것·이유·병원 신호까지." />
         <table className="px-table"><tbody>
           <tr><th></th><th>무료 비서</th><th>플러스 비서</th></tr>
-          <tr><td>답</td><td>두 줄<br /><span className="px-dim">지금 할 일 · 병원에 물어볼 것</span></td><td>자세히<br /><span className="px-dim">결론 · 확인할 것 · 이유 · 병원 신호</span></td></tr>
-          <tr><td>하루</td><td>5번</td><td>50번</td></tr>
+          <tr><td>답</td><td>두 줄<br /><span className="px-dim">지금 할 일 · 병원에 물어볼 것</span></td><td>두 줄 + [자세히 듣기]<br /><span className="px-dim">결론 · 확인할 것 · 이유 · 병원 신호</span></td></tr>
+          <tr><td>하루</td><td>5번</td><td>빠른 답 50번<br /><span className="px-dim">자세히 20번</span></td></tr>
           <tr><td>기록 반영</td><td>✓</td><td>✓</td></tr>
         </tbody></table>
         <p className="px-note">둘 다 진단을 단정하거나 약 용량을 말하지 않아요. 응급 신호면 병원 안내가 먼저. 평균적인 답이 궁금하면 답 아래 ChatGPT 버튼을 그대로 쓸 수 있어요.</p>

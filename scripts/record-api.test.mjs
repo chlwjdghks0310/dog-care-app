@@ -56,6 +56,7 @@ try {
   const askBody = await ask.json();
   assert.equal(askBody.tier, "free");
   assert.equal(typeof askBody.answer, "string");
+  assert.equal((await post("/api/ask", { text: "물을 많이 마셔요", petId: "dog-test", detail: true })).status, 403, "무료는 자세히 못 들음");
   assert.equal((await post("/api/record", { text: "" })).status, 400);
 
   // AI 상태 확인: 변 사진 2번까지, 3번째는 429(같은 기기). 다른 기기는 따로 센다

@@ -63,19 +63,19 @@ export async function recordFromText(dog, text, { signal } = {}) {
 }
 
 // 멍케어 비서(11/17): 질문에 우리 아이 기록을 아는 비서가 답한다. 무료는 두 칸(todo/vet), 플러스(MC-PLUS 코드)는 자세한 답(answer). 한도를 넘으면 status 429.
-export async function askAssistant(dog, text, { signal } = {}) {
+export async function askAssistant(dog, text, { signal, detail = false } = {}) {
   await ensureAIConsent();
   const { getCharacter } = await import("./character");
   const token = getCharacter(dog.id)?.token;
   const res = await fetch(`${API_BASE}/api/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...trackHeaders() },
-    body: JSON.stringify({ dogContext: toDogContext(dog), text, petId: dog.id, ...(token && { token }) }),
+    body: JSON.stringify({ dogContext: toDogContext(dog), text, petId: dog.id, detail, ...(token && { token }) }),
     signal,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error((data.error || "비서가 답을 만들지 못했어요.") + (data.detail ? ` (원인: ${data.detail})` : "")), { status: res.status, tier: data.tier });
-  return { tier: data.tier === "plus" ? "plus" : "free", answer: String(data.answer || ""), todo: String(data.todo || ""), vet: String(data.vet || ""), left: Number(data.left ?? 0) };
+  return { tier: data.tier === "plus" ? "plus" : "free", detail: Boolean(data.detail), answer: String(data.answer || ""), todo: String(data.todo || ""), vet: String(data.vet || ""), left: Number(data.left ?? 0), detailLeft: Number(data.detailLeft ?? 0) };
 }
 
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).

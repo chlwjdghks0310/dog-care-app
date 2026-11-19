@@ -2037,3 +2037,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .rewards-tiers li { display: flex; align-items: center; gap: 6px; text-align: left; } .rewards-tiers li > span:not(.ico-sk) { flex: 1; min-width: 0; } .rewards-tiers li .ico-sk, .rewards-tiers li > svg { flex: 0 0 auto; }
 .rewards-tiers li.got { color: var(--text); } .rewards-tiers li.got > svg:first-child, .rewards-tiers li.got .ico-sk { color: var(--warm); }
 .rewards-tiers .btn-ghost.small { padding: 4px 10px; min-height: 28px; font-size: 12.5px; }
+
+/* 비서 두 단계(11/20): 빠른 답 아래 [자세히 듣기] → 자세한 답 */
+.asst-more { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.asst-detail { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--border); }

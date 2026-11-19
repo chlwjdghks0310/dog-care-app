@@ -140,7 +140,7 @@ function AssistantNote({ dog, r, plus, onOpenPlus }) {
   async function ask() {
     setBusy(true); setErr("");
     try {
-      const a = await askAssistant(dog, monthDigest(dog, r));
+      const a = await askAssistant(dog, monthDigest(dog, r), { detail: true });
       const text = a.answer || [a.todo, a.vet].filter(Boolean).join("\n");
       const all = readJSON(NOTE_KEY, {});
       all[dog.id] = { ...(all[dog.id] || {}), [r.month]: { text, at: new Date().toISOString() } };
