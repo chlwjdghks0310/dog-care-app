@@ -341,3 +341,34 @@ section { padding: 44px 0; }
   .scr, .demo-phone, .btn, .floats .float { transition: none; }
   .svc.on, .svc.on .svc-ico, .svc.on .svc-cards li, .demo-hint .hand, .nav-glow, .ping::after, .float { animation: none !important; }
 }
+
+/* 멍케어 플러스(11/19): 무료 범위 먼저 → 세 가지 카드(휴대폰·그림) → 가격 띠 */
+.plus { padding: 56px 0 64px; background: var(--paper-2); }
+.plus-lead { max-width: 40em; margin: -14px auto 30px; text-align: center; font-size: 16px; line-height: 1.7; color: var(--ink-soft); }
+.plus-lead b { color: var(--ink); }
+.plus-grid { display: grid; gap: 18px; }
+.plus-card { position: relative; display: grid; gap: 16px; justify-items: center; padding: 26px 20px 22px; background: var(--surface); border: 2px solid var(--ink); border-radius: 26px; box-shadow: 4px 5px 0 var(--ink-10); }
+.plus-card::before { content: ""; position: absolute; top: -11px; left: 50%; width: 92px; height: 24px; background-color: rgba(246, 183, 138, 0.75); background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1.6px); background-size: 7px 7px; transform: translateX(-50%) rotate(-2deg); border-radius: 3px; }
+.plus-card:nth-child(2)::before { background-color: rgba(129, 171, 204, 0.6); transform: translateX(-50%) rotate(2.5deg); }
+.plus-card .phone.mini { width: min(220px, 60vw); border-width: 5px; border-radius: 26px; }
+.plus-text { display: grid; gap: 6px; justify-items: start; width: 100%; }
+.plus-text .sk { width: 44px; height: 44px; }
+.plus-text b { font-size: 19px; }
+.plus-text p { color: var(--ink-soft); font-size: 15px; line-height: 1.65; margin: 0; }
+.plus-text p b { color: var(--ink); font-size: inherit; }
+.plus-small { font-size: 13.5px !important; }
+.plus-tag { display: inline-block; margin-left: 4px; padding: 2px 9px; border-radius: 999px; background: var(--apricot-bg); color: var(--apricot-text); border: 1.5px dashed var(--apricot); font-size: 12px; font-weight: 800; vertical-align: middle; }
+.plus-art { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(300px, 100%); }
+.plus-art figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+.plus-art img { width: 100%; height: auto; border-radius: 20px; border: 2px solid var(--ink); background: #fff; }
+.plus-art figcaption { font-size: 13px; font-weight: 800; color: var(--ink-soft); }
+.plus-art figure:first-child { transform: rotate(-2deg); } .plus-art figure:last-child { transform: rotate(2deg); margin-top: 10px; }
+.plus-price { margin-top: 26px; display: grid; gap: 14px; padding: 22px 20px; background: var(--surface); border: 2px dashed var(--ink); border-radius: 24px; }
+.plus-price-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 16px; }
+.plus-price-main b { font-size: clamp(22px, 4vw, 30px); font-family: var(--font-title); font-weight: 400; color: var(--ink); }
+.plus-price-label { width: 100%; font-size: 13px; font-weight: 800; color: var(--apricot-text); }
+.plus-or { color: var(--ink-soft); }
+.plus-price-note { width: 100%; font-size: 14px; color: var(--ink-soft); }
+.plus-price-beta { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; background: var(--sky-bg); border-radius: 16px; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+.plus-price-beta .sk { width: 30px; height: 30px; flex-shrink: 0; } .plus-price-beta b { color: var(--ink); }
+@media (min-width: 720px) { .plus-grid { grid-template-columns: repeat(3, 1fr); gap: 22px; } .plus-card { padding: 30px 22px 24px; } .plus-price { grid-template-columns: 1fr 1fr; align-items: center; padding: 26px 28px; } }

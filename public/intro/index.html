@@ -37,7 +37,7 @@
   <link rel="preload" href="/fonts/bagelfatone-subset.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- 2026-11-14 개편: 스티커 아이콘(/sk/stickers.svg)과 같은 손그림 느낌. 설명서·자료실도 home.css 위에 각자 css -->
-  <link rel="stylesheet" href="/intro/home.css?v=2" />
+  <link rel="stylesheet" href="/intro/home.css?v=3" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
 </head>
 <body>
@@ -63,6 +63,7 @@
       <nav class="nav" id="nav" aria-label="주요 메뉴">
         <a href="/intro/guide/">기능 설명서</a>
         <a href="/intro/resources/">자료실</a>
+        <a href="#plus">플러스</a>
         <a href="#start">시작 방법</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
@@ -135,7 +136,7 @@
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-mic"/></svg><div><b>말하거나 적기</b><span>“산책 30분 했어”, “몸무게 3.2kg”처럼 짧게 말하면 <b>AI 없이 바로 저장</b>되고 [되돌리기]가 나와요. 긴 이야기는 AI가 문장을 기록으로 바꿔 건강 기록·일정·가계부에 나눠 담아요. 마이크로 말해도 돼요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-house"/></svg><div><b>지금 시기 가이드 · 다녀올게</b><span>말풍선 아래 <b>[이갈이 가이드 ›]</b>처럼 우리 아이 지금 시기 이름이 붙은 줄이 보여요. 누르면 케어 탭의 월령별 가이드가 바로 열려요. 나갈 때 <b>[다녀올게]</b>를 누르면 혼자 있는 시간을 세고, <b>[왔어]</b>를 누르면 짧은 돌봄 제안이 나와요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-graduation"/></svg><div><b>퍼피 100일</b><span>1살 아래 강아지라면 <b>하루 5분 훈련 과제</b>가 한 장씩 나와요. 이름 부르기부터 바깥 매너까지 14주, 급한 고민(짖음·물기·배변 실수)은 언제든 열어 봐요.</span></div></li>
-                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-idea"/></svg><div><b>궁금할 땐 정보 카드</b><span>질문을 적으면 AI가 답을 지어내는 대신 <b>공개 수의학 자료로 만든 정보 카드</b>를 보여 줘요. 더 묻고 싶으면 [ChatGPT에 물어보기]로 이어 줘요(멍케어 밖 AI, 참고용).</span></div></li>
+                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-chatHeart"/></svg><div><b>우리 아이 기록을 아는 비서</b><span>“물을 많이 마셔” 같은 질문을 적으면 멍케어 비서가 <b>체중·하루 체크·먹는 약 기록을 보고</b> <b>지금 할 일 · 병원에 물어볼 것</b> 두 줄로 답해요(하루 5번). 진단을 단정하거나 약 용량을 말하지 않아요. 더 자세한 답은 <a href="#plus">플러스 비서</a>, 평균적인 답이 궁금하면 [ChatGPT에 물어보기]도 그대로 있어요.</span></div></li>
               </ul>
               <p class="svc-note">멍케어는 진단하지 않아요. 걱정되는 모습이 계속되면 동물병원에 물어보세요. AI에 보내기 전에는 먼저 동의를 받아요.</p>
             </div>
@@ -248,7 +249,7 @@
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-image"/></svg><div><b>프로필 · 성장 추억</b><span>나이·견종·몸무게·알레르기·먹는 약이 맨 위 카드에 보여요. 사진을 모아 두고 그날의 문구를 적거나 스티커로 꾸며요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-vital"/></svg><div><b>건강 수치</b><span>기본은 <b>몸무게</b>만. 호흡수·체온·음수량은 켠 칸만 보이고, 참고 범위와 출처를 함께 보여 줘요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-med"/></svg><div><b>약 관리</b><span>처방대로 넣으면 시간에 알림이 오고, 먹였어요·건너뜀을 눌러요. 남은 양도 알려 줘요. 약 용량은 AI가 바꾸지 않아요.</span></div></li>
-                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-chart"/></svg><div><b>주간 리포트</b><span>일요일 저녁, 지난 7일 기록을 <b>숫자 그대로</b> 모아 보여 줘요. 점수를 매기지 않아요. [이번 주 카드로 자랑하기]로 예쁜 그림 한 장도 만들어요.</span></div></li>
+                <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-chart"/></svg><div><b>이번 주 · 한 달 리포트</b><span>일요일 저녁, 지난 7일 기록을 <b>그림과 숫자 그대로</b> 모아 보여 줘요(산책 발도장, 밥 그릇, 체중 두 점). 점수는 매기지 않아요. <b>한 달 리포트</b>는 달력 한 장에 산책·증상·병원이 모이고 체중 곡선과 지난달 비교까지 — <a href="#plus">플러스</a>에서 열려요(베타 동안은 모두). [이번 주 카드로 자랑하기]로 예쁜 그림 한 장도 만들어요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-users"/></svg><div><b>가족 공유 · 여러 마리</b><span>로그인하면 초대 코드로 <b>가족과 같은 기록</b>을 봐요. 강아지가 본가(가족 집)에 있으면 가족이 적은 “다른 게 있었어요”를 알림으로 받아요. 강아지는 여러 마리 등록할 수 있어요.</span></div></li>
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-settings"/></svg><div><b>설정</b><span>백업·로그인, 다크 모드·배경 테마, 기록 내보내기(병원용 PDF·엑셀용 CSV·전체 백업), AI 동의 확인·철회, 의견 보내기.</span></div></li>
               </ul>
@@ -356,6 +357,49 @@
       </div>
     </section>
 
+    <!-- 5.5 멍케어 플러스(11/19): 무료 범위 먼저, 플러스 세 가지, 가격은 예정·베타 무료 -->
+    <section class="plus" id="plus" aria-labelledby="plus-title">
+      <div class="wrap">
+        <p class="kicker center">멍케어 플러스</p>
+        <h2 id="plus-title" class="sec-title">더 깊이 알고 싶은 날엔 <em>플러스</em></h2>
+        <p class="plus-lead">하루 체크 · 기록 · 병원용 기록 · 이상 신호 · 알림 · 이번 주 리포트 · 월령별 가이드 · 가족 공유 · 여러 마리 — <b>지금 쓰는 건 전부 계속 무료</b>예요. 플러스는 여기에 세 가지를 더해요.</p>
+        <div class="plus-grid">
+          <article class="plus-card">
+            <figure class="phone mini"><img src="/intro/img/plus.jpg?v=1" alt="멍케어 플러스 화면 — 무료 비서와 플러스 비서 비교표" width="300" height="649" loading="lazy" /></figure>
+            <div class="plus-text">
+              <svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-chatHeart"/></svg>
+              <b>플러스 비서</b>
+              <p>무료 비서가 <b>두 줄</b>(지금 할 일 · 병원에 물어볼 것)로 답한다면, 플러스 비서는 <b>결론 · 집에서 확인할 것 · 이유 · 병원에 가야 할 신호</b>까지 자세히. 하루 5번 → 50번. 둘 다 우리 아이 기록을 보고 답하고, 진단을 단정하거나 약 용량을 말하지 않아요.</p>
+            </div>
+          </article>
+          <article class="plus-card">
+            <figure class="phone mini"><img src="/intro/img/month.jpg?v=1" alt="한 달 리포트 화면 — 달력 한 장과 체중 곡선" width="300" height="649" loading="lazy" /></figure>
+            <div class="plus-text">
+              <svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-calendar"/></svg>
+              <b>한 달 리포트</b>
+              <p><b>달력 한 장</b>에 하루 체크(칠한 칸)·산책(발도장)·증상(점)·병원(+)이 모여요. 체중은 곡선으로, 산책·밥·증상·병원비는 <b>지난달과 숫자 차이</b>만. 플러스 비서가 그 달을 세 줄로 읽어 줘요. 이번 주 리포트는 계속 무료.</p>
+            </div>
+          </article>
+          <article class="plus-card plus-card-char">
+            <div class="plus-art" aria-label="같은 강아지로 만든 두 그림체 예시">
+              <figure><img src="/character/sample-3d.jpg" alt="3D 영화풍 캐릭터 예시" width="480" height="480" loading="lazy" /><figcaption>3D 영화풍</figcaption></figure>
+              <figure><img src="/character/sample-hand.jpg" alt="손그림 크레파스 캐릭터 예시" width="480" height="480" loading="lazy" /><figcaption>손그림 크레파스</figcaption></figure>
+            </div>
+            <div class="plus-text">
+              <svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-video"/></svg>
+              <b>우리 아이 캐릭터</b>
+              <p>사진 2~4장을 올리면 <b>우리 아이를 닮은 캐릭터</b>가 후보 4장으로 나오고, 고른 그림이 <b>움직이는 영상</b>이 돼 첫 화면 강아지 자리에 살아요. 기다리기·고민하기가 기본, 정성은 기쁨·졸림·밥·산책 같은 부가 동작 3편을 더해요. 사진은 캐릭터를 만든 뒤 지워요.</p>
+              <p class="plus-small">단품 기본 4,900원 · 정성 9,900원 · 다른 그림체 추가 2,900원 <span class="plus-tag">곧 출시</span></p>
+            </div>
+          </article>
+        </div>
+        <div class="plus-price">
+          <div class="plus-price-main"><span class="plus-price-label">정식 가격(예정)</span><b>월 3,900원</b><span class="plus-or">또는</span><b>연 29,000원</b><span class="plus-price-note">연간엔 기본 캐릭터 1번 포함</span></div>
+          <p class="plus-price-beta"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-sparkles"/></svg><span><b>지금은 베타라 전부 무료</b>예요. 결제는 정식 출시 때 열리고, 그전까지는 베타 테스터 코드로 먼저 써 봐요. 설정 → <b>멍케어 플러스</b>에서 코드를 넣어요.</span></p>
+        </div>
+      </div>
+    </section>
+
     <!-- 6. 만든 사람 이야기 -->
     <section class="story" id="story" aria-labelledby="story-title">
       <div class="wrap story-in">
@@ -416,7 +460,15 @@
         </details>
         <details>
           <summary>AI는 어디에 쓰이나요?</summary>
-          <p>말한 문장을 기록으로 바꾸는 것, 진료 정리에서 영수증·처방전 사진의 글자를 읽는 것, 보호자가 고른 변·컨디션 사진·영상을 참고용으로 정리하는 것에만 써요. 짧은 문장(“산책 30분 했어”)은 AI 없이 바로 저장돼요. 질문에 답을 지어내지 않고, 약 용량을 바꾸지 않고, 진단하지 않아요. AI에 보내기 전에 먼저 동의를 받아요.</p>
+          <p>네 가지예요. ① 말한 문장을 기록으로 바꾸기(짧은 문장은 AI 없이 바로 저장) ② 진료 정리에서 영수증·처방전 사진의 글자 읽기 ③ 보호자가 고른 변·컨디션 사진·영상을 참고용으로 정리하기 ④ <b>멍케어 비서</b> — 질문하면 우리 아이 기록을 보고 “지금 할 일 · 병원에 물어볼 것” 두 줄로 답해요. 어느 것도 진단을 단정하거나 약 용량을 바꾸지 않아요. AI에 보내기 전에 먼저 동의를 받아요.</p>
+        </details>
+        <details>
+          <summary>멍케어 플러스는 뭐예요? 꼭 사야 하나요?</summary>
+          <p>아니요. 하루 체크·기록·병원용 기록·이상 신호·알림·이번 주 리포트·가이드·가족 공유는 <b>계속 무료</b>예요. 플러스는 <b>플러스 비서(자세한 답, 하루 50번) · 한 달 리포트 · 우리 아이 캐릭터(연간엔 기본 1번 포함, 정성 올리기·그림체 추가 할인)</b> 세 가지를 더해요. 정식 가격은 월 3,900원 또는 연 29,000원으로 예정했고, 베타 동안은 전부 무료예요. 결제는 정식 출시 때 열려요.</p>
+        </details>
+        <details>
+          <summary>우리 아이 캐릭터는 어떻게 만들어요? 사진은 어디로 가요?</summary>
+          <p>설정 → 멍케어 플러스 → <b>우리 아이 캐릭터</b>에서 그림체(3D 영화풍 / 손그림 크레파스)를 고르고 사진 2~4장을 올려요. 후보 4장이 나오면 가장 닮은 하나를 고르고(다시 뽑기 2번), 10분쯤 뒤 기다리기·고민하기 영상 2편이 첫 화면 강아지 자리에 들어가요. 사진은 위치 정보를 지운 뒤 그림·영상 AI(해외 서버)로 보내고, <b>캐릭터를 만든 뒤 바로 지워요</b>. 시작할 때 만 18세 이상 확인과 국외 전송 동의를 받고, 생성이 시작되면 취소할 수 없어요. 지금은 곧 출시 상태라 “출시되면 알려 주세요”를 켜 두거나 초대 코드로 먼저 써 볼 수 있어요.</p>
         </details>
         <details>
           <summary>앱스토어에 없나요?</summary>
