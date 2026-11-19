@@ -48,6 +48,34 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
       <div className="h1" style={{ marginBottom: 2 }}>케어</div>
       <p className="subtle" style={{ margin: "0 0 12px" }}>{dog.name} · {formatAge(stage.age)} · {stage.sizeLabel}{dog.weight ? ` · ${dog.weight}kg` : ""}</p>
 
+      {/* 11/20 순서(사용자): 하루 체크 → 사료 계산기·알림·외출 → 월령별 가이드 → 퍼피 100일 훈련 */}
+      <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} onOpenCharacter={onOpenCharacter} />
+
+      {food && food.daysLeft <= 7 && (
+        <button type="button" className="food-alert" onClick={onOpenFeeding} style={{ alignItems: "center", gap: 12 }}>
+          <FoodJar stock={food} size={44} ticks={false} />
+          <span><b>{stockLabel(food)}</b> {food.daysLeft > 0 ? "· 지금 주문하면 넉넉해요" : "· 새 봉투를 뜯었으면 눌러서 알려 주세요"}</span>
+        </button>
+      )}
+
+      <button type="button" className="care-feed" onClick={onOpenFeeding}>
+        <img src="/pieces/bowl.png" alt="" width="56" height="56" />
+        <span className="care-feed-body">
+          <b>사료 계산기</b>
+          <span>{feed.perMeal ? `한 끼 ${feed.perMeal}g · 하루 ${feed.meals}끼` : "몸무게를 적으면 한 끼 양을 계산해요"}{feed.next ? ` · ${feed.tomorrow ? "내일" : "다음"} ${feed.next}` : ""}</span>
+        </span>
+        <span className="care-feed-go">›</span>
+      </button>
+      <div className="quick-actions two" style={{ marginBottom: 14 }}>
+        <button className="quick-tile" onClick={onOpenAlarms}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
+          <span className="quick-tile-label">알림·알람</span>
+        </button>
+        <button className="quick-tile" onClick={() => setRoutineOpen(true)}>
+          <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
+          <span className="quick-tile-label">외출 시간</span>
+        </button>
+      </div>
       <button type="button" className="care-guide" onClick={onOpenGuide}>
         <span className="care-guide-top">
           <span className="care-guide-ico"><Ico name={stage.ico} size={34} /></span>
@@ -71,33 +99,6 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
       {onOpenPuppy && <PuppyCard dog={dog} onOpen={onOpenPuppy} />}
       {routineOpen && <RoutineSheet onClose={() => setRoutineOpen(false)} />}
 
-      {food && food.daysLeft <= 7 && (
-        <button type="button" className="food-alert" onClick={onOpenFeeding} style={{ alignItems: "center", gap: 12 }}>
-          <FoodJar stock={food} size={44} ticks={false} />
-          <span><b>{stockLabel(food)}</b> {food.daysLeft > 0 ? "· 지금 주문하면 넉넉해요" : "· 새 봉투를 뜯었으면 눌러서 알려 주세요"}</span>
-        </button>
-      )}
-
-      <DailyRow dog={dog} dateKey={dateKey} onBack={onBack} onOpenCharacter={onOpenCharacter} />
-
-      <button type="button" className="care-feed" onClick={onOpenFeeding}>
-        <img src="/pieces/bowl.png" alt="" width="56" height="56" />
-        <span className="care-feed-body">
-          <b>사료 계산기</b>
-          <span>{feed.perMeal ? `한 끼 ${feed.perMeal}g · 하루 ${feed.meals}끼` : "몸무게를 적으면 한 끼 양을 계산해요"}{feed.next ? ` · ${feed.tomorrow ? "내일" : "다음"} ${feed.next}` : ""}</span>
-        </span>
-        <span className="care-feed-go">›</span>
-      </button>
-      <div className="quick-actions two" style={{ marginBottom: 14 }}>
-        <button className="quick-tile" onClick={onOpenAlarms}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="alarm" size={24} /></span>
-          <span className="quick-tile-label">알림·알람</span>
-        </button>
-        <button className="quick-tile" onClick={() => setRoutineOpen(true)}>
-          <span className="quick-tile-icon" aria-hidden="true"><Ico name="house" size={24} /></span>
-          <span className="quick-tile-label">외출 시간</span>
-        </button>
-      </div>
     </div>
   );
 }

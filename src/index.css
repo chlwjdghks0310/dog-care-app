@@ -1936,7 +1936,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .spoons { display: inline-flex; gap: 2px; align-items: flex-end; flex-wrap: wrap; } .spoons img { height: auto; display: block; }
 .cup { position: relative; display: inline-block; flex-shrink: 0; } .cup img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: clip-path .8s ease; }
 .cup-avg { position: absolute; left: 16%; right: 16%; border-top: 1.5px dashed var(--ink); opacity: .7; }
-.ringstat { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; } .ringstat svg { position: absolute; inset: 0; } .ringstat-in { position: relative; display: grid; place-items: center; }
+.ringstat { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; } .ringstat > svg { position: absolute; inset: 0; } .ringstat-in { position: relative; display: grid; place-items: center; } .ringstat-in svg { position: static; display: block; }
 .wr-viz { display: block; margin: 2px 0; } .wr-num { font-family: var(--font-bubble); font-size: 24px; line-height: .95; font-weight: 700; color: var(--ink); } .wr-num small { font-family: inherit; font-size: 15px; color: var(--text-soft); font-weight: 400; }
 
 /* 한 달 리포트(플러스, 11/18): 달력 한 장 + 체중 곡선 + 칸 + 비서 세 줄 */
@@ -2018,7 +2018,8 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .care-feed-go { font-size: 22px; color: var(--text-faint); }
 .quick-actions.two { grid-template-columns: 1fr 1fr; }
 .quick-actions.two .quick-tile { aspect-ratio: auto; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 12px 14px; }
-.quick-actions.two .quick-tile .quick-tile-label { font-size: 14px; }
+.quick-actions.two .quick-tile .quick-tile-label { font-size: 13.5px; white-space: nowrap; }
+.quick-actions.two .quick-tile { padding: 12px 10px; gap: 8px; }
 /* 건강 체크 허브 큰 타일 */
 .hub-tiles .quick-tile.hub-tile { flex-direction: column; justify-content: center; gap: 6px; padding: 20px 10px 16px; aspect-ratio: 1; }
 .hub-tile .quick-tile-label { font-size: 15px; font-weight: 800; }
