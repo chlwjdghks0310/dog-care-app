@@ -9,6 +9,7 @@ import cors from "cors";
 import multer from "multer";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { WebSocketServer } from "ws";
 import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
@@ -126,6 +127,8 @@ setInterval(() => hits.clear(), 60_000).unref();
 const tooMany = (req) => (hits.set(req.ip, (hits.get(req.ip) || 0) + 1), hits.get(req.ip) > 60);
 
 // 앱·홈페이지가 sendBeacon(text/plain)으로 보낸다: { e: 사건, s: 어디서 왔나, v: 기기 번호, p: 페이지, l: 로그인, i: 홈 화면 앱, d: 강아지 등록 }
+// 기능별 사용 기기 수(통계 "뭘 쓰나"): check 하루 체크 · task 100일 과제 · record 기록 저장 · 나머지는 화면 열기(App 탭 이름)
+const ACTS = new Set(["check", "task", "record", "vet", "month", "report", "week", "guide", "puppy", "feeding", "budget", "health", "weight", "gallery", "plus", "character"]);
 app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
   res.status(204).end();
   if (isBot(req) || tooMany(req)) return;
@@ -141,7 +144,7 @@ app.post("/api/t", express.text({ limit: "2kb" }), (req, res) => {
   else if (b.e === "cta") track("cta_app", s, v, ["web"]);
   else if (b.e === "download") track("guide_download", s, v, ["web"]);
   else if (b.e === "first_open") track(b.i ? "app_first_open_installed" : "app_first_open", s, null, null);
-  else if (b.e === "act" && ["check", "task"].includes(b.a)) track(`act:${b.a}`, "", v, [`act_${b.a}`]); // 핵심 행동(하루 체크·100일 과제)
+  else if (b.e === "act" && ACTS.has(b.a)) track(`act:${b.a}`, "", v, [`act_${b.a}`]); // 핵심 행동(하루에 기기마다 한 번)
   else if (b.e === "open") track("app_open", "", v, ["app", b.l ? "app_login" : "app_anon", ...(b.i ? ["app_installed"] : []), ...(b.d ? ["app_dog"] : []), ...(b.r ? ["app_remote"] : [])]); // app_remote: 가족 집 강아지(비동거 보호자)
 });
 
@@ -177,7 +180,7 @@ app.post("/api/feedback", async (req, res) => {
 
 // AI 사용 횟수: 앱이 X-MC-V(기기 번호)·X-MC-L(로그인 1/0)을 붙여 보낸다. 채팅은 비서별(source=mode), 나머지는 기능별
 // chat = 말로 기록하기(예전 AI 채팅 자리 — 통계 표의 "AI 채팅" 칸에 그대로 쌓인다)
-const AI_ROUTES = { "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video", "/api/vet-doc": "vet_doc" };
+const AI_ROUTES = { "/api/ask": "ask", "/api/record": "chat", "/api/analyze-photo": "photo", "/api/analyze-general-photo": "photo", "/api/quick-stool": "stool", "/api/food-info": "food", "/api/food-label": "food_label", "/api/transcribe": "voice", "/api/analyze-behavior": "video", "/api/vet-doc": "vet_doc" };
 app.use(Object.keys(AI_ROUTES), (req, res, next) => {
   if (req.method === "POST" && !isBot(req)) {
     const kind = AI_ROUTES[req.baseUrl];
@@ -185,9 +188,25 @@ app.use(Object.keys(AI_ROUTES), (req, res, next) => {
     const v = visitorHash(req.get("x-mc-v"));
     track(kind === "chat" ? `ai_chat:${login ? "login" : "anon"}` : `ai_other:${login ? "login" : "anon"}`, kind === "chat" ? clean(req.body?.mode) : kind, v, ["ai", login ? "ai_login" : "ai_anon"]);
     res.on("finish", () => res.statusCode >= 500 && track("ai_error", kind, null, null));
+    return aiCtx.run({ kind, visitor: v, login }, next); // 이 요청 안의 AI 호출이 saveUsage로 기능·기기를 안다
   }
   next();
 });
+
+// 돈 통계(11/20, supabase/money.sql): AI 응답마다 토큰·달러 한 행. 단가 $/MTok [입력, 출력, 캐시 읽기, 캐시 쓰기] — 바뀌면 여기만.
+// 모르는 모델(Gemini 등)은 usd null로 적어 화면에 "단가 미확인"으로 보인다.
+const aiCtx = new AsyncLocalStorage();
+const PRICES = { "claude-opus-5-5": [4, 20, 0.2, 5], "claude-sonnet-5-5": [2, 10, 0.2, 2.5], "claude-haiku-5-5": [1, 5, 0.1, 1.25] };
+function saveUsage(model, inTok, outTok, cacheRead = 0, cacheWrite = 0) {
+  if (!pushDb) return;
+  const c = aiCtx.getStore() || {};
+  const p = PRICES[model];
+  const usd = p ? (inTok * p[0] + outTok * p[1] + cacheRead * p[2] + cacheWrite * p[3]) / 1e6 : null;
+  db("ai_usage", { method: "POST", body: { day: kstDay(), feature: c.kind || "other", model: model || "?", visitor: c.visitor || null, pet: c.pet || null, plus: Boolean(c.plus), in_tok: inTok, out_tok: outTok, cache_read: cacheRead, cache_write: cacheWrite, usd } })
+    .catch((e) => console.error("[server] ai_usage:", e.message));
+}
+const saveClaudeUsage = (r) => r?.usage && saveUsage(r.model, r.usage.input_tokens || 0, r.usage.output_tokens || 0, r.usage.cache_read_input_tokens || 0, r.usage.cache_creation_input_tokens || 0);
+const saveGeminiUsage = (r, model) => r?.usageMetadata && saveUsage(model, r.usageMetadata.promptTokenCount || 0, r.usageMetadata.candidatesTokenCount || 0);
 
 // 기기별 하루 사용 한도(무료로 쓰는 AI 비용의 상한). 기기 번호(X-MC-V) 해시로 세고, 없으면 IP로 센다.
 // check = 변 사진·영상 AI 상태 확인(합쳐서), record = 말로 기록하기, voice = 서버 받아쓰기, food = 사료 정보·라벨 읽기
@@ -543,22 +562,25 @@ const stripBeta = ({ betas, fallbacks, ...rest }) => (void betas, void fallbacks
 const betaRejected = (err) => err?.status === 400 && /beta|fallback/i.test(String(err?.message || ""));
 async function createMsg(params) {
   const p = fallbackBetaOk ? params : stripBeta(params);
+  let r;
   try {
-    return await client.beta.messages.create(p);
+    r = await client.beta.messages.create(p);
   } catch (err) {
-    if (fallbackBetaOk && params.betas && betaRejected(err)) {
-      console.error("[server] fallback 베타 거절됨 → 베타 없이 재시도:", err.message);
-      fallbackBetaOk = false;
-      return client.beta.messages.create(stripBeta(params));
-    }
-    throw err;
+    if (!(fallbackBetaOk && params.betas && betaRejected(err))) throw err;
+    console.error("[server] fallback 베타 거절됨 → 베타 없이 재시도:", err.message);
+    fallbackBetaOk = false;
+    r = await client.beta.messages.create(stripBeta(params));
   }
+  saveClaudeUsage(r);
+  return r;
 }
 async function callClaude(params, messages, onText) {
   if (!onText) return createMsg({ ...params, messages });
   const stream = client.beta.messages.stream({ ...(fallbackBetaOk ? params : stripBeta(params)), messages });
   for await (const ev of stream) if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") onText(ev.delta.text);
-  return stream.finalMessage();
+  const r = await stream.finalMessage();
+  saveClaudeUsage(r);
+  return r;
 }
 
 async function createWithContinuation(params, messages, onText) {
@@ -815,6 +837,7 @@ app.post("/api/ask", async (req, res) => {
   // 11/20 두 단계: 누구나 먼저 빠른 답(Haiku 두 줄). 플러스는 그 아래 [자세히]를 누를 때만 Sonnet(하루 20번) — 원가를 1/3 아래로
   const detail = Boolean(wantDetail);
   const para = detail && req.body?.format === "paragraph"; // 한 달 리포트 해설
+  Object.assign(aiCtx.getStore() || {}, { kind: detail ? "ask_detail" : "ask", pet, plus });
   if (detail && !plus) return res.status(403).json({ error: "자세한 답은 멍케어 플러스에서 들을 수 있어요.", tier, left: 0 });
   const { k, g, n, all } = askCount(pet);
   const dk = `${k}|detail`; const dn = askUsed.get(dk) || 0;
@@ -1151,6 +1174,7 @@ app.post("/api/transcribe", async (req, res) => {
         responseSchema: { type: "object", properties: { speech: { type: "boolean" }, text: { type: "string" } }, required: ["speech", "text"] },
       },
     });
+    saveGeminiUsage(r, "gemini-3.1-flash-lite");
     let out = {};
     try {
       out = JSON.parse(r.text || "{}");

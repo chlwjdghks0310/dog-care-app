@@ -1,4 +1,5 @@
 import { cloneElement, isValidElement, useId, useMemo, useRef, useState } from "react";
+import { trackAct } from "../services/analytics";
 import { useHelpTip } from "../components/HelpTip";
 import { todayKey } from "../utils/date";
 import { resizeImageFile } from "../utils/image";
@@ -118,6 +119,7 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding, onS
         savedWeightId.current = saved.id;
       } else {
         saved = saveRecord(dog.id, { ...rec, links: initial?.links, expenseId: initial?.expenseId });
+        trackAct("record");
         // 진료비를 적으면 가계부(병원·치료)에도 같은 지출로 — 고치면 그 지출도 같이 고친다
         if (type === "vet") {
           const expenseId = linkVetExpense(dog.id, saved);

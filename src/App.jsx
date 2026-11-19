@@ -1,4 +1,5 @@
 import { Fragment, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { trackAct } from "./services/analytics";
 import Toaster from "./components/Toaster";
 import { flushSync } from "react-dom";
 import { getDogs, deleteDog, getActiveDogId, setActiveDogId } from "./services/dogRepository";
@@ -108,6 +109,7 @@ export default function App() {
         if (el) scrollPosRef.current[pg.dataset.tab] = el.scrollTop;
       }
     }
+    if (PARENT_TAB[next]) trackAct(next); // 세부 화면 열기 = 기능 사용(통계 "뭘 쓰나", 하루 한 번)
     _setTab(next);
   }, []);
   useLayoutEffect(() => {

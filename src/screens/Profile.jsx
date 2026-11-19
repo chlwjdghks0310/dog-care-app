@@ -42,7 +42,7 @@ import Plus from "./Plus";
 import { characterOutputs } from "../services/character";
 import { RingStat, GrowthRuler } from "../components/Pieces";
 import { getSyncStatus, onSyncStatus } from "../services/sync";
-import { isTrackingOff, setTrackingOff } from "../services/analytics";
+import { isTrackingOff, setTrackingOff, trackAct } from "../services/analytics";
 import { supabase } from "../services/supabase";
 const StatsDashboard = lazy(() => import("../components/StatsDashboard"));
 import { leavePet, myRole } from "../services/sync/family";
@@ -88,6 +88,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
   }, []);
   // 설정 위에 겹쳐 여는 화면(도움말·문의하기·강아지 등록) — 닫으면 아래 설정이 그대로 보인다
   const [settingsSub, setSettingsSub] = useState(null); // null | "help" | "contact" | "add-dog"
+  useEffect(() => { if (settingsSub === "plus" || settingsSub === "character") trackAct(settingsSub); }, [settingsSub]);
   const subSwipeClose = useSwipeClose(() => setSettingsSub(null));
   const swipeClose = useSwipeClose(() => setSettingsOpen(false));
   const [editForm, setEditForm] = useState(null);
