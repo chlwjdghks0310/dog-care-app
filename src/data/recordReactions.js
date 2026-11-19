@@ -369,6 +369,17 @@ export const TIPS = {
   ],
 };
 
+// 건강 수치 팁은 잰 항목별로(없는 항목은 default)
+const VITAL_TIPS_BY_METRIC = {
+  walk: ["산책 뒤 발바닥과 물그릇을 한 번 봐 주세요.", "더운 날은 손등을 바닥에 5초 대 보고 뜨거우면 시간을 옮겨요.", "산책 뒤 헐떡임이 평소보다 오래 가면 적어 두세요.", "분 수보다 꾸준함이 좋아요. 짧아도 매일이면 충분해요."],
+  water: ["물 마시는 양이 며칠째 평소와 다르면 진료 때 꼭 말해 주세요.", "물그릇을 한두 곳으로 정해 두면 마신 양을 세기 쉬워요.", "숫자 하나보다 며칠의 흐름을 보는 게 좋아요."],
+  temp: ["체온은 직장 체온계로 재는 게 가장 정확해요.", "39.2℃를 넘으면 10분 쉬고 다시 재요.", "재기 어려워하면 간식과 칭찬으로 짧게 끝내 주세요."],
+  resp: ["잠들었거나 편히 쉴 때 센 숫자가 기준이에요.", "계속 30회를 넘으면 다시 세어 보고, 그래도 계속이면 병원에 물어보세요."],
+  heart: ["크기·나이마다 차이가 커요. 평소 값과 비교해 보세요.", "같은 시간, 같은 방법으로 재면 비교가 정확해요."],
+  fluid: ["수액 양과 시간은 처방대로, 바뀐 게 있으면 수의사에게 먼저 물어보세요."],
+  default: ["같은 시간, 같은 방법으로 재면 비교가 정확해요.", "숫자 하나보다 며칠의 흐름을 보는 게 좋아요.", "수치가 걱정되면 기록을 들고 병원에 물어보세요. 기록은 진단을 대신하지 않아요."],
+};
+
 // 걱정 기록 팁 — 모두 "이럴 땐 병원에 연락" 안내를 담는다
 export const CALM_TIPS = {
   symptom: [
@@ -493,7 +504,9 @@ export function reactionFor(rec, ctx = {}) {
     return { concern: true, line: fill(draw(`calm:${concern}`, CALM[concern]), ctx), tip };
   }
   const key = poolKey(rec);
-  const tip = draw(`tip:${key}`, TIPS[key]);
+  // 건강 수치는 잰 항목에 맞는 팁만(산책 기록 뒤에 체온 팁이 나오던 것, 11/19)
+  const metric = key === "vital" ? rec.data?.metric : null;
+  const tip = metric ? draw(`tip:vital:${metric}`, VITAL_TIPS_BY_METRIC[metric] || VITAL_TIPS_BY_METRIC.default) : draw(`tip:${key}`, TIPS[key]);
   const what = WHAT[rec.type] || rec.data?.kind || "일상";
   let line;
   if (QUIET.has(key)) return { quiet: true, line: fill(draw(key, LINES[key]), ctx), tip };

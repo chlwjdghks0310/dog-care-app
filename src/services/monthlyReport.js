@@ -62,6 +62,7 @@ export function buildMonthlyReport(dog, month = monthOf(todayKey()), today = tod
     weight: { last: lastKg, prevLast: prevKg, diff: diff(lastKg, prevKg) },
     compare: { walkDays: cur.walk.days - prev.walk.days, walkMinutes: cur.walk.minutes - prev.walk.minutes, symptoms: cur.symptoms.length - prev.symptoms.length, looseDays: cur.looseDays.length - prev.looseDays.length, cost: cur.cost - prev.cost, vetDays: cur.vetDays.length - prev.vetDays.length },
     prevHasRecords: prev.records > 0,
+    prevCheck: prev.checkDays.length,
   };
 }
 

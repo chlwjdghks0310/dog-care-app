@@ -14,7 +14,7 @@ function WeightDots({ w }) {
   const prev = w.diff != null ? Math.round((w.kg - w.diff) * 100) / 100 : null;
   const y2 = prev == null ? 18 : w.diff > 0 ? 12 : w.diff < 0 ? 24 : 18;
   return (
-    <svg viewBox="0 0 150 36" width="100%" style={{ maxWidth: 200, display: "block" }} aria-hidden="true">
+    <svg viewBox="0 -8 150 44" width="100%" style={{ maxWidth: 200, display: "block" }} aria-hidden="true">
       <line x1="10" y1="30" x2="140" y2="30" stroke="var(--border)" />
       {prev != null && <><line x1="40" y1="18" x2="110" y2={y2} stroke="var(--ink)" strokeWidth="1.5" strokeDasharray="3 3" /><circle cx="40" cy="18" r="4.5" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.5" /><text x="40" y="9" fontSize="8.5" textAnchor="middle" fill="var(--text-faint)">지난 {prev}</text></>}
       <circle cx="110" cy={y2} r="5.5" fill="var(--warm-bg)" stroke="var(--ink)" strokeWidth="1.5" />
@@ -41,7 +41,7 @@ export default function WeeklyReport({ dog, onBack, onOpenVet, onOpenMonth }) {
   const mealTotal = r.meal.usual + r.meal.less + r.meal.more;
   const tiles = [
     { ico: "walk", tone: "violet", label: "산책", viz: <WeekStrip dates={r.dates} on={(d) => r.walk.dates.includes(d)} />, num: r.walk.days ? `${r.walk.days}일` : "기록 없음", unit: r.walk.minutes ? `모두 ${r.walk.minutes}분` : "" },
-    { ico: "bowl", tone: "rose", label: "밥", viz: <span style={{ display: "flex", gap: 1, alignItems: "center", minHeight: 28 }}>{Array.from({ length: Math.min(7, mealTotal) }, (_, i) => <img key={i} src="/pieces/bowl.png" alt="" style={{ width: 26, opacity: i < r.meal.usual ? 1 : 0.35, filter: i < r.meal.usual ? "none" : "grayscale(1)" }} />)}</span>, num: mealTotal ? `${r.meal.usual}번` : "기록 없음", unit: [r.meal.less && `적게 ${r.meal.less}`, r.meal.more && `많이 ${r.meal.more}`].filter(Boolean).join(" · ") },
+    { ico: "bowl", tone: "rose", label: "밥", viz: <span style={{ display: "flex", gap: 0, alignItems: "center", minHeight: 28 }}>{Array.from({ length: Math.min(7, mealTotal) }, (_, i) => <img key={i} src="/pieces/bowl.png" alt="" style={{ width: 19, opacity: i < r.meal.usual ? 1 : 0.35, filter: i < r.meal.usual ? "none" : "grayscale(1)" }} />)}</span>, num: mealTotal ? `${r.meal.usual}번` : "기록 없음", unit: [r.meal.less && `적게 ${r.meal.less}`, r.meal.more && `많이 ${r.meal.more}`].filter(Boolean).join(" · ") },
     { ico: "toilet", tone: "teal", label: "무른 변·설사", viz: <WeekStrip dates={r.dates} on={(d) => r.looseDays.includes(d)} mark="square" />, num: `${r.looseDays.length}일`, unit: r.looseDays.length ? r.looseDays.map(md).join(", ") : "기록된 날 없음" },
     { ico: "bandaid", tone: "blue", label: "증상 기록", viz: <WeekStrip dates={r.dates} on={(d) => symptomDates.has(d)} mark="square" />, num: `${r.symptoms.length}번`, unit: r.symptoms.length ? "아래에 날짜별로" : "기록된 증상 없음" },
     { ico: "scales", tone: "blue", label: "체중", viz: <WeightDots w={r.weight} />, num: r.weight ? `${r.weight.kg}` : "기록 없음", unit: r.weight ? `kg${r.weight.diff != null ? ` · ${r.weight.diff > 0 ? "+" : ""}${r.weight.diff}` : ""}` : "" },

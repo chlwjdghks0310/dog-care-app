@@ -9,9 +9,11 @@ import { readJSON, writeJSON } from "../services/storage";
 import { md } from "../services/records";
 import { todayKey } from "../utils/date";
 import { josa } from "../utils/text";
+import Empty from "../components/Empty";
 
 const NOTE_KEY = "dogcare-month-note-v1"; // { [dogId]: { [month]: { text, at } } } — 비서 해설은 달마다 한 번만 받는다
 const DOW = ["월", "화", "수", "목", "금", "토", "일"];
+const mealTotal = (r) => r.meal.usual + r.meal.less + r.meal.more;
 const sign = (n, unit = "") => (n === 0 ? `지난달과 같아요` : `지난달보다 ${n > 0 ? "+" : "−"}${Math.abs(n).toLocaleString()}${unit}`);
 
 // 한 달 리포트(멍케어 플러스, 11/18): 달력 한 장 + 체중 곡선 + 칸 5개 + 플러스 비서 세 줄. 판단 없이 기록된 사실과 지난달 차이만.
@@ -23,10 +25,10 @@ export default function MonthlyReport({ dog, onBack, onOpenVet, onOpenPlus }) {
   const open = canSeeMonthReport(dog.id) || plus;
   const tiles = [
     { ico: "walk", tone: "violet", label: "산책", viz: <PawRow n={r.walk.days} />, num: `${r.walk.days}일`, unit: r.walk.minutes ? `모두 ${r.walk.minutes}분` : "", sub: r.prevHasRecords ? sign(r.compare.walkDays, "일") : "" },
-    { ico: "bowl", tone: "rose", label: "밥", viz: <Bowls usual={r.meal.usual} other={r.meal.less + r.meal.more} />, num: `${r.meal.usual}번`, unit: [r.meal.less && `적게 ${r.meal.less}`, r.meal.more && `많이 ${r.meal.more}`].filter(Boolean).join(" · ") || "평소대로", sub: "" },
-    { ico: "bandaid", tone: "blue", label: "증상·무른 변", viz: <Dots n={r.symptoms.length + r.looseDays.length} />, num: `${r.symptoms.length}번`, unit: `무른 변 ${r.looseDays.length}일`, sub: r.topKinds.length ? r.topKinds.map(([k, n]) => `${k} ${n}`).join(" · ") : r.prevHasRecords ? sign(r.compare.symptoms, "번") : "" },
-    { ico: "stethoscope", tone: "blue", label: "병원", viz: <Cost won={r.cost} />, num: `${r.vetDays.length}번`, unit: r.cost ? `${r.cost.toLocaleString()}원` : "병원비 기록 없음", sub: r.prevHasRecords && (r.cost || r.compare.cost) ? sign(r.compare.cost, "원") : "" },
-    { ico: "check", tone: "teal", label: "하루 체크", viz: <RingStat pct={r.elapsed ? r.checkDays.length / r.elapsed : 0} size={44} stroke={5}><svg viewBox="0 0 24 24" width="20" height="20" style={{ color: "var(--warm)" }}><PawGlyph stroke="currentColor" width={2.2} /></svg></RingStat>, num: `${r.checkDays.length}일`, unit: `${r.elapsed}일 중`, sub: "" },
+    { ico: "bowl", tone: "rose", label: "밥", viz: <Bowls usual={r.meal.usual} other={r.meal.less + r.meal.more} />, num: `${r.meal.usual}번`, unit: mealTotal(r) === 0 ? "" : [r.meal.less && `적게 ${r.meal.less}`, r.meal.more && `많이 ${r.meal.more}`].filter(Boolean).join(" · ") || "모두 평소만큼", sub: "" },
+    { ico: "bandaid", tone: "blue", label: "증상·변", viz: <Dots n={r.symptoms.length + r.looseDays.length} />, num: `${r.symptoms.length}번`, unit: `무른 변 ${r.looseDays.length}일`, sub: r.topKinds.length ? r.topKinds.map(([k, n]) => `${k} ${n}`).join(" · ") : r.prevHasRecords ? sign(r.compare.symptoms, "번") : "" },
+    { ico: "stethoscope", tone: "blue", label: "병원", viz: <Visits n={r.vetDays.length} />, num: `${r.vetDays.length}번`, unit: r.cost ? `${r.cost.toLocaleString()}원` : "병원비 기록 없음", sub: r.prevHasRecords && (r.cost || r.compare.cost) ? sign(r.compare.cost, "원") : "" },
+    { ico: "check", tone: "teal", label: "하루 체크", wide: true, viz: <RingStat pct={r.elapsed ? r.checkDays.length / r.elapsed : 0} size={52} stroke={6}><svg viewBox="0 0 24 24" width="22" height="22" style={{ color: "var(--warm)" }}><PawGlyph stroke="currentColor" width={2.2} /></svg></RingStat>, num: `${r.checkDays.length}일`, unit: `${r.elapsed}일 중 · ${Math.round((r.checkDays.length / Math.max(1, r.elapsed)) * 100)}%`, sub: r.prevHasRecords ? sign(r.checkDays.length - r.prevCheck, "일") : "" },
   ];
   return (
     <div className="screen">
@@ -47,18 +49,24 @@ export default function MonthlyReport({ dog, onBack, onOpenVet, onOpenPlus }) {
       ) : (
         <>
           <MonthGrid r={r} />
+          {r.records === 0 ? <Empty ico="note" compact style={{ marginTop: 10 }}>{monthLabel(r.month)}엔 적은 기록이 없어요.</Empty> : <>
           <WeightLine r={r} />
           <div className="wr-grid" style={{ marginTop: 10 }}>
             {tiles.map((t) => (
-              <div key={t.label} className="wr-tile">
+              <div key={t.label} className={`wr-tile${t.wide ? " wide" : ""}`}>
                 <span className="wr-label"><Ico name={t.ico} size={16} className={`cat-ico tone-${t.tone}`} /> {t.label}</span>
-                <span className="wr-viz">{t.viz}</span>
-                <span className="wr-num">{t.num}{t.unit && <small> {t.unit}</small>}</span>
-                {t.sub && <span className="wr-sub">{t.sub}</span>}
+                <span className="wr-body">
+                  <span className="wr-viz">{t.viz}</span>
+                  <span>
+                    <span className="wr-num">{t.num}{t.unit && <small> {t.unit}</small>}</span>
+                    {t.sub && <span className="wr-sub">{t.sub}</span>}
+                  </span>
+                </span>
               </div>
             ))}
           </div>
           <AssistantNote dog={dog} r={r} plus={plus} onOpenPlus={onOpenPlus} />
+          </>}
           <button type="button" className="btn-ghost report-btn" style={{ marginTop: 14 }} onClick={onOpenVet}>
             <Ico name="clipboard" size={18} className="cat-ico tone-blue" /> 병원용 기록으로 보기
           </button>
@@ -116,10 +124,10 @@ function WeightLine({ r }) {
   );
 }
 
-const PawRow = ({ n }) => <span style={{ display: "flex", gap: 2, flexWrap: "wrap", minHeight: 28, maxWidth: 150 }}>{Array.from({ length: Math.min(31, n) }, (_, i) => <svg key={i} viewBox="0 0 24 24" width="14" height="14" style={{ color: "var(--warm)" }}><PawGlyph stroke="currentColor" width={2.2} /></svg>)}</span>;
+const PawRow = ({ n }) => <span style={{ display: "flex", gap: 3, alignItems: "center", minHeight: 28 }}>{Array.from({ length: Math.min(7, n) }, (_, i) => <svg key={i} viewBox="0 0 24 24" width="16" height="16" style={{ color: "var(--warm)" }}><PawGlyph stroke="currentColor" width={2.2} /></svg>)}{n > 7 && <small className="faint" style={{ marginLeft: 4 }}>+{n - 7}</small>}{n === 0 && <small className="faint">기록 없음</small>}</span>;
 const Bowls = ({ usual, other }) => <span style={{ display: "flex", gap: 1, alignItems: "center", minHeight: 28 }}>{Array.from({ length: Math.min(7, usual + other) }, (_, i) => <img key={i} src="/pieces/bowl.png" alt="" style={{ width: 24, opacity: i < usual ? 1 : 0.35, filter: i < usual ? "none" : "grayscale(1)" }} />)}{usual + other > 7 && <small className="faint" style={{ marginLeft: 4 }}>+{usual + other - 7}</small>}</span>;
 const Dots = ({ n }) => <span style={{ display: "flex", gap: 4, flexWrap: "wrap", minHeight: 28, alignItems: "center", maxWidth: 150 }}>{Array.from({ length: Math.min(20, n) }, (_, i) => <b key={i} className="mr-dot" style={{ width: 9, height: 9 }} />)}{n === 0 && <small className="faint">기록 없음</small>}</span>;
-const Cost = ({ won }) => <span style={{ display: "flex", gap: 2, alignItems: "flex-end", minHeight: 28 }}>{Array.from({ length: Math.min(8, Math.ceil(won / 50000)) }, (_, i) => <i key={i} className="mr-coin" />)}{won === 0 && <small className="faint">0원</small>}</span>;
+const Visits = ({ n }) => <span style={{ display: "flex", gap: 4, alignItems: "center", minHeight: 28 }}>{Array.from({ length: Math.min(6, n) }, (_, i) => <Ico key={i} name="stethoscope" size={22} sticker />)}{n > 6 && <small className="faint">+{n - 6}</small>}{n === 0 && <small className="faint">병원 안 갔어요</small>}</span>;
 
 // 플러스 비서 세 줄: 달마다 한 번 받아 둔다(다시 받기 가능). 무료면 어떤 건지 한 줄만
 function AssistantNote({ dog, r, plus, onOpenPlus }) {

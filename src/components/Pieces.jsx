@@ -83,13 +83,20 @@ export function FoodJar({ stock, size = 96, ticks = true }) {
     <span className="jar" style={{ width: size, height: Math.round(size * 1.13), marginRight: ticks ? 72 : 0 }} role="img" aria-label={`사료 ${kg(leftG)} 남음, 약 ${stock.daysLeft}일분`}>
       <img src={PIECE("container")} alt="" />
       <img src={PIECE("container-full")} alt="" style={{ clipPath: `inset(${top}% 0 0 0)` }} />
-      {ticks && (
-        <span className="jar-ticks">
-          <i style={{ top: "24%" }}>꽉 참 {kg(bagG)}</i>
-          <i style={{ top: `${top}%` }}>오늘 {kg(leftG)}</i>
-          <i style={{ top: "84%" }}>{stock.daysLeft > 0 ? `${md(stock.runOut)} 비어요` : "비었어요"}</i>
-        </span>
-      )}
+      {ticks && (() => {
+        // 눈금 글자가 겹치지 않게: 오늘 글자는 꽉 참·비는 날 글자와 최소 14% 띄우고, 실제 높이엔 작은 표시만 남긴다
+        const GAP = 14;
+        const todayLabel = Math.max(24 + GAP, Math.min(84 - GAP, top));
+        const empty = !(stock.daysLeft > 0);
+        return (
+          <span className="jar-ticks">
+            <i style={{ top: "24%" }}>꽉 참 {kg(bagG)}</i>
+            {!empty && <i style={{ top: `${todayLabel}%` }} className="now">오늘 {kg(leftG)}</i>}
+            {!empty && Math.abs(todayLabel - top) > 1 && <em style={{ top: `${top}%` }} aria-hidden="true" />}
+            <i style={{ top: "84%" }}>{empty ? "비었어요" : `${md(stock.runOut)} 비어요`}</i>
+          </span>
+        );
+      })()}
     </span>
   );
 }
