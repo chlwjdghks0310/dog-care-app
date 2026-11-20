@@ -191,7 +191,7 @@ function Form({ dog, job, st, setSt, act, busy }) {
 
       <section className="px-card">
         <div className="px-feat"><Ico name="checklist" size={38} /><div className="px-feat-body"><div className="px-feat-title"><span className="px-num">3</span>확인</div></div></div>
-        <label className="char-check"><input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} /><span>저는 만 18세 이상이에요(캐릭터 기능은 성인만 쓸 수 있어요)</span></label>
+        <label className="char-check"><input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} /><span>저는 만 19세 이상이에요(캐릭터 기능은 성인만 쓸 수 있어요)</span></label>
         <label className="char-check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span>사진이 캐릭터를 만들기 위해 미국의 AI 서비스(Google·Runway)로 전송되는 데 동의해요. 만든 뒤 사진은 바로 지워요. 시작한 뒤에는 취소할 수 없어요.</span></label>
       </section>
       <button type="button" className="btn-primary" onClick={go} disabled={busy || st.offline || !st.ready}>{busy ? "보내는 중…" : outputs ? "새로 만들기" : "만들기 시작"}</button>
