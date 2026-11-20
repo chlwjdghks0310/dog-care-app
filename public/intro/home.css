@@ -372,3 +372,5 @@ section { padding: 44px 0; }
 .plus-price-beta { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; background: var(--sky-bg); border-radius: 16px; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
 .plus-price-beta .sk { width: 30px; height: 30px; flex-shrink: 0; } .plus-price-beta b { color: var(--ink); }
 @media (min-width: 720px) { .plus-grid { grid-template-columns: repeat(3, 1fr); gap: 22px; } .plus-card { padding: 30px 22px 24px; } .plus-price { grid-template-columns: 1fr 1fr; align-items: center; padding: 26px 28px; } }
+
+.sk-defs { position: absolute; }

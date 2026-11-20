@@ -21,7 +21,7 @@ export function weeklyCardStats(dog, today) {
   };
 }
 
-const loadImg = (src) => new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = src; });
+const loadImg = (src) => new Promise((ok, fail) => { const i = new Image(); if (/^https?:/.test(src)) i.crossOrigin = "anonymous"; /* 캐릭터 포스터(Supabase)는 다른 출처 — 캔버스 오염 방지 */ i.onload = () => ok(i); i.onerror = fail; i.src = src; });
 
 // 함께한 날: 입양일(없으면 생일)부터 오늘까지. 100일·200일…·1년·1000일 같은 날을 기념 카드로
 export function togetherDays(dog, today = new Date()) {

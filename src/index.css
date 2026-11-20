@@ -2117,3 +2117,5 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .co-done { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; } .co-done .co-sub { text-align: center; }
 .co-on3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .co-on3 div { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; background: var(--accent-soft); border-radius: 12px; font-size: 11.5px; font-weight: 800; text-align: center; }
 .co-preview { position: fixed; inset: 0; z-index: 130; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; } .co-preview-card { background: var(--bg); border-radius: 20px; padding: 14px; display: grid; gap: 10px; width: min(360px, 100%); font-size: 13.5px; line-height: 1.5; } .co-preview-card img { width: 100%; border-radius: 12px; aspect-ratio: 1; object-fit: cover; } .co-preview-card .co-sub { text-align: left; }
+
+.mr-ov-c small { font-size: 10.5px; line-height: 1.1; color: var(--text-soft); }

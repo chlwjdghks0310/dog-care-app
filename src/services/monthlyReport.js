@@ -113,7 +113,7 @@ export function weightTrend(cur, prevLast) {
   const pts = cur.weights;
   if (!pts.length) return { last: null, prevLast, diff: null, pct: null, avg: null, slope: null, dirLabel: "" };
   const last = pts.at(-1).kg;
-  const avg = round1(pts.reduce((s, p) => s + p.kg, 0) / pts.length * 10) / 10;
+  const avg = Math.round((pts.reduce((s, p) => s + p.kg, 0) / pts.length) * 100) / 100;
   const diff = prevLast != null ? Math.round((last - prevLast) * 100) / 100 : null;
   const pct = prevLast ? Math.round(((last - prevLast) / prevLast) * 100) : null;
   let slope = null, dirLabel = "";

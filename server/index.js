@@ -831,7 +831,7 @@ function splitDetail(text) {
 app.post("/api/ask", async (req, res) => {
   if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 물어봐 주세요." });
   const { dogContext, text, petId, token, detail: wantDetail } = req.body || {};
-  const q = typeof text === "string" ? text.trim().slice(0, 600) : "";
+  const q = typeof text === "string" ? text.trim().slice(0, req.body?.format === "paragraph" ? 2000 : 600) : ""; // 한 달 리포트 요약은 길다
   const pet = typeof petId === "string" && petId ? petId.slice(0, 80) : req.ip;
   if (!q) return res.status(400).json({ error: "질문을 적어 주세요." });
   const plus = character.isPlusCode(await character.accessCode(pet, token));
@@ -1249,7 +1249,9 @@ function sleep(ms) {
 async function generateContentWithRetry(params, retries = 2, delayMs = 3000) {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await gemini.models.generateContent(params);
+      const r = await gemini.models.generateContent(params);
+      saveGeminiUsage(r, params.model);
+      return r;
     } catch (err) {
       const isUnavailable = err.status === 503 || /UNAVAILABLE|overloaded|high demand/i.test(err.message || "");
       if (!isUnavailable || attempt >= retries) throw err;
@@ -1527,6 +1529,9 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// 출시 점검(11/20): 어디선가 await 없이 던진 거절·예외 하나로 서버 전체가 꺼지지 않게 한다(Node 15+는 기본이 종료). 원인은 로그로 남겨 Render에서 본다.
+process.on("unhandledRejection", (e) => console.error("[server] unhandledRejection:", e?.stack || e));
+process.on("uncaughtException", (e) => console.error("[server] uncaughtException:", e?.stack || e));
 const server = app.listen(PORT, () => {
   console.log(`[server] AI proxy listening on http://localhost:${PORT}`);
 });

@@ -5,6 +5,7 @@ import { supabase } from "../services/supabase";
 import { LoginForm } from "./AccountCard";
 import { API_BASE } from "../services/aiClient";
 import { PLUS_PRICE } from "../services/plus";
+import { CATALOG } from "../services/billingCatalog";
 
 // 운영자용 이용 통계(설정 → 이용 통계 / meongcare.kr/?stats). 숫자는 Supabase analytics_dashboard()(사용자)·money_dashboard()(돈, supabase/money.sql)가 준다 —
 // analytics_admins 표에 든 계정만 볼 수 있다. 이름·이메일 같은 개인정보는 없다(기기는 해시).
@@ -320,7 +321,7 @@ export default function StatsDashboard({ onClose }) {
             {m && (
               <Grid cols={3}>
                 <Tile label="작업 전체" value={n(m.character.jobs)} sub={`완성 ${n(m.character.done)} · 실패 ${n(m.character.failed)}`} tone="plain" />
-                <Tile label="완성 1마리당" value={usd(m.character.avg_usd)} sub={`≈ ${krw(n(m.character.avg_usd) * rate)} · 정가 4,900`} tone="plain" />
+                <Tile label="완성 1마리당" value={usd(m.character.avg_usd)} sub={`≈ ${krw(n(m.character.avg_usd) * rate)} · 정가 ${CATALOG.char_basic.price.toLocaleString()}`} tone="plain" />
                 <Tile label="코드 쓴 강아지" value={n(m.plus.character_users)} sub={`플러스 ${plusUsers} · 남은 플러스 코드 ${n(m.plus.codes_left)}`} tone="plain" />
               </Grid>
             )}

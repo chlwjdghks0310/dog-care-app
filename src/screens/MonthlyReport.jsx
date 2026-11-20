@@ -95,7 +95,7 @@ function Bars({ a, b, unit }) {
 function OverlapCard({ r }) {
   const o = r.overlaps;
   const Cell = ({ c, kind, i }) => {
-    if (i === 1) return <span className="mr-ov-c mark"><Ico name={/변|설사/.test(kind) ? "toilet" : "bandaid"} size={22} sticker />{kind}</span>;
+    if (i === 1) { const sub = c.less ? "밥 적게" : c.treat ? "간식" : c.noWalk ? "산책 없음" : ""; return <span className={`mr-ov-c mark${sub ? " hit" : ""}`}><Ico name={/변|설사/.test(kind) ? "toilet" : "bandaid"} size={22} sticker />{kind}{sub && <small>{sub}</small>}</span>; }
     const what = c.less ? ["bowl", "밥 적게"] : c.treat ? ["bone", "간식"] : c.noWalk ? ["walk", "산책 없음"] : ["check", "평소"];
     const hit = c.less || c.treat || c.noWalk;
     return <span className={`mr-ov-c${hit ? " hit" : ""}`}><Ico name={what[0]} size={22} sticker={hit} />{what[1]}</span>;

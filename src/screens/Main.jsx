@@ -727,7 +727,8 @@ function AssistantAnswer({ dog, said }) {
     askAssistant(dog, said, { signal: controller.signal }).then(setRes).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
     return () => controller.abort();
   }, [dog.id, said]);
-  const askMore = () => { setMore("loading"); askAssistant(dog, said, { detail: true }).then(setMore).catch((e) => setMore({ error: e.message })); };
+  const saidRef = useRef(said); saidRef.current = said;
+  const askMore = () => { const q = said; setMore("loading"); askAssistant(dog, q, { detail: true }).then((a) => saidRef.current === q && setMore(a)).catch((e) => saidRef.current === q && setMore({ error: e.message })); }; // 그사이 질문이 바뀌면 버림
   const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
   if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name} 기록을 보고 생각하는 중…</p>;
   if (res.error) return <p className="info-lead">{res.error}</p>;

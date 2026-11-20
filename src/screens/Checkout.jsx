@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "../components/Ico";
 import { useSwipeClose } from "../components/SwipeBack";
-import { CATALOG, POLICY, BILLING_OPEN, quote, won, startCheckout, recordBetaPlus, recordBetaCharacter } from "../services/billing";
+import { CATALOG, POLICY, BILLING_OPEN, STAMP_DISCOUNT, quote, won, startCheckout, recordBetaPlus, recordBetaCharacter } from "../services/billing";
 import { redeem, fetchStatus, STYLE_LABEL } from "../services/character";
 import { rewardsOf } from "../services/stamps";
 import { toast } from "../services/toast";
@@ -40,8 +40,8 @@ export default function Checkout({ dog, intent = "plus", plus = false, onClose, 
       </div>
 
       {step === "plan" && <PlanStep plan={plan} setPlan={setPlan} onNext={() => setStep("confirm")} />}
-      {step === "product" && <ProductStep tier={tier} setTier={setTier} style={style} setStyle={setStyle} extraStyle={extraStyle} setExtraStyle={setExtraStyle} plus={plus} reward={reward} onPreview={() => setPreview(true)} onNext={() => setStep("confirm")} />}
-      {step === "confirm" && <ConfirmStep dog={dog} q={q} intent={intent} agree={agree} setAgree={setAgree} onBack={back} onPaid={() => finish(intent, false)} onBeta={(code) => finish(intent, true, code)} />}
+      {step === "product" && <ProductStep tier={tier} setTier={setTier} style={style} setStyle={setStyle} extraStyle={extraStyle} setExtraStyle={setExtraStyle} plus={plus} reward={reward} total={q.total} onPreview={() => setPreview(true)} onNext={() => setStep("confirm")} />}
+      {step === "confirm" && <ConfirmStep dog={dog} q={q} items={items} plus={plus} stamp={stamp} intent={intent} agree={agree} setAgree={setAgree} onBack={back} onPaid={() => finish(intent, false)} onBeta={(code) => finish(intent, true, code)} />}
       {step === "done" && <DoneStep dog={dog} q={q} done={done} onClose={onClose} onOpenCharacter={onOpenCharacter} />}
 
       {preview && <Preview style={style} onClose={() => setPreview(false)} />}
@@ -90,7 +90,7 @@ function PlanStep({ plan, setPlan, onNext }) {
 }
 
 // ② 캐릭터 단품 — 그림체 + 미리보기(시험 사용) + 기본/정성 + 추가 옵션(비어 있는 체크) + 철회 불가 상자
-function ProductStep({ tier, setTier, style, setStyle, extraStyle, setExtraStyle, plus, reward, onPreview, onNext }) {
+function ProductStep({ tier, setTier, style, setStyle, extraStyle, setExtraStyle, plus, reward, total, onPreview, onNext }) {
   const b = CATALOG.char_basic, p = CATALOG.char_premium, s = CATALOG.char_style;
   const sp = plus && s.plusPrice != null ? s.plusPrice : s.price;
   return (
@@ -111,17 +111,17 @@ function ProductStep({ tier, setTier, style, setStyle, extraStyle, setExtraStyle
           </button>
         ))}
       </div>
-      {tier === "char_premium" && reward.discount && <div className="co-coupon"><Ico name="star" size={26} /><span><b>배지 10개 할인권</b> 정성에서 2,000원 빼요</span></div>}
+      {tier === "char_premium" && reward.discount && <div className="co-coupon"><Ico name="star" size={26} /><span><b>배지 10개 할인권</b> 정성에서 {won(STAMP_DISCOUNT)} 빼요</span></div>}
       <label className="co-chk"><input type="checkbox" checked={extraStyle} onChange={(e) => setExtraStyle(e.target.checked)} /><span>{s.title} <b>+{won(sp)}</b> <small>({s.desc}{plus ? " · 플러스 할인" : ` · 플러스면 ${won(s.plusPrice)}`})</small></span></label>
       <div className="co-warn"><Ico name="lock" size={26} /><span><b>만든 뒤엔 환불(청약철회)이 안 돼요</b>{POLICY.character.replace("만든 뒤에는 디지털 콘텐츠라 단순 변심 환불(청약철회)이 안 돼요. ", "디지털 콘텐츠라서요(전자상거래법 17조②5호). ")}</span></div>
-      <button type="button" className="btn-primary co-cta" onClick={onNext}>{CATALOG[tier].title} {won(CATALOG[tier].price + (extraStyle ? sp : 0) - (tier === "char_premium" && reward.discount ? 2000 : 0))} · 다음</button>
+      <button type="button" className="btn-primary co-cta" onClick={onNext}>{CATALOG[tier].title} {won(total)} · 다음</button>
       <p className="co-legal"><b>{POLICY.minAge}세 이상</b>만 결제 · 사진은 완성되면 지워요 · 결제 전 미리보기로 그림체와 움직임을 확인해 주세요</p>
     </div>
   );
 }
 
 // ③ 결제 확인 — 영수증, 한글 금액, 해지 방법, 비어 있는 필수 동의, 미성년자 고지, 돌아가기 = 결제 버튼 같은 급
-function ConfirmStep({ dog, q, intent, agree, setAgree, onBack, onPaid, onBeta }) {
+function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBack, onPaid, onBeta }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -129,7 +129,7 @@ function ConfirmStep({ dog, q, intent, agree, setAgree, onBack, onPaid, onBeta }
   const pay = async () => {
     if (busy) return; setBusy(true); setErr("");
     try {
-      const r = await startCheckout({ dogId: dog.id, items: q.lines.filter((l) => !l.included && l.id !== "stamp").map((l) => l.id), plus: false });
+      const r = await startCheckout({ dogId: dog.id, items, plus, stampDiscount: stamp, total: q.total }); // 서버가 같은 식으로 다시 계산해 total과 다르면 거절
       if (!r.open) { setCodeOpen(true); return; }
       if (r.url) { location.href = r.url; return; } // 토스페이먼츠 결제창으로(정식 때)
       onPaid();
@@ -156,7 +156,7 @@ function ConfirmStep({ dog, q, intent, agree, setAgree, onBack, onPaid, onBeta }
       </div>
       {q.plan && <div className="co-row"><span>해지</span><span>설정 › 플러스 › 해지하기 (다음 결제일 전까지 언제든)</span></div>}
       {!q.plan && <div className="co-row"><span>환불</span><span>후보가 하나도 안 닮으면 그 자리에서 전액 · 만든 뒤엔 철회 불가</span></div>}
-      <label className={`co-chk req${agree ? " on" : ""}`}><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /><span>[필수] 이용약관 · 결제·환불 안내{q.plan ? " · 자동 갱신" : " · 철회 제한"}을 확인했어요 <a className="link-btn" href="/?terms" target="_blank" rel="noreferrer" style={{ padding: 0 }}>보기</a></span></label>
+      <label className={`co-chk req${agree ? " on" : ""}`}><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /><span>[필수] 이용약관 · 결제·환불 안내{q.plan ? " · 자동 갱신" : " · 철회 제한"}을 확인했어요 <a className="link-btn" href="/?terms" target="_blank" rel="noreferrer" style={{ padding: "0 8px", minWidth: 44, justifyContent: "center" }}>보기</a></span></label>
       <p className="co-legal left">만 {POLICY.minAge}세 미만이라면 보호자(법정대리인)의 동의를 받고 결제해 주세요. 동의 없이 결제했다면 본인이나 보호자가 계약을 취소할 수 있어요.</p>
       {!BILLING_OPEN && <div className="co-beta"><Ico name="lock" size={22} /><span><b>정식 출시 때 결제가 열려요.</b> 지금은 베타라 {intent === "plus" ? "플러스 코드" : "초대 코드"}로 같은 걸 무료로 쓸 수 있어요.</span></div>}
       {err && <p className="error-text" role="alert" style={{ margin: 0 }}>{err}</p>}

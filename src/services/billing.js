@@ -71,24 +71,26 @@ export function koreanNumber(n) {
   return out;
 }
 
+const orderId = () => (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `o-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+const codeTitle = (label, code) => (code ? `${label} ${String(code).slice(0, 7)}…` : label); // 코드 전체는 장부에 남기지 않는다
 // 베타: 코드로 플러스가 열렸을 때 장부에 적는다(결제 0원). 정식 결제 때도 같은 모양으로 쌓인다
 export function recordBetaPlus(dogId, code) {
   const b = getBilling(dogId);
   if (b.plan?.source === "beta") return b;
   const at = new Date().toISOString();
-  return save(dogId, { plan: { id: "plus_beta", title: "플러스 (베타)", startedAt: at, nextAt: null, source: "beta" }, orders: [{ id: `beta-${Date.now()}`, at, items: [{ id: "plus_beta", title: `플러스 코드 ${String(code || "").slice(0, 7)}…`, price: 0 }], total: 0, source: "beta" }, ...b.orders] });
+  return save(dogId, { plan: { id: "plus_beta", title: "플러스 (베타)", startedAt: at, nextAt: null, source: "beta" }, orders: [{ id: orderId(), at, items: [{ id: "plus_beta", title: codeTitle("플러스 코드", code), price: 0 }], total: 0, source: "beta" }, ...b.orders] });
 }
 export function recordBetaCharacter(dogId, code) {
   const b = getBilling(dogId);
   if (b.orders.some((o) => o.items.some((i) => i.id === "char_beta"))) return b;
   const at = new Date().toISOString();
-  return save(dogId, { orders: [{ id: `beta-c-${Date.now()}`, at, items: [{ id: "char_beta", title: `캐릭터 초대 코드 ${String(code || "").slice(0, 7)}…`, price: 0 }], total: 0, source: "beta" }, ...b.orders] });
+  return save(dogId, { orders: [{ id: orderId(), at, items: [{ id: "char_beta", title: codeTitle("캐릭터 초대 코드", code), price: 0 }], total: 0, source: "beta" }, ...b.orders] });
 }
 
 // 결제 시작: 지금은 서버가 503으로 "정식 출시 때"를 돌려준다. 열리면 서버가 토스페이먼츠 결제창 주소를 준다
-export async function startCheckout({ dogId, items, plus }) {
+export async function startCheckout({ dogId, items, plus = false, stampDiscount = false, total }) {
   if (!BILLING_OPEN) return { open: false };
-  const res = await fetch(`${API_BASE}/api/billing/checkout`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ petId: dogId, items, plus }), signal: AbortSignal.timeout(15_000) })
+  const res = await fetch(`${API_BASE}/api/billing/checkout`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ petId: dogId, items, plus, stampDiscount, total }), signal: AbortSignal.timeout(15_000) })
     .catch(() => { throw new Error("서버에 연결할 수 없어요. 인터넷을 확인하고 다시 시도해 주세요"); });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `결제를 시작하지 못했어요 (${res.status})`);
