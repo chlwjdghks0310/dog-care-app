@@ -64,6 +64,7 @@ export async function deletePetRemote(petId) {
 
 export async function leavePet(petId) {
   const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error("로그인이 필요해요.");
   await removeMember(petId, auth.user.id);
   await syncNow();
 }

@@ -45,7 +45,7 @@ export function addWeightRecord(dogId, { weightKg, measuredAt, measurementMethod
     updatedAt: now,
   };
   all[dogId] = [...(all[dogId] || []), record];
-  writeJSON(KEY, all);
+  if (!writeJSON(KEY, all)) throw new Error("저장 공간이 부족해서 체중을 저장하지 못했어요. 사진을 줄이거나 빼고 다시 시도해 주세요.");
   return record;
 }
 
@@ -57,7 +57,7 @@ export function updateWeightRecord(dogId, id, patch) {
   const updated = { ...list[idx], ...patch, updatedAt: new Date().toISOString() };
   list[idx] = updated;
   all[dogId] = list;
-  writeJSON(KEY, all);
+  if (!writeJSON(KEY, all)) throw new Error("저장 공간이 부족해서 체중을 저장하지 못했어요. 사진을 줄이거나 빼고 다시 시도해 주세요.");
   return updated;
 }
 
@@ -65,7 +65,7 @@ export function deleteWeightRecord(dogId, id) {
   const all = getAll();
   const list = all[dogId] || [];
   all[dogId] = list.filter((r) => r.id !== id);
-  writeJSON(KEY, all);
+  if (!writeJSON(KEY, all)) throw new Error("저장 공간이 부족해서 체중을 저장하지 못했어요. 사진을 줄이거나 빼고 다시 시도해 주세요.");
 }
 
 // 직전 기록 대비 변화량/변화율. 이전 기록이 없으면 null을 돌려주고(화면에서 표시 생략),

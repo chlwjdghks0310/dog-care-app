@@ -7,6 +7,9 @@ export function readJSON(key, fallback) {
     if (!raw) return fallback;
     return needsRevive(raw) ? JSON.parse(raw, revive) : JSON.parse(raw);
   } catch {
+    // 깨진 값(용량 초과로 반쯤 저장됐거나 사진 복원 실패): 그대로 fallback을 주면 다음 저장이 전부를 덮어쓴다 → 원본을 .broken에 남기고 알린다(11/20 점검)
+    try { const raw = localStorage.getItem(key); if (raw) { localStorage.setItem(`${key}.broken`, raw); console.error("[storage] 깨진 값 복사본:", `${key}.broken`); } } catch { /* 공간 없음 */ }
+    notifyStorageError();
     return fallback;
   }
 }

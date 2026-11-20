@@ -9,7 +9,7 @@ import Ico from "../components/Ico";
 import RecordCalendar from "../components/RecordCalendar";
 import RecordsBrowser from "../components/RecordsBrowser";
 import { SymptomTimeline } from "../components/Pieces";
-import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotals, getRecords, saveRecord } from "../services/records";
+import { TYPES, MEAL_KINDS, md, getTimeline, filterTimeline, deleteRecord, dateAt, foodTotalsByDate, getRecords, saveRecord } from "../services/records";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"]];
@@ -180,7 +180,8 @@ function Trends({ dog, items, onAdd, onPick }) {
 function FoodChart({ dog, days, onPick, onAdd }) {
   const today = todayKey();
   const dates = Array.from({ length: days }, (_, i) => toDateKey(addDays(new Date(`${today}T00:00:00`), i - days + 1)));
-  const rows = dates.map((d) => ({ date: d, ...foodTotals(dog.id, d) }));
+  const byDate = foodTotalsByDate(dog.id);
+  const rows = dates.map((d) => ({ date: d, ...(byDate.get(d) || { dry: 0, wet: 0, water: 0 }) }));
   const has = rows.filter((r) => r.dry || r.wet || r.water);
   const maxFood = Math.max(1, ...rows.map((r) => r.dry + r.wet));
   const maxWater = Math.max(1, ...rows.map((r) => r.water));

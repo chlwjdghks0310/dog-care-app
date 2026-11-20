@@ -191,6 +191,12 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
     clearTimeout(talkTimerRef.current);
     talkTimerRef.current = setTimeout(() => setAvatarState("idle"), 1600);
   }
+  // 부가 동작 "기쁨"(정성 캐릭터): 기록이 저장되면 말하기 뒤에 6초. speak()와 같은 틱에 두면 talking이 덮어써 안 보인다(11/20 점검)
+  function celebrate() {
+    if (!customAvatar?.extras?.happy) return;
+    clearTimeout(talkTimerRef.current);
+    talkTimerRef.current = setTimeout(() => { setAvatarState("happy"); setTimeout(() => setAvatarState((s) => (s === "happy" ? "idle" : s)), 6000); }, 1600);
+  }
 
   // 질문으로 보이면: 응급 단어 → 응급 카드, 아니면 우리 자료(정보 카드·가이드북)에서 찾기. AI는 부르지 않는다.
   const infoMessage = (said) => {
@@ -218,13 +224,15 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
     if (local) {
       const before = new Set(getRecords(dog.id).map((r) => r.id));
       const beforeW = new Set(getWeightRecords(dog.id).map((r) => r.id));
-      const records = applyAppActions(dog, local);
+      let records;
+      try { records = applyAppActions(dog, local); }
+      catch (err) { setMessages((m) => [...m, { role: "ai", error: true, text: err.message || "저장하지 못했어. 다시 시도해 줘!", retry: null }]); setAvatarState("idle"); return; }
       if (records.done.length) {
         markFirstSteps(dog.id, { chat: true });
         const added = getRecords(dog.id).filter((r) => !before.has(r.id));
         const addedW = getWeightRecords(dog.id).filter((r) => !beforeW.has(r.id)).map((r) => r.id);
         setMessages((m) => [...m, { role: "ai", kind: "record", records, reacted: added.slice(-1)[0] || null, undo: { recs: added.map((r) => r.id), weights: addedW } }]);
-        speak();
+        speak(); celebrate();
         return;
       }
     }
@@ -255,13 +263,11 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       } else {
         const records = applyAppActions(dog, actions);
         if (records.done.length) markFirstSteps(dog.id, { chat: true }); // 첫 걸음 ③ "말로 기록해 보기" 완료
-        if (records.done.length && customAvatar?.extras?.happy) { // 부가 동작 "기쁨": 기록이 저장되면 6초 동안
-          setAvatarState("happy");
-          setTimeout(() => setAvatarState((s) => (s === "happy" ? "idle" : s)), 6000);
-        }
         // 새로 생긴 기록에 강아지가 한마디(걱정되는 기록이 있으면 그걸 먼저)
         const added = getRecords(dog.id).filter((r) => !before.has(r.id));
         setMessages((m) => [...m, { role: "ai", kind: "record", records, reacted: added.slice(-1)[0] || null }]);
+        speak(); if (records.done.length) celebrate();
+        return;
       }
       speak();
     } catch (err) {
@@ -727,7 +733,8 @@ function AssistantAnswer({ dog, said }) {
     askAssistant(dog, said, { signal: controller.signal }).then(setRes).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
     return () => controller.abort();
   }, [dog.id, said]);
-  const saidRef = useRef(said); saidRef.current = said;
+  const saidRef = useRef(said);
+  useEffect(() => { saidRef.current = said; }, [said]);
   const askMore = () => { const q = said; setMore("loading"); askAssistant(dog, q, { detail: true }).then((a) => saidRef.current === q && setMore(a)).catch((e) => saidRef.current === q && setMore({ error: e.message })); }; // 그사이 질문이 바뀌면 버림
   const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
   if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name} 기록을 보고 생각하는 중…</p>;

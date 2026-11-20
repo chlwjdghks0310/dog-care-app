@@ -33,6 +33,7 @@ const CATEGORIES_KEY = "dogcare-expense-categories-v1";
 const PROFILE = "dog"; // 강아지 프로필(이름·견종 등) 자체
 const CATEGORIES = "expense-categories"; // 지출 카테고리는 앱 전체 공용이라 강아지마다 사본을 올리고 받을 땐 합친다
 const STATE_KEY = "dogcare-sync-v1";
+let stateGen = 0; // resetSyncState마다 +1 — 그 전에 시작한 syncOnce는 상태를 쓰지 않는다(11/20 점검: 로그아웃 경쟁)
 // ponytail: 서버 시각 기준 커서 + 겹쳐 받기 10초 — 거의 동시에 저장된 행을 놓치지 않으려고. 받는 건 몇 번 받아도 같은 결과라 안전.
 const OVERLAP_MS = 10_000;
 
@@ -166,6 +167,8 @@ function collectChanges(petIds, state) {
 
 // 한 번 맞추기. 실패하면 던지고(다음에 다시), 성공한 만큼만 기억한다.
 export async function syncOnce(remote) {
+  const gen = stateGen;
+  const saveState = (v) => { if (gen === stateGen) writeJSON(STATE_KEY, v); };
   const state = loadState();
   let pets = await remote.myPets();
   let remoteIds = pets.map((p) => p.id);
@@ -192,7 +195,7 @@ export async function syncOnce(remote) {
   const changed = applyRows(rows, state) + removed.length;
   // 커서는 서버가 찍은 시각만 쓴다(폰 시계가 틀려도 놓치지 않게)
   const cursor = rows.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), state.cursor || "") || null;
-  writeJSON(STATE_KEY, { cursor, base: state.base, pets: petIds, family });
+  saveState({ cursor, base: state.base, pets: petIds, family });
 
   const { rows: out, commits } = collectChanges(petIds, state);
   if (out.length) {
@@ -203,7 +206,7 @@ export async function syncOnce(remote) {
       if (c.f === undefined) delete base[c.item];
       else base[c.item] = c.f;
     }
-    writeJSON(STATE_KEY, { cursor, base: state.base, pets: petIds, family });
+    saveState({ cursor, base: state.base, pets: petIds, family });
   }
   return { pulled: rows.length, changed, pushed: out.length, blocked };
 }
@@ -211,6 +214,7 @@ export async function syncOnce(remote) {
 // 로그아웃하면 서버와 맞춘 기억을 지운다(폰 기록은 그대로 남김).
 // dropFamily: 계정 삭제 — 가족으로 받아 온 강아지(남의 기록)는 이 폰에서도 지운다
 export function resetSyncState({ dropFamily = false } = {}) {
+  stateGen += 1;
   if (dropFamily) {
     const state = loadState();
     for (const id of state.family) dropLocalPet(id, state);

@@ -342,10 +342,13 @@ export function getFoodGrams(dogId) {
 }
 
 // 하루 밥·물 합계: { dry, wet, water }(없는 건 0) — 달력 그날 줄·목록 날짜 제목·변화 보기 그래프에 "통계로 합쳐" 보여 준다(11/10)
+export function foodTotalsByDate(dogId) { // 기록을 한 번만 읽어 날짜별 합계 Map(달력·목록·90일 그래프가 날마다 다시 읽지 않게, 11/20)
+  const map = new Map();
+  for (const k of ["dry", "wet", "water"]) for (const e of getVitalEntries(dogId, k)) { const d = e.at.slice(0, 10); const t = map.get(d) || { dry: 0, wet: 0, water: 0 }; t[k] += e.value; map.set(d, t); }
+  return map;
+}
 export function foodTotals(dogId, date) {
-  const t = { dry: 0, wet: 0, water: 0 };
-  for (const k of Object.keys(t)) for (const e of getVitalEntries(dogId, k)) if (e.at.slice(0, 10) === date) t[k] += e.value;
-  return t;
+  return foodTotalsByDate(dogId).get(date) || { dry: 0, wet: 0, water: 0 };
 }
 export const foodTotalsText = (t) => [t.dry > 0 && `건식 ${Math.round(t.dry)}g`, t.wet > 0 && `습식 ${Math.round(t.wet)}g`, t.water > 0 && `물 ${Math.round(t.water)}ml`].filter(Boolean).join(" · ");
 

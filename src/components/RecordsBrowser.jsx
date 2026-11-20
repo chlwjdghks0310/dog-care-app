@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Empty from "./Empty";
 import { createPortal } from "react-dom";
 import { useSheetSwipe } from "./SwipeBack";
 import Ico from "./Ico";
 import { formatKoreanDate } from "../utils/date";
 import { VITAL, fmtValue } from "../data/vitals";
-import { TYPES, FILTER_ORDER, summarize, filterTimeline, groupVitalDays, foodTotals, foodTotalsText } from "../services/records";
+import { TYPES, FILTER_ORDER, summarize, filterTimeline, groupVitalDays, foodTotalsByDate, foodTotalsText } from "../services/records";
 
 const PERIODS = [[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]];
 const FIELD_LABEL = {
@@ -40,8 +40,9 @@ export default function RecordsBrowser({ dog, items, initialTypes = [], initialD
 
   const shown = groupVitalDays(filterTimeline(items, { types, days, q, order }), types);
   const filtered = types.length || days || q.trim();
+  const totalsMap = useMemo(() => foodTotalsByDate(dog.id), [dog.id, items]); // eslint-disable-line react-hooks/exhaustive-deps
   const dayTotals = (date) => {
-    const t = foodTotalsText(foodTotals(dog.id, date));
+    const t = foodTotalsText(totalsMap.get(date) || { dry: 0, wet: 0, water: 0 });
     return t ? <span className="faint rec-date-sum"> · {t}</span> : null;
   };
 

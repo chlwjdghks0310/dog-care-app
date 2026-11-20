@@ -187,8 +187,16 @@ export async function getPushSubscription() {
 // 서버에 이 기기의 구독 + 매일 울릴 알람 목록을 보낸다. 서버가 그 시각에 푸시를 쏜다.
 // text/plain으로 보내 CORS 사전요청(preflight)을 피한다 — sendBeacon은 text/plain만 교차 출처로 보낼 수 있다.
 // 로그인했으면 토큰도 같이 보낸다 → 서버가 Supabase에서 이 사람이 어느 강아지의 가족인지 확인하고, 가족이 만든 알람도 이 기기로 보낸다
+// 앱을 닫는 순간(beacon)엔 비동기 세션 조회가 끝나기 전에 페이지가 멈출 수 있어, 저장소에 있는 토큰을 바로 읽는다
+function cachedAccessToken() {
+  try {
+    const ref = new URL(import.meta.env?.VITE_SUPABASE_URL || "").hostname.split(".")[0];
+    const raw = ref && localStorage.getItem(`sb-${ref}-auth-token`);
+    return raw ? JSON.parse(raw)?.access_token : undefined;
+  } catch { return undefined; }
+}
 async function postSubscription(subscription, alarms, { beacon = false } = {}) {
-  const accessToken = supabase ? (await supabase.auth.getSession().catch(() => null))?.data?.session?.access_token : undefined;
+  const accessToken = !supabase ? undefined : beacon ? cachedAccessToken() : (await supabase.auth.getSession().catch(() => null))?.data?.session?.access_token;
   // petIds: 이 기기에 있는 강아지 — 알람을 다 지운 강아지도 서버 공유 목록이 비워지도록
   const body = JSON.stringify({ subscription, alarms, petIds: getDogs().map((d) => d.id), accessToken, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   const url = `${API_BASE}/api/push/subscribe`;
@@ -259,7 +267,7 @@ export function buildPushAlarms() {
         if (before >= today) alarms.push({ cat: "med", time: "19:00", onlyDate: before, title: `💊 ${dog.name} 약이 이틀 뒤 끝나요`, body: "다시 진료가 필요한지, 약을 더 받아야 하는지 확인해 보세요." });
       }
       if (!med.remind || (med.endDate && med.endDate < today)) continue;
-      for (const time of med.times) {
+      for (const time of med.times || []) {
         alarms.push({
           cat: "med",
           time,
@@ -300,7 +308,11 @@ export function buildPushAlarms() {
 let resubscribing = null;
 export async function syncPushAlarms({ beacon = false } = {}) {
   const subscription = await getPushSubscription().catch(() => null);
-  if (subscription) return postSubscription(subscription, buildPushAlarms(), { beacon }).catch(() => {});
+  if (subscription) {
+    let alarms;
+    try { alarms = buildPushAlarms(); } catch (e) { console.error("[notifications] 알람 목록 만들기 실패:", e?.message); return; } // 강아지 하나의 깨진 자료가 전체 알람을 막지 않게
+    return postSubscription(subscription, alarms, { beacon }).catch(() => {});
+  }
   if (beacon || getPermission() !== "granted" || !isPushSupported()) return;
   resubscribing ||= subscribeToPush().catch(() => {}).finally(() => (resubscribing = null));
   return resubscribing;

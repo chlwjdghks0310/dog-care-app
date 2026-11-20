@@ -470,7 +470,7 @@ export default function App() {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [dog]);
+  }, [dog?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- 강아지가 바뀔 때만(프로필 수정·당겨서 새로고침마다 서버에 다시 보내지 않게, 11/20)
 
   if (loading) return null;
 
@@ -556,7 +556,6 @@ export default function App() {
     weight: () => <WeightTracker dog={dog} onUpdateDog={setActiveDog} onBack={() => setTab("profile")} />,
     meds: () => <Medications key={medFocus} dog={dog} focusDose={medFocus} onBack={() => (setMedFocus(null), setTab("profile"))} />,
     "add-dog": () => <DogRegister onRegistered={handleAddDog} onCancel={() => setTab("profile")} />,
-    vet: () => <VetSummary dog={dog} onBack={() => setTab("profile")} />,
     report: () => <WeeklyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("report")} onOpenMonth={() => setTab("month")} />,
     month: () => <MonthlyReport dog={dog} onBack={() => setTab("profile")} onOpenVet={() => openVet("profile")} onOpenPlus={() => (setTab("profile"), window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } })))} />,
     vital: () => <VitalDetail key={vitalMetric} dog={dog} metric={vitalMetric} onBack={() => setTab("profile")} onOpenWeight={() => setTab("weight")} onRecord={(type) => (setRecordsOpts({ type, back: "vital" }), setTab("records-new"))} />,
