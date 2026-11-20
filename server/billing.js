@@ -9,7 +9,7 @@ export function mountBilling(app, { tooMany }) {
   const closed = (res) => res.status(503).json({ error: "결제는 정식 출시 때 열려요. 지금은 베타 코드로 같은 걸 무료로 쓸 수 있어요.", open: false });
   app.post("/api/billing/checkout", (req, res) => {
     if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 시도해 주세요" });
-    const items = Array.isArray(req.body?.items) ? req.body.items.filter((i) => CATALOG[i]) : [];
+    const items = Array.isArray(req.body?.items) ? req.body.items.filter((i) => typeof i === "string" && Object.hasOwn(CATALOG, i)) : [];
     if (!items.length) return res.status(400).json({ error: "고른 상품이 없어요" });
     if (!isOpen()) return closed(res);
     res.status(501).json({ error: "결제 연동 준비 중이에요" }); // 토스페이먼츠 연동 자리

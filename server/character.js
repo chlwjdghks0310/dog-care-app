@@ -56,7 +56,7 @@ const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.di
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 const nowIso = () => new Date().toISOString();
 
-export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDevices, sendPush, tooMany, fakeAi, quiet }) {
+export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey, pushDevices, sendPush, tooMany, fakeAi, quiet }) {
   const geminiKey = process.env.CHARACTER_GEMINI_API_KEY || process.env.GEMINI_API_KEY; // 유료 등급 키(사진이 학습에 안 쓰이게)
   const runwayKey = process.env.RUNWAY_API_KEY;
   const ready = Boolean(dbOk && (geminiKey || fakeAi) && runwayKey && ffmpegPath);
@@ -93,10 +93,17 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   }
   const hasAccess = async (petId, token) => (await accessCode(petId, token)) !== null;
   const isPlusCode = (code) => /^MC-PLUS-/.test(code || "");
+  // 오늘 생성비(11/20 점검): 작업 만든 날이 아니라 "오늘 실제로 쓴 돈"을 장부 행(cost 칸)에 누적한다 — 어제 작업이 오늘 영상을 만들어도 한도에 잡힌다
   async function spentToday() {
-    const start = new Date(Date.now() + 9 * 3600e3); start.setUTCHours(0, 0, 0, 0); // KST 자정
-    const rows = await db(`character_jobs?select=cost&created_at=gte.${new Date(start.getTime() - 9 * 3600e3).toISOString()}`);
-    return rows.reduce((s, r) => s + Number(r.cost || 0), 0);
+    const row = one(await db(`character_jobs?id=eq.${ledgerId(kstDate())}&select=cost`).catch(() => []));
+    return Number(row?.cost || 0);
+  }
+  async function ledgerAdd(usd) {
+    if (!(usd > 0)) return;
+    const id = ledgerId(kstDate());
+    const cur = await spentToday();
+    if (cur === 0) await ensureLedger(id).catch(() => {});
+    await db(`character_jobs?id=eq.${id}`, { method: "PATCH", body: { cost: Math.round((cur + usd) * 1000) / 1000, updated_at: nowIso() } }).catch(() => {});
   }
   // 오늘 쓴 영상 크레딧 장부(11/18): character_jobs에 하루 한 행(status "ledger", pet_id "__ledger__", regen 칸 = 크레딧). 서버가 다시 켜져도 이어진다
   const kstDate = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
@@ -105,6 +112,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const row = one(await db(`character_jobs?id=eq.${ledgerId(kstDate())}&select=regen`).catch(() => []));
     return Number(row?.regen || 0);
   }
+  const ensureLedger = (id) => db("character_jobs", { method: "POST", prefer: "resolution=ignore-duplicates", body: { id, pet_id: "__ledger__", style: "hand", status: "ledger", step: `장부 ${kstDate()}`, cost: 0, regen: 0 } });
   async function videoCharge(cr) {
     const id = ledgerId(kstDate());
     const cur = await videoToday();
@@ -172,24 +180,27 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     if (!code || !petId) return bad(res, 400, "code/petId");
     const inv = one(await db(`character_invites?code=eq.${encodeURIComponent(code)}`));
     if (!inv) return bad(res, 404, "없는 코드예요");
-    const already = one(await db(`character_access?pet_id=eq.${encodeURIComponent(petId)}&select=pet_id`));
-    if (!already && inv.used >= inv.max_uses) return bad(res, 409, "이미 다 쓴 코드예요");
+    const already = one(await db(`character_access?pet_id=eq.${encodeURIComponent(petId)}&select=pet_id,code`));
+    const sameCode = already?.code === code;
+    if (!sameCode && inv.used >= inv.max_uses) return bad(res, 409, "이미 다 쓴 코드예요"); // 다른 코드로 갈아타도 횟수를 센다(11/20 점검)
     const token = randomBytes(24).toString("hex");
     await db("character_access", { method: "POST", prefer: "resolution=merge-duplicates", body: { pet_id: petId, token_hash: sha(token), code, granted_at: nowIso() } });
-    if (!already) await db(`character_invites?code=eq.${encodeURIComponent(code)}`, { method: "PATCH", body: { used: inv.used + 1 } });
-    // 선물 코드: 완성된 작업을 바로 넣어 앱이 다음 status 조회에서 홈 화면에 적용하게
-    const preset = PRESETS[code];
+    if (!sameCode) await db(`character_invites?code=eq.${encodeURIComponent(code)}`, { method: "PATCH", body: { used: inv.used + 1 } });
+    // 선물 코드: 완성된 작업을 바로 넣어 앱이 다음 status 조회에서 홈 화면에 적용하게(같은 코드를 다시 쓰면 또 넣지 않음)
+    const preset = sameCode ? null : PRESETS[code];
     if (preset) await db("character_jobs", { method: "POST", body: { id: randomUUID(), pet_id: petId, style: preset.style, status: "done", step: "완성!", picked: 1, outputs: presetOutputs(preset), cost: 0 } });
     res.json({ token, preset: Boolean(preset), plus: isPlusCode(code) });
   });
 
   // 사진 2~4장(앱이 캔버스로 다시 그려 EXIF 없이 JPEG로 보냄) + 그림체 + 동의 → 작업 등록
   const photos = multer({ storage: multer.memoryStorage(), limits: { fileSize: 6 * 1024 * 1024, files: 4 } });
-  app.post("/api/character/jobs", photos.array("photos", 4), async (req, res) => {
+  const photosUpload = (req, res, next) => photos.array("photos", 4)(req, res, (err) => { if (!err) return next(); const size = err.code === "LIMIT_FILE_SIZE"; res.status(size ? 413 : 400).json({ error: size ? "사진 한 장은 6MB까지예요. 조금 작은 사진으로 다시 올려 주세요" : "사진은 2~4장만 올릴 수 있어요" }); });
+  app.post("/api/character/jobs", photosUpload, async (req, res) => {
     if (!gate(req, res)) return;
     if (!ready) return bad(res, 503, "지금은 만들 수 없어요(서버 설정)");
     const { petId, token, style, consent, adult, endpoint } = req.body || {};
-    if (!isOpen() && !(await hasAccess(petId, token))) return bad(res, 403, "초대 코드가 필요해요");
+    const had = await hasAccess(petId, token);
+    if (!isOpen() && !had) return bad(res, 403, "초대 코드가 필요해요");
     if (!STYLE[style]) return bad(res, 400, "style");
     if (consent !== "1" || adult !== "1") return bad(res, 400, "동의가 필요해요");
     const files = (req.files || []).filter((f) => /^image\/(jpeg|png)$/.test(f.mimetype));
@@ -200,7 +211,9 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
     const paths = [];
     for (const [i, f] of files.entries()) paths.push(await put("character-private", `${id}/photo-${i + 1}.${f.mimetype === "image/png" ? "png" : "jpg"}`, f.buffer, f.mimetype));
     await db("character_jobs", { method: "POST", body: { id, pet_id: String(petId).slice(0, 80), style, status: "queued", step: "순서를 기다리는 중", photos: paths, endpoint: typeof endpoint === "string" ? endpoint.slice(0, 500) : null } });
-    res.json({ job: view(await jobById(id)) });
+    let issued = null;
+    if (!had) { issued = randomBytes(24).toString("hex"); await db("character_access", { method: "POST", prefer: "resolution=merge-duplicates", body: { pet_id: String(petId).slice(0, 80), token_hash: sha(issued), code: null, granted_at: nowIso() } }).catch(() => { issued = null; }); }
+    res.json({ job: view(await jobById(id)), ...(issued && { token: issued }) });
     setTimeout(tick, 500);
   });
 
@@ -251,7 +264,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   // 운영자(analytics_admins)만: 대기 명단 전원에게 "열렸어요" 푸시 한 번 → 명단 비움. 보통 CHARACTER_OPEN=1로 바꾼 뒤 누른다
   async function isAdmin(accessToken) {
     if (!accessToken) return false;
-    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/is_analytics_admin`, { method: "POST", headers: { apikey: (process.env.SUPABASE_ANON_KEY || "").trim(), Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(8000) }).catch(() => null);
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/is_analytics_admin`, { method: "POST", headers: { apikey: anonKey || (process.env.SUPABASE_ANON_KEY || "").trim(), Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(8000) }).catch(() => null);
     return Boolean(r?.ok && (await r.json()) === true);
   }
   app.post("/api/character/notify-waitlist", async (req, res) => {
@@ -344,7 +357,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   }
 
   async function doSheet(j) {
-    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); };
+    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); await ledgerAdd(d); };
     await update(j.id, { status: "sheet", step: "사진을 보고 설정화 후보를 그리는 중 (3~5분)" });
     const photos = await Promise.all(j.photos.map(async (p) => part(await getPrivate(p), p.endsWith(".png") ? "image/png" : "image/jpeg")));
     const refs = await styleRefs(j.style);
@@ -361,7 +374,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
   }
 
   async function doRender(j) {
-    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); };
+    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); await ledgerAdd(d); };
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "mc-char-"));
     try {
       await update(j.id, { status: "render", step: "고른 설정화로 움직임을 만드는 중 (10~15분)" });
@@ -415,7 +428,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
 
   // 부가 동작 한 편(outputs.pendingExtra에 적힌 종류): 저장해 둔 판 → Runway 5초 → 키잉 → outputs.extras[kind]
   async function doExtra(j) {
-    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); };
+    let spent = 0; const bump = async (d) => { spent += d; await update(j.id, { cost: Number(j.cost || 0) + spent }).catch(() => {}); await ledgerAdd(d); };
     const kind = j.outputs?.pendingExtra; const ex = EXTRAS[kind];
     if (!ex || !j.outputs?.[ex.base]) throw new Error("부가 동작 재료가 없어요");
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "mc-char-"));
@@ -479,7 +492,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, pushDev
         else await doRender(j);
       } catch (e) {
         if (!e.wait) console.error("[character] job", j.id, e.message);
-        if (e.wait) { await update(j.id, { status: j.status === "render" || j.status === "picked" ? "picked" : j.status === "extra" ? "extra-queued" : "queued", step: e.message }).catch(() => {}); return; }
+        if (e.wait) { await update(j.id, { status: ["queued", "picked", "extra-queued"].includes(j.status) ? j.status : "queued", step: e.message }).catch(() => {}); return; } // j.status는 실행 전 스냅샷(queued/picked/extra-queued)
         if (j.status === "extra-queued") { // 부가 동작 실패는 기본 캐릭터를 건드리지 않는다
           const { pendingExtra, ...rest } = j.outputs || {}; void pendingExtra;
           await update(j.id, { status: "done", outputs: rest, error: String(e.message).slice(0, 200), step: "부가 동작을 만들지 못했어요. 다시 시도해 주세요" }).catch(() => {});

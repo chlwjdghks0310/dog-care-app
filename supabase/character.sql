@@ -66,7 +66,7 @@ language plpgsql stable security definer set search_path = public as $$
 begin
   if not is_analytics_admin() then raise exception 'not admin'; end if;
   return (select json_build_object(
-    'today_cost', coalesce((select sum(cost) from character_jobs where created_at >= date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul'), 0),
+    'today_cost', coalesce((select cost from character_jobs where status = 'ledger' and pet_id = '__ledger__' and created_at >= date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul' order by created_at desc limit 1), 0), -- 11/20: 오늘 실제로 쓴 돈(장부 행)
     'by_status', (select coalesce(json_object_agg(status, n), '{}'::json) from (select status, count(*) n from character_jobs group by status) s),
     'waitlist', (select count(*) from character_waitlist),
     'invites_left', (select coalesce(sum(max_uses - used), 0) from character_invites)

@@ -67,8 +67,8 @@ export async function startJob(dogId, { style, blobs }) {
   if (c.token) form.append("token", c.token);
   const ep = await endpoint(); if (ep) form.append("endpoint", ep);
   blobs.forEach((b, i) => form.append("photos", b, `photo-${i + 1}.jpg`));
-  const { job } = await call("/jobs", { method: "POST", form });
-  save(dogId, { job, outputs: null });
+  const { job, token } = await call("/jobs", { method: "POST", form });
+  save(dogId, { job, outputs: null, ...(token && { token }) }); // 문이 열려 코드 없이 시작하면 서버가 토큰을 준다(뒤 단계용)
   return job;
 }
 export async function refreshJob(dogId) {

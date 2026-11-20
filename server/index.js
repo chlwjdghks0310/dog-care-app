@@ -201,7 +201,7 @@ const PRICES = { "claude-opus-5-5": [4, 20, 0.2, 5], "claude-sonnet-5-5": [2, 10
 function saveUsage(model, inTok, outTok, cacheRead = 0, cacheWrite = 0) {
   if (!pushDb) return;
   const c = aiCtx.getStore() || {};
-  const p = PRICES[model];
+  const p = PRICES[model] || PRICES[Object.keys(PRICES).find((k) => String(model || "").startsWith(k))]; // 응답 model엔 날짜가 붙을 수 있다
   const usd = p ? (inTok * p[0] + outTok * p[1] + cacheRead * p[2] + cacheWrite * p[3]) / 1e6 : null;
   db("ai_usage", { method: "POST", body: { day: kstDay(), feature: c.kind || "other", model: model || "?", visitor: c.visitor || null, pet: c.pet || null, plus: Boolean(c.plus), in_tok: inTok, out_tok: outTok, cache_read: cacheRead, cache_write: cacheWrite, usd } })
     .catch((e) => console.error("[server] ai_usage:", e.message));
@@ -780,7 +780,7 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 // 우리 아이 캐릭터(server/character.js, supabase/character.sql): 초대 코드·알림 대기·생성 작업 큐. 키가 없으면 라우트는 503으로 답하고 일꾼은 안 돈다.
 // 여기서 켜는 이유: 아래 멍케어 비서(/api/ask)가 같은 코드 표(MC-PLUS-*)로 플러스를 판단한다
 mountBilling(app, { tooMany }); // 결제(11/20): 사업자등록 전엔 503
-const character = mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, pushDevices, sendPush, tooMany });
+const character = mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, anonKey: SUPABASE_ANON_KEY, pushDevices, sendPush, tooMany });
 
 // 멍케어 비서(11/17 재도입, 사용자 결정): 질문이면 우리 아이 기록을 아는 비서가 답한다. ChatGPT 버튼은 그대로 둔다(평균적인 답을 원할 수도 있어서).
 //   무료: 가장 가벼운 모델, 두 칸 고정 답(지금 할 일 / 병원에 물어볼 것), 하루 5번
@@ -831,7 +831,7 @@ function splitDetail(text) {
 app.post("/api/ask", async (req, res) => {
   if (tooMany(req)) return res.status(429).json({ error: "잠시 뒤 다시 물어봐 주세요." });
   const { dogContext, text, petId, token, detail: wantDetail } = req.body || {};
-  const q = typeof text === "string" ? text.trim().slice(0, req.body?.format === "paragraph" ? 2000 : 600) : ""; // 한 달 리포트 요약은 길다
+  const q = typeof text === "string" ? text.trim().slice(0, wantDetail && req.body?.format === "paragraph" ? 2000 : 600) : ""; // 한 달 리포트 요약(플러스 자세히)만 길게
   const pet = typeof petId === "string" && petId ? petId.slice(0, 80) : req.ip;
   if (!q) return res.status(400).json({ error: "질문을 적어 주세요." });
   const plus = character.isPlusCode(await character.accessCode(pet, token));
@@ -1531,7 +1531,7 @@ app.use((err, req, res, next) => {
 
 // 출시 점검(11/20): 어디선가 await 없이 던진 거절·예외 하나로 서버 전체가 꺼지지 않게 한다(Node 15+는 기본이 종료). 원인은 로그로 남겨 Render에서 본다.
 process.on("unhandledRejection", (e) => console.error("[server] unhandledRejection:", e?.stack || e));
-process.on("uncaughtException", (e) => console.error("[server] uncaughtException:", e?.stack || e));
+process.on("uncaughtException", (e) => { console.error("[server] uncaughtException:", e?.stack || e); setTimeout(() => process.exit(1), 200); });
 const server = app.listen(PORT, () => {
   console.log(`[server] AI proxy listening on http://localhost:${PORT}`);
 });
