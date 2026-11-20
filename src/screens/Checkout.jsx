@@ -42,7 +42,7 @@ export default function Checkout({ dog, intent = "plus", plus = false, onClose, 
       {step === "plan" && <PlanStep plan={plan} setPlan={setPlan} onNext={() => setStep("confirm")} />}
       {step === "product" && <ProductStep tier={tier} setTier={setTier} style={style} setStyle={setStyle} extraStyle={extraStyle} setExtraStyle={setExtraStyle} plus={plus} reward={reward} total={q.total} onPreview={() => setPreview(true)} onNext={() => setStep("confirm")} />}
       {step === "confirm" && <ConfirmStep dog={dog} q={q} items={items} plus={plus} stamp={stamp} intent={intent} agree={agree} setAgree={setAgree} onBack={back} onPaid={() => finish(intent, false)} onBeta={(code) => finish(intent, true, code)} />}
-      {step === "done" && <DoneStep dog={dog} q={q} done={done} onClose={onClose} onOpenCharacter={onOpenCharacter} />}
+      {step === "done" && <DoneStep q={q} done={done} onClose={onClose} onOpenCharacter={onOpenCharacter} />}
 
       {preview && <Preview style={style} onClose={() => setPreview(false)} />}
     </div>,
@@ -135,7 +135,7 @@ function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBa
       onPaid();
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
-  const useCode = async () => {
+  const applyCode = async () => {
     const c = code.trim().toUpperCase();
     if (!c || busy) return; setBusy(true); setErr("");
     try {
@@ -167,8 +167,8 @@ function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBa
         </div>
       ) : (
         <div className="co-code">
-          <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={intent === "plus" ? "MC-PLUS-XXXX" : "MC-BETA-XXXX"} autoCapitalize="characters" autoCorrect="off" spellCheck={false} inputMode="text" enterKeyHint="done" onKeyDown={(e) => e.key === "Enter" && useCode()} />
-          <div className="co-two"><button type="button" className="btn-ghost same" onClick={() => setCodeOpen(false)}>돌아가기</button><button type="button" className="btn-primary" disabled={busy || !code.trim()} onClick={useCode}>{busy ? "확인 중…" : "코드 쓰기"}</button></div>
+          <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={intent === "plus" ? "MC-PLUS-XXXX" : "MC-BETA-XXXX"} autoCapitalize="characters" autoCorrect="off" spellCheck={false} inputMode="text" enterKeyHint="done" onKeyDown={(e) => e.key === "Enter" && applyCode()} />
+          <div className="co-two"><button type="button" className="btn-ghost same" onClick={() => setCodeOpen(false)}>돌아가기</button><button type="button" className="btn-primary" disabled={busy || !code.trim()} onClick={applyCode}>{busy ? "확인 중…" : "코드 쓰기"}</button></div>
         </div>
       )}
       <p className="co-legal">{BILLING_OPEN ? "결제창은 토스페이먼츠가 열어요 · 카드 정보는 멍케어에 남지 않아요 · 결제 처리 위탁: 토스페이먼츠(주)" : "결제가 열리면 토스페이먼츠 결제창에서 카드·네이버페이·토스페이로 낼 수 있어요"}</p>
@@ -177,7 +177,7 @@ function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBa
 }
 
 // ④ 완료 — 켜진 것 3개, 다음 결제일, 이메일 안내, 바로 써 보기
-function DoneStep({ dog, q, done, onClose, onOpenCharacter }) {
+function DoneStep({ q, done, onClose, onOpenCharacter }) {
   const plusDone = done?.kind === "plus";
   return (
     <div className="co-body">

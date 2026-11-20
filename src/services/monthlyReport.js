@@ -59,7 +59,6 @@ function count(dogId, month, today) {
   return { from, to, days: lastDayOf(month), elapsed, records: recs.length + ws.length, walk: { dates: walkDates, days: walkDates.length, minutes: walkMinutes }, meal, lessDates, treatDates, looseDays, symptoms, topKinds, vetDays, cost, weights, checkDays, streaks };
 }
 
-const round1 = (x) => Math.round(x * 10) / 10;
 const dir = (n) => (n > 0 ? "늘었어요" : "줄었어요");
 const wd = (dates) => { const w = topWeekdays(dates); return w.length ? `${w.join("·")}요일에 몰려요` : ""; };
 
