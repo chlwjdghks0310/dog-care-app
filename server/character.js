@@ -51,7 +51,9 @@ const PRESETS = {
   "MC-GIFT-MALTESE": { note: "선물: 말티즈(그림일기)", style: "hand", dir: "maltese" },
   "MC-GIFT-BLACK": { note: "선물: 검은 믹스견(3D)", style: "3d", dir: "black" },
 };
-const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.dir}/idle.mp4`, thinking: `/character/presets/${p.dir}/thinking.mp4`, poster: `/character/presets/${p.dir}/poster.png`, sheet: `/character/presets/${p.dir}/sheet.jpg`, madeAt: "2026-11-17T10:00:00.000Z", preset: p.dir });
+// 11/20: 선물 세 마리 부가 동작 3편(기쁨·밥 기다림·산책)도 파일로(scripts/char-video.mjs로 만들어 720px로 줄임, 편당 $0.45). 졸림은 엎드린 판이 없어 뺌
+const PRESET_EXTRAS = (dir) => ({ happy: `/character/presets/${dir}/happy.mp4`, meal: `/character/presets/${dir}/meal.mp4`, walk: `/character/presets/${dir}/walk.mp4` });
+const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.dir}/idle.mp4`, thinking: `/character/presets/${p.dir}/thinking.mp4`, poster: `/character/presets/${p.dir}/poster.png`, sheet: `/character/presets/${p.dir}/sheet.jpg`, extras: PRESET_EXTRAS(p.dir), madeAt: "2026-11-17T10:00:00.000Z", preset: p.dir });
 
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 const nowIso = () => new Date().toISOString();
@@ -140,7 +142,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey
       : null;
     return seg && { base: Math.min(seg[0], 0.98), next: Math.min(seg[1], 0.98), secs: seg[2], since: j.updated_at };
   }
-  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, progress: progressOf(j), style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs, error: j.error, extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
+  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, progress: progressOf(j), style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs?.preset ? { ...j.outputs, extras: { ...PRESET_EXTRAS(j.outputs.preset), ...(j.outputs.extras || {}) } } : j.outputs, error: j.error, // 선물(이미 코드를 쓴 폰)도 새 부가 동작을 받게 extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
 
   // ---- 푸시 ----
   async function notify(endpoint, title, body) {
