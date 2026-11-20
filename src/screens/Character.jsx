@@ -11,10 +11,13 @@ import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pi
 const SAMPLE = { "3d": "/character/sample-3d.jpg", hand: "/character/sample-hand.jpg" };
 const EXTRA_ICO = { happy: "party", sleepy: "moon", meal: "bowl", walk: "walk" };
 import { rewardsOf, claimExtra } from "../services/stamps";
+import Checkout from "./Checkout";
+import { recordBetaCharacter, CATALOG, won } from "../services/billing";
 const EXTRA_WHEN = { happy: "기록을 저장하면 6초 동안", sleepy: "밤 10시~아침 6시, 가만히 있을 때", meal: "밥 시간 30분 전후", walk: "산책 시간(곧)" };
 
 export default function Character({ dog }) {
-  const [st, setSt] = useState(null); // 서버 status
+  // 서버에 묻는 동안 마지막으로 알던 상태를 먼저 보여 준다(토큰·플러스·작업이 폰에 있음). 처음이면 "불러오는 중"
+  const [st, setSt] = useState(() => { const c = getCharacter(dog.id); return c && (c.token || c.job) ? { offline: true, cached: true, access: Boolean(c.token), plus: Boolean(c.plus), job: c.job || null } : null; }); // 서버 status
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const timer = useRef(null);
@@ -78,6 +81,7 @@ function Steps() {
 
 function Locked({ dog, st, setSt, act, busy }) {
   const [code, setCode] = useState("");
+  const [checkout, setCheckout] = useState(false);
   const canPush = isNotificationSupported();
   const toggleWait = act(async (on) => {
     if (on && getPermission() !== "granted") { const p = await requestPermission(); if (p !== "granted") throw new Error("알림을 켜야 출시 소식을 보내 드릴 수 있어요"); }
@@ -87,6 +91,7 @@ function Locked({ dog, st, setSt, act, busy }) {
   const useCode = act(async () => {
     if (!code.trim()) throw new Error("코드를 넣어 주세요");
     await redeem(dog.id, code.trim());
+    recordBetaCharacter(dog.id, code.trim());
     setSt(await fetchStatus(dog.id));
   });
   return (
@@ -95,7 +100,10 @@ function Locked({ dog, st, setSt, act, busy }) {
         <div className="px-sec">곧 출시 · 두 가지 그림체 중 하나를 골라요</div>
         <Samples />
         <Steps />
+        <button type="button" className="btn-primary" style={{ width: "100%" }} onClick={() => setCheckout(true)}>단품으로 갖기 · {won(CATALOG.char_basic.price)}부터</button>
+        <p className="px-note">기본 {won(CATALOG.char_basic.price)} · 정성 {won(CATALOG.char_premium.price)} · 다른 그림체 +{won(CATALOG.char_style.price)}. 연간 플러스엔 기본 1번이 들어 있어요.</p>
       </section>
+      {checkout && <Checkout dog={dog} intent="character" plus={Boolean(st?.plus)} onClose={() => setCheckout(false)} onChanged={() => fetchStatus(dog.id).then(setSt).catch(() => {})} onOpenCharacter={() => setCheckout(false)} />}
       <section className="px-card">
         <label className="px-switch">
           <Ico name="bell" size={38} />

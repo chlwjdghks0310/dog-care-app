@@ -15,6 +15,7 @@ import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 import { mountCharacter } from "./character.js";
+import { mountBilling } from "./billing.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
 
@@ -778,6 +779,7 @@ const APP_TOOL_RULES = `[앱에 기록하기]
 
 // 우리 아이 캐릭터(server/character.js, supabase/character.sql): 초대 코드·알림 대기·생성 작업 큐. 키가 없으면 라우트는 503으로 답하고 일꾼은 안 돈다.
 // 여기서 켜는 이유: 아래 멍케어 비서(/api/ask)가 같은 코드 표(MC-PLUS-*)로 플러스를 판단한다
+mountBilling(app, { tooMany }); // 결제(11/20): 사업자등록 전엔 503
 const character = mountCharacter(app, { db, dbOk: pushDb, supabaseUrl: SUPABASE_URL, serviceKey: SUPABASE_SERVICE_KEY, pushDevices, sendPush, tooMany });
 
 // 멍케어 비서(11/17 재도입, 사용자 결정): 질문이면 우리 아이 기록을 아는 비서가 답한다. ChatGPT 버튼은 그대로 둔다(평균적인 답을 원할 수도 있어서).

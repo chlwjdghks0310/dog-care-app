@@ -1,25 +1,31 @@
 import { useEffect, useState } from "react";
 import Ico from "../components/Ico";
 import { fetchStatus, redeem } from "../services/character";
+import Checkout from "./Checkout";
+import PlusManage from "./PlusManage";
+import { recordBetaPlus, getBilling, PLUS_MONTH, PLUS_YEAR, won } from "../services/billing";
+import { isPlus } from "../services/plus";
 
 // 멍케어 플러스(11/17, 사용자 결정): 설정에 따로 있는 칸. 베타 동안은 결제 없이 플러스 코드로만 열리고, 막는 건 플러스 비서 하나뿐.
 // 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 스티커 아이콘을 기능마다 다르게(플러스=트로피 win, 비서=chatHeart, 캐릭터=video, 진료 정리=clipboard, 리포트=chart, 코드=lock),
 // 세로 한 줄 구성, 무료/플러스 차이는 작은 표로.
 export default function Plus({ dog, onOpenCharacter, onOpenMonth }) {
-  const [st, setSt] = useState(null);
+  const [st, setSt] = useState(() => (isPlus(dog.id) ? { offline: true, cached: true, plus: true } : null)); // 서버에 묻는 동안 마지막으로 알던 플러스 상태부터
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkout, setCheckout] = useState(false);
   const load = () => fetchStatus(dog.id).then(setSt).catch((e) => (setErr(e.message), setSt({ offline: true })));
   useEffect(() => { load(); }, [dog.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const useCode = async () => {
     if (!code.trim() || busy) return;
     setBusy(true); setErr("");
-    try { await redeem(dog.id, code.trim()); await load(); setCode(""); }
+    try { await redeem(dog.id, code.trim()); recordBetaPlus(dog.id, code.trim()); await load(); setCode(""); }
     catch (e) { setErr(e.message); }
     finally { setBusy(false); }
   };
-  const plus = Boolean(st?.plus);
+  const plus = st?.offline ? isPlus(dog.id) : Boolean(st?.plus); // 서버에 못 닿으면 마지막으로 알던 상태로(오류처럼 보이지 않게)
+  useEffect(() => { if (plus && !getBilling(dog.id).plan) recordBetaPlus(dog.id, ""); }, [plus, dog.id]); // 예전에 코드를 쓴 강아지도 장부에
   return (
     <div className="px">
       <header className="px-hero">
@@ -29,10 +35,14 @@ export default function Plus({ dog, onOpenCharacter, onOpenMonth }) {
           <p className="px-lead">{plus ? `${dog.name}는 플러스예요. 고마워요!` : "기록·수첩·가이드·가족 공유는 언제나 무료. 플러스는 세 가지를 더해요 — 플러스 비서, 한 달 리포트, 우리 아이 캐릭터."}</p>
         </div>
       </header>
-      <div className="px-price">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}><span className="px-dim">정식 가격(예정)</span><span className="chip">지금은 베타 무료</span></div>
-        <div style={{ width: "100%" }}><b>월 3,900원</b> <span className="px-dim">또는</span> <b>연 38,900원</b> <span className="px-dim">(연간엔 기본 캐릭터 1번 포함)</span></div>
-      </div>
+      {plus ? <PlusManage dog={dog} /> : (
+        <div className="px-price">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}><span className="px-dim">정식 가격(예정)</span><span className="chip">지금은 베타 무료</span></div>
+          <div style={{ width: "100%" }}><b>월 {won(PLUS_MONTH)}</b> <span className="px-dim">또는</span> <b>연 {won(PLUS_YEAR)}</b> <span className="px-dim">(연간엔 기본 캐릭터 1번 포함)</span></div>
+          <button type="button" className="btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={() => setCheckout(true)}>플러스 시작하기 · 가격 보기</button>
+        </div>
+      )}
+      {checkout && <Checkout dog={dog} intent="plus" plus={plus} onClose={() => setCheckout(false)} onChanged={load} onOpenCharacter={() => (setCheckout(false), onOpenCharacter?.())} />}
 
       <section className="px-card">
         <div className="px-sec">지금 플러스에만</div>
