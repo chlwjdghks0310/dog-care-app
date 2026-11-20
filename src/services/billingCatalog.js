@@ -9,7 +9,7 @@ export const CATALOG = {
   plus_year: { id: "plus_year", kind: "plus", period: "year", title: "플러스 1년", price: PLUS_YEAR, includesCharacter: true, desc: "1년에 한 번 결제 · 기본 캐릭터 1번 포함" },
   plus_month: { id: "plus_month", kind: "plus", period: "month", title: "플러스 한 달", price: PLUS_MONTH, includesCharacter: false, desc: "매달 같은 날 결제 · 언제든 해지" },
   char_basic: { id: "char_basic", kind: "character", title: "기본 캐릭터", price: CHAR_BASIC, desc: "후보 4장 중 1장 · 다시 뽑기 2번 · 움직임 2편(기다리기·고민하기)" },
-  char_premium: { id: "char_premium", kind: "character", title: "정성 캐릭터", price: CHAR_PREMIUM, desc: "기본 + 부가 동작 3편 · 다시 뽑기 4번 · 사람이 보정" },
+  char_premium: { id: "char_premium", kind: "character", title: "정성 캐릭터", price: CHAR_PREMIUM, desc: "기본 + 부가 동작 3편(기쁨·밥 기다림·졸림) · 다시 뽑기 4번 · 사람이 보정" },
   // 추가 옵션: 플러스면 할인가. 정성 올리기(기본→정성)는 차액 5,000, 플러스 2,900(11/18) — 11/20 메모의 5,900은 사용자 확인 필요
   char_style: { id: "char_style", kind: "addon", title: "다른 그림체 하나 더", price: 3900, plusPrice: 2900, desc: "추가로 내는 돈" },
   char_upgrade: { id: "char_upgrade", kind: "addon", title: "정성으로 올리기", price: CHAR_PREMIUM - CHAR_BASIC, plusPrice: 2900, desc: "기본을 이미 만든 뒤 부가 동작 3편 추가" },

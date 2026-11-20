@@ -2119,3 +2119,9 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .co-preview { position: fixed; inset: 0; z-index: 130; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 20px; } .co-preview-card { background: var(--bg); border-radius: 20px; padding: 14px; display: grid; gap: 10px; width: min(360px, 100%); font-size: 13.5px; line-height: 1.5; } .co-preview-card img { width: 100%; border-radius: 12px; aspect-ratio: 1; object-fit: cover; } .co-preview-card .co-sub { text-align: left; }
 
 .mr-ov-c small { font-size: 10.5px; line-height: 1.1; color: var(--text-soft); }
+
+/* 캐릭터 부가 동작 줄(11/20): 설명 + 켜기 + 조정 */
+.char-extra { display: grid; gap: 6px; padding: 8px 0; border-top: 1px dashed var(--border); } .char-extra:first-of-type { border-top: 0; }
+.char-extra-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-left: 42px; }
+.char-extra-on { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-soft); }
+.char-extra-time { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; } .char-extra-time input { min-height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; }

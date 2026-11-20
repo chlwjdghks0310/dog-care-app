@@ -36,9 +36,8 @@ const EXTRAS = {
   happy: { base: "green", label: "기쁨", text: "A cute 'overjoyed' gesture: the fluffy tail wags fast and wide, the whole body wiggles and bounces lightly in place with excitement, ears flap, eyes sparkle, two quick blinks; tiny happy hops on the spot but it never leaves the frame and never stands up fully. Static camera. Seamless loop: the final frame matches the first frame exactly." },
   sleepy: { base: "lie", label: "졸림", text: "The puppy stays lying down with its chin on its paws. A sleepy moment: the eyes slowly get heavy and half-close, blink slowly twice, the head sinks a little lower, a gentle slow breathing rise and fall, one ear droops; then the eyes drift closed and softly open again. Very slow and calm. Static camera. Seamless loop: the final frame matches the first frame exactly." },
   meal: { base: "green", label: "밥 기다림", text: "The puppy stays seated and looks down toward the floor just in front of it as if a food bowl is being set down: eyes wide and eager, ears perk forward, the tail wags quickly, the front paws shuffle in place with impatience, a small excited body wiggle. Nothing else appears in the frame. Static camera. Seamless loop: the final frame matches the first frame exactly." },
-  walk: { base: "green", label: "산책 가자", text: "The puppy stays seated but is clearly asking to go outside: it looks up at the viewer, lifts one front paw and taps the air twice, tilts its head, ears up, the tail sweeps side to side, a little bounce of excitement. Nothing else appears in the frame. Static camera. Seamless loop: the final frame matches the first frame exactly." },
 };
-const MAX_EXTRAS = 3; // 정성 상품 = 부가 동작 3편(베타는 코드 쓴 사람 모두 무료)
+const MAX_EXTRAS = 3; // 정성 상품 = 부가 동작 세 편 전부(기쁨·밥 기다림·졸림, 11/20 산책은 뺌) — 베타는 코드 쓴 사람 모두 무료
 const motion = (style, kind) => (style === "hand" ? HAND_2D : "") + MOUTH + (kind === "idle" ? IDLE : kind === "thinking" ? THINK : EXTRAS[kind].text);
 const DURATION = { "3d": { idle: 5, thinking: 5 }, hand: { idle: 5, thinking: 5 } }; // 11/18: 3D idle도 5초(10초는 크레딧 2배 — 느긋한 지시문으로 5초면 충분)
 const VIDEO_DAILY_CR = Number(process.env.CHARACTER_VIDEO_DAILY_CREDITS || 450); // 하루 영상 크레딧 한도(10편) — 11/18 비용 점검
@@ -51,8 +50,8 @@ const PRESETS = {
   "MC-GIFT-MALTESE": { note: "선물: 말티즈(그림일기)", style: "hand", dir: "maltese" },
   "MC-GIFT-BLACK": { note: "선물: 검은 믹스견(3D)", style: "3d", dir: "black" },
 };
-// 11/20: 선물 세 마리 부가 동작 3편(기쁨·밥 기다림·산책)도 파일로(scripts/char-video.mjs로 만들어 720px로 줄임, 편당 $0.45). 졸림은 엎드린 판이 없어 뺌
-const PRESET_EXTRAS = (dir) => ({ happy: `/character/presets/${dir}/happy.mp4`, meal: `/character/presets/${dir}/meal.mp4`, walk: `/character/presets/${dir}/walk.mp4` });
+// 11/20: 선물 세 마리 부가 동작(기쁨·밥 기다림)도 파일로(scripts/char-video.mjs로 만들어 720px로 줄임, 편당 $0.45). 졸림은 엎드린 판이 없어 뺌
+const PRESET_EXTRAS = (dir) => ({ happy: `/character/presets/${dir}/happy.mp4`, meal: `/character/presets/${dir}/meal.mp4` }); // 졸림은 엎드린 판이 생기면, 산책은 상품에서 뺌(파일만 남김)
 const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.dir}/idle.mp4`, thinking: `/character/presets/${p.dir}/thinking.mp4`, poster: `/character/presets/${p.dir}/poster.png`, sheet: `/character/presets/${p.dir}/sheet.jpg`, extras: PRESET_EXTRAS(p.dir), madeAt: "2026-11-17T10:00:00.000Z", preset: p.dir });
 
 const sha = (s) => createHash("sha256").update(s).digest("hex");

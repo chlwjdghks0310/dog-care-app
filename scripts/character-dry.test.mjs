@@ -241,21 +241,21 @@ const pass = (name) => console.error("  ✓", name);
   // 재료 그림을 못 불러오면: 기본 캐릭터는 그대로 done, 오류만 적힘
   const green = row.outputs.green;
   row.outputs.green = green.replace(/green\.png$/, "gone.png");
-  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "walk", token })).status, 200);
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "meal", token })).status, 200);
   await drain(2);
   j = await job(pet, token);
-  assert.equal(j.status, "done"); assert.ok(!j.outputs.extras?.walk); assert.match(j.step, /만들지 못했어요/); assert.ok(j.outputs.idle, "기본 영상은 그대로");
+  assert.equal(j.status, "done"); assert.ok(!j.outputs.extras?.meal); assert.match(j.step, /만들지 못했어요/); assert.ok(j.outputs.idle, "기본 영상은 그대로");
   assert.equal(pushes.at(-1), "😿 부가 동작을 만들지 못했어요");
   // 고친 뒤 다시 요청 → 지난 오류 지워지고 완성
   row.outputs.green = green;
-  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "walk", token })).status, 200);
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "meal", token })).status, 200);
   assert.equal(tables.character_jobs.find((x) => x.id === row.id).error, null, "다시 요청하면 지난 오류 지움");
   await drain(3);
   j = await job(pet, token);
-  assert.ok(j.outputs.extras?.walk, "산책 영상"); assert.equal(j.status, "done");
+  assert.ok(j.outputs.extras?.meal, "밥 기다림 영상"); assert.equal(j.status, "done");
   assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "sleepy", token })).status, 200); await drain(3);
-  const fourth = await post(`/jobs/${row.id}/extra`, { kind: "meal", token });
-  assert.equal(fourth.status, 409); assert.match(fourth.body.error, /3개까지/);
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "walk", token })).status, 400, "산책은 상품에서 뺌 → 없는 동작");
+  assert.equal((await post(`/jobs/${row.id}/extra`, { kind: "sleepy", token })).status, 409, "세 편 다 있으면 같은 동작은 또 못 만듦");
   pass("⑦ 부가 동작: 1편마다 영상 1번, 중복·4편째 409, 실패해도 기본 유지, 재요청 때 오류 지움");
 }
 

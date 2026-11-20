@@ -23,6 +23,7 @@ import PuppyCard from "../components/PuppyCard";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
 import { quickParse, quickDelete } from "../services/quickParse";
+import { getExtraPrefs, inSleepyWindow, inMealWindow } from "../services/characterPrefs";
 import { getWeightRecords, deleteWeightRecord } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import { todayKey } from "../utils/date";
@@ -95,9 +96,10 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   }, [dog.id]);
   const openCharacter = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "character" } }));
   // 가만히 있을 때의 모습: 밤(22시~6시)엔 "졸림", 밥 시간 30분 전후엔 "밥 기다림"(부가 동작이 있을 때만)
-  const hour = new Date().getHours();
-  const mealSoon = (getFeedingSettings(dog.id).times || []).some((t) => Math.abs(Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) - (hour * 60 + new Date().getMinutes())) <= 30);
-  const idleState = customAvatar?.extras?.sleepy && (hour >= 22 || hour < 6) ? "sleepy" : customAvatar?.extras?.meal && mealSoon ? "meal" : "idle";
+  // 11/20: 언제 나오나는 캐릭터 화면의 조정값(services/characterPrefs)을 따른다 — 끄면 안 나오고, 시간대·폭은 사용자가 정한 대로
+  const [prefs, setPrefs] = useState(() => getExtraPrefs(dog.id));
+  useEffect(() => { const on = () => setPrefs(getExtraPrefs(dog.id)); window.addEventListener("dogcare-character-prefs", on); return () => window.removeEventListener("dogcare-character-prefs", on); }, [dog.id]);
+  const idleState = customAvatar?.extras?.sleepy && inSleepyWindow(prefs.sleepy) ? "sleepy" : customAvatar?.extras?.meal && inMealWindow(prefs.meal, getFeedingSettings(dog.id).times) ? "meal" : "idle";
   const talkTimerRef = useRef(null);
   const abortRef = useRef(null);
   // 기록 읽기: 목록을 아래로 스크롤하면 안내문·하단 탭을 내려 숨기고, 위로 스크롤하면 다시 보인다
@@ -193,9 +195,9 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   }
   // 부가 동작 "기쁨"(정성 캐릭터): 기록이 저장되면 말하기 뒤에 6초. speak()와 같은 틱에 두면 talking이 덮어써 안 보인다(11/20 점검)
   function celebrate() {
-    if (!customAvatar?.extras?.happy) return;
+    if (!customAvatar?.extras?.happy || !prefs.happy.on) return;
     clearTimeout(talkTimerRef.current);
-    talkTimerRef.current = setTimeout(() => { setAvatarState("happy"); setTimeout(() => setAvatarState((s) => (s === "happy" ? "idle" : s)), 6000); }, 1600);
+    talkTimerRef.current = setTimeout(() => { setAvatarState("happy"); setTimeout(() => setAvatarState((s) => (s === "happy" ? "idle" : s)), prefs.happy.sec * 1000); }, 1600);
   }
 
   // 질문으로 보이면: 응급 단어 → 응급 카드, 아니면 우리 자료(정보 카드·가이드북)에서 찾기. AI는 부르지 않는다.

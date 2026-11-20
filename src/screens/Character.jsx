@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
-import { useHelpTip } from "../components/HelpTip";
 import PawProgress from "../components/PawProgress";
 import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
 import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
@@ -9,11 +8,11 @@ import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pi
 // 흐름: 잠김(알림 대기·코드) → 그림체·사진·동의 → 후보 4장 중 고르기 → 영상 만드는 중 → 완성(홈 강아지가 바뀜) → 부가 동작
 // 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 캐릭터=video 스티커, 단계마다 다른 스티커(사진 image·고르기 tap·홈 house), 부가 동작도 각각(party·moon·meal·walk)
 const SAMPLE = { "3d": "/character/sample-3d.jpg", hand: "/character/sample-hand.jpg" };
-const EXTRA_ICO = { happy: "party", sleepy: "moon", meal: "bowl", walk: "walk" };
+
 import { rewardsOf, claimExtra } from "../services/stamps";
+import { EXTRA_KINDS, EXTRA_META, getExtraPrefs, setExtraPref } from "../services/characterPrefs";
 import Checkout from "./Checkout";
 import { recordBetaCharacter, CATALOG, won } from "../services/billing";
-const EXTRA_WHEN = { happy: "기록을 저장하면 6초 동안", sleepy: "밤 10시~아침 6시, 가만히 있을 때", meal: "밥 시간 30분 전후", walk: "산책 시간(곧)" };
 
 export default function Character({ dog }) {
   // 서버에 묻는 동안 마지막으로 알던 상태를 먼저 보여 준다(토큰·플러스·작업이 폰에 있음). 처음이면 "불러오는 중"
@@ -153,7 +152,7 @@ function Form({ dog, job, st, setSt, act, busy }) {
               <div className="px-feat-desc">{STYLE_LABEL[outputs.style]} · {outputs.preset ? "선물 코드로 받음" : String(outputs.madeAt).slice(0, 10)}</div>
             </div>
           </div>
-          {job?.outputs?.green && <Extras dog={dog} job={job} setSt={setSt} act={act} busy={busy} />}
+          <Extras dog={dog} job={job} outputs={outputs} setSt={setSt} act={act} busy={busy} />
           <button type="button" className="btn-ghost" onClick={() => (clearCharacterOutputs(dog.id), setSt((s) => ({ ...s })))}>기본 강아지로 돌리기</button>
         </section>
       )}
@@ -196,36 +195,52 @@ function Form({ dog, job, st, setSt, act, busy }) {
       </section>
       <button type="button" className="btn-primary" onClick={go} disabled={busy || st.offline || !st.ready}>{busy ? "보내는 중…" : outputs ? "새로 만들기" : "만들기 시작"}</button>
       {!st.ready && !st.offline && <p className="px-note">지금은 서버 준비 중이라 만들 수 없어요.</p>}
-      <p className="px-note">후보 4장(10분쯤) → 하나 고르면 기본 움직임 2가지(15분쯤) → 그 뒤 부가 동작을 3개까지 더할 수 있어요. 단계마다 알림으로 알려 드려요.</p>
+      <p className="px-note">후보 4장(10분쯤) → 하나 고르면 기본 움직임 2가지(15분쯤) → 그 뒤 부가 동작 세 편(기쁨·밥 기다림·졸림)을 더할 수 있어요. 단계마다 알림으로 알려 드려요.</p>
     </>
   );
 }
 
-// 부가 동작(정성 상품 = 3편, 베타는 무료). 상황에 맞춰 홈 화면에서 움직인다
-function Extras({ dog, job, setSt, act, busy }) {
-  const have = job.outputs?.extras || {};
-  const pending = job.outputs?.pendingExtra;
-  const n = Object.keys(have).length;
-  const max = job.maxExtras || 3;
+// 부가 동작(정성 상품 = 기쁨·밥 기다림·졸림 세 편, 베타는 무료). 줄마다 "언제 나오나" 설명 + 켜기 + 조정(11/20 사용자). 선물 캐릭터도 조정만은 된다
+function Extras({ dog, job, outputs, setSt, act, busy }) {
+  const have = outputs?.extras || job?.outputs?.extras || {};
+  const pending = job?.outputs?.pendingExtra;
+  const canMake = Boolean(job?.outputs?.green); // 서버가 만든 캐릭터만 새 동작을 만들 수 있다(선물은 파일로 받음)
+  const n = EXTRA_KINDS.filter((k) => have[k]).length;
   const reward = rewardsOf(dog.id); // 스탬프 배지 5개 = 부가 동작 1편(11/19)
-  const [tip, panel] = useHelpTip("부가 동작", "기본 캐릭터는 기다리기(꼬리·귀·고개 움직임)와 고민하기(엎드려 눈 굴림) 두 편이에요. 부가 동작은 네 가지 중 세 편까지: 기쁨 — 기록을 저장하면 6초 동안 몸을 흔들어요 · 졸림 — 밤 10시~아침 6시엔 꾸벅 졸아요 · 밥 기다림 — 사료 계산기 밥 시간 30분 전후에 그릇 쪽을 봐요 · 산책 가자 — 산책 시간이 되면 목줄을 기다려요(곧). 한 편마다 5초 영상을 새로 만들어 5~8분 걸리고, 실패해도 기본 캐릭터는 그대로예요. 정성 상품엔 3편이 들어 있고, 하루 체크 배지 5개마다 1편을 받아요."); // 11/20 사용자: 뭐가 있는지 글로
+  const [prefs, setPrefs] = useState(() => getExtraPrefs(dog.id));
+  const set = (k, patch) => setPrefs(setExtraPref(dog.id, k, patch));
   const add = (kind) => act(async () => { const j = await addExtra(dog.id, kind); if (reward.extrasLeft > 0) claimExtra(dog.id); setSt((s) => ({ ...s, job: j })); });
+  const Seg = ({ k, field, opts, fmt = (v) => v }) => (
+    <div className="chip-wrap" style={{ margin: 0, gap: 4 }}>{opts.map((v) => <button key={v} type="button" className={`seg${prefs[k][field] === v ? " on" : ""}`} style={{ padding: "5px 0", fontSize: 12.5 }} aria-pressed={prefs[k][field] === v} onClick={() => set(k, { [field]: v })}>{fmt(v)}</button>)}</div>
+  );
   return (
-    <div style={{ display: "grid", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-      <div className="px-sec" style={{ display: "flex", alignItems: "center", gap: 6 }}>부가 동작 {n}/{max} <span className="px-dim">· 상황에 맞춰 홈 화면에서 움직여요</span>{tip}</div>
-      {panel}
-      {reward.extrasLeft > 0 && <p className="px-note" style={{ margin: 0 }}>🏅 하루 체크 배지 {reward.badges}개 — 부가 동작 {reward.extrasLeft}편을 받을 수 있어요. 아래에서 골라 [만들기]</p>}
-      {Object.entries(job.extras || {}).map(([kind, label]) => (
-        <div key={kind} className="px-feat">
-          <Ico name={EXTRA_ICO[kind] || "sparkles"} size={30} />
-          <div className="px-feat-body"><div className="px-feat-title" style={{ fontSize: 15 }}>{label}</div><div className="px-feat-desc" style={{ fontSize: 13 }}>{EXTRA_WHEN[kind]}</div></div>
-          {have[kind] ? <Ico name="check" size={22} style={{ color: "var(--accent-strong)", alignSelf: "center" }} />
-            : pending === kind ? <span style={{ alignSelf: "center" }}><PawProgress progress={job.progress} size={40} stroke={4} percent="none" label={`${label} 만드는 중`} /></span>
-            : <button type="button" className="btn-ghost small" style={{ alignSelf: "center" }} onClick={add(kind)} disabled={busy || Boolean(pending) || n >= max}>만들기</button>}
-        </div>
-      ))}
+    <div style={{ display: "grid", gap: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+      <div className="px-sec">부가 동작 {n}/3 <span className="px-dim">· 상황에 맞춰 홈 화면에서 움직여요 · 여기서 켜고 끄고 시간을 맞춰요</span></div>
+      {canMake && reward.extrasLeft > 0 && <p className="px-note" style={{ margin: 0 }}>🏅 하루 체크 배지 {reward.badges}개 — 부가 동작 {reward.extrasLeft}편을 받을 수 있어요. 아래 [만들기]</p>}
+      {EXTRA_KINDS.map((k) => {
+        const m = EXTRA_META[k], p = prefs[k], done = Boolean(have[k]);
+        return (
+          <div key={k} className="char-extra">
+            <div className="px-feat">
+              <Ico name={m.ico} size={30} />
+              <div className="px-feat-body"><div className="px-feat-title" style={{ fontSize: 15 }}>{m.label}</div><div className="px-feat-desc" style={{ fontSize: 13 }}>{m.how(p)}</div></div>
+              {done ? <Ico name="check" size={22} style={{ color: "var(--accent-strong)", alignSelf: "center" }} />
+                : pending === k ? <span style={{ alignSelf: "center" }}><PawProgress progress={job.progress} size={40} stroke={4} percent="none" label={`${m.label} 만드는 중`} /></span>
+                : canMake ? <button type="button" className="btn-ghost small" style={{ alignSelf: "center" }} onClick={add(k)} disabled={busy || Boolean(pending) || n >= 3}>만들기</button>
+                : <span className="px-dim" style={{ alignSelf: "center", whiteSpace: "nowrap" }}>준비 중</span>}
+            </div>
+            <div className="char-extra-ctl">
+              <label className="char-extra-on"><input type="checkbox" role="switch" className="switch" checked={p.on} onChange={(e) => set(k, { on: e.target.checked })} aria-label={`${m.label} 켜기`} /><span>{p.on ? "켬" : "끔"}</span></label>
+              {k === "happy" && <Seg k="happy" field="sec" opts={[3, 6, 10]} fmt={(v) => `${v}초`} />}
+              {k === "meal" && <Seg k="meal" field="win" opts={[15, 30, 60]} fmt={(v) => `앞뒤 ${v}분`} />}
+              {k === "sleepy" && <div className="char-extra-time"><input type="time" value={p.from} onChange={(e) => e.target.value && set("sleepy", { from: e.target.value })} aria-label="졸림 시작" /><span>~</span><input type="time" value={p.to} onChange={(e) => e.target.value && set("sleepy", { to: e.target.value })} aria-label="졸림 끝" /></div>}
+            </div>
+          </div>
+        );
+      })}
       {pending && <p className="px-note">{job.step} · 끝나면 알림으로 알려 드려요</p>}
-      {job.error && !pending && <p className="error-text" style={{ margin: 0, fontSize: 12.5 }}>{job.step}</p>}
+      {job?.error && !pending && <p className="error-text" style={{ margin: 0, fontSize: 12.5 }}>{job.step}</p>}
+      {!canMake && n < 3 && <p className="px-note" style={{ margin: 0 }}>선물 캐릭터의 남은 동작은 준비되면 넣어 드려요.</p>}
     </div>
   );
 }

@@ -209,7 +209,7 @@ function Preview({ style, onClose }) {
     <div className="co-preview" role="dialog" aria-label="미리보기" onClick={onClose}>
       <div className="co-preview-card" onClick={(e) => e.stopPropagation()}>
         <img src={SAMPLE[style]} alt={`${STYLE_LABEL[style]} 견본`} />
-        <div><b>{STYLE_LABEL[style]}</b> 견본 강아지예요. 완성되면 홈 화면에서 꼬리 흔들며 기다리고, 물어볼 땐 엎드려서 고민해요(5초 영상 2편). 정성은 기쁨·졸림·밥 기다림·산책 중 3편을 더해요.</div>
+        <div><b>{STYLE_LABEL[style]}</b> 견본 강아지예요. 완성되면 홈 화면에서 꼬리 흔들며 기다리고, 물어볼 땐 엎드려서 고민해요(5초 영상 2편). 정성은 기쁨·밥 기다림·졸림 세 편을 더해요.</div>
         <div className="co-sub">후보 4장을 먼저 보고 고르니, 결제 뒤에도 "하나도 안 닮았어요"면 그 자리에서 전액 환불돼요.</div>
         <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={onClose}>닫기</button>
       </div>
