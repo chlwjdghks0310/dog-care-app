@@ -22,7 +22,7 @@ import SpeechBubble from "../components/SpeechBubble";
 import PuppyCard from "../components/PuppyCard";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
-import { quickParse } from "../services/quickParse";
+import { quickParse, quickDelete } from "../services/quickParse";
 import { getWeightRecords, deleteWeightRecord } from "../services/weightLog";
 import { syncPushAlarms } from "../services/notifications";
 import { todayKey } from "../utils/date";
@@ -220,13 +220,18 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       return;
     }
     // 자주 쓰는 짧은 말은 AI 없이 바로 저장 + [되돌리기](비용 0원) — 애매하면 지금처럼 AI로
-    const local = quickParse(said, todayKey());
+    const local = quickDelete(dog.id, said, todayKey()) || quickParse(said, todayKey()); // "지워줘"는 AI 없이 후보부터(11/20)
     if (local) {
       const before = new Set(getRecords(dog.id).map((r) => r.id));
       const beforeW = new Set(getWeightRecords(dog.id).map((r) => r.id));
       let records;
       try { records = applyAppActions(dog, local); }
       catch (err) { setMessages((m) => [...m, { role: "ai", error: true, text: err.message || "저장하지 못했어. 다시 시도해 줘!", retry: null }]); setAvatarState("idle"); return; }
+      if (records.confirm.length && !records.done.length) { // 지우기 후보: 건마다 [지우기] 버튼
+        setMessages((m) => [...m, { role: "ai", kind: "record", records, reacted: null, lead: records.confirm.length > 1 ? "이 중에 지울 걸 골라 줘!" : "이거 지울까?" }]);
+        speak();
+        return;
+      }
       if (records.done.length) {
         markFirstSteps(dog.id, { chat: true });
         const added = getRecords(dog.id).filter((r) => !before.has(r.id));
@@ -430,6 +435,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
                     ))}
                   </div>
                 )}
+                {m.lead && <div style={{ marginBottom: 8 }}>{m.lead}</div>}
                 {m.records.confirm?.map((c, j) => (
                   <div key={j} className="rec-confirm">
                     <div style={{ fontWeight: 700, marginBottom: 6 }}>

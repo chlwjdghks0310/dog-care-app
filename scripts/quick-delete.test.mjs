@@ -1,0 +1,21 @@
+// 채팅 "지워줘" 후보 고르기(11/20): 힌트(오늘·어제·방금·산책·변·체중)로 후보를 좁히고, 후보가 없으면 null(AI 경로)
+import assert from "node:assert/strict";
+const store = {};
+globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = String(v)), removeItem: (k) => delete store[k] };
+globalThis.window = globalThis;
+const today = "2026-11-20", yday = "2026-11-19";
+const rec = (id, type, at, data) => ({ id, type, at, data });
+localStorage.setItem("dogcare-records-v1", JSON.stringify({ d1: [rec("r1", "daily", `${today}T08:10`, { kind: "산책", minutes: 30 }), rec("r2", "meal", `${today}T09:00`, { kind: "dry", amount: 40, appetite: "평소" }), rec("r3", "symptom", `${today}T07:00`, { kinds: ["구토"] }), rec("r4", "potty", `${yday}T19:00`, { stool: "무름" })] }));
+localStorage.setItem("dogcare-weight-log-v1", JSON.stringify({ d1: [{ id: "w1", dogId: "d1", weightKg: 2.4, measuredAt: `${today}T10:00:00` }] }));
+const { quickDelete, isDeleteAsk } = await import("../src/services/quickParse.js");
+const ids = (s) => (quickDelete("d1", s, today) || []).map((a) => a.id);
+assert.deepEqual(ids("산책 지워줘"), ["r1"]);
+assert.deepEqual(ids("아까 거 지워"), ["w1"], "방금/아까 = 가장 최근 1건");
+assert.deepEqual(new Set(ids("오늘 기록 삭제")), new Set(["w1", "r2", "r1", "r3"]), "오늘 전부(최신순 4건)");
+assert.deepEqual(ids("어제 변 기록 지워줘"), ["r4"]);
+assert.deepEqual(ids("몸무게 지워"), ["w1"]);
+assert.deepEqual(ids("토한 거 지워줘"), ["r3"]);
+assert.equal(quickDelete("d1", "어제 산책 지워", today), null, "후보 없으면 null → AI");
+assert.equal(quickDelete("d1", "오늘 산책 30분 했어", today), null, "지우기 말이 아니면 null");
+assert.ok(!isDeleteAsk("이 긴 문장은 사십 자를 훌쩍 넘기 때문에 빠른 지우기로 다루지 않고 AI에게 넘기는 게 맞다 지워줘"));
+console.log("quick-delete ok");
