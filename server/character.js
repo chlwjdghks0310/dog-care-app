@@ -142,7 +142,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey
       : null;
     return seg && { base: Math.min(seg[0], 0.98), next: Math.min(seg[1], 0.98), secs: seg[2], since: j.updated_at };
   }
-  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, progress: progressOf(j), style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs?.preset ? { ...j.outputs, extras: { ...PRESET_EXTRAS(j.outputs.preset), ...(j.outputs.extras || {}) } } : j.outputs, error: j.error, // 선물(이미 코드를 쓴 폰)도 새 부가 동작을 받게 extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
+  const view = (j) => j && ({ id: j.id, status: j.status, step: j.step, progress: progressOf(j), style: j.style, candidates: (j.candidates || []).map(publicUrl), picked: j.picked, regen: j.regen, regenLeft: Math.max(0, MAX_REGEN - (j.regen || 0)), outputs: j.outputs?.preset ? { ...j.outputs, extras: { ...PRESET_EXTRAS(j.outputs.preset), ...(j.outputs.extras || {}) } } : j.outputs, error: j.error, /* 선물(이미 코드를 쓴 폰)도 새 부가 동작을 받게 */ extras: Object.fromEntries(Object.entries(EXTRAS).map(([k, e]) => [k, e.label])), maxExtras: MAX_EXTRAS, createdAt: j.created_at, updatedAt: j.updated_at });
 
   // ---- 푸시 ----
   async function notify(endpoint, title, body) {
