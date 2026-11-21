@@ -51,7 +51,7 @@ const PRESETS = {
   "MC-GIFT-BLACK": { note: "선물: 검은 믹스견(3D)", style: "3d", dir: "black" },
 };
 // 11/20: 선물 세 마리 부가 동작(기쁨·밥 기다림)도 파일로(scripts/char-video.mjs로 만들어 720px로 줄임, 편당 $0.45). 졸림은 엎드린 판이 없어 뺌
-const PRESET_EXTRAS = (dir) => ({ happy: `/character/presets/${dir}/happy.mp4`, meal: `/character/presets/${dir}/meal.mp4` }); // 졸림은 엎드린 판이 생기면, 산책은 상품에서 뺌(파일만 남김)
+const PRESET_EXTRAS = (dir) => ({ happy: `/character/presets/${dir}/happy.mp4`, meal: `/character/presets/${dir}/meal.mp4`, sleepy: `/character/presets/${dir}/sleepy.mp4` }); // 11/21 졸림까지 세 편(산책은 상품에서 뺌, 파일만 남김)
 const presetOutputs = (p) => ({ style: p.style, idle: `/character/presets/${p.dir}/idle.mp4`, thinking: `/character/presets/${p.dir}/thinking.mp4`, poster: `/character/presets/${p.dir}/poster.png`, sheet: `/character/presets/${p.dir}/sheet.jpg`, extras: PRESET_EXTRAS(p.dir), madeAt: "2026-11-17T10:00:00.000Z", preset: p.dir });
 
 const sha = (s) => createHash("sha256").update(s).digest("hex");
