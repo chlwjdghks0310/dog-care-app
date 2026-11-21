@@ -41,5 +41,5 @@ console.log("routine ok");
 const F = await import("../src/services/foodStock.js");
 assert.deepEqual(F.stockFromBag({ grams: 2000, openedAt: "2026-10-01" }, 50, "2026-11-05"), { daysLeft: 5, runOut: "2026-11-10", dailyGrams: 50, bagDays: 40 });
 assert.equal(F.stockFromBag({ grams: 2000, openedAt: "2026-10-01" }, 0, "2026-11-05"), null, "급여량 모르면 어림 안 함");
-assert.equal(F.stockLabel({ daysLeft: 0 }), "사료가 다 떨어졌을 때예요");
+assert.equal(F.stockLabel({ daysLeft: 0 }), "계산으로는 사료가 다 떨어졌어요 · 새 봉투를 등록해 주세요");
 console.log("routine+food ok");
