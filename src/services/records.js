@@ -39,7 +39,7 @@ export const TYPES = {
 // 새 기록 추가에서 고르는 순서
 export const ADD_ORDER = ["weight", "meal", "potty", "symptom", "vital", "med", "vet", "media", "daily"]; // 11/10: 밥·물을 앞으로, 수치(호흡·체온 등)는 기록 창에서만 적는다 // 성장 추억(media)은 갤러리로 연다 — 예전 '성장·추억'(life) 기록은 목록·필터에만(11/7)
 // 전체 기록 필터에 쓰는 종류(건강 수치는 프로필의 수치 칸에서 적는다)
-export const FILTER_ORDER = [...ADD_ORDER, "condition", "life", "vital"];
+export const FILTER_ORDER = [...ADD_ORDER, "condition", "life"]; // vital은 ADD_ORDER에 이미 있음(중복 key, 11/21)
 
 export const SYMPTOM_KINDS = ["구토", "설사", "기침", "식욕 없음", "기운 없음", "절뚝거림", "가려움·긁음", "눈 이상", "귀 이상", "피부 이상", "숨이 가쁨", "떨림", "물 많이 마심", "기타"];
 export const REPEAT = ["처음", "가끔", "자주", "계속"];

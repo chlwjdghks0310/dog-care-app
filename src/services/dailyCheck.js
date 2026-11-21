@@ -3,6 +3,7 @@
 // 놓친 날은 [기억 안 나요]로 가짜 '평소' 기록을 막는다.
 // 하루 상태는 이 파일의 저장소에, "다른 것"은 기존 기록(식사·배변·증상·컨디션)으로도 저장해 병원용 기록·기록 탭·주간 리포트에 그대로 이어진다.
 import { readJSON, writeJSON } from "./storage";
+import { toast } from "./toast";
 import { saveRecord, deleteRecord, newRecordId, localNow } from "./records";
 import { addDays, toDateKey, todayKey } from "../utils/date";
 
@@ -68,7 +69,9 @@ export const getDay = (dogId, date) => all()[dogId]?.[date] || null;
 function setDay(dogId, date, value) {
   const data = all();
   data[dogId] = { ...data[dogId], [date]: value };
-  writeJSON(KEY, data);
+  const ok = writeJSON(KEY, data);
+  if (!ok) toast("저장 공간이 부족해서 하루 체크를 저장하지 못했어요. 사진을 줄이거나 빼고 다시 해 주세요", { ico: "alert", ms: 6000 }); // 11/21: 저장 실패를 삼키면 화면은 "했음"인데 폰엔 없다
+  return ok;
 }
 
 // 기록 시각: 오늘은 지금, 지난날은 그날 저녁 8시

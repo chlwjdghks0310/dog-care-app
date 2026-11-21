@@ -25,4 +25,4 @@ export function getFoodStock(dog, today = todayKey()) {
 }
 
 export const stockLabel = (st) =>
-  st.daysLeft <= 0 ? "사료가 다 떨어졌을 때예요" : `사료가 약 ${st.daysLeft}일 남았어요`;
+  st.daysLeft <= 0 ? "계산으로는 사료가 다 떨어졌어요 · 새 봉투를 등록해 주세요" : `사료가 약 ${st.daysLeft}일 남았어요`;
