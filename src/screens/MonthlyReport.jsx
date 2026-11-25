@@ -3,7 +3,8 @@ import Ico from "../components/Ico";
 import { PawGlyph } from "../components/Pieces";
 import Empty from "../components/Empty";
 import { buildMonthlyReport, addMonths, monthLabel, monthOf, monthDigest } from "../services/monthlyReport";
-import { canSeeMonthReport, isPlus } from "../services/plus";
+import { canSeeMonthReport, isPlus, MONTH_REPORT_GATED } from "../services/plus";
+import { PAY_OPENS } from "../services/billing";
 import { fetchStatus, characterOutputs } from "../services/character";
 import { askAssistant } from "../services/aiClient";
 import { readJSON, writeJSON } from "../services/storage";
@@ -32,7 +33,7 @@ export default function MonthlyReport({ dog, onBack, onOpenVet, onOpenPlus }) {
         <div className="h1" style={{ margin: 0 }}>{josa(dog.name, "이의", "의")} {monthLabel(month)}</div>
         <button type="button" className="mr-nav" aria-label="다음 달" disabled={r.isCurrent} onClick={() => setMonth(addMonths(month, 1))}>›</button>
       </div>
-      <p className="subtle" style={{ marginBottom: 14 }}>{md(r.from)} ~ {md(r.to)} · 기록 {r.records}개{r.prevHasRecords ? ` · ${monthLabel(r.prevMonth)}과 비교했어요` : ""} <span className="px-badge" style={{ marginLeft: 6 }}>플러스</span></p>
+      <p className="subtle" style={{ marginBottom: 14 }}>{md(r.from)} ~ {md(r.to)} · 기록 {r.records}개{r.prevHasRecords ? ` · ${monthLabel(r.prevMonth)}과 비교했어요` : ""} <span className="px-badge" style={{ marginLeft: 6 }}>플러스{!MONTH_REPORT_GATED && ` · ${PAY_OPENS}까지 무료`}</span></p>
 
       {!open ? (
         <div className="card mr-lock">

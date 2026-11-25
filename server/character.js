@@ -176,6 +176,8 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey
   // 초대 코드 → 이 강아지 전용 token(폰에만 저장). 코드는 대소문자·공백 무시
   app.post("/api/character/redeem", async (req, res) => {
     if (!gate(req, res)) return;
+    // 11/25(사용자): 코드 사용은 끝났다. 이미 받은 token은 그대로 쓰고, 새로 코드를 쓰는 것만 막는다(시험은 CHARACTER_CODES=1)
+    if (process.env.CHARACTER_CODES !== "1") return bad(res, 410, "코드 사용은 끝났어요");
     const code = String(req.body?.code || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 40);
     const petId = String(req.body?.petId || "").slice(0, 80);
     if (!code || !petId) return bad(res, 400, "code/petId");

@@ -18,6 +18,7 @@ const run = promisify(execFile);
 process.env.RUNWAY_API_KEY = "test-runway";
 process.env.CHARACTER_POLL_MS = "20";
 process.env.CHARACTER_OPEN = "0";
+process.env.CHARACTER_CODES = "1"; // 코드 사용은 11/25에 끝났지만, 시험은 코드로 token을 받아 흐름을 돌린다
 const SUPA = "https://fake.supabase.co";
 
 // ---- 고정 파일(ffmpeg로 즉석 생성): 사진 jpg, Gemini 그림 png, Runway 영상 mp4(초록 배경 + 어두운 네모) ----
@@ -118,6 +119,9 @@ const pass = (name) => console.error("  ✓", name);
 // ① 처음부터 끝까지
 {
   const pet = "dog-a";
+  delete process.env.CHARACTER_CODES; // 실제 서버 상태: 새 코드 사용은 막힘
+  assert.equal((await post("/redeem", { code: "MC-PLUS-A7KQ", petId: pet })).status, 410);
+  process.env.CHARACTER_CODES = "1";
   const r = await post("/redeem", { code: "MC-PLUS-A7KQ", petId: pet });
   assert.equal(r.status, 200); assert.equal(r.body.plus, true);
   const token = r.body.token;
