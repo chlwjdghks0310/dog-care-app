@@ -1,0 +1,14 @@
+{
+  "appId": "kr.meongcare.app",
+  "appName": "멍케어",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "path": "ios.nosync"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "path": "android.nosync"
+  },
+  "backgroundColor": "#eef5ff"
+}

@@ -62,7 +62,8 @@
       // 처음 온 사람(검색·주소 입력)에게는 소개 홈페이지를 먼저 보여 준다.
       // 홈 화면 앱, 기록이 있는 사람, 주소에 ?·#가 붙은 경우(?app, ?privacy, 로그인 돌아옴, 알림)는 그대로 앱
       try {
-        var standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+        var standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches
+          || !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); // 스토어 앱(Capacitor)은 늘 앱
         var hasData = false;
         for (var i = 0; i < localStorage.length; i++) if (localStorage.key(i).indexOf("dogcare-") === 0) { hasData = true; break; }
         if (!standalone && !hasData && !location.search && !location.hash && location.pathname === "/") {

@@ -5,6 +5,8 @@ import { deleteAccount, getSyncStatus, onSyncStatus, signOut, syncNow } from "..
 import PrivacyPolicy from "./PrivacyPolicy";
 import Terms from "./Terms";
 import Ico from "./Ico";
+import { isNative } from "../services/native";
+import { oauthRedirect, openOAuth } from "../services/nativeAuth";
 
 // 설정의 "백업·로그인" 카드. Supabase가 설정돼 있을 때만 보인다(src/services/supabase.js).
 // 로그인은 선택 — 안 해도 앱은 지금처럼 폰에만 저장한다.
@@ -85,7 +87,12 @@ function LoginMethods({ user }) {
       setBusy(false);
     }
   }
-  const linkKakao = () => run(() => supabase.auth.linkIdentity({ provider: "kakao", options: { redirectTo: location.origin } }));
+  const linkKakao = () => run(async () => {
+    if (!isNative()) return supabase.auth.linkIdentity({ provider: "kakao", options: { redirectTo: location.origin } });
+    const res = await supabase.auth.linkIdentity({ provider: "kakao", options: { redirectTo: oauthRedirect(), skipBrowserRedirect: true } });
+    if (!res.error && res.data?.url) await openOAuth(res.data.url);
+    return res;
+  });
   const sendCode = () => run(() => supabase.auth.updateUser({ email: email.trim() }), () => setSent(true));
   const verify = () => run(() => supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email_change" }), () => (setOpen(false), setMsg("이메일을 연결했어요.")));
 
@@ -237,12 +244,17 @@ export function LoginForm({ onEmail }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(takeRedirectError);
   const [emailOpen, setEmailOpen] = useState(false);
+  useEffect(() => {
+    const onErr = (e) => setError(e.detail); // 스토어 앱: 카카오에서 돌아왔는데 실패
+    window.addEventListener("dogcare-login-error", onErr);
+    return () => window.removeEventListener("dogcare-login-error", onErr);
+  }, []);
   async function kakao() {
     setBusy(true);
     setError("");
     // 카카오로 갈 때 지금 화면을 방문 기록에 남기지 않는다(replace) — 남기면 나중에 뒤로 가기로 로그인 전 화면 스냅샷이 되살아나 "온보딩으로 돌아간" 것처럼 보임(11/11)
-    const { data: oauth, error: err } = await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: location.origin, skipBrowserRedirect: true } });
-    if (!err && oauth?.url) location.replace(oauth.url);
+    const { data: oauth, error: err } = await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: oauthRedirect(), skipBrowserRedirect: true } });
+    if (!err && oauth?.url) isNative() ? await openOAuth(oauth.url) : location.replace(oauth.url); // 스토어 앱은 앱 안 브라우저로 열고 kr.meongcare.app://login으로 돌아온다
     if (err) setError(authMessage(err));
     setBusy(false);
   }

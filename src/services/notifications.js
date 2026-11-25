@@ -5,6 +5,8 @@
 import { alarmLine as puppyAlarmLine } from "./puppy100";
 import { minutesBefore, nowLabel as getNowLabel, todayKey, addDays, toDateKey } from "../utils/date";
 import { API_BASE } from "./aiClient";
+import { isNative } from "./native";
+import { nativePermission, requestNativePermission, scheduleLocal } from "./localNotify";
 import { getDogs } from "./dogRepository";
 import { nextStageChange } from "./stageGuide";
 import { getFeedingSettings } from "./feedingSettings";
@@ -45,20 +47,22 @@ function uncool(dogId, group) {
 const NOTIFIED_KEY_PREFIX = "dogcare-notified-";
 
 export function isNotificationSupported() {
-  return typeof window !== "undefined" && "Notification" in window;
+  return isNative() || (typeof window !== "undefined" && "Notification" in window); // 스토어 앱은 휴대폰 예약 알림(localNotify.js)
 }
 
 export function getPermission() {
+  if (isNative()) return nativePermission();
   return isNotificationSupported() ? Notification.permission : "unsupported";
 }
 
 export async function requestPermission() {
+  if (isNative()) return requestNativePermission();
   if (!isNotificationSupported()) return "unsupported";
   return Notification.requestPermission();
 }
 
 export async function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return null;
+  if (isNative() || !("serviceWorker" in navigator)) return null; // 스토어 앱은 파일이 앱 안에 있어 서비스워커가 필요 없다
   try {
     return await navigator.serviceWorker.register("/sw.js");
   } catch {
@@ -89,6 +93,7 @@ function markNotified(dateKey, itemId, time) {
 export const VIBRATE = [400, 150, 400, 150, 400];
 
 async function fireNotification(title, body, url) {
+  if (isNative()) return; // 스토어 앱은 같은 알림이 휴대폰에 예약돼 있다(중복 방지)
   const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
   // 서버 푸시가 켜져 있으면 같은 알림을 서버가 보내므로 여기선 띄우지 않는다(중복 방지).
   if (await registration?.pushManager?.getSubscription()) return;
@@ -172,7 +177,7 @@ function urlBase64ToUint8Array(base64) {
 }
 
 export function isPushSupported() {
-  return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+  return typeof window !== "undefined" && !isNative() && "serviceWorker" in navigator && "PushManager" in window; // 스토어 앱 푸시는 APNs·FCM으로 따로
 }
 
 export async function getPushSubscription() {
@@ -307,6 +312,10 @@ export function buildPushAlarms() {
 // 그때는 묻지 않고 다시 구독해서, 사용자가 다시 켜지 않아도 알람이 계속 오게 한다.
 let resubscribing = null;
 export async function syncPushAlarms({ beacon = false } = {}) {
+  if (isNative()) {
+    // 스토어 앱: 서버에 보내는 대신 같은 목록을 휴대폰에 예약한다
+    try { return await scheduleLocal(buildPushAlarms()); } catch (e) { console.error("[notifications] 예약 알림 실패:", e?.message); return; }
+  }
   const subscription = await getPushSubscription().catch(() => null);
   if (subscription) {
     let alarms;

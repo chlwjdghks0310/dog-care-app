@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import Ico from "../components/Ico";
 import { browserTargets, openLabel } from "../utils/openBrowser";
+import { isNative } from "../services/native";
 
 // 처음 시작 전 "홈 화면에 설치" 안내 — 휴대폰 브라우저로 열었으면 설치한 앱에서 시작하게 한다(건너뛰기 없음).
 // 설치 확인 = 홈 화면 아이콘으로 열면(standalone) 이 화면이 안 나온다. 안드로이드 크롬은 설치 버튼(beforeinstallprompt)을 바로 띄운다.
-export const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches;
+export const isStandalone = () => window.navigator.standalone === true || window.matchMedia?.("(display-mode: standalone)").matches || isNative(); // 스토어 앱은 설치 안내가 필요 없다
 const ua = () => navigator.userAgent;
 export const isIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = () => /Android/.test(ua());

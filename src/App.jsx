@@ -45,6 +45,8 @@ import { applyTheme, applyColor } from "./services/themeSettings";
 import { startSync, syncNow, getSyncStatus } from "./services/sync";
 import { deletePetRemote } from "./services/sync/family";
 import { isEditing } from "./services/beta";
+import { initLocalNotify } from "./services/localNotify";
+import { initNativeAuth } from "./services/nativeAuth";
 import WhatsNew from "./components/WhatsNew";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -433,6 +435,8 @@ export default function App() {
     // 앱이 이미 켜져 있을 때 알림을 누르면 서비스워커가 주소를 보내 준다
     const onMessage = (e) => e.data?.type === "open-url" && openFromUrl(e.data.url);
     navigator.serviceWorker?.addEventListener("message", onMessage);
+    initNativeAuth(); // 스토어 앱: 카카오 로그인에서 돌아오기
+    initLocalNotify(openFromUrl).then(() => syncPushAlarms()); // 스토어 앱: 예약 알림 권한 읽기 + 알림 눌러 들어오기
     return () => {
       window.removeEventListener("dogcare-synced", onSynced);
       navigator.serviceWorker?.removeEventListener("message", onMessage);

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">멍케어</string>
+    <string name="title_activity_main">멍케어</string>
+    <string name="package_name">kr.meongcare.app</string>
+    <string name="custom_url_scheme">kr.meongcare.app</string>
+</resources>
