@@ -93,7 +93,8 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey
     return row && row.token_hash === sha(token) ? row.code || "" : null;
   }
   const hasAccess = async (petId, token) => (await accessCode(petId, token)) !== null;
-  const isPlusCode = (code) => /^MC-PLUS-/.test(code || "");
+  // 11/25(사용자): 코드로 연 플러스는 끝(캐릭터는 그대로). 결제가 열리면 플러스 판단은 구독으로 바뀐다. 시험만 PLUS_CODES=1
+  const isPlusCode = (code) => process.env.PLUS_CODES === "1" && /^MC-PLUS-/.test(code || "");
   // 오늘 생성비(11/20 점검): 작업 만든 날이 아니라 "오늘 실제로 쓴 돈"을 장부 행(cost 칸)에 누적한다 — 어제 작업이 오늘 영상을 만들어도 한도에 잡힌다
   async function spentToday() {
     const row = one(await db(`character_jobs?id=eq.${ledgerId(kstDate())}&select=cost`).catch(() => []));

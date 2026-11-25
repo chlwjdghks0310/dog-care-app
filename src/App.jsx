@@ -47,6 +47,8 @@ import { deletePetRemote } from "./services/sync/family";
 import { isEditing } from "./services/beta";
 import { initLocalNotify } from "./services/localNotify";
 import { initNativeAuth } from "./services/nativeAuth";
+import { isPlus } from "./services/plus";
+import { fetchStatus } from "./services/character";
 import WhatsNew from "./components/WhatsNew";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -436,6 +438,7 @@ export default function App() {
     const onMessage = (e) => e.data?.type === "open-url" && openFromUrl(e.data.url);
     navigator.serviceWorker?.addEventListener("message", onMessage);
     initNativeAuth(); // 스토어 앱: 카카오 로그인에서 돌아오기
+    for (const d of getDogs()) if (isPlus(d.id)) fetchStatus(d.id).catch(() => {}); // 폰이 기억하는 플러스 상태를 서버 기준으로 맞춘다(11/25 코드 플러스 종료)
     initLocalNotify(openFromUrl).then(() => syncPushAlarms()); // 스토어 앱: 예약 알림 권한 읽기 + 알림 눌러 들어오기
     return () => {
       window.removeEventListener("dogcare-synced", onSynced);

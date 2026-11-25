@@ -18,6 +18,7 @@ const run = promisify(execFile);
 process.env.RUNWAY_API_KEY = "test-runway";
 process.env.CHARACTER_POLL_MS = "20";
 process.env.CHARACTER_OPEN = "0";
+process.env.PLUS_CODES = "1"; // 코드 플러스도 11/25에 끝 — 시험에서만 켠다
 process.env.CHARACTER_CODES = "1"; // 코드 사용은 11/25에 끝났지만, 시험은 코드로 token을 받아 흐름을 돌린다
 const SUPA = "https://fake.supabase.co";
 
@@ -124,6 +125,9 @@ const pass = (name) => console.error("  ✓", name);
   process.env.CHARACTER_CODES = "1";
   const r = await post("/redeem", { code: "MC-PLUS-A7KQ", petId: pet });
   assert.equal(r.status, 200); assert.equal(r.body.plus, true);
+  delete process.env.PLUS_CODES; // 실제 서버 상태: 코드를 썼어도 플러스는 아님, 캐릭터 권한은 그대로
+  { const st = (await api(`/status?petId=${pet}&token=${r.body.token}`)).body; assert.equal(st.plus, false); assert.equal(st.access, true); }
+  process.env.PLUS_CODES = "1";
   const token = r.body.token;
   const form = new FormData();
   for (const [k, v] of Object.entries({ petId: pet, token, style: "hand", consent: "1", adult: "1", endpoint: "https://push.test/dev1" })) form.append(k, v);
