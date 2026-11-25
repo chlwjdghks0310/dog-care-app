@@ -275,7 +275,7 @@ export function mountCharacter(app, { db, dbOk, supabaseUrl, serviceKey, anonKey
     let sent = 0;
     for (const { endpoint } of rows) {
       const device = pushDevices.get(endpoint);
-      if (device && (await sendPush(device, "🐾 우리 아이 캐릭터가 열렸어요", "기다려 주셔서 고마워요. 사진 2~4장이면 바로 만들 수 있어요", "/?app&open=character"))) sent++;
+      if (device && (await sendPush(device, "🐾 멍케어 플러스와 캐릭터가 열렸어요", "기다려 주셔서 고마워요. 설정 › 멍케어 플러스에서 볼 수 있어요", "/?app&open=plus"))) sent++;
     }
     if (req.body?.clear !== false) await db("character_waitlist?endpoint=neq.", { method: "DELETE" });
     res.json({ waitlist: rows.length, sent, open: isOpen() });

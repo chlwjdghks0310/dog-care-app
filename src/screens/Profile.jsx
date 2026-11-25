@@ -365,7 +365,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
             <SettingsGroup title="계정">
               <SettingsRow ico="lock" title="백업·로그인" sub={accountSub} badge={!sync.user ? "권장" : ""} onClick={() => setSettingsSub("account")} />
               <SettingsRow ico="users" title="가족 공유" sub={sync.user ? `초대 코드로 ${dog.name} 기록 함께 보기` : "로그인한 뒤 쓸 수 있어요"} onClick={() => setSettingsSub("family")} />
-              {admin && <SettingsRow ico="chart" title="이용 통계" sub="운영자만 보여요 · 유입·로그인·다시 온 사람·베타 의견" badge="운영자" onClick={() => setStatsOpen(true)} />}
+              {admin && <SettingsRow ico="chart" title="이용 통계" sub="운영자만 보여요 · 유입·로그인·다시 온 사람·의견" badge="운영자" onClick={() => setStatsOpen(true)} />}
               {admin && <SettingsRow ico="eye" title="이 기기는 통계에서 빼기" sub="내가 열고 쓰는 건 사용자 수에 안 들어가요(기기마다 따로 켜야 해요)" right={<input type="checkbox" role="switch" className="switch" checked={trackOff} onChange={(e) => (setTrackingOff(e.target.checked), setTrackOff(e.target.checked))} aria-label="이 기기는 통계에서 빼기" />} />}
             </SettingsGroup>
             {statsOpen && (
@@ -381,7 +381,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <SettingsRow ico="paw" title="새 강아지 등록하기" onClick={() => setSettingsSub("add-dog")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어 플러스">
-              <SettingsRow ico="star" title="멍케어 플러스" sub="플러스 비서 · 한 달 리포트 · 캐릭터 · 월 3,900원(베타 무료)" badge="베타" onClick={() => setSettingsSub("plus")} />
+              <SettingsRow ico="star" title="멍케어 플러스" sub="플러스 비서 · 한 달 리포트 · 캐릭터" onClick={() => setSettingsSub("plus")} />
               {/* 11/18 사용자: 캐릭터도 유료라 플러스 묶음 아래에 */}
               <SettingsRow ico="video" title="우리 아이 캐릭터" sub={characterOutputs(dog.id) ? `${dog.name} 캐릭터가 홈 화면에 있어요` : "사진으로 만드는 움직이는 캐릭터"} badge={characterOutputs(dog.id) ? "" : "곧 출시"} onClick={() => setSettingsSub("character")} />
             </SettingsGroup>
@@ -394,7 +394,7 @@ export default function Profile({ dog, onQuickAdd, onOpenGallery, onOpenVet, onO
               <SettingsRow ico="clipboard" title="기록 내보내기" sub="병원용 한 장 · 엑셀 표 · 전체 백업 파일" onClick={() => setSettingsSub("export")} />
             </SettingsGroup>
             <SettingsGroup title="멍케어">
-              <SettingsRow ico="pencil" title="의견 보내기" sub="사소한 것도 좋아요" badge="베타" onClick={() => setSettingsSub("feedback")} />
+              <SettingsRow ico="pencil" title="의견 보내기" sub="사소한 것도 좋아요" onClick={() => setSettingsSub("feedback")} />
               <SettingsRow ico="book" title="도움말" onClick={() => setSettingsSub("help")} />
               <SettingsRow ico="mail" title="문의하기" sub="1시간 안에 답해요" onClick={() => setSettingsSub("contact")} />
             </SettingsGroup>

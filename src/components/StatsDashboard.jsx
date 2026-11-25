@@ -220,7 +220,7 @@ export default function StatsDashboard({ onClose }) {
               <Tile label="오늘 앱 연 기기" value={n(today["앱 사용자(명)"])} sub={`어제 ${n(yesterday?.["앱 사용자(명)"])}${delta(n(today["앱 사용자(명)"]), yesterday ? n(yesterday["앱 사용자(명)"]) : null)} · 홈 화면 앱 ${n(today["홈 화면 앱 사용자(명)"])}`} />
               <Tile label="오늘 처음 연 기기" value={n(today["앱 처음 연 횟수"])} sub={`홈페이지 방문 ${n(today["홈페이지 방문자(명)"])} · 앱 버튼 ${n(today["앱 버튼 누름(회)"])}회`} />
               <Tile label="이번 달 지출" value={m ? krw((n(m.month.usd) + n(m.character.month_usd)) * rate) : "—"} sub={m ? `AI ${usd(m.month.usd)} + 캐릭터 ${usd(m.character.month_usd)}` : "money.sql 필요"} tone="plain" />
-              <Tile label="이번 달 수입" value="₩0" sub={`베타 · 플러스 ${plusUsers}명(정식이면 ${krw(plusUsers * PLUS_PRICE.month)}/월)`} tone="plain" />
+              <Tile label="이번 달 수입" value="₩0" sub={`결제 전 · 플러스 ${plusUsers}명(열리면 ${krw(plusUsers * PLUS_PRICE.month)}/월)`} tone="plain" />
             </Grid>
             <Note>기기 = 브라우저 저장소 하나(사람이 아님). 지출은 서버가 AI 응답마다 적은 토큰 × 단가, 캐릭터는 작업마다 적은 생성비. 환율·고정비는 아래 "돈"에서 바꿔요.</Note>
           </Section>
@@ -232,7 +232,7 @@ export default function StatsDashboard({ onClose }) {
               <>
                 <Grid cols={3}>
                   <Tile label="나간 돈" value={krw(spendKrw + fixedPeriod)} sub={`AI ${usd(aiUsd)} · 캐릭터 ${usd(charUsd)}${fixed ? ` · 고정비 ${krw(fixedPeriod)}` : ""}`} tone="warn" />
-                  <Tile label="들어온 돈" value="₩0" sub={`베타(결제 없음) · 정식이면 ${krw(wouldBe)}`} tone="plain" />
+                  <Tile label="들어온 돈" value="₩0" sub={`결제 전 · 열리면 ${krw(wouldBe)}`} tone="plain" />
                   <Tile label="정식이었다면" value={krw(wouldBe - spendKrw - fixedPeriod)} sub={wouldBe - spendKrw - fixedPeriod >= 0 ? "남아요" : "모자라요"} tone={wouldBe - spendKrw - fixedPeriod >= 0 ? "plain" : "warn"} />
                 </Grid>
                 <Card title="어디로 빠지나">
@@ -329,7 +329,7 @@ export default function StatsDashboard({ onClose }) {
           </Section>
 
           {/* ⑥ 의견·오류 */}
-          <Section id="inbox" title="베타 의견·오류" sub="30일">
+          <Section id="inbox" title="의견·오류" sub="30일">
             <BetaInbox />
           </Section>
 
@@ -337,7 +337,7 @@ export default function StatsDashboard({ onClose }) {
             <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
               <li><b>기기</b> = 사람이 아니라 브라우저 저장소 하나. 같은 사람의 아이폰 앱·사파리·맥은 각각 1기기. 하루에 몇 번 열어도 1.</li>
               <li><b>돈</b>은 서버가 AI 응답마다 적은 토큰 × 단가(server PRICES, 11/20 기준)와 캐릭터 작업의 생성비. Anthropic·Google·Runway 청구서와 몇 % 차이는 날 수 있어요.</li>
-              <li><b>정식이었다면</b> = 플러스 코드 쓴 강아지 수 × 3,900원 − 나간 돈. 베타라 실제 수입은 0원.</li>
+              <li><b>정식이었다면</b> = 플러스 코드 쓴 강아지 수 × 3,900원 − 나간 돈. 결제 전이라 실제 수입은 0원.</li>
               <li><b>떠남</b> = 마지막으로 앱을 연 지 14일 넘은 기기. "하루만"은 첫날만 열고 7일 넘게 안 온 기기.</li>
               <li>운영자 기기는 설정 → "이 기기는 통계에서 빼기"를 켜면 안 들어가요. 개발 중 컴퓨터와 자동 점검은 처음부터 빠져 있어요.</li>
             </ul>

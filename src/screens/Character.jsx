@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import Ico from "../components/Ico";
 import PawProgress from "../components/PawProgress";
-import { getPermission, isNotificationSupported, requestPermission } from "../services/notifications";
-import { fetchStatus, setWaitlist, redeem, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
+import { fetchStatus, shrinkPhoto, startJob, refreshJob, pickCandidate, regenCandidates, retryRender, addExtra, getCharacter, clearCharacterOutputs, isWorking, isExtraWorking, STYLE_LABEL } from "../services/character";
 
-// 우리 아이 캐릭터(11/17): 설정 → 우리 강아지 → "우리 아이 캐릭터". 문은 잠겨 있고(곧 출시) 초대 코드를 쓴 강아지만 만든다.
-// 흐름: 잠김(알림 대기·코드) → 그림체·사진·동의 → 후보 4장 중 고르기 → 영상 만드는 중 → 완성(홈 강아지가 바뀜) → 부가 동작
+// 우리 아이 캐릭터(11/17): 설정 → 우리 강아지 → "우리 아이 캐릭터". 문은 잠겨 있고(결제가 열릴 때까지) 예전에 코드를 받은 강아지만 만든다. 11/25: 코드 입력 화면은 없앰.
+// 흐름: 잠김(열리면 알림) → 그림체·사진·동의 → 후보 4장 중 고르기 → 영상 만드는 중 → 완성(홈 강아지가 바뀜) → 부가 동작
 // 11/18 다시 짬(사용자: 폰에서 잘림·AI티·아이콘 겹침): 캐릭터=video 스티커, 단계마다 다른 스티커(사진 image·고르기 tap·홈 house), 부가 동작도 각각(party·moon·meal·walk)
 const SAMPLE = { "3d": "/character/sample-3d.jpg", hand: "/character/sample-hand.jpg" };
 
 import { rewardsOf, claimExtra } from "../services/stamps";
 import { EXTRA_KINDS, EXTRA_META, getExtraPrefs, setExtraPref } from "../services/characterPrefs";
 import Checkout from "./Checkout";
-import { recordBetaCharacter, CATALOG, won } from "../services/billing";
+import { CATALOG, won, BILLING_OPEN, PAY_OPENS } from "../services/billing";
+import OpenNotify from "../components/OpenNotify";
 
 export default function Character({ dog }) {
   // 서버에 묻는 동안 마지막으로 알던 상태를 먼저 보여 준다(토큰·플러스·작업이 폰에 있음). 처음이면 "불러오는 중"
@@ -79,45 +79,18 @@ function Steps() {
 }
 
 function Locked({ dog, st, setSt, act, busy }) {
-  const [code, setCode] = useState("");
   const [checkout, setCheckout] = useState(false);
-  const canPush = isNotificationSupported();
-  const toggleWait = act(async (on) => {
-    if (on && getPermission() !== "granted") { const p = await requestPermission(); if (p !== "granted") throw new Error("알림을 켜야 출시 소식을 보내 드릴 수 있어요"); }
-    const r = await setWaitlist(dog.id, on);
-    setSt((s) => ({ ...s, waiting: r.waiting }));
-  });
-  const useCode = act(async () => {
-    if (!code.trim()) throw new Error("코드를 넣어 주세요");
-    await redeem(dog.id, code.trim());
-    recordBetaCharacter(dog.id, code.trim());
-    setSt(await fetchStatus(dog.id));
-  });
   return (
     <>
       <section className="px-card">
-        <div className="px-sec">곧 출시 · 두 가지 그림체 중 하나를 골라요</div>
+        <div className="px-sec">{PAY_OPENS}에 열려요 · 두 가지 그림체 중 하나를 골라요</div>
         <Samples />
         <Steps />
-        <button type="button" className="btn-primary" style={{ width: "100%" }} onClick={() => setCheckout(true)}>단품으로 갖기 · {won(CATALOG.char_basic.price)}부터</button>
+        {BILLING_OPEN && <button type="button" className="btn-primary" style={{ width: "100%" }} onClick={() => setCheckout(true)}>단품으로 갖기 · {won(CATALOG.char_basic.price)}부터</button>}
         <p className="px-note">기본 {won(CATALOG.char_basic.price)} · 정성 {won(CATALOG.char_premium.price)} · 다른 그림체 +{won(CATALOG.char_style.price)}. 연간 플러스엔 기본 1번이 들어 있어요.</p>
       </section>
       {checkout && <Checkout dog={dog} intent="character" plus={Boolean(st?.plus)} onClose={() => setCheckout(false)} onChanged={() => fetchStatus(dog.id).then(setSt).catch(() => {})} onOpenCharacter={() => setCheckout(false)} />}
-      <section className="px-card">
-        <label className="px-switch">
-          <Ico name="bell" size={38} />
-          <div className="px-feat-body">
-            <div className="px-feat-title">출시되면 알려 주세요</div>
-            <div className="px-feat-desc">{canPush ? "열리는 날 알림 한 번만 보내요" : "알림을 쓸 수 있는 홈 화면 앱에서 켤 수 있어요"}</div>
-          </div>
-          <input type="checkbox" role="switch" className="switch" checked={Boolean(st.waiting)} disabled={!canPush || busy || st.offline} onChange={(e) => toggleWait(e.target.checked)} aria-label="출시되면 알려 주세요" />
-        </label>
-      </section>
-      <section className="px-card">
-        <div className="px-feat"><Ico name="lock" size={38} /><div className="px-feat-body"><div className="px-feat-title">초대 코드가 있어요</div><div className="px-feat-desc">베타 테스터에게 드린 코드예요. 강아지 한 마리에 한 번 써요.</div></div></div>
-        <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="MC-XXXX-XXXX" autoCapitalize="characters" autoCorrect="off" spellCheck={false} />
-        <button type="button" className="btn-primary" onClick={useCode} disabled={busy || st.offline}>{busy ? "확인 중…" : "코드 쓰기"}</button>
-      </section>
+      <OpenNotify dog={dog} waiting={st.waiting} offline={st.offline} onChange={(w) => setSt((s) => ({ ...s, waiting: w }))} />
     </>
   );
 }
@@ -149,11 +122,12 @@ function Form({ dog, job, st, setSt, act, busy }) {
             <img src={outputs.poster} alt="" style={{ width: 72, height: 72, objectFit: "contain", flexShrink: 0 }} />
             <div className="px-feat-body">
               <div className="px-feat-title">{dog.name} 캐릭터가 홈 화면에 있어요</div>
-              <div className="px-feat-desc">{STYLE_LABEL[outputs.style]} · {outputs.preset ? "선물 코드로 받음" : String(outputs.madeAt).slice(0, 10)}</div>
+              <div className="px-feat-desc">{STYLE_LABEL[outputs.style]} · {outputs.preset ? "선물로 받음" : String(outputs.madeAt).slice(0, 10)}</div>
             </div>
           </div>
           <Extras dog={dog} job={job} outputs={outputs} setSt={setSt} act={act} busy={busy} />
           <button type="button" className="btn-ghost" onClick={() => (clearCharacterOutputs(dog.id), setSt((s) => ({ ...s })))}>기본 강아지로 돌리기</button>
+          <a className="link-btn" style={{ alignSelf: "center" }} href={`mailto:meongcare.app@gmail.com?subject=${encodeURIComponent("캐릭터 문제 알리기")}`}>그림에 문제가 있나요? 알려 주기</a>
         </section>
       )}
       {job?.status === "failed" && (
@@ -200,7 +174,7 @@ function Form({ dog, job, st, setSt, act, busy }) {
   );
 }
 
-// 부가 동작(정성 상품 = 기쁨·밥 기다림·졸림 세 편, 베타는 무료). 줄마다 "언제 나오나" 설명 + 켜기 + 조정(11/20 사용자). 선물 캐릭터도 조정만은 된다
+// 부가 동작(정성 상품 = 기쁨·밥 기다림·졸림 세 편). 줄마다 "언제 나오나" 설명 + 켜기 + 조정(11/20 사용자). 선물 캐릭터도 조정만은 된다
 function Extras({ dog, job, outputs, setSt, act, busy }) {
   const have = outputs?.extras || job?.outputs?.extras || {};
   const pending = job?.outputs?.pendingExtra;

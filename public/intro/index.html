@@ -10,7 +10,7 @@
     <meta name="google-site-verification" content="AtQ9wlZ8x0Ew4oq_ykp-QgD_w0nPJumbhyspIwdYjzY" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>멍케어 · 병원 가기 전, 한 장이면 돼요</title>
-  <meta name="description" content="진료실에서 말문이 막히지 않게. 하루 10초 [평소와 같아요] 체크가 모여 수의사에게 보여 줄 병원용 기록 한 장이 되고, 다녀오면 영수증 사진으로 진료 정리까지. 지금은 베타라 무료예요." />
+  <meta name="description" content="진료실에서 말문이 막히지 않게. 하루 10초 [평소와 같아요] 체크가 모여 수의사에게 보여 줄 병원용 기록 한 장이 되고, 다녀오면 영수증 사진으로 진료 정리까지. 기록과 병원용 기록은 무료예요." />
   <!-- 이 페이지가 쓰는 자원만 허용(외부는 글꼴 CDN뿐). frame-ancestors 등 헤더로만 되는 건 Render 설정에서 -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://dog-care-app.onrender.com; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -75,8 +75,6 @@
   </header>
 
   <main id="main">
-    <!-- 11월 베타 모집 띠(11/11~12/15). 끝나면 이 블록만 지우기 -->
-    <a class="beta-bar" href="/?app&from=beta"><strong>11월 베타 테스터 모집</strong> · 11/15~12/15 한 달, 하루 10초, 무료 · <span>앱 바로 써 보기 →</span></a>
 
     <!-- 2. 히어로: 슬로건 + 누르면 바뀌는 휴대폰(간략 미리보기). 아래 탭을 누르면 화면이 바뀌고 그 탭 설명이 떠오른다(intro.js).
          JS가 없으면 설명이 휴대폰 아래에 차례로 보인다(nojs.css). tablist/tab/tabpanel, ←/→로 탭 이동 -->
@@ -97,7 +95,7 @@
             <a class="btn btn-lg" href="/?app">무료로 시작하기</a>
             <a class="btn btn-lg btn-ghost" href="#demo">휴대폰으로 둘러보기</a>
           </div>
-          <p class="note">지금은 베타라 모든 기능이 무료예요 · 앱스토어 없이 홈 화면에 설치해 써요 · 로그인 없이 시작</p>
+          <p class="note">기록·병원용 기록·가이드는 무료 · 앱스토어 없이 홈 화면에 설치해 써요 · 로그인 없이 시작</p>
           <div class="qr" aria-hidden="true">
             <img src="/intro/img/qr.svg" alt="" width="88" height="88" />
             <span>휴대폰 카메라로 찍으면<br /><b>바로 열려요</b></span>
@@ -357,7 +355,7 @@
       </div>
     </section>
 
-    <!-- 5.5 멍케어 플러스(11/19): 무료 범위 먼저, 플러스 세 가지, 가격은 예정·베타 무료 -->
+    <!-- 5.5 멍케어 플러스(11/19): 무료 범위 먼저, 플러스 세 가지, 결제는 2027년 1월(11/25) -->
     <section class="plus" id="plus" aria-labelledby="plus-title">
       <div class="wrap">
         <p class="kicker center">멍케어 플러스</p>
@@ -440,7 +438,7 @@
           <div><b>자동 갱신 알림</b>결제 7일 전에 이메일로 미리 알려요. 해지는 설정 › 플러스에서 한 번에.</div>
           <div><b>결제 나이</b>플러스·캐릭터 모두 만 19세 이상만 결제할 수 있어요.</div>
         </div>
-        <p class="plus-price-beta"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-sparkles"/></svg><span><b>지금은 베타라 전부 무료</b>예요. 결제는 정식 출시 때 열리고, 그전까지는 베타 테스터 코드로 먼저 써 봐요. 설정 → <b>멍케어 플러스</b> → [플러스 시작하기]에서 같은 화면을 미리 볼 수 있어요.</span></p>
+        <p class="plus-price-beta"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-sparkles"/></svg><span><b>결제는 2027년 1월에 열려요.</b> 설정 → <b>멍케어 플러스</b>에서 <b>[열리면 알려 주세요]</b>를 켜 두면 열리는 날 알림을 보내 드려요.</span></p>
       </div>
     </section>
 
@@ -492,7 +490,7 @@
         <h2 id="faq-title" class="sec-title">자주 묻는 <em>질문</em></h2>
         <details>
           <summary>정말 무료인가요?</summary>
-          <p>지금은 베타 기간이라 모든 기능을 무료로 쓸 수 있어요. 카드 등록도 필요 없고 광고도 없어요. 결제는 정식 출시 때 열리고, 가격과 결제 화면은 설정 → 멍케어 플러스 → [플러스 시작하기]에서 미리 볼 수 있어요(지금은 코드로만 열려요).</p>
+          <p>하루 체크·기록·병원용 기록·알림·가이드·가족 공유는 무료예요. 카드 등록도 필요 없고 광고도 없어요. 멍케어 플러스와 우리 아이 캐릭터는 유료이고, 결제는 2027년 1월에 열려요. 설정 → <b>멍케어 플러스</b>에서 <b>[열리면 알려 주세요]</b>를 켜 두면 열리는 날 알림을 보내 드려요.</p>
         </details>
         <details>
           <summary>메모장이나 다른 기록 앱과 뭐가 달라요?</summary>
@@ -508,7 +506,7 @@
         </details>
         <details>
           <summary>멍케어 플러스는 뭐예요? 꼭 사야 하나요?</summary>
-          <p>아니요. 하루 체크·기록·병원용 기록·이상 신호·알림·이번 주 리포트·가이드·가족 공유는 <b>계속 무료</b>예요. 플러스는 <b>플러스 비서([자세히 듣기] 다섯 칸, 하루 20번) · 한 달 리포트 · 우리 아이 캐릭터(연간엔 기본 1번 포함, 정성 올리기·그림체 추가 할인)</b> 세 가지를 더해요. 정식 가격은 월 3,900원 또는 연 38,900원으로 예정했고, 베타 동안은 전부 무료예요. 결제는 정식 출시 때 열려요.</p>
+          <p>아니요. 하루 체크·기록·병원용 기록·이상 신호·알림·이번 주 리포트·가이드·가족 공유는 <b>계속 무료</b>예요. 플러스는 <b>플러스 비서([자세히 듣기] 다섯 칸, 하루 20번) · 한 달 리포트 · 우리 아이 캐릭터(연간엔 기본 1번 포함, 정성 올리기·그림체 추가 할인)</b> 세 가지를 더해요. 가격은 월 3,900원 또는 연 38,900원이고, 결제는 2027년 1월에 열려요.</p>
         </details>
         <details>
           <summary>우리 아이 캐릭터는 어떻게 만들어요? 사진은 어디로 가요?</summary>

@@ -35,6 +35,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>사료 봉투·영수증·우리 아이 사진을 찍어 기록에 넣을 때 카메라를 써요.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>말로 기록할 때 목소리를 글자로 바꾸려고 마이크를 써요. 누르고 말하는 동안에만 들어요.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>자랑 카드·병원용 기록 그림을 사진 앱에 저장할 때 써요.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

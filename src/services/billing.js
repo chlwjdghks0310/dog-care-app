@@ -5,8 +5,10 @@ import { API_BASE } from "./aiClient";
 export * from "./billingCatalog";
 
 // 결제(11/20): 사업자등록 전이라 결제 자체는 잠겨 있다(BILLING_OPEN=false). 화면·견적·환불 계산·기록은 다 만들어 두고,
-// 베타 동안은 결제 자리에서 플러스/초대 코드를 쓴다. 토스페이먼츠 연동은 사업자등록 뒤 서버(server/billing.js)에서 연다.
+// 11/25(사용자): 코드 입력은 없앴다. 결제가 열릴 때까지는 "열리면 알려 주세요"만(components/OpenNotify.jsx).
+// 아이폰 앱은 인앱결제(애플 심사 3.1.1), 웹은 토스페이먼츠 — 연동은 계정이 준비된 뒤.
 export const BILLING_OPEN = false;
+export const PAY_OPENS = "2027년 1월"; // 화면에 보이는 결제 시작 시기(한 곳)
 
 const KEY = "dogcare-billing-v1"; // { [dogId]: { plan: {id, startedAt, nextAt, source:"beta"|"card", last4?, canceledAt?} | null, orders: [{id, at, items:[{id,title,price}], total, source}] } }
 const all = () => readJSON(KEY, {}) || {};
@@ -78,7 +80,7 @@ export function recordBetaPlus(dogId, code) {
   const b = getBilling(dogId);
   if (b.plan?.source === "beta") return b;
   const at = new Date().toISOString();
-  return save(dogId, { plan: { id: "plus_beta", title: "플러스 (베타)", startedAt: at, nextAt: null, source: "beta" }, orders: [{ id: orderId(), at, items: [{ id: "plus_beta", title: codeTitle("플러스 코드", code), price: 0 }], total: 0, source: "beta" }, ...b.orders] });
+  return save(dogId, { plan: { id: "plus_beta", title: "플러스", startedAt: at, nextAt: null, source: "beta" }, orders: [{ id: orderId(), at, items: [{ id: "plus_beta", title: codeTitle("플러스 코드", code), price: 0 }], total: 0, source: "beta" }, ...b.orders] });
 }
 export function recordBetaCharacter(dogId, code) {
   const b = getBilling(dogId);

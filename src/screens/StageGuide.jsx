@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Empty from "../components/Empty";
 import Ico from "../components/Ico";
+import { isNative } from "../services/native";
 import { GUIDE_AREAS, GUIDE_CARDS, LATER_STAGES } from "../data/stageGuide";
 import { STAGES, getStage, getFit, stageRangeLabel } from "../services/stageGuide";
 import { formatAge } from "../utils/age";
@@ -172,6 +173,7 @@ function Block({ label, ico, tone, children }) {
 // 더 궁금한 건 ChatGPT로(오늘 탭 AskOutside와 같은 규칙: 이름은 안 넣고 견종·나이·몸무게·크기·시기만, 응급 단어면 병원 안내 먼저)
 function AskMore({ dog, st }) {
   const [q, setQ] = useState("");
+  if (isNative()) return null; // 스토어 앱에서는 앱 밖으로 내보내는 버튼을 두지 않는다(애플 심사 4.2)
   const text = q.trim();
   const urgent = text ? isEmergency(text) : null;
   const prompt = `강아지 정보: ${[dog.breed, formatAge(st.age), st.sizeLabel, dog.weight ? `${dog.weight}kg` : "", `지금 시기: ${st.name}`, dog.neutered ? "중성화함" : ""].filter(Boolean).join(", ")}\n질문: ${text.split(dog.name).join("우리 강아지")}\n\n이 시기(${st.name}) 강아지에게 맞게, 보호자가 집에서 할 수 있는 것과 병원에 물어볼 것을 나눠서 쉽게 답해 주세요. 약 이름이나 용량은 말하지 마세요.`;

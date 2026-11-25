@@ -18,9 +18,9 @@ export default function PlusManage({ dog }) {
   return (
     <>
       <section className="px-card">
-        <div className="px-sec">{beta ? "베타 플러스 · 쓰는 중" : `${CATALOG[plan.id]?.title || "플러스"} · 쓰는 중`}</div>
+        <div className="px-sec">{beta ? "플러스 · 쓰는 중" : `${CATALOG[plan.id]?.title || "플러스"} · 쓰는 중`}</div>
         <div className="co-row"><span>시작</span><span>{d(plan.startedAt)}</span></div>
-        <div className="co-row"><span>다음 결제</span><span>{beta ? "없음 (정식 출시 때 미리 알려요)" : `${d(plan.nextAt)} · ${won(CATALOG[plan.id]?.price || 0)}`}</span></div>
+        <div className="co-row"><span>다음 결제</span><span>{beta ? "없음 (결제가 열려도 미리 알려 드려요)" : `${d(plan.nextAt)} · ${won(CATALOG[plan.id]?.price || 0)}`}</span></div>
         {!beta && <div className="co-row"><span>결제 수단</span><span>카드 끝자리 {plan.last4 || "—"}</span></div>}
         <div className="co-row last"><span>결제 내역</span><span>{b.orders.length}건 · 아래</span></div>
       </section>
@@ -28,14 +28,14 @@ export default function PlusManage({ dog }) {
       <section className="px-card">
         <div className="px-feat-title">해지하면</div>
         {beta ? (
-          <p className="px-feat-desc">베타 플러스는 결제가 없어서 해지할 것도, 돌려드릴 것도 없어요. 정식 출시 뒤에는 여기서 바로 해지할 수 있고, {CATALOG.plus_year.title}은 {POLICY.yearCancel}</p>
+          <p className="px-feat-desc">지금 쓰는 플러스는 결제가 없어서 해지할 것도, 돌려드릴 것도 없어요. 결제가 열린 뒤에는 여기서 바로 해지할 수 있고, {CATALOG.plus_year.title}은 {POLICY.yearCancel}</p>
         ) : (
           <p className="px-feat-desc">{rf.refund > 0 ? <>지금 해지하면 <b>{won(rf.refund)}</b>을 {POLICY.refundDays}영업일 안에 결제한 카드로 돌려드려요.<br /></> : <>지금 해지하면 <b>{rf.usableUntil}</b> 전날까지 쓰고, 그 뒤로는 결제되지 않아요.<br /></>}<span className="px-dim">{rf.lines.join(" · ")}</span></p>
         )}
         {!ask ? (
           <div className="co-two"><button type="button" className="btn-ghost same" onClick={() => setAsk(true)}>해지하기</button><button type="button" className="btn-ghost same" onClick={() => setAsk(false)}>계속 쓰기</button></div>
         ) : (
-          <div className="co-beta" style={{ marginTop: 8 }}><Ico name="alert" size={22} /><span>{beta ? "베타 플러스는 해지할 결제가 없어요. 코드를 돌려놓고 싶으면 설정 › 의견 보내기로 알려 주세요." : "해지는 정식 결제가 열리면 여기서 바로 돼요."}</span></div>
+          <div className="co-beta" style={{ marginTop: 8 }}><Ico name="alert" size={22} /><span>{beta ? "지금은 해지할 결제가 없어요. 플러스를 끄고 싶으면 설정 › 의견 보내기로 알려 주세요." : "해지는 결제가 열리면 여기서 바로 돼요."}</span></div>
         )}
         <p className="px-note" style={{ marginTop: 8 }}>앱이 안 열리면 meongcare.app@gmail.com으로 "플러스 해지"라고 보내 주세요. 받는 대로 답장해요.</p>
       </section>

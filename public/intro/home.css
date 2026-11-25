@@ -74,10 +74,6 @@ em { font-style: normal; }
 /* 0. 안내 띠 */
 .appbar { margin: 0; padding: 9px var(--gutter); background: var(--sky-bg); color: var(--ink); font-size: 14px; line-height: 1.5; text-align: center; }
 .appbar a { font-weight: 800; white-space: nowrap; }
-.beta-bar { display: block; text-align: center; padding: 11px 16px; background: var(--ink); color: #fff; text-decoration: none; font-size: 14px; line-height: 1.4; }
-.beta-bar strong { color: var(--apricot); }
-.beta-bar span { text-decoration: underline; text-underline-offset: 3px; }
-.beta-bar:hover { background: #5a4a3d; }
 
 /* 1. 헤더 */
 .top { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--paper) 90%, transparent); backdrop-filter: saturate(1.3) blur(10px); -webkit-backdrop-filter: saturate(1.3) blur(10px); border-bottom: 1px solid var(--line); }

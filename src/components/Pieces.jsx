@@ -2,6 +2,7 @@ import { getDay, daysThisMonth } from "../services/dailyCheck";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
+import { haptic } from "../services/native";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { md } from "../services/records";
 import { rewardsOf, badgeEarnedToday, BADGE_DAYS, EXTRA_PER, DISCOUNT_AT } from "../services/stamps";
@@ -190,7 +191,7 @@ export function StampMoment({ dogId, onDone }) {
   const [out, setOut] = useState(false);
   const done = useRef(onDone); done.current = onDone;
   const close = () => { setOut(true); setTimeout(() => done.current(), 360); };
-  useEffect(() => { const t = setTimeout(close, 2600); return () => clearTimeout(t); }, []);
+  useEffect(() => { const h = setTimeout(() => haptic("Heavy"), 500); const t = setTimeout(close, 2600); return () => (clearTimeout(t), clearTimeout(h)); }, []); // 도장 "쿵"에 맞춰 진동(스토어 앱)
   return createPortal(
     <div className={`stamp-moment${out ? " out" : ""}`} onClick={close} role="status" aria-live="polite">
       <div className="sm-box">

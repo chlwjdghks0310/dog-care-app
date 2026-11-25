@@ -22,6 +22,7 @@ import SpeechBubble from "../components/SpeechBubble";
 import PuppyCard from "../components/PuppyCard";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
+import { isNative } from "../services/native";
 import { quickParse, quickDelete } from "../services/quickParse";
 import { getExtraPrefs, inSleepyWindow, inMealWindow } from "../services/characterPrefs";
 import { getWeightRecords, deleteWeightRecord } from "../services/weightLog";
@@ -787,6 +788,7 @@ function DetailAnswer({ a }) {
 // 더 묻고 싶으면 ChatGPT로 넘기기(멍케어 비용 0원, 사용자 결정 11/7 A안). 보호자가 누를 때만 열고, 이름은 넣지 않는다(견종·나이·몸무게만).
 // 응급 단어가 보이면 이 버튼 대신 병원 연락 안내만 보여 준다.
 function AskOutside({ dog, question, urgent }) {
+  if (isNative()) return null; // 스토어 앱에서는 앱 밖으로 내보내는 버튼을 두지 않는다(애플 심사 4.2)
   const age = dog.birthDate ? formatAge(calculateAge(dog.birthDate)) : "";
   const prompt = `강아지 정보: ${[dog.breed, age, dog.weight ? `${dog.weight}kg` : ""].filter(Boolean).join(", ")}\n질문: ${question.split(dog.name).join("우리 강아지")}\n\n${urgent ? "응급일 수 있어요. 지금 해야 할 일과 병원에 전화할 때 알려 줄 정보를 먼저 짧게 알려 주세요. " : ""}수의사 진단이 아닌 일반 정보로 쉽게 답해 주고, 바로 병원에 가야 하는 신호가 있으면 먼저 알려 주세요.`;
   return (

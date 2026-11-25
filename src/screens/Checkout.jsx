@@ -2,15 +2,14 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "../components/Ico";
 import { useSwipeClose } from "../components/SwipeBack";
-import { CATALOG, POLICY, BILLING_OPEN, STAMP_DISCOUNT, quote, won, startCheckout, recordBetaPlus, recordBetaCharacter } from "../services/billing";
-import { redeem, fetchStatus, STYLE_LABEL } from "../services/character";
+import { CATALOG, POLICY, BILLING_OPEN, PAY_OPENS, STAMP_DISCOUNT, quote, won, startCheckout } from "../services/billing";
+import { STYLE_LABEL } from "../services/character";
 import { rewardsOf } from "../services/stamps";
-import { toast } from "../services/toast";
 
 // 결제 흐름(11/20, 시안 3 https://claude.ai/artifact/9z2DZhuWuWmcpZkRkC92Bb): ① 플러스 고르기 / ② 캐릭터 단품 → ③ 결제 확인 → ④ 완료.
 // 법(전자상거래법 21조의2·13조·17조) 때문에 지키는 것: 월·연 카드 같은 크기 · 총금액이 먼저 · 추가 옵션과 동의는 비어 있는 체크 ·
 // 금액 한글 병기 · 돌아가기와 결제 버튼 같은 급 · 미성년자 고지 · 캐릭터는 "철회 불가" 표시 + 미리보기.
-// 사업자등록 전(BILLING_OPEN=false)에는 결제 버튼 자리가 "코드로 열기"가 된다 — 화면·견적·장부는 정식 때 그대로 쓴다.
+// 결제가 열리기 전(BILLING_OPEN=false)에는 이 화면으로 들어오는 버튼 자체가 없다(11/25: 코드 입력 삭제). 화면·견적·장부는 열릴 때 그대로 쓴다.
 const SAMPLE = { "3d": "/character/sample-3d.jpg", hand: "/character/sample-hand.jpg" };
 
 export default function Checkout({ dog, intent = "plus", plus = false, onClose, onOpenCharacter, onChanged }) {
@@ -22,14 +21,14 @@ export default function Checkout({ dog, intent = "plus", plus = false, onClose, 
   const [extraStyle, setExtraStyle] = useState(false); // 미리 체크하지 않는다(법 21조의2①2호)
   const [agree, setAgree] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [done, setDone] = useState(null); // { kind:"plus"|"character", beta }
+  const [done, setDone] = useState(null); // { kind:"plus"|"character" }
   const reward = rewardsOf(dog.id);
   const stamp = tier === "char_premium" && Boolean(reward.discount);
   const items = useMemo(() => (intent === "plus" ? [plan] : [tier, ...(extraStyle ? ["char_style"] : [])]), [intent, plan, tier, extraStyle]);
   const q = useMemo(() => quote({ items, plus, stampDiscount: stamp }), [items, plus, stamp]);
 
   const back = () => (step === "confirm" ? setStep(intent === "plus" ? "plan" : "product") : onClose());
-  const finish = (kind, beta) => { setDone({ kind, beta }); setStep("done"); onChanged?.(); };
+  const finish = (kind) => { setDone({ kind }); setStep("done"); onChanged?.(); };
 
   return createPortal(
     <div className="settings-sheet co" role="dialog" aria-label="결제" style={{ zIndex: 125 }} {...swipe}>
@@ -41,7 +40,7 @@ export default function Checkout({ dog, intent = "plus", plus = false, onClose, 
 
       {step === "plan" && <PlanStep plan={plan} setPlan={setPlan} onNext={() => setStep("confirm")} />}
       {step === "product" && <ProductStep tier={tier} setTier={setTier} style={style} setStyle={setStyle} extraStyle={extraStyle} setExtraStyle={setExtraStyle} plus={plus} reward={reward} total={q.total} onPreview={() => setPreview(true)} onNext={() => setStep("confirm")} />}
-      {step === "confirm" && <ConfirmStep dog={dog} q={q} items={items} plus={plus} stamp={stamp} intent={intent} agree={agree} setAgree={setAgree} onBack={back} onPaid={() => finish(intent, false)} onBeta={(code) => finish(intent, true, code)} />}
+      {step === "confirm" && <ConfirmStep dog={dog} q={q} items={items} plus={plus} stamp={stamp} intent={intent} agree={agree} setAgree={setAgree} onBack={back} onPaid={() => finish(intent)} />}
       {step === "done" && <DoneStep q={q} done={done} onClose={onClose} onOpenCharacter={onOpenCharacter} />}
 
       {preview && <Preview style={style} onClose={() => setPreview(false)} />}
@@ -121,30 +120,17 @@ function ProductStep({ tier, setTier, style, setStyle, extraStyle, setExtraStyle
 }
 
 // ③ 결제 확인 — 영수증, 한글 금액, 해지 방법, 비어 있는 필수 동의, 미성년자 고지, 돌아가기 = 결제 버튼 같은 급
-function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBack, onPaid, onBeta }) {
-  const [code, setCode] = useState("");
+function ConfirmStep({ dog, q, items, plus, stamp, agree, setAgree, onBack, onPaid }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [codeOpen, setCodeOpen] = useState(false);
   const pay = async () => {
     if (busy) return; setBusy(true); setErr("");
     try {
       const r = await startCheckout({ dogId: dog.id, items, plus, stampDiscount: stamp, total: q.total }); // 서버가 같은 식으로 다시 계산해 total과 다르면 거절
-      if (!r.open) { setCodeOpen(true); return; }
+      if (!r.open) { setErr(`결제는 ${PAY_OPENS}에 열려요.`); return; }
       if (r.url) { location.href = r.url; return; } // 토스페이먼츠 결제창으로(정식 때)
       onPaid();
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
-  };
-  const applyCode = async () => {
-    const c = code.trim().toUpperCase();
-    if (!c || busy) return; setBusy(true); setErr("");
-    try {
-      const r = await redeem(dog.id, c);
-      await fetchStatus(dog.id).catch(() => null);
-      if (intent === "plus") recordBetaPlus(dog.id, c); else recordBetaCharacter(dog.id, c);
-      toast(intent === "plus" && r?.plus === false ? "캐릭터만 열리는 코드예요" : "코드를 썼어요", { ico: "party" });
-      onBeta(c);
-    } catch (e) { setErr(e.message || "코드를 확인하지 못했어요"); } finally { setBusy(false); }
   };
   return (
     <div className="co-body">
@@ -158,20 +144,12 @@ function ConfirmStep({ dog, q, items, plus, stamp, intent, agree, setAgree, onBa
       {!q.plan && <div className="co-row"><span>환불</span><span>후보가 하나도 안 닮으면 그 자리에서 전액 · 만든 뒤엔 철회 불가</span></div>}
       <label className={`co-chk req${agree ? " on" : ""}`}><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /><span>[필수] 이용약관 · 결제·환불 안내{q.plan ? " · 자동 갱신" : " · 철회 제한"}을 확인했어요 <a className="link-btn" href="/?terms" target="_blank" rel="noreferrer" style={{ padding: "0 8px", minWidth: 44, justifyContent: "center" }}>보기</a></span></label>
       <p className="co-legal left">만 {POLICY.minAge}세 미만이라면 보호자(법정대리인)의 동의를 받고 결제해 주세요. 동의 없이 결제했다면 본인이나 보호자가 계약을 취소할 수 있어요.</p>
-      {!BILLING_OPEN && <div className="co-beta"><Ico name="lock" size={22} /><span><b>정식 출시 때 결제가 열려요.</b> 지금은 베타라 {intent === "plus" ? "플러스 코드" : "초대 코드"}로 같은 걸 무료로 쓸 수 있어요.</span></div>}
       {err && <p className="error-text" role="alert" style={{ margin: 0 }}>{err}</p>}
-      {!codeOpen ? (
-        <div className="co-two">
-          <button type="button" className="btn-ghost same" onClick={onBack}>돌아가기</button>
-          <button type="button" className="btn-primary" disabled={(BILLING_OPEN && !agree) || busy} onClick={BILLING_OPEN ? pay : () => setCodeOpen(true)}>{BILLING_OPEN ? `${won(q.total)} 결제하기` : "코드로 열기"}</button>
-        </div>
-      ) : (
-        <div className="co-code">
-          <input className="char-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={intent === "plus" ? "MC-PLUS-XXXX" : "MC-BETA-XXXX"} autoCapitalize="characters" autoCorrect="off" spellCheck={false} inputMode="text" enterKeyHint="done" onKeyDown={(e) => e.key === "Enter" && applyCode()} />
-          <div className="co-two"><button type="button" className="btn-ghost same" onClick={() => setCodeOpen(false)}>돌아가기</button><button type="button" className="btn-primary" disabled={busy || !code.trim()} onClick={applyCode}>{busy ? "확인 중…" : "코드 쓰기"}</button></div>
-        </div>
-      )}
-      <p className="co-legal">{BILLING_OPEN ? "결제창은 토스페이먼츠가 열어요 · 카드 정보는 멍케어에 남지 않아요 · 결제 처리 위탁: 토스페이먼츠(주)" : "결제가 열리면 토스페이먼츠 결제창에서 카드·네이버페이·토스페이로 낼 수 있어요"}</p>
+      <div className="co-two">
+        <button type="button" className="btn-ghost same" onClick={onBack}>돌아가기</button>
+        <button type="button" className="btn-primary" disabled={!BILLING_OPEN || !agree || busy} onClick={pay}>{BILLING_OPEN ? `${won(q.total)} 결제하기` : `${PAY_OPENS}에 열려요`}</button>
+      </div>
+      {BILLING_OPEN && <p className="co-legal">결제창은 토스페이먼츠가 열어요 · 카드 정보는 멍케어에 남지 않아요 · 결제 처리 위탁: 토스페이먼츠(주)</p>}
     </div>
   );
 }
@@ -181,15 +159,14 @@ function DoneStep({ q, done, onClose, onOpenCharacter }) {
   const plusDone = done?.kind === "plus";
   return (
     <div className="co-body">
-      <div className="co-done"><Ico name="party" size={56} /><div className="h1" style={{ margin: 0 }}>{plusDone ? "플러스가 켜졌어요" : "캐릭터를 만들 수 있어요"}</div><div className="co-sub">{done?.beta ? "베타 코드 · 0원" : `${won(q.total)} · ${q.startedAt}`}</div></div>
+      <div className="co-done"><Ico name="party" size={56} /><div className="h1" style={{ margin: 0 }}>{plusDone ? "플러스가 켜졌어요" : "캐릭터를 만들 수 있어요"}</div><div className="co-sub">{`${won(q.total)} · ${q.startedAt}`}</div></div>
       {plusDone ? (
-        <div className="co-on3"><div><Ico name="chatHeart" size={30} />비서 자세히</div><div><Ico name="calendar" size={30} />한 달 리포트</div><div><Ico name="video" size={30} />캐릭터 {done?.beta ? "" : "1번"}</div></div>
+        <div className="co-on3"><div><Ico name="chatHeart" size={30} />비서 자세히</div><div><Ico name="calendar" size={30} />한 달 리포트</div><div><Ico name="video" size={30} />캐릭터 1번</div></div>
       ) : (
         <div className="co-on3"><div><Ico name="image" size={30} />사진 2~4장</div><div><Ico name="tap" size={30} />후보 고르기</div><div><Ico name="house" size={30} />홈에서 움직여요</div></div>
       )}
-      {!done?.beta && q.plan && <div className="co-row"><span>다음 결제</span><span>{q.nextAt} · {won(q.total)}</span></div>}
-      {!done?.beta && <div className="co-row"><span>영수증 · 계약 내용</span><span>이메일로 보냈어요</span></div>}
-      {done?.beta && <div className="co-row"><span>정식 출시 때</span><span>결제 없이 쓰던 그대로, 미리 알려 드려요</span></div>}
+      {q.plan && <div className="co-row"><span>다음 결제</span><span>{q.nextAt} · {won(q.total)}</span></div>}
+      <div className="co-row"><span>영수증 · 계약 내용</span><span>이메일로 보냈어요</span></div>
       <div className="co-row"><span>결제 내역</span><span>설정 › 멍케어 플러스 아래</span></div>
       {plusDone ? (
         <>
