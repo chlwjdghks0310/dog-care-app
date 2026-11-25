@@ -1441,6 +1441,26 @@ async function sendPush(device, title, body, url) {
 }
 
 // 가족 알림(11/12): 하루 체크에서 "다른 게 있었어요"를 고른 폰이 보내면, 같은 강아지(petId)를 공유하는 다른 기기들에 한 줄 푸시.
+// 계정 삭제 직전에 앱이 부른다: 카카오로 가입한 사람이면 카카오 쪽 "연결된 서비스"에서도 멍케어를 끊는다(애플 심사 5.1.1(v)·카카오 정책).
+// KAKAO_ADMIN_KEY(카카오 개발자 콘솔 → 앱 키 → Admin 키)가 Render에 없으면 아무것도 하지 않는다. 실패해도 계정 삭제는 그대로 진행된다(앱이 결과를 기다리지 않음).
+app.post("/api/account/unlink-kakao", async (req, res) => {
+  if (tooMany(req)) return res.status(429).json({ error: "too many" });
+  const key = process.env.KAKAO_ADMIN_KEY;
+  const token = req.body?.accessToken;
+  if (!key || typeof token !== "string" || !SUPABASE_URL || !SUPABASE_ANON_KEY) return res.json({ ok: false, skipped: true });
+  try {
+    const u = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } }).then((r) => (r.ok ? r.json() : null));
+    const kakao = u?.identities?.find((i) => i.provider === "kakao");
+    const id = kakao?.identity_data?.provider_id || kakao?.identity_data?.sub;
+    if (!id) return res.json({ ok: true, kakao: false });
+    const r = await fetch("https://kapi.kakao.com/v1/user/unlink", { method: "POST", headers: { Authorization: `KakaoAK ${key}`, "Content-Type": "application/x-www-form-urlencoded" }, body: `target_id_type=user_id&target_id=${encodeURIComponent(id)}` });
+    res.json({ ok: r.ok, kakao: true });
+  } catch (e) {
+    console.error("[server] kakao unlink:", e.message);
+    res.json({ ok: false });
+  }
+});
+
 // 보낸 사람이 그 강아지의 구성원인지 accessToken으로 확인한다. 기기 목록은 subscribe 때 저장된 pets(확인된 강아지)로 고른다.
 app.post("/api/push/family-alert", async (req, res) => {
   if (!vapidConfigured) return res.status(503).json({ error: "push off" });

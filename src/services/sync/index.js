@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import { onLocalChange } from "../storage";
 import { syncOnce, resetSyncState, SYNCED_KEYS } from "./engine";
 import { supabaseRemote } from "./supabaseRemote";
+const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787"; // aiClient를 끌어오지 않으려고 여기서 직접(analytics.js와 같은 방식)
 
 const WATCHED = new Set([...SYNCED_KEYS, "dogcare-dogs-v1", "dogcare-expense-categories-v1"]);
 const listeners = new Set();
@@ -101,6 +102,11 @@ export async function signOut() {
 // 계정 삭제(설정 → 백업·로그인). 서버 기록은 supabase/schema.sql의 delete_my_account가 지운다 —
 // 가족과 함께 쓰던 강아지는 가족에게 넘어가고, 나만 쓰던 강아지 기록은 서버에서 사라진다. 이 폰의 내 강아지 기록은 남는다.
 export async function deleteAccount() {
+  // 카카오로 가입했으면 카카오 쪽 연결도 끊는다(서버가 처리, 최대 5초 — 실패해도 삭제는 계속)
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) await fetch(`${API_BASE}/api/account/unlink-kakao`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessToken: data.session.access_token }), signal: AbortSignal.timeout(5000) });
+  } catch { /* 연결 끊기는 덤 — 계정 삭제를 막지 않는다 */ }
   const { error } = await supabase.rpc("delete_my_account");
   if (error) throw new Error(error instanceof TypeError || /fetch|network/i.test(error.message) ? "인터넷 연결을 확인하고 다시 시도해 주세요." : "계정을 지우지 못했어요. 잠시 뒤 다시 시도해 주세요.");
   await supabase.auth.signOut({ scope: "local" }).catch(() => {});

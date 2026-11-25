@@ -9,6 +9,7 @@ import { localNow } from "../services/records";
 import { saveEvent } from "../services/calendarEvents";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import { BottomSheet, EmailLogin, LoginForm, LoginSheet, PolicyLine, useSyncStatus } from "../components/AccountCard";
+import { isNative } from "../services/native";
 import SpeechBubble from "../components/SpeechBubble";
 import { supabase } from "../services/supabase";
 import { readJSON, writeJSON } from "../services/storage";
@@ -46,6 +47,7 @@ function Intro({ onDone }) {
   const trackRef = useRef(null);
   const [index, setIndex] = useState(0);
   const last = index === SLIDES.length - 1;
+  const [loginOpen, setLoginOpen] = useState(false);
 
   function next() {
     if (last) return onDone();
@@ -82,6 +84,9 @@ function Intro({ onDone }) {
         <button type="button" className="btn-primary" onClick={next}>
           {last ? "우리 아이 소개하기" : "다음"}
         </button>
+        {/* 스토어 앱: 홈 화면 앱을 쓰던 사람이 새로 받았을 때 — 로그인하면 기록·사진이 그대로 온다 */}
+        {isNative() && <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => setLoginOpen(true)}>쓰던 기록 불러오기</button>}
+        {loginOpen && <LoginSheet onClose={() => setLoginOpen(false)} />}
         <PolicyLine />
       </div>
     </div>

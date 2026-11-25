@@ -10,5 +10,11 @@
     "allowMixedContent": false,
     "path": "android.nosync"
   },
-  "backgroundColor": "#eef5ff"
+  "backgroundColor": "#eef5ff",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_paw",
+      "iconColor": "#3478D1"
+    }
+  }
 }

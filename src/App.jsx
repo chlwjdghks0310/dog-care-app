@@ -50,6 +50,7 @@ import { initNativeAuth } from "./services/nativeAuth";
 import { isPlus } from "./services/plus";
 import { fetchStatus } from "./services/character";
 import WhatsNew from "./components/WhatsNew";
+import StoreMove from "./components/StoreMove";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const PARENT_TAB = {
@@ -636,6 +637,7 @@ export default function App() {
       </div>
       {/* 채팅 중(대화 스크롤)일 때만 빼고, 홈·나머지 화면은 맨 위에서 당기면 새로고침(11/18: 오늘 탭도 평소엔 되게) */}
       <WhatsNew />
+      <StoreMove />
       <Toaster />
       {storageWarn && <div className="whats-new" role="alert" onClick={() => setStorageWarn(false)}><b>저장하지 못했어요</b> · 저장 공간이 부족하거나 개인정보 보호 모드예요. 설정 → 백업·로그인에서 백업해 두세요</div>}
       {!online && <div className="offline-bar" role="status">인터넷이 없어요 · 기록은 이 폰에 저장돼요. 말로 기록·진료 정리·백업은 연결되면 돼요</div>}
