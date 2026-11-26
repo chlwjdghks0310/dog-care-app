@@ -85,22 +85,26 @@ export function saveUnknown(dogId, date) {
 }
 
 // picks: { meal: "반 이상 남김", stool: "무름" } → 하루 상태 + 기존 기록. 같은 날 다시 저장하면 앞서 만든 기록은 덮어쓴다(같은 id).
-export function saveDiff(dogId, date, picks) {
+// noRec(11/26): { [itemId]: label } — 보호자가 오늘 이미 직접 적은 기록에서 가져온 선택(checkTalk.picksFromRecords). 그 선택 그대로면 기록을 또 만들지 않는다
+//   (같은 식사 기록이 두 개가 되지 않게, 그리고 [다시 고르기]가 보호자의 원래 기록을 지우지 않게 recIds에도 넣지 않는다). 선택을 바꾸면 평소처럼 기록을 만든다.
+export function saveDiff(dogId, date, picks, { noRec = {} } = {}) {
   const entries = Object.entries(picks).filter(([id, label]) => option(id, label));
   if (!entries.length) throw new Error("다른 점을 하나 이상 골라 주세요.");
   const prev = getDay(dogId, date);
   const ids = { ...(prev?.recIds || {}) };
   const at = atFor(date);
+  const fromRec = Object.fromEntries(Object.entries({ ...(prev?.noRec || {}), ...noRec }).filter(([id, label]) => picks[id] === label));
+  const makes = (id, label) => Boolean(option(id, label)?.rec) && !fromRec[id];
   // 고치면서 뺀 항목·기록 없는 선택지로 바꾼 항목의 예전 기록은 지운다(남으면 이상 신호·병원용 기록에 잘못 남음)
   for (const id of Object.keys(ids)) {
-    if (!option(id, picks[id])?.rec) (deleteRecord(dogId, ids[id]), delete ids[id]);
+    if (!makes(id, picks[id])) (deleteRecord(dogId, ids[id]), delete ids[id]);
   }
-  for (const [id, label] of entries) if (option(id, label).rec) ids[id] ||= newRecordId();
+  for (const [id, label] of entries) if (makes(id, label)) ids[id] ||= newRecordId();
   // 하루 상태를 먼저 적고 기록을 쓴다 — 중간에 저장이 실패해도 recIds가 남아 [다시 고르기]로 지울 수 있게(11/11 점검 #16)
-  setDay(dogId, date, { status: "diff", picks: Object.fromEntries(entries), recIds: ids });
+  setDay(dogId, date, { status: "diff", picks: Object.fromEntries(entries), recIds: ids, ...(Object.keys(fromRec).length && { noRec: fromRec }) });
   for (const [id, label] of entries) {
     const o = option(id, label);
-    if (!o.rec) continue;
+    if (!makes(id, label)) continue;
     const [type, data] = o.rec;
     const item = ITEMS.find((i) => i.id === id);
     saveRecord(dogId, { id: ids[id], type, at, data, memo: `하루 체크: ${item.label} ${label}`, photos: [] });

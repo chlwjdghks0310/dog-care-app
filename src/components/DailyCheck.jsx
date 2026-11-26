@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
 import { ITEMS, getDay, saveUsual, saveUnknown, saveDiff, signalsOf, daysThisMonth, daysInRange, runsOf, missedYesterday } from "../services/dailyCheck";
+import { askFor } from "../services/checkTalk";
+import { getRecords } from "../services/records";
 import { markCheckedIn } from "../services/routine";
 import { syncPushAlarms } from "../services/notifications";
 import { trackAct } from "../services/analytics";
@@ -17,36 +19,69 @@ export const dailyPending = (dogId, today = todayKey()) => missedYesterday(dogId
 
 export default function DailyCheck({ dog, onChange, onSheetChange }) {
   const today = todayKey();
-  const [sheet, setSheetState] = useState(null); // 고르는 날짜
-  const setSheet = (d) => (setSheetState(d), onSheetChange?.(Boolean(d)));
+  const [sheet, setSheetState] = useState(null); // 고르는 창 { date, initial, noRec, saved }
+  const setSheet = (v) => (setSheetState(v), onSheetChange?.(Boolean(v)));
   const date = dailyPending(dog.id, today);
   const isYesterday = date && date !== today;
   const mark = (d) => (trackAct("check"), d === today && (markCheckedIn(dog.id), syncPushAlarms())); // 오늘 했으면 오늘 체크 알림은 건너뛰게
   const changed = (d) => (mark(d), onChange?.());
+  // 오늘 체크는 여름이가 어제·오늘 기록을 알고 묻는다(11/26, services/checkTalk.js). 어제를 놓친 날의 "어제 어땠어?"는 그대로
+  const ask = date && !isYesterday ? askFor(dog.id, today, getRecords(dog.id)) : null;
+  const noRecOf = (part) => Object.fromEntries((part?.noRec || []).map((id) => [id, part.picks?.[id] ?? part.initial?.[id]]));
+  // [또 남겼어]·[응, 이대로]: 고르는 창 없이 바로 저장. 병원에 물어볼 신호가 있으면 저장한 뒤 그 안내를 보여 준다(고르는 창에서 저장했을 때와 같게)
+  function again() {
+    const { picks } = ask.again;
+    try {
+      saveDiff(dog.id, date, picks, { noRec: noRecOf(ask.again) });
+    } catch {
+      return setSheet({ date, initial: picks, noRec: noRecOf(ask.again) });
+    }
+    alertFamily(dog, `오늘 다른 점: ${Object.entries(picks).map(([id, l]) => `${ITEMS.find((i) => i.id === id)?.label} ${l}`).join(", ")}`);
+    const sig = signalsOf(picks);
+    if (sig.red.length || sig.warn.length) return (mark(date), setSheet({ date, initial: picks, saved: true }));
+    changed(date);
+  }
   return (
     <>
       {date && (
         <span className="summary dc-ask">
-          <span className="summary-open">
+          <span className="summary-open pop-in" key={ask?.text || date}>
             <span className="summary-role">하루 체크 · {dog.name}</span>
-            {isYesterday ? "어제는 기록이 없어! 어제 어땠어?" : "오늘 나 어땠어?"}
+            {isYesterday ? "어제는 기록이 없어! 어제 어땠어?" : ask.text}
           </span>
+          {ask?.from && (
+            <span className="dc-from">
+              {ask.from.slice(0, 3).map((f) => {
+                const item = ITEMS.find((i) => i.id === f.itemId);
+                return <span key={f.id + f.itemId} className="dc-from-row"><Ico name={item.ico} size={18} /> {item.label} {f.label} · {timeLabel(f.time)}</span>;
+              })}
+            </span>
+          )}
           <span className="dc-btns">
-            <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, date), changed(date))}><Ico name="check" size={18} /> {isYesterday ? "평소였어요" : "평소와 같아요"}</button>
-            <button type="button" className="dc-diff" onClick={() => setSheet(date)}>다른 게 있었어요</button>
+            {isYesterday ? (
+              <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, date), changed(date))}><Ico name="check" size={18} /> 평소였어요</button>
+            ) : ask.usual ? (
+              <button type="button" className="dc-usual" onClick={() => (saveUsual(dog.id, date), changed(date))}><Ico name="check" size={18} /> {ask.usual}</button>
+            ) : (
+              <button type="button" className="dc-usual" onClick={again}><Ico name="check" size={18} /> {ask.again.label}</button>
+            )}
+            {ask?.usual && ask.again && <button type="button" className="dc-diff" onClick={again}>{ask.again.label}</button>}
+            <button type="button" className={`dc-diff${ask?.usual && ask.again ? " wide" : ""}`} onClick={() => setSheet({ date, initial: ask?.more.initial, noRec: noRecOf(ask?.more) })}>{ask?.more.label || "다른 게 있었어요"}</button>
           </span>
           {isYesterday ? (
             <button type="button" className="link-btn summary-more" onClick={() => (saveUnknown(dog.id, date), changed(date))}>기억 안 나요</button>
-          ) : (
+          ) : ask.kind === "plain" ? (
             // 처음 며칠은 "왜 매일 누르는지"를 말해 준다(11/8 첫 화면 한 문장) — 5번 넘게 한 뒤엔 짧게
             <span className="summary-more">{daysInRange(dog.id, "0000", "9999") < 5 ? "매일 남기면 병원 갈 때 한 장으로 정리돼" : "평소와 같으면 한 번만 누르면 끝이야"}</span>
-          )}
+          ) : null}
         </span>
       )}
-      {sheet && <DiffSheet dog={dog} date={sheet} initial={getDay(dog.id, sheet)?.picks} onClose={() => (setSheet(null), onChange?.())} onSaved={() => mark(sheet)} />}
+      {sheet && <DiffSheet dog={dog} date={sheet.date} initial={sheet.saved ? sheet.initial : getDay(dog.id, sheet.date)?.picks || sheet.initial} noRec={sheet.noRec} startSaved={sheet.saved} onClose={() => (setSheet(null), onChange?.())} onSaved={() => mark(sheet.date)} />}
     </>
   );
 }
+
+const timeLabel = (hm) => { const h = Number(hm.slice(0, 2)); return `${h < 12 ? "오전" : "오후"} ${h % 12 || 12}시${hm.slice(3) === "00" ? "" : ` ${Number(hm.slice(3))}분`}`; };
 
 // 외출에서 돌아와 [왔어]를 누르면: 오늘 체크를 아직 안 했으면 바로 묻는다(사용자 요청 11/7). 이상 없으면 한 번, 있으면 고르기
 export function BackCheckSheet({ dog, alone, onClose }) {
@@ -108,18 +143,18 @@ function RedBox() {
 }
 
 // 다른 점 고르기: 항목을 누르면 그 항목의 선택지만 펼친다. 항목마다 하나씩
-export function DiffSheet({ dog, date, initial, onClose, onSaved }) {
+export function DiffSheet({ dog, date, initial, noRec, startSaved = false, onClose, onSaved }) {
   initial ||= {};
   const [picks, setPicks] = useState(initial);
   const [open, setOpen] = useState(() => Object.keys(initial));
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(startSaved); // startSaved: 말풍선의 [또 남겼어]로 이미 저장한 뒤 병원 안내만 보여 줄 때
   const [error, setError] = useState("");
   const toggleItem = (id) => (open.includes(id) ? (setOpen(open.filter((x) => x !== id)), setPicks(({ [id]: _, ...rest }) => rest)) : setOpen([...open, id]));
   const sig = signalsOf(picks);
 
   function save() {
     try {
-      saveDiff(dog.id, date, picks);
+      saveDiff(dog.id, date, picks, { noRec });
     } catch (e) {
       return setError(e.message);
     }

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { recordFromText, askAssistant } from "../services/aiClient";
-import DailyCheck, { dailyPending, dailySummaryLines, UsualNote } from "../components/DailyCheck";
+import DailyCheck, { dailyPending, DiffSheet, UsualNote } from "../components/DailyCheck";
+import { remarkFor } from "../services/checkTalk";
+import { collectFacts } from "../services/checkFacts";
 import { createPortal } from "react-dom";
 import NotifyAsk, { notifyAskPending } from "../components/NotifyAsk";
 import BackupAsk, { backupAskPending } from "../components/BackupAsk";
@@ -62,6 +64,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   const [hop, setHop] = useState(false); // 하루 체크를 끝내면 강아지가 폴짝(모션 6곳 중 하나, 11/9)
   const hopNow = () => (setHop(true), setTimeout(() => setHop(false), 1100));
   const [stampMoment, setStampMoment] = useState(false);
+  const [editCheck, setEditCheck] = useState(false); // 마친 뒤 [다른 것도 적기] — 오늘 체크에 항목을 더하거나 고친다(11/26)
   const [vetPreview, setVetPreview] = useState(false); // 첫 걸음 ① 병원용 기록 미리 보기(예시로 채운 한 장) // 하루 체크 끝 → 어두운 배경 위 스탬프 노트(도장 "쿵") 한 번
   const inputRef = useRef("");
   const inputElRef = useRef(null);
@@ -366,7 +369,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
             </SpeechBubble>
           ) : (
             <SpeechBubble key="summary">
-              <TodaySummary dog={dog} onOpen={onOpenGuide} outing={<OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
+              <TodaySummary dog={dog} onOpen={onOpenGuide} onOpenVet={onOpenVet} onEditCheck={() => setEditCheck(true)} outing={<OutingChip dog={dog} onChecked={() => refresh((n) => n + 1)} />} />
             </SpeechBubble>
           )}
         </div>
@@ -405,6 +408,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
       </div>
 
       {stampMoment && <StampMoment dogId={dog.id} onDone={() => setStampMoment(false)} />}
+      {editCheck && <DiffSheet dog={dog} date={todayKey()} initial={getDay(dog.id, todayKey())?.picks} onClose={() => (setEditCheck(false), refresh((n) => n + 1))} onSaved={() => syncPushAlarms()} />}
       {vetPreview && <VetPreviewSheet dog={dog} onClose={() => (markFirstSteps(dog.id, { vet: true }), setVetPreview(false), refresh((n) => n + 1))} onOpenVet={() => (markFirstSteps(dog.id, { vet: true }), setVetPreview(false), onOpenVet())} />}
 
       {isChat && avatarState === "thinking" && <ThinkingBubble top={`calc(${CORNER_TOP} + 26px)`} />}
@@ -625,11 +629,12 @@ function GuideLink({ chapter, inline }) {
 
 // 첫 화면 말풍선: 우리 강아지가 오늘 요약을 말해 준다(남은 할 일·다음 약·7일 안 일정). 기록된 것만, 판단 없이
 // 말풍선 아래 줄(11/11): [지금 시기 가이드 ›](11/15, 전엔 오늘 할 일 n개) + [다녀올게] — 강아지 밑에 있던 칩 두 개를 말풍선 안으로 옮기고 강아지를 키움(사용자 결정)
-function HomeRow({ dog, onOpen, outing }) {
+function HomeRow({ dog, onOpen, outing, before }) {
   // 11/15 사용자: 오늘 할 일 목록은 뺐다. 그 자리에 지금 시기 가이드 — 보호자가 찾아가지 않아도 "지금 챙길 것"이 먼저 보이게
   const st = getStage(dog);
   return (
     <span className="sb-row">
+      {before}
       <button type="button" className="summary-go" onClick={onOpen}>
         <Ico name={st.ico} size={15} /> {st.short} 가이드 <span aria-hidden="true">›</span>
       </button>
@@ -638,21 +643,26 @@ function HomeRow({ dog, onOpen, outing }) {
   );
 }
 
-function TodaySummary({ dog, onOpen, outing }) {
+function TodaySummary({ dog, onOpen, onOpenVet, onEditCheck, outing }) {
   const t = getTodaySummary(dog);
   const together = togetherDays(dog);
-  const lines = [...getSignals(dog).filter((s) => !(s.id === "med" && t.checkDoses)).map((s) => ["alert", "rose", s.text]) /* 약은 아래 '약 기록 확인' 줄과 겹치면 뺌 */, ...(isMilestone(together) ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : []), ...dailySummaryLines(dog.id)];
+  // 마친 뒤 한마디(11/26): 오늘 체크를 했으면 여름이가 기록을 보고 한 문장으로 말한다. 그 한마디가 이미 말한 것(기념일)은 아래 줄에서 뺀다
+  const today = todayKey();
+  const day = getDay(dog.id, today);
+  const remark = day && day.status !== "unknown" ? remarkFor(dog.id, today, collectFacts(dog, today)) : null;
+  const said = remark?.key || "";
+  const lines = [...getSignals(dog).filter((s) => !(s.id === "med" && t.checkDoses)).map((s) => ["alert", "rose", s.text]) /* 약은 아래 '약 기록 확인' 줄과 겹치면 뺌 */, ...(isMilestone(together) && !said.startsWith("together") ? [["heartPlain", "rose", `오늘 함께한 지 ${together}일이야! 우리 아이 → 이번 주 리포트에서 기념 카드를 만들 수 있어`]] : [])];
   // 할 일 개수는 아래 칩에 있어 말풍선에선 뺀다(11/9) — 여기엔 그날 꼭 볼 것(이상 신호·약·사료·병원 일정)만
   if (t.checkDoses) lines.push(["pill", "teal", `약 먹인 기록 ${t.checkDoses}개를 확인해 줘`]);
   else if (t.nextDose) lines.push(["pill", "teal", `${t.nextDose.time} ${t.nextDose.name} ${t.nextDose.dose} 먹을 차례야`]);
   const food = getFoodStock(dog);
-  if (food && food.daysLeft <= 5) lines.push(["bowl", "rose", stockLabel(food)]);
-  if (t.nextEvent) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
+  if (food && food.daysLeft <= 5 && said !== "food") lines.push(["bowl", "rose", stockLabel(food)]);
+  if (t.nextEvent && !said.startsWith("event")) lines.push(["calendar", "violet", `${t.nextEvent.days === 0 ? `오늘${t.nextEvent.time ? ` ${t.nextEvent.time}` : ""}` : `${t.nextEvent.days}일 뒤`} ${t.nextEvent.title}`]);
   return (
     <span className="summary">
       <span className="summary-open">
         <span className="summary-role">기록 친구 · {dog.name}</span>
-        말로 하면 내가 기록해 줄게
+        <span className="pop-in" style={{ display: "block" }} key={remark?.text || "idle"}>{remark ? remark.text : "말로 하면 내가 기록해 줄게"}</span>
       </span>
       {lines.length ? (
         // 작은 화면에서 말풍선이 길어지면 아래 입력칸이 밀려나서 4줄까지만(점검 11/7, 아이폰 SE)
@@ -662,10 +672,15 @@ function TodaySummary({ dog, onOpen, outing }) {
             <span>{text}</span>
           </span>
         ))
-      ) : (
+      ) : remark ? null : (
         <span className="summary-line">오늘은 특별히 챙길 게 없어. 오늘 있었던 일 말해 줘!</span>
       )}
-      <HomeRow dog={dog} onOpen={onOpen} outing={outing} />
+      <HomeRow dog={dog} onOpen={onOpen} outing={outing} before={remark && (
+        <>
+          {remark.go === "vet" && <button type="button" className="summary-go" onClick={onOpenVet}><Ico name="clipboard" size={15} /> 병원용 기록 <span aria-hidden="true">›</span></button>}
+          <button type="button" className="summary-go" onClick={onEditCheck}><Ico name="pencil" size={15} /> 다른 것도 적기</button>
+        </>
+      )} />
     </span>
   );
 }
