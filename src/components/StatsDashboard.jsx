@@ -238,7 +238,7 @@ export default function StatsDashboard({ onClose }) {
                 <Card title="어디로 빠지나">
                   <HBars rows={[...features.map((f) => ({ label: f.label, v: n(f.usd), text: krw(n(f.usd) * rate), sub: `${n(f.calls)}번 · ${n(f.people)}기기` })), ...(charUsd || n(m.character.jobs) ? [{ label: "캐릭터 그림·영상", v: charUsd, text: krw(charUsd * rate), sub: `${n(m.character.daily.reduce((a, r) => a + n(r.jobs), 0))}작업`, tone: "warn" }] : [])].sort((a, b) => b.v - a.v)} max={featTotal} />
                   {features.length === 0 && !charUsd && <p className="subtle" style={{ margin: "6px 0 0" }}>이 기간엔 AI를 쓴 기록이 없어요(돈 표는 11/20부터 쌓여요).</p>}
-                  <Note>비서 빠른 답은 Haiku(한 번 ≈ ₩3), 자세히는 Sonnet(≈ ₩20), 말로 기록은 Haiku, 진료 정리·사료·변 사진은 Sonnet. {unpriced ? `단가를 모르는 호출 ${unpriced}건(Gemini 받아쓰기)은 0원으로 잡혀 있어요.` : ""}</Note>
+                  <Note>비서 빠른 답은 Haiku(한 번 ≈ ₩0.6), 자세히는 Sonnet(≈ ₩20), 말로 기록은 Haiku, 진료 정리·사료·변 사진은 Sonnet. {unpriced ? `단가를 모르는 호출 ${unpriced}건(Gemini 받아쓰기)은 0원으로 잡혀 있어요.` : ""}</Note>
                 </Card>
                 <Card title="날짜별 지출(원)">
                   <Bars rows={dayList} label="" fmt={(v) => (!v ? "" : v < 1000 ? String(v) : `${Math.round(v / 100) / 10}천`)} />
@@ -336,7 +336,7 @@ export default function StatsDashboard({ onClose }) {
           <Card title="읽는 법" style={{ fontSize: 12.5 }}>
             <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
               <li><b>기기</b> = 사람이 아니라 브라우저 저장소 하나. 같은 사람의 아이폰 앱·사파리·맥은 각각 1기기. 하루에 몇 번 열어도 1.</li>
-              <li><b>돈</b>은 서버가 AI 응답마다 적은 토큰 × 단가(server PRICES, 11/20 기준)와 캐릭터 작업의 생성비. Anthropic·Google·Runway 청구서와 몇 % 차이는 날 수 있어요.</li>
+              <li><b>돈</b>은 서버가 AI 응답마다 적은 토큰 × 단가(server/prices.js, 11/26 공식 가격표 기준)와 캐릭터 작업의 생성비. Anthropic·Google·Runway 청구서와 몇 % 차이는 날 수 있어요.</li>
               <li><b>정식이었다면</b> = 플러스 코드 쓴 강아지 수 × 3,900원 − 나간 돈. 결제 전이라 실제 수입은 0원.</li>
               <li><b>떠남</b> = 마지막으로 앱을 연 지 14일 넘은 기기. "하루만"은 첫날만 열고 7일 넘게 안 온 기기.</li>
               <li>운영자 기기는 설정 → "이 기기는 통계에서 빼기"를 켜면 안 들어가요. 개발 중 컴퓨터와 자동 점검은 처음부터 빠져 있어요.</li>

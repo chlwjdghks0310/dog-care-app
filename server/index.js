@@ -15,6 +15,7 @@ import webpush from "web-push";
 import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 import { mountCharacter } from "./character.js";
+import { usdOf } from "./prices.js";
 import { mountBilling } from "./billing.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
@@ -197,12 +198,10 @@ app.use(Object.keys(AI_ROUTES), (req, res, next) => {
 // 돈 통계(11/20, supabase/money.sql): AI 응답마다 토큰·달러 한 행. 단가 $/MTok [입력, 출력, 캐시 읽기, 캐시 쓰기] — 바뀌면 여기만.
 // 모르는 모델(Gemini 등)은 usd null로 적어 화면에 "단가 미확인"으로 보인다.
 const aiCtx = new AsyncLocalStorage();
-const PRICES = { "claude-opus-5-5": [4, 20, 0.2, 5], "claude-sonnet-5-5": [2, 10, 0.2, 2.5], "claude-haiku-5-5": [1, 5, 0.1, 1.25] };
 function saveUsage(model, inTok, outTok, cacheRead = 0, cacheWrite = 0) {
   if (!pushDb) return;
   const c = aiCtx.getStore() || {};
-  const p = PRICES[model] || PRICES[Object.keys(PRICES).find((k) => String(model || "").startsWith(k))]; // 응답 model엔 날짜가 붙을 수 있다
-  const usd = p ? (inTok * p[0] + outTok * p[1] + cacheRead * p[2] + cacheWrite * p[3]) / 1e6 : null;
+  const usd = usdOf(model, inTok, outTok, cacheRead, cacheWrite); // 단가는 server/prices.js 한 곳
   db("ai_usage", { method: "POST", body: { day: kstDay(), feature: c.kind || "other", model: model || "?", visitor: c.visitor || null, pet: c.pet || null, plus: Boolean(c.plus), in_tok: inTok, out_tok: outTok, cache_read: cacheRead, cache_write: cacheWrite, usd } })
     .catch((e) => console.error("[server] ai_usage:", e.message));
 }
@@ -848,7 +847,7 @@ app.post("/api/ask", async (req, res) => {
   if (!detail && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 비서 횟수(${ASK_LIMIT.plus}번)를 다 썼어요. 내일 다시 물어봐 주세요.` : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
   try {
     const response = await createMsg({
-      ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩3)
+      ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩0.6)
       max_tokens: detail ? 1200 : 300,
       // Sonnet 5.5는 thinking "disabled"를 거절(400) → Sonnet엔 생략, Haiku만 끈다(11/20)
       ...(detail ? {} : { thinking: { type: "disabled" } }),
