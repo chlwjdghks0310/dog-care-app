@@ -38,3 +38,20 @@ export async function initNativeAuth() {
     } else if (r.error) fail(`로그인하지 못했어요: ${r.error}`);
   });
 }
+
+// Apple 로그인(아이폰 스토어 앱만 — 애플 심사 4.8: 카카오 로그인이 있으면 이메일을 숨길 수 있는 로그인도 있어야 한다).
+// 아이폰의 Apple 로그인 창에서 받은 ID 토큰을 Supabase에 넘긴다. Supabase 대시보드 Apple provider의 Client IDs에 kr.meongcare.app이 있어야 한다.
+export const canAppleLogin = () => isNative() && globalThis.Capacitor?.getPlatform?.() === "ios";
+export async function appleLogin() {
+  const { SignInWithApple } = await import("@capacitor-community/apple-sign-in");
+  const raw = crypto.randomUUID(); // 토큰 재사용 방지 값: 애플엔 해시를, Supabase엔 원래 값을 준다
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  let res;
+  try {
+    res = await SignInWithApple.authorize({ clientId: "kr.meongcare.app", redirectURI: "https://meongcare.kr", scopes: "email name", nonce: hash });
+  } catch (e) {
+    if (/1001|cancel/i.test(`${e?.code} ${e?.message}`)) return { canceled: true }; // 사용자가 창을 닫음
+    throw e;
+  }
+  return supabase.auth.signInWithIdToken({ provider: "apple", token: res.response.identityToken, nonce: raw });
+}

@@ -6,7 +6,7 @@ import PrivacyPolicy from "./PrivacyPolicy";
 import Terms from "./Terms";
 import Ico from "./Ico";
 import { isNative } from "../services/native";
-import { oauthRedirect, openOAuth } from "../services/nativeAuth";
+import { oauthRedirect, openOAuth, canAppleLogin, appleLogin } from "../services/nativeAuth";
 
 // 설정의 "백업·로그인" 카드. Supabase가 설정돼 있을 때만 보인다(src/services/supabase.js).
 // 로그인은 선택 — 안 해도 앱은 지금처럼 폰에만 저장한다.
@@ -258,9 +258,25 @@ export function LoginForm({ onEmail }) {
     if (err) setError(authMessage(err));
     setBusy(false);
   }
+  async function apple() {
+    setBusy(true);
+    setError("");
+    try {
+      const { error: err } = await appleLogin();
+      if (err) setError(authMessage(err));
+    } catch (e) {
+      setError("Apple 로그인을 하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    }
+    setBusy(false);
+  }
   if (emailOpen) return <EmailLogin onBack={() => setEmailOpen(false)} />;
   return (
     <div className="login-buttons">
+      {canAppleLogin() && (
+        <button type="button" className="btn-primary login-apple" disabled={busy} onClick={apple}>
+          <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{"\uF8FF"}</span> Apple로 로그인
+        </button>
+      )}
       <button type="button" className="btn-primary login-kakao" disabled={busy} onClick={kakao}>
         <KakaoMark /> 카카오 로그인
       </button>

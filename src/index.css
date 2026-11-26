@@ -942,6 +942,7 @@ label > input.switch { width: 24px; height: 24px; margin-right: 26px; }
 .login-bottom { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; max-width: 400px; margin: 0 auto; padding: 8px 20px 0; }
 .login-buttons { display: flex; flex-direction: column; gap: 10px; }
 .login-kakao { background: #fee500; color: rgba(0, 0, 0, 0.85); border-radius: 12px; box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.login-apple { background: #000; color: #fff; border-radius: 12px; box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 8px; } /* Apple 로그인 단추(아이폰 스토어 앱만): 검은 바탕·흰 글씨(애플 가이드) */
 .login-email { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 12px; font-weight: 700; } /* 카카오보다 눈에 띄지 않게(카카오 가이드) */
 .login-guest { align-self: center; color: var(--text-soft); font-size: 14.5px; text-decoration: underline; text-underline-offset: 3px; }
 .login-policy { text-align: center; margin: 2px 0 0; font-size: 12px; }
