@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://meongcare.kr/intro/</loc></url>
-  <url><loc>https://meongcare.kr/?privacy</loc></url>
-  <url><loc>https://meongcare.kr/intro/guide/</loc></url>
-  <url><loc>https://meongcare.kr/intro/resources/</loc></url>
+  <url><loc>https://meongcare.kr/intro/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://meongcare.kr/intro/guide/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://meongcare.kr/intro/resources/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://meongcare.kr/intro/install/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://meongcare.kr/intro/family/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://meongcare.kr/?privacy</loc><lastmod>2026-11-27</lastmod></url>
 </urlset>
