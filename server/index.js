@@ -873,7 +873,7 @@ app.post("/api/ask", async (req, res) => {
   if (all >= ASK_GLOBAL_LIMIT) return res.status(429).json({ error: "오늘은 비서가 쉬어야 해요. 내일 다시 물어봐 주세요.", tier, left: 0 });
   if (detail && dn >= ASK_DETAIL_LIMIT) return res.status(429).json({ error: `오늘 자세한 답 횟수(${ASK_DETAIL_LIMIT}번)를 다 썼어요. 빠른 답은 계속 들을 수 있어요.`, tier, left: 0, detail: true });
   if (follow && fn >= ASK_LIMIT[tier] * ASK_FOLLOW_PER_QUESTION) return res.status(429).json({ error: "오늘은 이어서 묻기를 다 썼어. 내일 다시 물어봐 줘.", tier, left: Math.max(0, ASK_LIMIT[tier] - n) });
-  if (!detail && !follow && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 비서 횟수(${ASK_LIMIT.plus}번)를 다 썼어요. 내일 다시 물어봐 주세요.` : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
+  if (!detail && !follow && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 새 질문 ${ASK_LIMIT.plus}개를 다 물어봤어. 내일 다시 물어봐 줘.` : "오늘 새 질문 5개를 다 물어봤어. 내일 다시 물어봐 줘.", tier, left: 0 });
   try {
     const response = await createMsg({
       ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩0.6)
