@@ -7,7 +7,7 @@ const OPERATOR = {
   name: "멍케어(대표 최정환)",
   contact: "meongcare.app@gmail.com",
   effective: "2026년 10월 22일",
-  revised: "2026년 11월 20일",
+  revised: "2026년 11월 26일",
 };
 
 const SECTIONS = [
