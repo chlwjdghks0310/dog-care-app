@@ -77,7 +77,7 @@ function PlanStep({ plan, setPlan, onNext }) {
       </div>
       <table className="co-cmp"><thead><tr><th></th><th>무료</th><th className="pl">플러스</th></tr></thead><tbody>
         <tr><td>하루 체크 · 기록 · 병원용 기록 · 알림 · 가족 공유</td><td className="ok">✓</td><td className="pl ok">✓</td></tr>
-        <tr><td>비서 빠른 답</td><td>하루 5번</td><td className="pl ok">하루 50번</td></tr>
+        <tr><td>비서에게 묻기</td><td>하루 질문 5개</td><td className="pl ok">하루 질문 50개</td></tr>
         <tr><td>비서 자세히 듣기</td><td className="no">—</td><td className="pl ok">하루 20번</td></tr>
         <tr><td>한 달 리포트</td><td className="no">—</td><td className="pl ok">✓</td></tr>
         <tr><td>우리 아이 캐릭터</td><td>단품 {won(CATALOG.char_basic.price)}~</td><td className="pl ok">연간 1번 포함</td></tr>

@@ -2026,13 +2026,14 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .care-feed-body b { font-size: 16px; }
 .care-feed-body span { font-size: 13px; color: var(--text-soft); }
 .care-feed-go { font-size: 22px; color: var(--text-faint); }
-.quick-actions.two { grid-template-columns: 1fr 1fr; }
+.quick-actions.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* 11/26: 1fr는 내용보다 좁아지지 않아 좁은 화면에서 둘째 타일이 밖으로 밀렸다 */
 .quick-actions.two .quick-tile { aspect-ratio: auto; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 12px 14px; }
 .quick-actions.two .quick-tile .quick-tile-label { font-size: 13.5px; white-space: nowrap; }
 .quick-actions.two .quick-tile { padding: 12px 10px; gap: 8px; }
 /* 건강 체크 허브 큰 타일 */
 .hub-tiles .quick-tile.hub-tile { flex-direction: column; justify-content: center; gap: 6px; padding: 20px 10px 16px; aspect-ratio: 1; }
-.hub-tile .quick-tile-label { font-size: 15px; font-weight: 800; }
+.hub-tile .quick-tile-label { font-size: 15px; font-weight: 800; white-space: normal; }
+.hub-tile { min-width: 0; text-align: center; }
 .hub-sub { font-size: 12px; color: var(--text-soft); line-height: 1.35; }
 .chat-suggest .record-example { gap: 7px; }
 
