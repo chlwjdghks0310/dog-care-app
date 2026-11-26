@@ -10,7 +10,7 @@ import { todayKey } from "../utils/date";
 import { alertFamily } from "../services/familyAlert";
 import { saveDog } from "../services/dogRepository";
 
-// 오늘 탭 말풍선의 10초 하루 체크: 강아지가 "오늘 어땠어?" 하고 묻는다. [평소와 같아요] 한 번이면 끝, [다른 게 있었어요]면 다른 항목만.
+// 비서 탭 말풍선의 10초 하루 체크: 강아지가 "오늘 어땠어?" 하고 묻는다. [평소와 같아요] 한 번이면 끝, [다른 게 있었어요]면 다른 항목만.
 // 어제를 놓쳤으면 어제 것부터([기억 안 나요]는 '평소'로 치지 않음). 판단하지 않고 기록된 사실과 병원 상담 기준만 보여 준다.
 // 물어볼 게 없으면(오늘 끝) 아무것도 그리지 않고, 열려 있는 고르기 창만 유지한다 — 오늘 요약은 Main 말풍선이 보여 준다.
 export const dailyPending = (dogId, today = todayKey()) => missedYesterday(dogId, today) || (!getDay(dogId, today) && today);

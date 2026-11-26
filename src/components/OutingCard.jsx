@@ -8,7 +8,7 @@ import { BackCheckSheet } from "./DailyCheck";
 import { getDay } from "../services/dailyCheck";
 import { todayKey } from "../utils/date";
 
-// 오늘 탭의 외출 칩(11/9: 카드 → 칩 한 줄, 오늘 할 일 칩 옆). [다녀올게] → "혼자 n시간째 · 왔어" → "체크 보기".
+// 비서 탭의 외출 칩(11/9: 카드 → 칩 한 줄, 오늘 할 일 칩 옆). [다녀올게] → "혼자 n시간째 · 왔어" → "체크 보기".
 // 평소 외출 시간 설정(RoutineSheet)은 오늘 할 일 화면으로 옮김. 하루 상태 체크는 위의 하루 체크 말풍선이 맡는다.
 export default function OutingChip({ dog, onChecked }) {
   const [, setTick] = useState(0);

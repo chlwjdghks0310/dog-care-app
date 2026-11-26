@@ -54,13 +54,13 @@ import StoreMove from "./components/StoreMove";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const PARENT_TAB = {
-  // 11/15: 케어 탭(5번째) = 월령별 가이드 + 퍼피 100일 + 사료 계산기·알림(오늘 할 일 목록은 사용자 결정으로 뺌). 오늘 탭 띠·칩에서 열어도 케어 탭 페이지에 쌓인다
+  // 11/15: 케어 탭(5번째) = 월령별 가이드 + 퍼피 100일 + 사료 계산기·알림(오늘 할 일 목록은 사용자 결정으로 뺌). 비서 탭 띠·칩에서 열어도 케어 탭 페이지에 쌓인다
   guide: "care",
   week: "care",
   feeding: "care",
   alarms: "care",
   info: "care",
-  puppy: "care", // 퍼피 100일 훈련 화면(11/9) — 오늘 탭 띠·케어 탭 띠에서 열림
+  puppy: "care", // 퍼피 100일 훈련 화면(11/9) — 비서 탭 띠·케어 탭 띠에서 열림
   "guide-profile": "profile",
   health: "hospital", // 건강 체크(변·컨디션)는 병원 탭에서(사용자 요청 11/7)
   "health-stool": "hospital",
@@ -606,7 +606,7 @@ export default function App() {
   const inSubScreen = Boolean(PARENT_TAB[tab]);
   const pages = {
     // 메인은 채팅 상태가 유지되도록 다시 그리지 않는다. 나머지는 탭을 옮길 때마다 새로 그려 다른 탭에서 바뀐 내용이 반영되게 한다.
-    // 오늘 탭: 비서는 세부 화면(오늘 할 일 등)을 여는 동안에도 숨겨 둔 채 살려 둔다(3D·말로 기록 내용 유지)
+    // 비서 탭: 비서는 세부 화면(오늘 할 일 등)을 여는 동안에도 숨겨 둔 채 살려 둔다(3D·말로 기록 내용 유지)
     main: (
       <>
         {/* 세부 화면(오늘 할 일 등)은 오늘 화면 위에 겹쳐 그려서, 밀어서 뒤로 갈 때 아래에 오늘 화면이 보인다 */}
@@ -635,7 +635,7 @@ export default function App() {
           </div>
         ))}
       </div>
-      {/* 채팅 중(대화 스크롤)일 때만 빼고, 홈·나머지 화면은 맨 위에서 당기면 새로고침(11/18: 오늘 탭도 평소엔 되게) */}
+      {/* 채팅 중(대화 스크롤)일 때만 빼고, 홈·나머지 화면은 맨 위에서 당기면 새로고침(11/18: 비서 탭도 평소엔 되게) */}
       <WhatsNew />
       <StoreMove />
       <Toaster />

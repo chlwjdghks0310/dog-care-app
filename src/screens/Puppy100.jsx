@@ -11,7 +11,7 @@ import { md } from "../services/records";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 
 // 퍼피 100일 훈련 화면(계획표 11/9 2장 "품은 앱"): 오늘 과제 → 이번 주 → 14주 지도(잠그지 않음, 미리 보기) → 급한 고민 → 지난 발도장.
-// 오늘 탭 띠에서 열리고 오른쪽으로 밀면 오늘로. 데이터는 services/puppy100 그대로라 나중에 앱을 따로 떼도 이 화면이 첫 화면이 된다.
+// 비서 탭 띠에서 열리고 오른쪽으로 밀면 오늘로. 데이터는 services/puppy100 그대로라 나중에 앱을 따로 떼도 이 화면이 첫 화면이 된다.
 export default function Puppy100({ dog, onBack }) {
   const [, refresh] = useState(0);
   const [more, setMore] = useState(false); // 오늘 몫을 했어도 다음 과제를 막지 않는다(보강 조사 11/9)

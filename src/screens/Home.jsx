@@ -103,7 +103,7 @@ export default function Home({ dog, onBack, onOpenFeeding, onOpenAlarms, onOpenG
   );
 }
 
-// 오늘 하루 체크 결과 — 잘못 눌렀으면 [다시 고르기](체크와 체크로 만든 기록을 지우고 오늘 탭 말풍선이 다시 물어본다)
+// 오늘 하루 체크 결과 — 잘못 눌렀으면 [다시 고르기](체크와 체크로 만든 기록을 지우고 비서 탭 말풍선이 다시 물어본다)
 function DailyRow({ dog, dateKey, onBack, onOpenCharacter }) {
   const [day, setDay] = useState(() => getDay(dog.id, dateKey));
   if (!day || day.status === "unknown") return null;
@@ -115,7 +115,7 @@ function DailyRow({ dog, dateKey, onBack, onOpenCharacter }) {
         <span style={{ flex: 1, minWidth: 0 }}><b>오늘 하루 체크</b> · {text}</span>
         <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (clearDay(dog.id, dateKey), markCheckedIn(dog.id, null), syncPushAlarms(), setDay(null), toast("오늘 하루 체크를 지웠어요 · 다시 골라 주세요"), onBack?.())}>다시 고르기</button>
       </div>
-      {/* 11/18 사용자: 스탬프 노트는 오늘 탭 말풍선이 아니라 여기(케어)에 — 오늘 탭 강아지가 작아지지 않게 */}
+      {/* 11/18 사용자: 스탬프 노트는 비서 탭 말풍선이 아니라 여기(케어)에 — 비서 탭 강아지가 작아지지 않게 */}
       <WeekStamps dogId={dog.id} today={dateKey} />
       <StampRewards dogId={dog.id} today={dateKey} onOpenCharacter={onOpenCharacter} />
     </div>

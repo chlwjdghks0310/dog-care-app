@@ -48,7 +48,7 @@ export function weekDates(today = todayKey()) {
   return Array.from({ length: 7 }, (_, i) => toDateKey(addDays(mon, i)));
 }
 
-// 하루 체크 스탬프 노트(오늘 탭 말풍선 안): 이번 주 7칸, 찍은 날 발도장, 오늘은 쿵 찍히는 모션. 빠진 날은 그냥 빈 칸(벌점 없음)
+// 하루 체크 스탬프 노트(비서 탭 말풍선 안): 이번 주 7칸, 찍은 날 발도장, 오늘은 쿵 찍히는 모션. 빠진 날은 그냥 빈 칸(벌점 없음)
 export function WeekStamps({ dogId, today = todayKey() }) {
   const dates = weekDates(today);
   const stamped = (d) => { const v = getDay(dogId, d); return Boolean(v && v.status !== "unknown"); };

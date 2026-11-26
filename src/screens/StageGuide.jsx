@@ -170,7 +170,7 @@ function Block({ label, ico, tone, children }) {
   );
 }
 
-// 더 궁금한 건 ChatGPT로(오늘 탭 AskOutside와 같은 규칙: 이름은 안 넣고 견종·나이·몸무게·크기·시기만, 응급 단어면 병원 안내 먼저)
+// 더 궁금한 건 ChatGPT로(비서 탭 AskOutside와 같은 규칙: 이름은 안 넣고 견종·나이·몸무게·크기·시기만, 응급 단어면 병원 안내 먼저)
 function AskMore({ dog, st }) {
   const [q, setQ] = useState("");
   if (isNative()) return null; // 스토어 앱에서는 앱 밖으로 내보내는 버튼을 두지 않는다(애플 심사 4.2)

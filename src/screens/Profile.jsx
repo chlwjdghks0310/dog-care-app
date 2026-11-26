@@ -891,8 +891,8 @@ function GalleryStrip({ dog, onOpen }) {
   );
 }
 
-// 설정: 퍼피 100일 카드 켜고 끄기(오늘 탭 카드에서 숨겼을 때 다시 켜는 곳). 진행 기록은 지우지 않는다
+// 설정: 퍼피 100일 카드 켜고 끄기(비서 탭 카드에서 숨겼을 때 다시 켜는 곳). 진행 기록은 지우지 않는다
 function PuppyToggle({ dog }) {
   const [on, setOn] = useState(() => !getPuppyProgress(dog.id).hidden);
-  return <SettingsRow ico="paw" title="퍼피 100일 카드" sub="오늘 탭에 하루 5분 과제(1살 아래) · 꺼도 기록은 남아요" right={<input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked), toast(e.target.checked ? "퍼피 100일 카드를 켰어요" : "퍼피 100일 카드를 껐어요 · 기록은 남아요", { ico: "paw" }))} aria-label="퍼피 100일 카드" />} />;
+  return <SettingsRow ico="paw" title="퍼피 100일 카드" sub="비서 탭에 하루 5분 과제(1살 아래) · 꺼도 기록은 남아요" right={<input type="checkbox" role="switch" className="switch" checked={on} onChange={(e) => (setPuppyHidden(dog.id, !e.target.checked), setOn(e.target.checked), toast(e.target.checked ? "퍼피 100일 카드를 켰어요" : "퍼피 100일 카드를 껐어요 · 기록은 남아요", { ico: "paw" }))} aria-label="퍼피 100일 카드" />} />;
 }

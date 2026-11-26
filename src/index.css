@@ -1221,7 +1221,7 @@ input[type="checkbox"]:not(.switch):checked::after { transform: scale(1); }
 .ck-seg.on.lv2 { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
 
 
-/* 10초 하루 체크(오늘 탭): 평소와 같아요 한 번이면 끝 */
+/* 10초 하루 체크(비서 탭): 평소와 같아요 한 번이면 끝 */
 .dc-card { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); padding: 14px; margin-top: 10px; }
 .dc-q { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
 .dc-q b { font-size: 16px; }
@@ -1544,7 +1544,7 @@ button.seg, button.chip { min-height: 36px; }
 /* 진료실 [보여 주기]는 다크 모드에서도 흰 종이 — 안의 글자색 토큰을 밝은 모드 값으로 되돌린다(11/9: 흰 바탕에 연한 하늘색·회색 글자가 안 보이던 것) */
 :root[data-theme="dark"] .vet-show { color-scheme: light; --text: #1f2a37; --text-soft: #4a5a6b; --text-faint: #5f6b78; --accent: #4b90e2; --accent-strong: #255a9c; --accent-soft: #dde9fa; --border: #e4ebf3; --surface: #ffffff; --bg: #ffffff; --danger: #b04a3a; --warning: #8a5a00; color: var(--text); }
 
-/* 오늘 탭 칩 한 줄(11/9 6→4): 왼쪽 오늘 할 일, 오른쪽 외출. 44px 한 줄로 두 카드를 대신한다 */
+/* 비서 탭 칩 한 줄(11/9 6→4): 왼쪽 오늘 할 일, 오른쪽 외출. 44px 한 줄로 두 카드를 대신한다 */
 .home-chip { flex: 1; min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; box-shadow: var(--shadow); }
 .home-chip.on { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-strong); }
 .home-chip span[aria-hidden] { color: var(--text-soft); font-weight: 400; }

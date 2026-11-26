@@ -3,10 +3,10 @@ import { useEffect, useRef } from "react";
 import { DogIcon, NotebookPenIcon, PawPrintIcon, SproutIcon, StethoscopeIcon } from "@animateicons/react/lucide";
 
 export const TABS = [
-  // 방향 A(병원 수첩, 2026-11-07): 오늘 · 기록 · 병원 · 우리 아이
-  { key: "main", label: "오늘", Icon: DogIcon },
-  { key: "care", label: "케어", Icon: SproutIcon }, // 11/15 사용자 결정: 월령별 가이드·퍼피 100일·오늘 할 일을 한 탭으로(5탭). 새싹 = 시기에 맞춰 자라는 아이
+  // 11/26(사용자): '오늘' → '비서', 순서는 케어 · 기록 · 비서 · 병원 · 우리 아이 — 비서가 한가운데이자 앱을 열면 처음 보이는 화면(key는 그대로 main)
+  { key: "care", label: "케어", Icon: SproutIcon }, // 11/15: 월령별 가이드·퍼피 100일. 새싹 = 시기에 맞춰 자라는 아이
   { key: "records", label: "기록", Icon: NotebookPenIcon },
+  { key: "main", label: "비서", Icon: DogIcon },
   { key: "hospital", label: "병원", Icon: StethoscopeIcon },
   { key: "profile", label: "우리 아이", Icon: PawPrintIcon },
 ];

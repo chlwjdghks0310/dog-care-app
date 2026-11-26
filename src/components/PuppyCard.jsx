@@ -6,7 +6,7 @@ import { eligible, state, finishTest, retryWeek, passLine } from "../services/pu
 import { trackAct } from "../services/analytics";
 import { todayKey } from "../utils/date";
 
-// 오늘 탭 "오늘의 5분" 띠(퍼피 첫 100일). 홈에는 이 한 줄만 두고, 누르면 훈련 화면(screens/Puppy100)이 열린다(계획표 11/9 2장).
+// 비서 탭 "오늘의 5분" 띠(퍼피 첫 100일). 홈에는 이 한 줄만 두고, 누르면 훈련 화면(screens/Puppy100)이 열린다(계획표 11/9 2장).
 // 왜: 카드 한 장이 450~500px라 강아지가 줄고 입력창이 밀렸음. Zigzag·Pupford·Dogo도 홈엔 한 줄(Today's lessons 0/3·Continue Training·33%)만 둔다.
 export default function PuppyCard({ dog, onOpen }) {
   const today = todayKey();
