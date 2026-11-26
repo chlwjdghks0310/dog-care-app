@@ -175,7 +175,7 @@ export async function drawDiaryCard(dog, r, { story = false } = {}) {
   // 아이 한마디(숫자에 밑줄)
   const sayY = P.y + P.s + (story ? 44 : 50), sayPx = story ? 38 : 42;
   g.font = `${sayPx}px ${F.say}`; g.textBaseline = "alphabetic"; g.textAlign = "left";
-  const lines = g.measureText(d.award.line).width <= W - 90 ? [d.award.line] : d.award.line.split(/(?<=[.!?])\s+/).slice(0, 2); // 한 줄에 들어가면 한 줄로
+  const lines = g.measureText(d.award.line).width <= W - 90 ? [d.award.line] : (d.award.line.match(/[^.!?]+[.!?]*/g) || [d.award.line]).map((t) => t.trim()).filter(Boolean).slice(0, 2); // 한 줄에 들어가면 한 줄로(뒤돌아보기 정규식은 옛 사파리에서 앱 전체가 안 열려서 쓰지 않는다)
   lines.forEach((t, i) => {
     const y = sayY + i * sayPx * 0.92, m = t.match(/\d+(개월|번|개|일|분|줄)?/);
     const w = g.measureText(t).width; let x = W / 2 - w / 2;
