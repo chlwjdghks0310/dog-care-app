@@ -5,11 +5,11 @@ import Empty from "../components/Empty";
 import { buildMonthlyReport, addMonths, monthLabel, monthOf, monthDigest } from "../services/monthlyReport";
 import { canSeeMonthReport, isPlus, MONTH_REPORT_GATED } from "../services/plus";
 import { PAY_OPENS } from "../services/billing";
-import { fetchStatus, characterOutputs } from "../services/character";
+import { fetchStatus } from "../services/character";
 import { askAssistant } from "../services/aiClient";
 import { readJSON, writeJSON } from "../services/storage";
 import { md } from "../services/records";
-import { drawMonthCard } from "../services/shareCard";
+import { drawDiaryCard, monthCardData } from "../services/shareCard";
 import { toast } from "../services/toast";
 import { todayKey } from "../utils/date";
 import { josa } from "../utils/text";
@@ -186,30 +186,30 @@ function WeightCard({ r }) {
   );
 }
 
-// ⑤ 자랑 카드: 캐릭터(없으면 사진) + "11월의 여름이" + 좋은 것만. 건강 정보는 안 넣는다
+// ⑤ 자랑 카드(11/27 그림일기): 그림 + 이 달의 상장 + 아이 한마디 + 발도장 칸. 건강 정보는 안 넣는다
 function ShareCard({ dog, r }) {
-  const poster = characterOutputs(dog.id)?.poster || dog.photo || "/intro/img/dog-yeoreum-sit.png";
-  const [busy, setBusy] = useState(false);
-  const good = [r.walk.days ? `산책 ${r.walk.days}일` : "", r.checkDays.length ? `하루 체크 ${r.checkDays.length}일` : "", r.streaks ? `배지 ${r.streaks}개` : "", `기록 ${r.records}개`].filter(Boolean).slice(0, 3);
-  async function share() {
+  const d = useMemo(() => monthCardData(dog, r), [dog, r]);
+  const [busy, setBusy] = useState("");
+  async function share(story) {
     if (busy) return;
-    setBusy(true);
+    setBusy(story ? "story" : "feed");
     try {
-      const blob = await drawMonthCard(dog, r);
-      const file = new File([blob], `${dog.name}-${monthLabel(r.month)}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: `${monthLabel(r.month)}의 ${dog.name}` });
+      const blob = await drawDiaryCard(dog, r, { story });
+      const file = new File([blob], `${dog.name}-${monthLabel(r.month)}${story ? "-스토리" : ""}.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: d.title });
       else { const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(file), download: file.name }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
     } catch (e) { if (e.name !== "AbortError") toast("카드를 만들지 못했어요. 다시 시도해 주세요.", { ico: "alert" }); }
-    finally { setBusy(false); }
+    finally { setBusy(""); }
   }
   return (
     <div className="mr-share">
       <div className="mr-share-pv">
-        <img src={poster} alt="" />
-        <span><b>{monthLabel(r.month)}의 {dog.name}</b><small>{good.join(" · ")}</small><small className="faint">달력 + 세 줄 + 캐릭터 한 장</small></span>
+        <img src={d.image} alt="" />
+        <span><small className="mr-award">{monthLabel(r.month)}의 {d.award.name}</small><b>{d.award.line}</b></span>
       </div>
-      <button type="button" className="btn-primary" disabled={busy} onClick={share}><Ico name="camera" size={18} /> {busy ? "만드는 중…" : "이 달 카드로 자랑하기"}</button>
-      <p className="faint" style={{ margin: 0, fontSize: 12 }}>산책·하루 체크·배지·기록 수만 들어가요. 증상·병원·체중은 넣지 않아요.</p>
+      <button type="button" className="btn-primary" disabled={!!busy} onClick={() => share(false)}><Ico name="camera" size={18} /> {busy === "feed" ? "만드는 중…" : "이 달 카드로 자랑하기"}</button>
+      <button type="button" className="btn-ghost" disabled={!!busy} onClick={() => share(true)}>{busy === "story" ? "만드는 중…" : "스토리용 세로 카드"}</button>
+      <p className="faint" style={{ margin: 0, fontSize: 12 }}>상장은 누구나 달마다 하나씩 받아요. 산책·하루 체크·기록 수·함께한 날만 들어가고, 증상·병원·체중은 넣지 않아요.</p>
     </div>
   );
 }
