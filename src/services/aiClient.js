@@ -4,6 +4,8 @@ import { getCategories } from "./expenses";
 import { calculateAge, formatAge } from "../utils/age";
 import { sanitizeStructured, structureAnswer } from "../utils/aiAnswer";
 import { ensureAIConsent } from "./aiConsent";
+import { buildMemory } from "./assistantMemory";
+import { getStage } from "./stageGuide";
 import { trackHeaders } from "./analytics";
 import { toDateKey } from "../utils/date";
 
@@ -17,6 +19,16 @@ function safeSnapshot(dog) {
   } catch {
     return "";
   }
+}
+
+// "이갈이·탐색기(3~7개월) — 젖니가 빠지고…" 한 줄. 생일이 없으면 뺀다
+function stageLine(dog) {
+  try { if (!dog.birthDate) return undefined; const st = getStage(dog); return `${st.name}(${st.rangeLabel}) — ${st.tip}`; } catch { return undefined; }
+}
+
+// 오래 기억하는 기록(비서 질문에만 같이 보낸다) — 만들다 실패해도 질문은 가게
+function safeMemory(dog) {
+  try { return buildMemory(dog); } catch (e) { console.error("[aiClient] 기억 만들기 실패:", e?.message); return ""; }
 }
 
 function toDogContext(dog) {
@@ -34,6 +46,8 @@ function toDogContext(dog) {
     neutered: dog.neutered,
     food: dog.food,
     adoptionDate: dog.adoptionDate,
+    usual: dog.usual || undefined, // 평소 모습(하루 체크의 기준)
+    stage: stageLine(dog), // 지금 시기 — 비서가 월령 얘기를 가이드와 같은 기준으로 하게(11/26)
     weightHistory: getWeightRecords(dog.id)
       .slice(-6)
       .map((r) => `${r.measuredAt.slice(0, 10)} ${r.weightKg}kg`),
@@ -63,19 +77,19 @@ export async function recordFromText(dog, text, { signal } = {}) {
 }
 
 // 멍케어 비서(11/17): 질문에 우리 아이 기록을 아는 비서가 답한다. 무료는 두 칸(todo/vet), 플러스(MC-PLUS 코드)는 자세한 답(answer). 한도를 넘으면 status 429.
-export async function askAssistant(dog, text, { signal, detail = false, format } = {}) {
+export async function askAssistant(dog, text, { signal, detail = false, format, history, memory } = {}) {
   await ensureAIConsent();
   const { getCharacter } = await import("./character");
   const token = getCharacter(dog.id)?.token;
   const res = await fetch(`${API_BASE}/api/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...trackHeaders() },
-    body: JSON.stringify({ dogContext: toDogContext(dog), text, petId: dog.id, detail, ...(format && { format }), ...(token && { token }) }),
+    body: JSON.stringify({ dogContext: { ...toDogContext(dog), memory: safeMemory(dog) }, text, petId: dog.id, detail, ...(format && { format }), ...(token && { token }), ...(history?.length && { history }), ...(memory?.length && { memory }) }), // history: 이어 묻기(앞의 질문·답), memory: 지난 대화(참고)
     signal,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error((data.error || "비서가 답을 만들지 못했어요.") + (data.detail ? ` (원인: ${data.detail})` : "")), { status: res.status, tier: data.tier });
-  return { tier: data.tier === "plus" ? "plus" : "free", detail: Boolean(data.detail), answer: String(data.answer || ""), todo: String(data.todo || ""), vet: String(data.vet || ""), sections: data.sections || null, left: Number(data.left ?? 0), detailLeft: Number(data.detailLeft ?? 0) };
+  return { tier: data.tier === "plus" ? "plus" : "free", detail: Boolean(data.detail), answer: String(data.answer || ""), say: String(data.say || ""), next: Array.isArray(data.next) ? data.next.filter((q) => typeof q === "string").slice(0, 2) : [], follow: Boolean(data.follow), todo: String(data.todo || ""), vet: String(data.vet || ""), sections: data.sections || null, left: Number(data.left ?? 0), detailLeft: Number(data.detailLeft ?? 0) };
 }
 
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).

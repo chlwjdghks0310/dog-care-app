@@ -1832,6 +1832,11 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .asst-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; }
 .asst-row { display: grid; gap: 2px; font-size: 14px; line-height: 1.55; } .asst-row b { font-size: 13px; color: var(--accent-strong); }
 .asst-body { white-space: pre-line; font-size: 14px; line-height: 1.6; }
+/* 11/26 여름이 말투 답: 말풍선 글꼴로 두 마디 + 작은 안내 + 다음 질문 단추 */
+.asst-say { font-family: var(--font-bubble); font-size: 23px; line-height: 1.12; white-space: pre-line; }
+.asst-note, .asst-left { font-size: 11.5px; }
+.asst-next { display: flex; flex-wrap: wrap; gap: 6px; }
+.asst-next .summary-go { font-family: var(--font-bubble); font-size: 20px; border-radius: 999px; padding: 4px 12px; margin-top: 0; background: var(--surface); border: 1px solid var(--border); box-shadow: none; }
 .asst .link-btn { justify-self: start; font-size: 12.5px; }
 
 /* 멍케어 플러스·우리 아이 캐릭터 화면(11/18 다시 짬: 세로 한 줄, 스티커 아이콘 크게·기능마다 다르게) */

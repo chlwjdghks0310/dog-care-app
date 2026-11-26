@@ -265,6 +265,13 @@ function Form({ dog, type, initial, prefill, onSaved, onBack, onOpenFeeding, onS
         </>
       )}
 
+      {/* 변 체크·컨디션 체크에서 받은 AI 참고 설명(11/26): 기록에 같이 남아 있고, 여기서 읽거나 지울 수 있다 */}
+      {data.aiNote && (
+        <Field label="AI 참고 설명 (진단 아님)">
+          <p className="subtle" style={{ whiteSpace: "pre-wrap", margin: "0 0 6px", fontSize: 13.5, lineHeight: 1.55 }}>{data.aiNote}</p>
+          <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => set("aiNote")("")}>이 설명 지우기</button>
+        </Field>
+      )}
       <Field label="메모">
         <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="선택" maxLength={500} />
       </Field>

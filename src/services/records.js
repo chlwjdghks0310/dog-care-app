@@ -362,3 +362,6 @@ export function vitalDaily(entries, kind) {
   }
   return [...map.values()];
 }
+
+// AI 참고 설명(변 사진·영상 확인)을 기록에 같이 남길 때(11/26 "모든 기록이 기억되게"): 강조 표시를 떼고 1,200자까지. 진단이 아니라 참고 설명이다
+export const aiNoteOf = (text) => String(text || "").replace(/\*\*/g, "").trim().slice(0, 1200);

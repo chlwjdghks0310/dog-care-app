@@ -7,6 +7,7 @@ const firstCardId = (q) => findInfo(q).find((r) => r.type === "card")?.card.id;
 
 assert.ok(isEmergency("초콜릿 한 조각 먹었어"), "초콜릿 → 응급");
 assert.ok(isEmergency("경련해요"), "경련 → 응급");
+assert.ok(isEmergency("숨을 헐떡이고 잇몸이 파래") && isEmergency("혀가 파랗게 됐어"), "잇몸·혀 색 → 응급");
 assert.equal(firstCardId("아침에 노란 거품 토했어"), "vomit-diarrhea");
 assert.equal(firstCardId("사료 언제 바꿔?"), "food-switch");
 assert.equal(isEmergency("산책 20분 했어"), null);

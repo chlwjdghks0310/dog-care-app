@@ -21,6 +21,7 @@ import { GUIDEBOOK_CHAPTERS, GUIDEBOOK_URL } from "../data/guidebookChapters";
 import DogAvatarVideo from "../components/DogAvatarVideo";
 import ThinkingBubble from "../components/ThinkingBubble";
 import SpeechBubble from "../components/SpeechBubble";
+import { rememberChat, recentTalk } from "../services/chatMemory";
 import PuppyCard from "../components/PuppyCard";
 import DogReaction from "../components/DogReaction";
 import Ico from "../components/Ico";
@@ -131,6 +132,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   function goHome() {
     chatSessionRef.current += 1;
     abortRef.current?.abort();
+    threadRef.current = { turns: [] };
     setMessages([]);
     setVoiceError("");
     busyRef.current = false;
@@ -173,7 +175,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   function resolveConfirm(msgIndex, j, ok) {
     const action = messages[msgIndex]?.records?.confirm?.[j];
     if (!action || action.status) return;
-    const status = ok ? applyConfirmedAction(dog, action) || "이미 없거나 고칠 수 없는 기록이에요." : "취소했어요.";
+    const status = ok ? applyConfirmedAction(dog, action) || "이미 없거나 고칠 수 없는 기록이야." : "취소했어.";
     setMessages((list) =>
       list.map((m, i) =>
         i === msgIndex ? { ...m, records: { ...m.records, confirm: m.records.confirm.map((c, k) => (k === j ? { ...c, status } : c)) } } : m
@@ -185,7 +187,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   function resolveAsk(msgIndex, j, categoryId) {
     const ask = messages[msgIndex]?.records?.ask?.[j];
     if (!ask || ask.status) return;
-    const status = categoryId ? saveAskedExpense(dog, ask, categoryId) || "저장하지 못했어요." : "기록하지 않았어요.";
+    const status = categoryId ? saveAskedExpense(dog, ask, categoryId) || "저장하지 못했어." : "안 적었어.";
     if (categoryId) markFirstSteps(dog.id, { chat: true });
     setMessages((list) =>
       list.map((m, i) => (i === msgIndex ? { ...m, records: { ...m.records, ask: m.records.ask.map((c, k) => (k === j ? { ...c, status } : c)) } } : m))
@@ -207,8 +209,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
   // 질문으로 보이면: 응급 단어 → 응급 카드, 아니면 우리 자료(정보 카드·가이드북)에서 찾기. AI는 부르지 않는다.
   const infoMessage = (said) => {
     const hit = isEmergency(said);
-    return { role: "ai", kind: "info", said, emergency: hit ? EMERGENCY : null, situation: hit ? EMERGENCY.situations.find((x) => x.keywords.includes(hit))?.line : null, results: findInfo(said) };
+    // 이어 묻기(11/26): 같은 대화에서 앞의 질문·답 두 개까지를 같이 보낸다(질문 하나 + 이어 묻기 두 번). 세 번을 채우면 다음 질문부터 새 대화
+    const t = threadRef.current;
+    if (t.turns.length > 2) t.turns = [];
+    const history = hit ? [] : t.turns.slice();
+    return { role: "ai", kind: "info", said, history, memory: history.length ? [] : recentTalk(dog.id), emergency: hit ? EMERGENCY : null, situation: hit ? EMERGENCY.situations.find((x) => x.keywords.includes(hit))?.line : null, results: findInfo(said) };
   };
+  const threadRef = useRef({ turns: [] }); // 지금 대화에서 주고받은 [{ q, a }] — 화면을 떠나면 비운다(지난 대화는 chatMemory가 기억)
 
   // 보내기: 🎤 음성 인식이 끝나도 바로 이리로(듣는 동안 화면이 바뀌어도 최신 send를 쓰도록 ref로)
   const sendRef = useRef(null);
@@ -430,13 +437,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
                 </div>
               );
             }
-            if (m.kind === "info") return <InfoAnswer key={i} msg={m} dog={dog} />;
+            if (m.kind === "info") return <InfoAnswer key={i} msg={m} dog={dog} active={i === messages.length - 1 && !pending} onAsk={(q) => sendRef.current(q)} onAnswered={(turn) => threadRef.current.turns.push(turn)} />;
             if (m.kind === "more") return <div key={i} className="rec-card">{m.text}</div>;
             return (
               <div key={i} className="rec-card">
                 {m.records.done.length > 0 && (
                   <div className="rec-done">
-                    <strong><Ico name="note" size={15} /> 앱에 기록했어요</strong>
+                    <strong><Ico name="note" size={15} /> 적어 뒀어</strong>
                     {m.records.done.map((r) => (
                       <div key={r}>{r}</div>
                     ))}
@@ -481,13 +488,13 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
                     )}
                   </div>
                 ))}
-                {m.records.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>기록하지 못한 내용이 있어요. 조금 더 자세히 말해 주세요.</div>}
+                {m.records.failed > 0 && <div className="faint" style={{ marginTop: 6 }}>못 적은 게 있어. 조금만 더 자세히 말해 줘.</div>}
                 {m.undo && (
                   <button type="button" className="link-btn" style={{ margin: "4px 0 0" }} onClick={() => {
                     m.undo.recs.forEach((id) => deleteRecord(dog.id, id));
                     m.undo.weights.forEach((id) => deleteWeightRecord(dog.id, id));
                     syncPushAlarms();
-                    setMessages((list) => list.map((x, k) => (k === i ? { role: "ai", kind: "more", text: "되돌렸어요. 다시 말해 주세요!" } : x)));
+                    setMessages((list) => list.map((x, k) => (k === i ? { role: "ai", kind: "more", text: "되돌렸어. 다시 말해 줘!" } : x)));
                   }}>
                     <Ico name="arrowDown" size={14} /> 되돌리기
                   </button>
@@ -563,7 +570,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
 }
 
 // 질문에 대한 안내: 응급이면 응급 카드가 먼저, 그다음 우리 정보 카드·가이드북. 진단·판단 없이 일반 참고 + 병원 안내만.
-function InfoAnswer({ msg, dog }) {
+function InfoAnswer({ msg, dog, active, onAsk, onAnswered }) {
   const { emergency, situation, results, said } = msg;
   return (
     <div className="rec-card">
@@ -579,14 +586,14 @@ function InfoAnswer({ msg, dog }) {
           </div>
         </div>
       )}
-      {!emergency && said && <AssistantAnswer dog={dog} said={said} />}
+      {!emergency && said && <AssistantAnswer dog={dog} said={said} history={msg.history} memory={msg.memory} active={active} onAsk={onAsk} onAnswered={onAnswered} />}
       {!emergency && results.length > 0 && <p className="info-lead">멍케어 자료에서 관련 내용도 찾아봤어요.</p>}
       {results.map((r) =>
         r.type === "card" ? <InfoCard key={r.card.id} card={r.card} /> : <GuideLink key={r.chapter.chapter} chapter={r.chapter} />
       )}
-      {!emergency && !results.length && <p className="info-lead">아직 준비된 자료가 없어요. 걱정되면 동물병원에 물어보세요. 기록할 내용이었다면 "산책 30분 했어"처럼 말해 주세요.</p>}
+      {/* 11/26: 여름이가 답한 뒤에는 "준비된 자료가 없어요"와 아래 참고 문구를 되풀이하지 않는다(답 안에 "진단이 아니에요"가 있다) — 읽을 글을 줄인다 */}
       {said && <AskOutside dog={dog} question={said} urgent={Boolean(emergency)} />}
-      <p className="faint" style={{ margin: "8px 0 0", fontSize: 12 }}>일반적인 참고 정보예요. 우리 아이 상태는 동물병원에서 확인해 주세요.</p>
+      {(emergency || results.length > 0) && <p className="faint" style={{ margin: "8px 0 0", fontSize: 12 }}>일반적인 참고 정보예요. 우리 아이 상태는 동물병원에서 확인해 주세요.</p>}
     </div>
   );
 }
@@ -747,27 +754,42 @@ function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
   );
 }
 
-// 멍케어 비서(11/17 재도입 → 11/20 두 단계): 누구나 먼저 빠른 답 두 칸(지금 할 일 / 병원에 물어볼 것, Haiku). 플러스는 그 아래 [자세히 듣기](Sonnet, 하루 20번). 응급은 위 응급 카드가 대신한다.
-function AssistantAnswer({ dog, said }) {
-  const [res, setRes] = useState(null); // { tier, answer, todo, vet, left, detailLeft } | { error, status }
+// 멍케어 비서(11/17 재도입 → 11/20 두 단계 → 11/26 여름이 말투): 빠른 답은 강아지가 직접 말한다(말 · 병원 얘기, Haiku) + 다음 질문 단추(이어 묻기 두 번까지).
+// 플러스는 그 아래 [자세히 듣기](Sonnet 다섯 칸 — 설명이 길어 예전 말투 그대로, 하루 20번). 응급은 위 응급 카드가 대신한다.
+function AssistantAnswer({ dog, said, history, memory, active, onAsk, onAnswered }) {
+  const [res, setRes] = useState(null); // { tier, answer, say, vet, next, left, detailLeft } | { error, status }
   const [more, setMore] = useState(null); // 자세한 답 { answer, left } | { error } | "loading"
+  const answered = useRef(onAnswered); answered.current = onAnswered;
   useEffect(() => {
     const controller = new AbortController();
     setRes(null); setMore(null);
-    askAssistant(dog, said, { signal: controller.signal }).then(setRes).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
+    askAssistant(dog, said, { signal: controller.signal, history, memory }).then((r) => {
+      setRes(r);
+      const a = [r.say || r.todo, r.vet].filter(Boolean).join(" ") || r.answer;
+      rememberChat(dog.id, said, a); // 다음 질문 때 "지난 대화"로 참고 + 병원용 기록의 "최근 상담 질문"
+      answered.current?.({ q: said, a });
+    }).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
     return () => controller.abort();
-  }, [dog.id, said]);
+  }, [dog.id, said]); // eslint-disable-line react-hooks/exhaustive-deps -- history·memory는 질문을 보낼 때 정해진 값
   const saidRef = useRef(said);
   useEffect(() => { saidRef.current = said; }, [said]);
   const askMore = () => { const q = said; setMore("loading"); askAssistant(dog, q, { detail: true }).then((a) => saidRef.current === q && setMore(a)).catch((e) => saidRef.current === q && setMore({ error: e.message })); }; // 그사이 질문이 바뀌면 버림
   const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
-  if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name} 기록을 보고 생각하는 중…</p>;
+  if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name}가 기록을 떠올리는 중…</p>;
   if (res.error) return <p className="info-lead">{res.error}</p>;
   const plus = res.tier === "plus";
   return (
     <div className="asst">
-      <div className="asst-head"><span className="chip">{plus ? "플러스 비서" : "멍케어 비서"}</span><span className="faint">오늘 {Math.max(0, res.left)}번 더 물어볼 수 있어요</span></div>
-      {res.todo || res.vet ? (
+      {res.say ? (
+        <>
+          <div className="asst-say pop-in">{res.say}</div>
+          {res.vet && <div className="asst-say">{res.vet}</div>}
+          <span className="faint asst-note">진단이 아니에요 · 걱정되면 동물병원에 물어보세요</span>
+          {active && res.next.length > 0 && (
+            <div className="asst-next">{res.next.map((q) => <button key={q} type="button" className="summary-go" onClick={() => onAsk?.(q)}>{q}</button>)}</div>
+          )}
+        </>
+      ) : res.todo || res.vet ? (
         <>
           <div className="asst-row"><b>지금 할 일</b><div>{res.todo}</div></div>
           <div className="asst-row"><b>병원에 물어볼 것</b><div>{res.vet}</div></div>
@@ -775,6 +797,7 @@ function AssistantAnswer({ dog, said }) {
       ) : (
         <div className="asst-body">{res.answer}</div>
       )}
+      {!res.follow && <span className="faint asst-left">오늘 새 질문 {Math.max(0, res.left)}번 더 · 이어서 묻는 건 두 번까지 세지 않아요</span>}
       {!plus && <button type="button" className="link-btn" onClick={openPlus}>더 자세한 답은 멍케어 플러스에서</button>}
       {plus && !more && (res.detailLeft > 0 ? <button type="button" className="btn-ghost small asst-more" onClick={askMore}><Ico name="chatHeart" size={15} /> 자세히 듣기 <span className="faint">· 오늘 {res.detailLeft}번 남음</span></button> : <span className="faint">오늘 자세한 답 횟수를 다 썼어요. 빠른 답은 계속 들을 수 있어요.</span>)}
       {more === "loading" && <p className="faint" style={{ margin: 0 }}><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={14} /></span>기록을 읽고 자세히 적는 중이에요…</p>}

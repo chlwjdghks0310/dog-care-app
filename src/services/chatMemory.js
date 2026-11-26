@@ -12,7 +12,8 @@ export function getChatMemory(dogId) {
 
 export function rememberChat(dogId, question, answer) {
   const all = readJSON(KEY, {});
-  all[dogId] = [...(all[dogId] || []), { role: "user", text: question }, { role: "ai", text: answer }].slice(-MAX);
+  const at = new Date().toISOString();
+  all[dogId] = [...(all[dogId] || []), { role: "user", text: question, at }, { role: "ai", text: answer, at }].slice(-MAX);
   writeJSON(KEY, all);
 }
 
@@ -25,4 +26,17 @@ export function noteChatResult(dogId, note) {
   if (last < 0) return;
   list[last] = { ...list[last], text: `${list[last].text}\n[앱 처리 결과] ${note}` };
   writeJSON(KEY, all);
+}
+
+// 지난 대화(11/26 비서 재개편): 최근 며칠 안에 물었던 것과 답을 [{ q, a }]로 — 비서가 새 질문에 참고만 하게 같이 보낸다. 화면에는 보여 주지 않는다.
+export function recentTalk(dogId, { days = 14, max = 3 } = {}, now = Date.now()) {
+  const list = getChatMemory(dogId);
+  const out = [];
+  for (let i = 0; i + 1 < list.length; i++) {
+    const [u, a] = [list[i], list[i + 1]];
+    if (u.role !== "user" || a.role !== "ai" || !u.at || now - new Date(u.at).getTime() > days * 86400000) continue;
+    out.push({ q: u.text, a: a.text });
+    i++;
+  }
+  return out.slice(-max);
 }

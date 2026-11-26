@@ -16,6 +16,7 @@ import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 import { mountCharacter } from "./character.js";
 import { usdOf } from "./prices.js";
+import { splitDog, turnsOf } from "./askParse.js";
 import { mountBilling } from "./billing.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
@@ -271,7 +272,7 @@ function buildSystemPrompt(dogContext) {
 
 // 강아지 정보·앱 기록 — 사람마다, 기록할 때마다 바뀌는 부분(프롬프트 캐싱에선 늘 맨 뒤에 둔다)
 function dogInfo(dogContext) {
-  const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory, appData } = dogContext || {};
+  const { name, breed, gender, weight, ageLabel, allergies, notes, birthDate, neutered, food, adoptionDate, weightHistory, appData, memory, stage, usual } = dogContext || {};
   const genderLabel = gender === "male" ? "수컷" : gender === "female" ? "암컷" : gender;
   const appearance = getBreedAppearance(breed);
   const lines = [
@@ -289,6 +290,8 @@ function dogInfo(dogContext) {
     adoptionDate ? `입양일: ${adoptionDate}` : null,
     allergies ? `알레르기: ${allergies}` : null,
     notes ? `특이사항: ${notes}` : null,
+    typeof usual === "string" && usual.trim() ? `평소 모습(보호자가 적음): ${usual.trim().slice(0, 200)}` : null,
+    typeof stage === "string" && stage.trim() ? `지금 시기(월령별 가이드): ${stage.trim().slice(0, 200)}` : null,
     Array.isArray(weightHistory) && weightHistory.length > 1 ? `최근 체중 기록(오래된→최근): ${weightHistory.join(", ")}` : null,
     appearance.brachycephalic ? "참고: 단두종(코가 짧은 견종)으로 호흡기 이슈에 취약할 수 있음" : null,
     appearance.sizeCategory === "large" ? "참고: 대형견으로 관절(고관절/팔꿈치) 이슈에 취약할 수 있음" : null,
@@ -298,6 +301,10 @@ function dogInfo(dogContext) {
           "보호자가 이 앱(멍케어)에 기록한 내용 — 체크리스트·일정표·가계부·알람·체중 관리. 보호자가 일정·지출·할 일·체중 등을 물으면 이 기록을 근거로 정확한 날짜·금액·항목을 들어 답한다(계산이 필요하면 직접 계산). 여기에 없는 내용은 기록이 없다고 말하고 지어내지 않는다. 건강 답변에도 관련 기록(최근 체중 변화, 밀린 할 일 등)이 있으면 자연스럽게 반영한다:",
           appData.slice(0, 8000),
         ].join("\n")
+      : null,
+    // 11/26: 비서 질문에만 오는 "오래 기억하는 기록"(앱 assistantMemory.js — 90일 전부, 진료·증상·약은 1년, 체중 전체). 위 요약과 겹치는 최근 기록이 있어도 괜찮다
+    typeof memory === "string" && memory.trim()
+      ? ["", "더 오래된 기록까지(보호자가 적은 사실 그대로 — 진단이 아니다. 진료 기록의 소견·처방은 수의사가 한 말을 보호자가 옮겨 적은 것):", memory.slice(0, 16000)].join("\n")
       : null,
   ].filter(Boolean);
   return lines.join("\n");
@@ -790,11 +797,27 @@ const ASK_DETAIL_LIMIT = 20; // 11/20 사용자: [자세히](Sonnet)는 플러�
 const ASK_GLOBAL_LIMIT = 3000; // 하루 전체(비용 안전장치)
 const askUsed = new Map(); // `${day}|${petId}` → n, `${day}|*` → 전체
 const askCount = (petId) => { const d = kstDay(); const k = `${d}|${petId}`; const g = `${d}|*`; return { k, g, n: askUsed.get(k) || 0, all: askUsed.get(g) || 0 }; };
-const ASK_RULES_FREE = `너는 강아지 돌봄 앱 "멍케어"의 비서다. 아래 "강아지 정보"의 기록을 아는 상태에서 보호자의 질문에 아주 짧게 답한다.
-반드시 아래 두 줄 형식으로만 답한다(다른 말 금지, 각 줄 2문장 이내, 전체 4줄 이내):
-지금 할 일: (집에서 지금 해 볼 것 — 기록에 근거가 있으면 한 번 언급. 예: "어제 체중이 2.4kg로 늘었으니…")
-병원에 물어볼 것: (병원에 가면 이렇게 말하라는 한 문장. 병원 갈 필요가 없어 보이면 "지금은 지켜봐도 돼요. ~하면 병원에 물어보세요")
-규칙: 진단을 단정하지 않는다(병 이름을 "~일 수 있어요"로 하나만). 약 이름·용량·횟수는 절대 말하지 않는다(그건 "병원에 물어볼 것"으로). 호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함 같은 응급 신호면 첫 줄을 "지금 할 일: 지금 바로 동물병원(야간이면 24시 병원)으로 가세요."로 쓴다. 해요체, 이모지 없음.`;
+// 11/26(사용자 결정): 빠른 답은 강아지 본인이 보호자에게 직접 말한다(반말·담백). 지키는 선은 그대로 — 병 이름 단정 ✗, 약 용량 ✗, 응급이면 병원 먼저.
+// 규칙 글에는 강아지 이름을 넣지 않는다(모든 강아지가 같은 글 → 캐시가 걸린다). 이름·기록은 아래 dogInfo에 있다.
+const ASK_RULES_DOG = `너는 아래 "강아지 정보"에 나오는 그 강아지 본인이다. 너를 키우는 보호자가 너에 대해 묻는다. "강아지 정보"는 보호자가 멍케어 앱에 적어 둔 네 기록이다. 그 기록을 아는 상태에서, 네가 직접 보호자에게 말하듯 아주 짧게 답한다.
+반드시 아래 세 줄 형식으로만 답한다(줄 머리말 "말:", "병원:", "다음 질문:"을 그대로 쓰고, 다른 말은 쓰지 않는다):
+말: (질문에 대한 답. 기록에 관련된 일이 있으면 한 가지만 짚고, 집에서 지금 해 줄 것을 말한다. 딱 두 문장, 합쳐서 80자 안팎. 예: "나 11/24에 사료 바꾸고 이틀째 남겼잖아. 예전 사료를 조금 섞어 줘.")
+병원: (병원에 가야 하는 때를 한 문장으로. 필요하면 가서 뭐라고 말하면 되는지 한 문장 더. 예: "이틀 더 이러면 병원에 데려가 줘.")
+다음 질문: (보호자가 너에게 이어서 물을 만한 짧은 질문 2개를 " | "로 나눠 쓴다. 각 15자 이내. 예: "변은 괜찮아? | 병원 가야 해?")
+말투: 반말로 담백하게, 너 자신은 "나"라고 한다. 귀여운 척·의성어·이모지·감탄사 남발은 하지 않는다. 보호자를 "엄마", "아빠", "주인"이라고 부르지 않는다.
+규칙:
+- 짧게. "말:"은 두 문장, "병원:"은 한두 문장을 넘기지 않는다. 같은 말을 두 줄에 되풀이하지 않는다.
+- 병 이름을 말하지 않는다. 보호자가 "이거 ○○야?"처럼 병 이름을 물어도 맞다·아니다·그럴 수도 있다고 하지 말고 "그건 병원에서 봐야 알 수 있어."라고 한 뒤, 기록에 보이는 사실과 지금 해 줄 것만 말한다.
+- 약 이름·용량·횟수는 절대 말하지 않는다. 약 얘기는 "병원:" 줄에서 병원에 물어보라고만 한다. 사람 약은 먹이면 안 된다고만 말한다.
+- 기록에 없는 일을 지어내지 않는다("배변 훈련 중", "털갈이 중"처럼 기록에 없는 상태를 말하지 않는다). 날짜와 숫자는 "강아지 정보"에 적힌 것만 쓴다. 먹는 양·칼로리·물 양·시간·횟수 같은 기준 숫자가 적혀 있지 않으면 숫자 없이 방향만 말한다("조금만", "짧게 여러 번", "오래 두지 말고"). "강아지 정보"에 "지금 시기"가 있으면 그 설명을 따른다.
+- "체크리스트", "이번 주 핵심", "다가오는 관리" 같은 기록 속 목록 이름은 입 밖에 내지 않는다(내용만 쓴다).
+- 수의사가 했다고 기록에 적힌 말은 "병원에서 ~라고 했잖아"처럼 그대로 전해도 된다. 네가 진단하지는 않는다.
+- 병원 얘기를 억지로 만들지 않는다. 건강과 상관없는 질문(일정·돈·기록 확인·훈련·생활)이고 걱정할 일이 없으면 "병원:" 줄은 머리말만 쓰고 비워 둔다("없음"이라고 쓰지 않는다).
+- "다음 질문"은 보호자가 너에게 묻는 말이다. 네가 보호자에게 묻는 말("토했어?", "먹였어?")을 쓰지 않는다.
+- 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 "말:" 줄을 "지금 바로 동물병원에 데려가 줘. 밤이면 24시 병원으로."로 쓴다.
+- 이어지는 대화면 앞에서 한 말을 되풀이하지 말고 새 질문에만 답한다. "지난 대화"는 참고만 한다.
+- 강아지 돌봄과 상관없는 질문이면 "말:" 줄에 "그건 내가 잘 몰라. 나에 대한 건 뭐든 물어봐."라고만 쓰고 나머지 두 줄은 비운다.`;
+const ASK_FOLLOW_PER_QUESTION = 2; // 질문 하나에 이어 묻기 두 번까지(하루 질문 횟수에는 세지 않는다 — 한 번 ≈ ₩0.6)
 const ASK_RULES_PLUS = `너는 강아지 돌봄 앱 "멍케어"의 플러스 비서다. 아래 "강아지 정보"의 기록(체중·접종·약·최근 하루 체크)을 아는 상태에서 보호자의 질문에 친절하고 구체적으로 답한다.
 반드시 아래 다섯 칸 형식 그대로 답한다(칸 제목은 바꾸지 않고, 칸마다 줄을 바꾼다. 다른 말·인사·마크다운 금지):
 결론: (한 문장. 지금 상황을 한 줄로)
@@ -842,26 +865,32 @@ app.post("/api/ask", async (req, res) => {
   if (detail && !plus) return res.status(403).json({ error: "자세한 답은 멍케어 플러스에서 들을 수 있어요.", tier, left: 0 });
   const { k, g, n, all } = askCount(pet);
   const dk = `${k}|detail`; const dn = askUsed.get(dk) || 0;
+  // 이어 묻기(빠른 답만): 앞의 질문·답을 대화로 같이 보낸다. 하루 질문 횟수는 줄지 않지만 따로 상한(질문 횟수 × 2)을 둔다
+  const history = detail ? [] : turnsOf(req.body?.history, ASK_FOLLOW_PER_QUESTION, 600, 600);
+  const follow = history.length > 0;
+  const fk = `${k}|follow`; const fn = askUsed.get(fk) || 0;
+  const memory = detail ? [] : turnsOf(req.body?.memory, 3, 120, 240); // 지난 대화(다른 날 물었던 것) — 참고용
   if (all >= ASK_GLOBAL_LIMIT) return res.status(429).json({ error: "오늘은 비서가 쉬어야 해요. 내일 다시 물어봐 주세요.", tier, left: 0 });
   if (detail && dn >= ASK_DETAIL_LIMIT) return res.status(429).json({ error: `오늘 자세한 답 횟수(${ASK_DETAIL_LIMIT}번)를 다 썼어요. 빠른 답은 계속 들을 수 있어요.`, tier, left: 0, detail: true });
-  if (!detail && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 비서 횟수(${ASK_LIMIT.plus}번)를 다 썼어요. 내일 다시 물어봐 주세요.` : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
+  if (follow && fn >= ASK_LIMIT[tier] * ASK_FOLLOW_PER_QUESTION) return res.status(429).json({ error: "오늘은 이어서 묻기를 다 썼어. 내일 다시 물어봐 줘.", tier, left: Math.max(0, ASK_LIMIT[tier] - n) });
+  if (!detail && !follow && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 비서 횟수(${ASK_LIMIT.plus}번)를 다 썼어요. 내일 다시 물어봐 주세요.` : "오늘 무료 비서 횟수(5번)를 다 썼어요. 내일 다시 물어보거나, 아래 ChatGPT로 물어볼 수 있어요.", tier, left: 0 });
   try {
     const response = await createMsg({
       ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩0.6)
-      max_tokens: detail ? 1200 : 300,
+      max_tokens: detail ? 1200 : 400,
       // Sonnet 5.5는 thinking "disabled"를 거절(400) → Sonnet엔 생략, Haiku만 끈다(11/20)
       ...(detail ? {} : { thinking: { type: "disabled" } }),
       output_config: { effort: detail ? "medium" : "low" },
-      system: [{ type: "text", text: para ? ASK_RULES_PARA : detail ? ASK_RULES_PLUS : ASK_RULES_FREE, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) }],
-      messages: [{ role: "user", content: q }],
+      system: [{ type: "text", text: para ? ASK_RULES_PARA : detail ? ASK_RULES_PLUS : ASK_RULES_DOG, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) + (memory.length ? `\n\n지난 대화(예전에 보호자가 물었던 것과 네가 한 답 — 참고만):\n${memory.map((t) => `- 보호자: ${t.q}\n  나: ${t.a}`).join("\n")}` : "") }],
+      messages: [...history.flatMap((t) => [{ role: "user", content: t.q }, { role: "assistant", content: t.a }]), { role: "user", content: q }],
     });
     logCache(response);
-    if (detail) askUsed.set(dk, dn + 1); else askUsed.set(k, n + 1);
+    if (detail) askUsed.set(dk, dn + 1); else if (follow) askUsed.set(fk, fn + 1); else askUsed.set(k, n + 1);
     askUsed.set(g, all + 1);
     const answer = claudeText(response).trim();
-    const todo = answer.match(/지금 할 일:\s*([\s\S]*?)(?=\n병원에 물어볼 것:|$)/)?.[1]?.trim() || "";
-    const vet = answer.match(/병원에 물어볼 것:\s*([\s\S]*)$/)?.[1]?.trim() || "";
-    res.json({ tier, detail, answer, todo, vet, ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - 1, detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
+    // 빠른 답: say(여름이의 말)·vet(병원 얘기)·next(다음 질문 단추). todo에도 say를 넣어 둔다 — 아직 옛 화면을 쓰는 폰은 todo·vet 두 칸을 그리기 때문
+    const dog = detail ? null : splitDog(answer);
+    res.json({ tier, detail, answer, ...(dog ? { say: dog.say, todo: dog.say, vet: dog.vet, next: follow && history.length >= ASK_FOLLOW_PER_QUESTION ? [] : dog.next, follow } : { todo: "", vet: "" }), ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - (follow ? 0 : 1), detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
   } catch (err) {
     console.error("[server] ask error:", err.status, err.message);
     res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });
@@ -876,7 +905,7 @@ const RECORD_RULES = `너는 강아지 돌봄 앱 "멍케어"의 기록 도우�
 - 말한 것만으로 기록할 수 있으면 바로 기록한다. 모르는 칸은 비워 두고 아는 것만 적는다(예: "아침 사료 다 먹었어" → 식사 기록 appetite 평소, "사료 3만 원 샀어" → 지출 3만 원·분류 사료).
 - 꼭 필요한 값(지출 금액, 체중 숫자 등)이 없을 때만 도구를 부르지 말고, 무엇을 알려 주면 되는지 한 문장으로 되묻는다(예: "얼마 썼는지 알려 주면 바로 적어 둘게!").
 - 시각(time)은 보호자가 "8시", "3시 반"처럼 시각을 말했을 때만 적는다. "아침·저녁"만 말하면 비워 둔다.
-- 답은 항상 한국어로, 기록했으면 따로 말하지 않아도 된다.
+- 답은 항상 한국어 반말로(강아지가 보호자에게 말하듯 담백하게), 기록했으면 따로 말하지 않아도 된다.
 - 기록이 아니라 질문·고민·잡담이면 도구를 부르지 말고 QUESTION 한 단어만 답한다. 건강 질문에 답하거나 조언·진단하지 않는다.`;
 app.post("/api/record", async (req, res) => {
   const { dogContext, text, categories } = req.body || {};

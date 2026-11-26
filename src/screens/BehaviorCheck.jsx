@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useAnalysisTimer, AnalysisTimeInfo } from "../components/AnalysisTimer";
 import { renderEmphasized } from "../components/RichText";
 import Ico from "../components/Ico";
@@ -7,7 +7,7 @@ import AskBox from "../components/AskBox";
 import { ConditionCheck } from "../components/HealthChecks";
 import { analyzeBehavior } from "../services/aiClient";
 import { conditionFlags } from "../services/healthRules";
-import { getRecords, localNow, newRecordId, saveRecord, validateRecord } from "../services/records";
+import { getRecords, localNow, newRecordId, saveRecord, validateRecord, aiNoteOf } from "../services/records";
 
 const MAX_SIZE_MB = 500;
 
@@ -24,9 +24,11 @@ export default function BehaviorCheck({ dog, onBack }) {
   const flags = conditionFlags(check, others, at.slice(0, 10));
   const edit = (fn) => (v) => (fn(v), setSaved(false));
 
-  function save() {
+  // note: AI 영상 설명이 막 도착했을 때 그 글. 설명은 같은 기록에 aiNote로 같이 남는다(영상 파일은 저장하지 않는다, 11/26)
+  function save(note) {
     setSaveError("");
-    const rec = { id, type: "condition", at, data: { check, ...(videoTaken && { videoTaken }), ...(flags.length && { flags }) }, memo: memo.trim(), photos: [] };
+    const aiNote = aiNoteOf(typeof note === "string" ? note : resultRef.current);
+    const rec = { id, type: "condition", at, data: { check, ...(videoTaken && { videoTaken }), ...(flags.length && { flags }), ...(aiNote && { aiNote }) }, memo: memo.trim(), photos: [] };
     const problem = validateRecord(rec);
     if (problem) return setSaveError(problem === "적은 내용이 없어요." ? "한 가지 이상 골라 주세요." : problem);
     try {
@@ -44,12 +46,14 @@ export default function BehaviorCheck({ dog, onBack }) {
     setVideoTaken(false);
     setMemo("");
     setSaved(false);
+    setResult(null); // 새 기록에 앞 기록의 AI 설명이 딸려 가지 않게
   }
 
   const [file, setFile] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState(null);
+  const resultRef = useRef(null); resultRef.current = result; // save()가 위에 있어 최신 결과를 ref로 읽는다
   const [error, setError] = useState("");
   const [question, setQuestion] = useState("");
   const timer = useAnalysisTimer("dogcare-timing-video-v1", [35, 60]);
@@ -77,6 +81,7 @@ export default function BehaviorCheck({ dog, onBack }) {
     try {
       const { answer } = await analyzeBehavior(dog, file, undefined, "vet", { question: question.trim() });
       setResult(answer);
+      save(answer); // 설명 글을 이 기록에 바로 남긴다 — 여름이가 다음 질문부터 기억한다
       timer.stop(true);
     } catch (err) {
       timer.stop(false);
@@ -120,14 +125,14 @@ export default function BehaviorCheck({ dog, onBack }) {
             <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={reset}>새로 체크하기</button>
           </div>
         ) : (
-          <button type="button" className="btn-primary" onClick={save}>기록 저장</button>
+          <button type="button" className="btn-primary" onClick={() => save()}>기록 저장</button>
         )}
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="h2"><Ico name="scan" size={18} /> AI로 영상 보기 (선택 · 하루 2번)</div>
         <p className="faint" style={{ marginTop: 0 }}>
-          영상 속 자세·걸음걸이·호흡을 AI가 참고용으로 설명해 줘요. 영상은 서버를 거쳐 Google Gemini API로 전송되고, 결과는 저장되지 않아요.
+          영상 속 자세·걸음걸이·호흡을 AI가 참고용으로 설명해 줘요. 영상은 서버를 거쳐 Google Gemini API로 전송되고, 영상은 저장하지 않고 설명 글만 이 기록에 같이 남아요.
         </p>
         {videoUrl ? (
           <video src={videoUrl} controls style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />
@@ -171,7 +176,7 @@ export default function BehaviorCheck({ dog, onBack }) {
           <div className="h2"><Ico name="scan" size={18} /> 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
           <div className="leave-note" style={{ marginTop: 12 }}>
-            <Ico name="alert" size={15} /> 이 화면을 나가면 AI 결과가 지워져요. 남겨 두려면 화면을 캡처해 주세요.
+            <Ico name="note" size={15} /> {saved ? "이 설명을 컨디션 기록에 같이 남겼어요. 기록 탭에서 다시 볼 수 있어요." : "위에서 [기록 저장]을 누르면 이 설명도 같이 남아요."}
           </div>
         </div>
       )}

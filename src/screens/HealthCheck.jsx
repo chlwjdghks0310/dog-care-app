@@ -8,7 +8,7 @@ import { StoolCheck } from "../components/HealthChecks";
 import { analyzePhoto } from "../services/aiClient";
 import { stoolFlags } from "../services/healthRules";
 import { resizeImageFile } from "../utils/image";
-import { getRecords, localNow, newRecordId, saveRecord, validateRecord } from "../services/records";
+import { getRecords, localNow, newRecordId, saveRecord, validateRecord, aiNoteOf } from "../services/records";
 
 // 변 체크 — 보호자가 모양·색·보이는 것을 직접 골라 배변 기록으로 저장(기본). AI 자세히 보기는 선택(하루 2번, 참고).
 export default function HealthCheck({ dog, onBack }) {
@@ -41,9 +41,11 @@ export default function HealthCheck({ dog, onBack }) {
     setPreviewUrl(URL.createObjectURL(f));
   }
 
-  async function save() {
+  // note: AI 설명이 막 도착했을 때 그 글(상태가 아직 안 바뀌어 직접 넘긴다). AI 참고 설명은 같은 기록에 aiNote로 같이 남는다(11/26)
+  async function save(note) {
     setSaveError("");
-    const clean = Object.fromEntries(Object.entries({ ...data, flags }).filter(([, v]) => (Array.isArray(v) ? v.length : v != null && v !== "")));
+    const aiNote = aiNoteOf(typeof note === "string" ? note : result);
+    const clean = Object.fromEntries(Object.entries({ ...data, flags, ...(aiNote && { aiNote }) }).filter(([, v]) => (Array.isArray(v) ? v.length : v != null && v !== "")));
     let photos = [];
     try {
       if (file) photos = [await resizeImageFile(file, 720, 0.8)];
@@ -83,6 +85,7 @@ export default function HealthCheck({ dog, onBack }) {
       const answer = await analyzePhoto(dog, file, question.trim());
       setResult(answer);
       timer.stop(true);
+      save(answer); // 설명을 이 기록에 바로 남긴다 — 여름이가 다음 질문부터 기억한다
     } catch (err) {
       timer.stop(false);
       // 서버의 하루 횟수 제한(429) 문구도 그대로 보여 준다
@@ -128,14 +131,14 @@ export default function HealthCheck({ dog, onBack }) {
             <button type="button" className="btn-ghost" style={{ width: "100%" }} onClick={reset}>새로 체크하기</button>
           </div>
         ) : (
-          <button type="button" className="btn-primary" onClick={save}>기록 저장</button>
+          <button type="button" className="btn-primary" onClick={() => save()}>기록 저장</button>
         )}
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="h2"><Ico name="scan" size={18} /> AI로 자세히 보기 (선택 · 하루 2번)</div>
         <p className="faint" style={{ marginTop: 0 }}>
-          위에 넣은 사진을 AI가 대변 점수표 같은 자료를 바탕으로 참고용으로 설명해 줘요. 결과는 저장되지 않아요.
+          위에 넣은 사진을 AI가 대변 점수표 같은 자료를 바탕으로 참고용으로 설명해 줘요. 설명은 이 기록에 같이 남아요.
         </p>
         <AskBox value={question} onChange={setQuestion} examples={["언제부터 지켜봐야 해?", "사료를 바꿔야 할까?", "어제보다 묽어졌어", "병원 가기 전에 뭘 확인해?"]} />
         <button className="btn-ghost" style={{ width: "100%" }} onClick={handleSubmit} disabled={!file || pending}>
@@ -155,7 +158,7 @@ export default function HealthCheck({ dog, onBack }) {
           <div className="h2"><Ico name="scan" size={18} /> 참고 분석 (진단 아님)</div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>{renderEmphasized(result)}</p>
           <div className="leave-note" style={{ marginTop: 12 }}>
-            <Ico name="alert" size={15} /> 이 화면을 나가면 AI 결과가 지워져요. 남겨 두려면 화면을 캡처해 주세요.
+            <Ico name="note" size={15} /> {saved ? "이 설명을 배변 기록에 같이 남겼어요. 기록 탭에서 다시 볼 수 있어요." : "위에서 [기록 저장]을 누르면 이 설명도 같이 남아요."}
           </div>
         </div>
       )}
