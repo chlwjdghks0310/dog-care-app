@@ -16,7 +16,7 @@ import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 import { mountCharacter } from "./character.js";
 import { usdOf } from "./prices.js";
-import { splitDog, turnsOf, strayNumbers, strayDates } from "./askParse.js";
+import { splitDog, turnsOf, strayNumbers, strayDates, fillNext } from "./askParse.js";
 import { mountBilling } from "./billing.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
@@ -907,7 +907,7 @@ app.post("/api/ask", async (req, res) => {
     }
     // 빠른 답: say(여름이의 말)·vet(병원 얘기)·next(다음 질문 단추). todo에도 say를 넣어 둔다 — 아직 옛 화면을 쓰는 폰은 todo·vet 두 칸을 그리기 때문
     const dog = detail ? null : splitDog(answer);
-    res.json({ tier, detail, answer, ...(dog ? { say: dog.say, todo: dog.say, vet: dog.vet, next: follow && history.length >= ASK_FOLLOW_PER_QUESTION ? [] : dog.next, follow } : { todo: "", vet: "" }), ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - (follow ? 0 : 1), detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
+    res.json({ tier, detail, answer, ...(dog ? { say: dog.say, todo: dog.say, vet: dog.vet, next: follow && history.length >= ASK_FOLLOW_PER_QUESTION ? [] : /그건 내가 잘 몰라/.test(dog.say) ? [] : fillNext(dog.next, { question: q, say: dog.say }), follow } : { todo: "", vet: "" }), ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - (follow ? 0 : 1), detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
   } catch (err) {
     console.error("[server] ask error:", err.status, err.message);
     res.status(502).json({ error: "비서가 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.", tier, detail: `${err.status || ""} ${String(err.message || "").slice(0, 140)}`.trim() });

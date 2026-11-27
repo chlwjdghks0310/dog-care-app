@@ -209,6 +209,7 @@ function ShareCard({ dog, r }) {
       </div>
       <button type="button" className="btn-primary" disabled={!!busy} onClick={() => share(false)}><Ico name="camera" size={18} /> {busy === "feed" ? "만드는 중…" : "이 달 카드로 자랑하기"}</button>
       <button type="button" className="btn-ghost" disabled={!!busy} onClick={() => share(true)}>{busy === "story" ? "만드는 중…" : "스토리용 세로 카드"}</button>
+      {d.cover && <p className="faint" style={{ margin: 0, fontSize: 12 }}>카드에 프로필 사진이 들어가요. 인식표의 전화번호나 집 주소가 보이는 사진이면 다른 사진으로 바꿔 주세요.</p>}
       <p className="faint" style={{ margin: 0, fontSize: 12 }}>상장은 누구나 달마다 하나씩 받아요. 산책·하루 체크·기록 수·함께한 날만 들어가고, 증상·병원·체중은 넣지 않아요.</p>
     </div>
   );

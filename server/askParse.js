@@ -1,7 +1,18 @@
 // 비서 빠른 답(여름이 말투, 11/26)의 글 → 화면 칸. server/index.js의 /api/ask가 쓴다.
 // 다음 질문 단추: 보호자가 비서(강아지)에게 물을 말만 남긴다. "귀 냄새 나?", "토했어?"처럼 강아지가 보호자에게 묻는 말은
 // 눌러도 말이 안 돼서 버린다 — 보호자가 궁금해할 때 쓰는 낱말(왜·언제·어떻게·해도 돼 등)이 있어야 통과(11/27)
-export const ownerAsks = (q) => !/언제부터|(랬|했|났|였|줬|봤|갔)어\?$/.test(q) && /왜|언제|어떻게|어떡|얼마|어디|뭐|뭘|무엇|무슨|누구|어느|어떤|몇|해도|야 해|야 돼|가야|돼\?|될까|되나|해야|괜찮|줄까|갈까|할까|바꿀까|맞아\?|기록|지난|다음/.test(q);
+export const ownerAsks = (q) => !/언제부터|(랬|했|났|였|줬|봤|갔|먹었|없|있)어\?$|없지\?$|있지\?$/.test(q) && /왜|언제|어떻게|어떡|얼마|어디|뭐|뭘|무엇|무슨|누구|어느|어떤|몇|해도|야 해|야 돼|가야|돼\?|될까|되나|해야|괜찮|줄까|갈까|할까|바꿀까|맞아\?|기록|지난|다음/.test(q);
+// 걸러 내고 단추가 모자라면 언제 눌러도 말이 되는 질문으로 채운다(11/27 사용자: "또 다른 건 먹은 건 없어?" 같은 단추가 남아 있었다).
+// 모두 보호자가 묻는 말이고, 비서가 기록·일반 돌봄으로 답할 수 있는 것. 방금 한 질문과 같은 건 뺀다
+const SAFE_NEXT = ["집에서 뭘 해 줄까?", "언제까지 지켜봐?", "병원 가야 해?", "뭘 조심해야 해?"];
+const SAFE_NEXT_ER = ["가는 동안 뭘 해 줄까?", "병원에 뭘 챙겨 가?"]; // 응급 답 뒤
+export function fillNext(next, { question = "", say = "" } = {}) {
+  const pool = /지금 바로 동물병원/.test(say) ? SAFE_NEXT_ER : SAFE_NEXT;
+  const norm = (t) => t.replace(/[\s?.!]/g, "");
+  const out = [...next];
+  for (const q of pool) { if (out.length >= 2) break; if (!out.some((x) => norm(x) === norm(q)) && norm(q) !== norm(question)) out.push(q); }
+  return out.slice(0, 2);
+}
 // 답 속 숫자 가운데 근거(강아지 정보·질문·앞 대화)에 없는 것. 24(24시 병원)는 봐준다 — 기록에 없는 기준 숫자를 지어내는지 보는 용도
 export function strayNumbers(text, source) {
   const have = new Set(String(source).match(/\d+(?:\.\d+)?/g) || []);

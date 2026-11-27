@@ -36,3 +36,9 @@ console.log("ask-parse ok");
   console.log("ask-parse dates ok");
 }
 { const { ownerAsks } = await import("../server/askParse.js"); for (const q of ["언제부터 그랬어?", "병원 어디서 했어?", "언제부터 짖어?"]) assert.ok(!ownerAsks(q), q); assert.ok(ownerAsks("지난번 병원에서 뭐랬지?")); }
+{ const { ownerAsks, fillNext } = await import("../server/askParse.js");
+  for (const q of ["또 다른 건 먹은 건 없어?", "다른 증상은 없어?", "피는 안 났어?", "기운은 있어?", "많이 먹었어?"]) assert.ok(!ownerAsks(q), q);
+  assert.deepEqual(fillNext([], { question: "초콜릿 먹었어 어떡해", say: "지금 바로 동물병원에 데려가 줘." }), ["가는 동안 뭘 해 줄까?", "병원에 뭘 챙겨 가?"]);
+  assert.deepEqual(fillNext(["산책은 해도 돼?"], { question: "밥을 남겨" }), ["산책은 해도 돼?", "집에서 뭘 해 줄까?"]);
+  assert.deepEqual(fillNext([], { question: "병원 가야 해?" }), ["집에서 뭘 해 줄까?", "언제까지 지켜봐?"]);
+  console.log("ask-parse 단추 채우기 ok"); }
