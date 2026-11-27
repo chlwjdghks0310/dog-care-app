@@ -93,3 +93,16 @@ assert.equal(remarkFor("d1", T, { ...f1, usualRun: 0, diffToday: { meal: "조금
 assert.equal(remarkFor("d1", "2026-11-27", { usualRun: 2, stage: { key: "teeth", name: "이갈이·탐색기" } }).text, "나 오늘부터 이갈이·탐색기야. 뭐가 달라지는지 봐 줘.");
 assert.equal(remarkFor("dNew", T, { usualRun: 1, stage: { key: "teeth", name: "이갈이·탐색기" } }).text, "나 요즘 이가 간지러워. 씹을 거 하나 줘."); // 처음 쓰는 날엔 "오늘부터"가 아니다
 console.log("check-talk ok");
+
+// 11/27 칭찬 한마디: 하루걸러, 이상 신호가 있는 날엔 안 나온다, 호칭·숫자 없음
+{
+  const { pickRemark, PRAISE } = await import("../src/services/checkTalk.js");
+  const even = "2026-11-28", odd = "2026-11-27"; // 날짜 번호 짝·홀
+  const pe = Math.floor(Date.parse(`${even}T00:00:00Z`) / 86400000) % 2 === 0 ? even : odd, po = pe === even ? odd : even;
+  const a = pickRemark({ usualRun: 5 }, {}, pe);
+  assert.ok(PRAISE.some((p) => a.text.startsWith(p)), a.text); assert.ok(/평소 같았어/.test(a.text));
+  assert.ok(!PRAISE.some((p) => pickRemark({ usualRun: 5 }, {}, po).text.startsWith(p)), "하루걸러");
+  assert.ok(!PRAISE.some((p) => pickRemark({ usualRun: 5, signalIds: ["meal"] }, {}, pe).text.startsWith(p)), "이상 신호 날엔 칭찬 없음");
+  for (const p of PRAISE) { assert.ok(!/아빠|엄마|언니|오빠|누나|집사|보호자/.test(p), p); assert.ok(p.endsWith("."), p); }
+  console.log("check-talk 칭찬 ok");
+}

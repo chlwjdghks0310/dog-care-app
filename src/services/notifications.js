@@ -214,6 +214,22 @@ async function postSubscription(subscription, alarms, { beacon = false } = {}) {
 // 모든 강아지의 매일 알람(케어 권장 시각 + 사료 불리기 30분 전 + 사용자 알람)을 서버용 목록으로 만든다.
 // 알람마다 petId(강아지 id)를 붙인다 — 서버가 같은 강아지의 가족 기기 모두에 보낼 수 있게.
 // ponytail: 완료 체크 여부는 무시하고 매일 보낸다 — 서버는 체크 상태를 모른다.
+// 하루 체크 알림 문구: 하루 한 번은 그대로, 말만 날마다 바꾼다(같은 말은 반복할수록 효과가 준다 — 듀오링고). 알림은 미리 예약되니 그날 가서 틀릴 수 있는
+// 숫자·사실은 넣지 않고, 건강 얘기도 넣지 않는다(애플 심사 4.5.4). 호칭 없음. 여러 마리면 "우리" 문장만
+export const CHECK_LINES = [
+  "오늘 나 어땠어? 10초만 들려줘", "저녁이야. 내 하루 물어봐 줘", "내 수첩 한 줄만 채워 줘", "도장 찍을 시간이야",
+  "오늘 하루도 같이 적어 볼까?", "나 여기서 기다리고 있어", "한 번만 눌러 주면 돼", "오늘 내 얘기 들어 줄 시간 있어?",
+  "자기 전에 나 한 번만 봐 줘", "오늘도 발도장 하나 찍자", "내 하루, 궁금하지 않아?", "잠깐이면 돼. 오늘은 어땠는지 알려 줘",
+  "수첩 펴 놨어. 오늘 것만 적자", "오늘도 나 챙겨 줄 거지?", "하루 끝에 나랑 10초만", "오늘 우리 어땠는지 남겨 두자",
+];
+export const CHECK_LINES_MANY = ["오늘 우리 어땠어? 10초만 들려줘", "우리 수첩 한 줄씩만 채워 줘", "도장 찍을 시간이야", "오늘 우리 어땠는지 남겨 두자", "하루 끝에 우리랑 10초만", "오늘도 발도장 하나씩 찍자"];
+export const dayIndex = (date) => Math.floor(Date.parse(`${date}T00:00:00Z`) / 86400000);
+export const pickByDate = (list, date) => list[dayIndex(date) % list.length];
+function checkBodies(many, extra) {
+  const rotate = (many ? CHECK_LINES_MANY : CHECK_LINES).map((t) => (extra ? `${extra}\n${t}` : t));
+  return { body: pickByDate(rotate, todayKey()), rotate };
+}
+
 export function buildPushAlarms() {
   const all = [];
   const prefs = getNotifPrefs();
@@ -295,9 +311,10 @@ export function buildPushAlarms() {
     const who = dogs.length > 1 ? "우리 아이들" : dogs[0].name;
     all.push({
       time: plan.time,
-      title: `🐾 ${who} 오늘 어땠어요?`,
+      title: `🐾 ${who}`,
+      // 문구는 날마다 다른 말로(11/27): rotate에서 날짜 순서대로 하나 — 폰 예약(localNotify)·서버 푸시가 같은 규칙으로 고른다. body는 rotate를 모르는 옛 서버용
       // 퍼피 100일 과제가 남았으면 같은 알림에 한 줄만(알림 수는 늘리지 않음, 했으면 안 붙음)
-      body: puppyAlarmLine(dogs) ? `${puppyAlarmLine(dogs)}\n체크는 평소와 같으면 한 번이면 끝이에요.` : "평소와 같으면 한 번만 누르면 끝이에요.",
+      ...checkBodies(dogs.length > 1, puppyAlarmLine(dogs)),
       url: "/?checkin=1",
       days: plan.days,
       skipDate: dogs.every((d) => checkedInToday(d.id)) ? todayKey() : undefined,

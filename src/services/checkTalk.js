@@ -107,6 +107,11 @@ const STAGE_LINES = {
   middle: ["이제 검진 항목을 조금 늘릴 때래.", "계단은 천천히 갈게. 기다려 줘."],
   senior: ["작은 변화도 적어 줘. 병원에서 큰 도움이 돼.", "산책은 짧게 여러 번이 좋아."],
 };
+// 칭찬 한마디: 기록 숫자가 아니라 보호자가 한 일을 말한다. 호칭 없음
+export const PRAISE = [
+  "오늘도 들여다봐 줘서 고마워.", "매일 물어봐 주니까 든든해.", "이렇게 적어 두면 병원 갈 때 내가 편해.", "바쁜데도 나 챙겨 줬네. 고마워.",
+  "오늘도 잊지 않았구나. 역시야.", "이 10초가 나한텐 큰 거야.", "내 하루를 알아주는 사람이 있어서 좋아.", "꼬박꼬박 봐 줘서 마음이 놓여.",
+];
 const SAID_KEY = "dogcare-check-talk-v1"; // { [dogId]: { today: { date, key, text, go }, last: { [key]: date } } }
 
 // facts: 화면이 모아서 넘겨 준다 — { diffToday: 오늘 고른 것, usualRun: 오늘까지 평소가 이어진 날, runs: [{ item, days }], resolved: 어제 달랐다가 오늘 평소로 돌아온 항목 라벨들,
@@ -147,7 +152,9 @@ export function pickRemark(facts, lastSaid = {}, today) {
     const i = lastSaid[`stage:${f.stage.key}:n`] === "0" ? 1 : 0;
     return { key: `stage:${f.stage.key}`, text: lines[i], go: "guide", turn: String(i) };
   }
-  // 6. 평소가 이어짐
+  // 6. 평소가 이어짐 — 하루걸러 "챙겨 준 행동"을 먼저 칭찬한다(11/27, 듀오링고: 노력을 칭찬하는 문구 → 2주 뒤 잔존 +7.2%). 이상 신호가 떠 있는 날엔 칭찬 없이 사실만
+  const day = Math.floor(Date.parse(`${today}T00:00:00Z`) / 86400000);
+  if (!f.signalIds?.length && day % 2 === 0) return { key: "usual", text: `${PRAISE[(day / 2) % PRAISE.length]}${f.usualRun >= 2 ? ` 벌써 ${nth(f.usualRun)} 평소 같았어.` : ""}` };
   return { key: "usual", text: f.usualRun >= 2 ? `좋아! 벌써 ${nth(f.usualRun)} 평소 같았어.` : "오늘도 평소 같았구나. 좋아!" };
 }
 

@@ -182,20 +182,23 @@ export async function drawDiaryCard(dog, r, { story = false } = {}) {
     if (m) { const pre = g.measureText(t.slice(0, m.index)).width, nw = g.measureText(m[0]).width; g.fillStyle = "#ffc994"; g.fillRect(x + pre, y + 2, nw, 7); }
     g.fillStyle = INK; g.fillText(t, x, y);
   });
-  // 발도장 칸: 절반 넘게 찍은 달은 달력처럼(쉬는 날은 쿨쿨), 적게 찍은 달은 모은 도장만 — 빈칸이 많아 보이지 않게
+  // 발도장 칸: 절반 넘게 찍은 달은 달력처럼(쉬는 날로 넘어간 날은 달 도장), 적게 찍은 달은 모은 도장만 — 빈칸이 많아 보이지 않게
   const GX = story ? 54 : 40, GY = sayY + (lines.length > 1 ? sayPx : 6) + (story ? 16 : 22), GW = W - GX * 2;
   const got = d.cells.filter((x) => x.checked), full = got.length >= d.f.days / 2;
+  const rests = d.cells.filter((x) => x.rest).length; // 쉬는 날로 넘어간 날(달 도장). 그냥 안 한 날은 빈 점선
+  const moon = (cx, cy, size) => { g.save(); g.fillStyle = "#eaf2fd"; g.strokeStyle = "#5d86c4"; g.lineWidth = size * 0.06; g.beginPath(); g.arc(cx, cy, size * 0.44, 0, 7); g.fill(); g.stroke();
+    g.translate(cx - size * 0.3, cy - size * 0.3); g.scale((size * 0.6) / 24, (size * 0.6) / 24); g.lineWidth = 2.4; g.lineJoin = "round"; g.fillStyle = "#b9d3f5"; const m = new Path2D("M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"); g.fill(m); g.stroke(m); g.restore(); };
   const list = full ? d.cells : got, cols = full ? Math.ceil(list.length / 3) : 10, cell = (GW - 36) / cols;
   const gh = list.length ? 34 + cell * Math.ceil(list.length / cols) + 10 : 0;
   if (list.length) {
     g.fillStyle = "#fffdf8"; g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.roundRect(GX, GY, GW, gh, 22); g.fill(); g.stroke();
     g.font = `${story ? 13 : 15}px ${F.ui}`; g.fillStyle = "#8a7d6d"; g.textAlign = "left"; g.fillText(`${d.f.m}월 발도장 ${d.f.check}개`, GX + 18, GY + 24);
-    g.textAlign = "right"; g.fillText(full ? (list.some((x) => !x.checked && !x.future) ? "쉬는 날은 쿨쿨" : "하루도 안 빠졌어") : "하나씩 모으는 중", GX + GW - 18, GY + 24);
+    g.textAlign = "right"; g.fillText(full ? (rests ? `쉬는 날 ${rests}번` : list.every((x) => x.checked || x.future) ? "하루도 안 빠졌어" : "") : "하나씩 모으는 중", GX + GW - 18, GY + 24);
     list.forEach((x, i) => {
       const cx = GX + 18 + (i % cols) * cell + cell / 2, cy = GY + 34 + Math.floor(i / cols) * cell + cell / 2, rad = cell * 0.36;
       if (x.checked) paw(cx, cy, cell * 0.8, ((x.day * 37) % 21) - 10);
-      else if (x.future) { g.setLineDash([3, 3]); g.strokeStyle = "#e3d8c3"; g.lineWidth = 1.6; g.beginPath(); g.arc(cx, cy, rad, 0, 7); g.stroke(); g.setLineDash([]); }
-      else { g.fillStyle = "#eef3fa"; g.beginPath(); g.arc(cx, cy, rad, 0, 7); g.fill(); g.fillStyle = "#b9c4d6"; g.font = `${Math.max(9, cell * 0.26)}px ${F.ui}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("zZ", cx, cy + 1); g.textBaseline = "alphabetic"; }
+      else if (x.rest) moon(cx, cy, cell * 0.8);
+      else { g.setLineDash([3, 3]); g.strokeStyle = "#e3d8c3"; g.lineWidth = 1.6; g.beginPath(); g.arc(cx, cy, rad, 0, 7); g.stroke(); g.setLineDash([]); } // 아직 안 온 날·그냥 안 한 날은 같은 빈 점선(구분해 보여 줄 이유가 없다)
     });
   }
   // 서명·로고

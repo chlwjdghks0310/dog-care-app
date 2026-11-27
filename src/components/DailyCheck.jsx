@@ -1,3 +1,4 @@
+import { restHint, streakOf } from "../services/stamps";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Ico from "./Ico";
@@ -69,10 +70,14 @@ export default function DailyCheck({ dog, onChange, onSheetChange }) {
             <button type="button" className={`dc-diff${ask?.usual && ask.again ? " wide" : ""}`} onClick={() => setSheet({ date, initial: ask?.more.initial, noRec: noRecOf(ask?.more) })}>{ask?.more.label || "다른 게 있었어요"}</button>
           </span>
           {isYesterday ? (
-            <button type="button" className="link-btn summary-more" onClick={() => (saveUnknown(dog.id, date), changed(date))}>기억 안 나요</button>
+            <>
+              <button type="button" className="link-btn summary-more" onClick={() => (saveUnknown(dog.id, date), changed(date))}>기억 안 나요</button>
+              {/* 쉬는 날(11/27): 어제가 비어도 오늘 체크하면 이어진다는 걸 여기서 먼저 말해 준다 — 억지로 "평소였어요"를 누르지 않게 */}
+              {streakOf(dog.id).pending && <span className="summary-more">기억 안 나도 괜찮아. 하루쯤은 쉬어도 이어져</span>}
+            </>
           ) : ask.kind === "plain" ? (
             // 처음 며칠은 "왜 매일 누르는지"를 말해 준다(11/8 첫 화면 한 문장) — 5번 넘게 한 뒤엔 짧게
-            <span className="summary-more">{daysInRange(dog.id, "0000", "9999") < 5 ? "매일 남기면 병원 갈 때 한 장으로 정리돼" : "평소와 같으면 한 번만 누르면 끝이야"}</span>
+            <span className="summary-more">{restHint(dog.id) || (daysInRange(dog.id, "0000", "9999") < 5 ? "매일 남기면 병원 갈 때 한 장으로 정리돼" : "평소와 같으면 한 번만 누르면 끝이야")}</span>
           ) : null}
         </span>
       )}

@@ -5,13 +5,17 @@ import Ico from "./Ico";
 import { haptic } from "../services/native";
 import { todayKey, toDateKey, addDays } from "../utils/date";
 import { md } from "../services/records";
-import { rewardsOf, badgeEarnedToday, BADGE_DAYS, EXTRA_PER, DISCOUNT_AT } from "../services/stamps";
+import { rewardsOf, streakOf, badgeEarnedToday, BADGE_DAYS, EXTRA_PER, DISCOUNT_AT } from "../services/stamps";
 
 // 숫자를 그림으로(11/18 시안 2차 확정): 발도장 주간 줄·스탬프 노트·사료통·숟가락·물컵·원·성장 자·증상 타임라인.
 // 원칙: 그림은 "얼마나 찼나"만 말한다(좋다/나쁘다 색 없음). 숫자는 옆에 작게 남긴다. 조각 그림은 public/pieces/(앱 스티커 톤, Gemini).
 const PIECE = (n) => `/pieces/${n}.png`;
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 
+// 쉬는 날 도장(11/27): 발바닥과 같은 선 굵기의 초승달 — 하루 빠졌지만 이어진 날
+export function MoonGlyph({ stroke = "currentColor", width = 2 }) {
+  return <g fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.500 10.500Z" /></g>;
+}
 // 앱 발바닥(lucide paw-print — Ico "paw"와 같은 선). SVG 안에서 쓰려고 path로.
 export function PawGlyph({ x = 0, y = 0, s = 1, rotate = 0, stroke = "var(--warm)", width = 2 }) {
   return (
@@ -53,8 +57,9 @@ export function WeekStamps({ dogId, today = todayKey() }) {
   const dates = weekDates(today);
   const stamped = (d) => { const v = getDay(dogId, d); return Boolean(v && v.status !== "unknown"); };
   const month = daysThisMonth(dogId, today);
+  const rest = new Set(streakOf(dogId, today).rest); // 쉬는 날로 넘어간 날(지나고 나서만 표시)
   return (
-    <span className="stamps" role="img" aria-label={`이번 주 하루 체크 ${dates.filter(stamped).length}일, 이번 달 ${month}일`}>
+    <span className="stamps" role="img" aria-label={`이번 주 하루 체크 ${dates.filter(stamped).length}일${dates.some((d) => rest.has(d)) ? ", 쉬는 날 하루" : ""}, 이번 달 ${month}일`}>
       <img className="stamps-tape" src={PIECE("tape")} alt="" />
       <span className="stamps-ttl">이번 주 하루 체크<small>이번 달 <b>{month}</b>번</small></span>
       <span className="stamps-week">
@@ -62,8 +67,9 @@ export function WeekStamps({ dogId, today = todayKey() }) {
           const on = stamped(d), isToday = d === today, future = d > today;
           return (
             <span key={d} className={`stamp-day${future ? " future" : ""}`}>
-              <span className={`stamp-slot${on ? " on" : ""}${isToday ? " today" : ""}${isToday && on ? " stamped" : ""}`}>
+              <span className={`stamp-slot${on ? " on" : ""}${rest.has(d) ? " rest" : ""}${isToday ? " today" : ""}${isToday && on ? " stamped" : ""}`}>
                 {on && <svg viewBox="0 0 24 24" style={{ transform: `rotate(${[-8, 6, -3, 5, -6, 4, -2][i]}deg)` }}><PawGlyph stroke="currentColor" width={2.1} /></svg>}
+                {!on && rest.has(d) && <svg viewBox="0 0 24 24"><MoonGlyph width={2.1} /></svg>}
               </span>
               <span className={isToday ? "stamp-lab today" : "stamp-lab"}>{isToday ? "오늘" : DOW[new Date(`${d}T00:00:00`).getDay()]}</span>
             </span>
@@ -195,7 +201,7 @@ export function StampMoment({ dogId, onDone }) {
   return createPortal(
     <div className={`stamp-moment${out ? " out" : ""}`} onClick={close} role="status" aria-live="polite">
       <div className="sm-box">
-        <span className="sm-cheer">{badgeEarnedToday(dogId) ? `${BADGE_DAYS}일 연속! 배지 획득` : "잘했어요!!"}</span>
+        <span className="sm-cheer">{badgeEarnedToday(dogId) ? `발도장 ${BADGE_DAYS}개! 배지 획득` : "잘했어요!!"}</span>
         <WeekStamps dogId={dogId} />
       </div>
     </div>,
@@ -212,6 +218,16 @@ export function Badge({ on = true, size = 26 }) {
   );
 }
 
+const DOW_FULL = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+export function restLine(r, today) {
+  if (r.pending && !r.checkedToday) return "어제는 못 만났네요. 오늘 체크하면 이어져요.";
+  const week = new Set(weekDates(today));
+  const d = r.rest.filter((x) => week.has(x)).at(-1);
+  if (d && r.streak > 0) return `${DOW_FULL[new Date(`${d}T00:00:00`).getDay()]}은 쉬는 날로 넘어갔어요. 하루쯤 빠져도 이어져요.`;
+  if (r.streak === 0 && r.best >= 3 && !r.checkedToday) return `다시 만나서 반가워요. 가장 길게 이어진 건 ${r.best}일이에요.`;
+  return "";
+}
+
 // 스탬프 상품(11/19 사용자 결정): 7일 연속 = 배지 1 · 배지 5 = 부가 동작 1편 · 배지 10 = 정성 캐릭터 할인. 케어 탭 하루 체크 카드 아래
 export function StampRewards({ dogId, onOpenCharacter, today = todayKey() }) {
   const r = rewardsOf(dogId, today);
@@ -221,14 +237,16 @@ export function StampRewards({ dogId, onOpenCharacter, today = todayKey() }) {
     <div className="rewards">
       <div className="rewards-top">
         <span className="rewards-ttl">배지 <b>{r.badges}</b>개</span>
-        <span className="faint">{r.streak > 0 ? `${r.streak}일째 이어지는 중 · 다음 배지까지 ${r.toNext}일` : `${BADGE_DAYS}일 연속 체크하면 배지 하나`}</span>
+        <span className="faint">{r.streak > 0 ? `${r.streak}일째 이어지는 중 · 다음 배지까지 ${r.toNext}일` : `${BADGE_DAYS}일 이어서 체크하면 배지 하나`}{r.best > r.streak ? ` · 최고 ${r.best}일` : ""}</span>
       </div>
+      {/* 쉬는 날 한 줄: 지나간 쉬는 날은 알려 주고, 어제 빠졌으면 오늘 이어질 수 있다고만 말한다(벌점처럼 읽히지 않게) */}
+      {restLine(r, today) && <p className="rewards-rest">{restLine(r, today)}</p>}
       <div className="rewards-row" aria-label={`배지 ${r.badges}개`}>
         {Array.from({ length: Math.min(slots, 10) }, (_, i) => <Badge key={i} on={i < r.badges} size={24} />)}
         {r.badges > 10 && <small className="faint">+{r.badges - 10}</small>}
       </div>
       <ul className="rewards-tiers">
-        <li className={r.badges >= 1 ? "got" : ""}><Ico name="check" size={14} /> <span>{BADGE_DAYS}일 연속 체크 → 배지 1개</span></li>
+        <li className={r.badges >= 1 ? "got" : ""}><Ico name="check" size={14} /> <span>{BADGE_DAYS}번 이어서 체크 → 배지 1개</span></li>
         <li className={r.extrasEarned > 0 ? "got" : ""}><Ico name="party" size={14} sticker /> <span>배지 {EXTRA_PER}개 → 캐릭터 부가 동작 1편{r.extrasLeft > 0 ? ` · ${r.extrasLeft}편 받을 수 있어요` : r.extrasEarned ? " · 받았어요" : ` · ${r.toExtra}개 남음`}</span>{r.extrasLeft > 0 && onOpenCharacter && <button type="button" className="btn-ghost small" onClick={onOpenCharacter}>받기</button>}</li>
         <li className={r.discount ? "got" : ""}><Ico name="video" size={14} sticker /> <span>배지 {DISCOUNT_AT}개 → 정성 캐릭터 할인{r.discount ? " · 할인권 있어요(결제 열리면 써요)" : ` · ${r.toDiscount}개 남음`}</span></li>
       </ul>

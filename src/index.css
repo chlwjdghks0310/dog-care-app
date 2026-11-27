@@ -1915,6 +1915,8 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .stamp-slot { width: 28px; height: 28px; border-radius: 50%; border: 1.4px dashed var(--border); background: var(--surface); display: grid; place-items: center; box-sizing: border-box; }
 .stamp-slot.on { border: 1.4px solid var(--warm-bg); background: var(--warm-bg); }
 .stamp-slot svg { width: 21px; height: 21px; color: var(--warm); display: block; }
+.stamp-slot.rest { border: 1.4px solid var(--accent-soft); background: var(--accent-soft); } .stamp-slot.rest svg { color: var(--accent-strong, var(--accent)); width: 18px; height: 18px; } /* 쉬는 날 도장(11/27) */
+.rewards-rest { margin: 6px 0 0; font-size: 12.5px; color: var(--text-soft); }
 .stamp-slot.today { border: 1.4px dashed var(--warm); animation: stamp-beckon 1.6s ease-in-out infinite; }
 .stamp-slot.today.stamped { border: 1.4px solid var(--warm); animation: stamp-press .5s ease-out both; }
 .stamp-slot.today.stamped svg { animation: stamp-in .45s cubic-bezier(.2,.9,.3,1.3) both; }
@@ -1960,6 +1962,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mr-cal-dow { margin-bottom: 4px; }
 .mr-cell { position: relative; aspect-ratio: 1; border-radius: 10px 12px 9px 11px/11px 9px 12px 10px; border: 1.2px dashed var(--border); display: grid; place-items: center; background: var(--surface); box-sizing: border-box; }
 .mr-cell.on { border: 1.2px solid var(--warm-bg); background: var(--warm-bg); }
+.mr-cell.rest { border: 1.2px solid var(--accent-soft); background: var(--accent-soft); } /* 쉬는 날로 넘어간 날 */
 .mr-cell.future { opacity: .35; border-style: dotted; }
 .mr-cell i { position: absolute; top: 2px; left: 4px; font-style: normal; font-size: 9.5px; color: var(--text-faint); font-weight: 700; }
 .mr-cell .mr-paw { width: 20px; height: 20px; color: var(--warm); margin-top: 6px; }
@@ -1970,6 +1973,7 @@ body.tap-shield .pager-page, body.tap-shield .es-backdrop, body.tap-shield .all-
 .mr-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 11.5px; color: var(--text-soft); }
 .mr-legend span { display: inline-flex; align-items: center; gap: 4px; }
 .mr-legend svg { width: 14px; height: 14px; color: var(--warm); }
+.mr-legend .lg-rest { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: var(--accent-soft); border: 1px solid var(--accent-soft); }
 .mr-legend .lg-on { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: var(--warm-bg); border: 1px solid var(--warm-bg); }
 .mr-note { margin-top: 10px; display: grid; gap: 8px; }
 .mr-note-text { margin: 0; font-size: 14.5px; line-height: 1.6; white-space: pre-line; }

@@ -1,3 +1,4 @@
+import { streakOf } from "./stamps";
 import { getRecords } from "./records";
 import { getWeightRecords } from "./weightLog";
 import { getDay } from "./dailyCheck";
@@ -54,9 +55,10 @@ function count(dogId, month, today) {
   const checkDays = [];
   for (let i = 1; i <= elapsed; i++) { const d = `${month}-${pad(i)}`; const v = getDay(dogId, d); if (v && v.status !== "unknown") checkDays.push(d); }
   // 7일 연속 몇 번(그 달 안에서)
-  let run = 0, streaks = 0;
-  for (let i = 1; i <= elapsed; i++) { if (checkDays.includes(`${month}-${pad(i)}`)) { run += 1; if (run % 7 === 0) streaks += 1; } else run = 0; }
-  return { from, to, days: lastDayOf(month), elapsed, records: recs.length + ws.length, walk: { dates: walkDates, days: walkDates.length, minutes: walkMinutes }, meal, lessDates, treatDates, looseDays, symptoms, topKinds, vetDays, cost, weights, checkDays, streaks };
+  // 배지·쉬는 날은 stamps.streakOf 한 곳에서(11/27) — 이 달에 딴 배지 수, 이 달의 쉬는 날
+  const st = streakOf(dogId, to);
+  const streaks = st.badges.filter((d) => d.startsWith(month)).length, restDays = st.rest.filter((d) => d.startsWith(month));
+  return { from, to, days: lastDayOf(month), elapsed, restDays, records: recs.length + ws.length, walk: { dates: walkDates, days: walkDates.length, minutes: walkMinutes }, meal, lessDates, treatDates, looseDays, symptoms, topKinds, vetDays, cost, weights, checkDays, streaks };
 }
 
 const dir = (n) => (n > 0 ? "늘었어요" : "줄었어요");
@@ -73,8 +75,8 @@ export function diffsOf(cur, prev, { prevHas }) {
   if (prevHas && cur.symptoms.length !== prev.symptoms.length) out.push({ key: "symptom", ico: "bandaid", title: `증상 기록이 ${dir(cur.symptoms.length - prev.symptoms.length)}`, sub: cur.topKinds.length ? cur.topKinds.map(([k, n]) => `${k} ${n}`).join(" · ") : "이번 달엔 없었어요", a: prev.symptoms.length, b: cur.symptoms.length, unit: "번", score: rel(prev.symptoms.length, cur.symptoms.length) + 0.4 });
   else if (!prevHas && cur.symptoms.length >= 2) out.push({ key: "symptom", ico: "bandaid", title: `증상 기록 ${cur.symptoms.length}번`, sub: cur.topKinds.map(([k, n]) => `${k} ${n}`).join(" · "), a: 0, b: cur.symptoms.length, unit: "번", score: 0.6 });
   if (cur.lessDates.length >= 3) out.push({ key: "less", ico: "bowl", title: `밥을 적게 먹은 날 ${cur.lessDates.length}일`, sub: wd(cur.lessDates) || `지난달 ${prev.lessDates.length}일`, a: prev.lessDates.length, b: cur.lessDates.length, unit: "일", score: (prevHas ? rel(prev.lessDates.length, cur.lessDates.length) : 0.3) + 0.3 });
-  if (prevHas && Math.abs(cur.checkDays.length - prev.checkDays.length) >= 3) out.push({ key: "check", ico: "checklist", title: `하루 체크 ${cur.checkDays.length}일`, sub: cur.streaks ? `7일 연속 ${cur.streaks}번 · 배지 ${cur.streaks}개` : `${cur.elapsed}일 중`, a: prev.checkDays.length, b: cur.checkDays.length, unit: "일", score: rel(prev.checkDays.length, cur.checkDays.length) + 0.1 });
-  else if (!prevHas && cur.checkDays.length >= 7) out.push({ key: "check", ico: "checklist", title: `하루 체크 ${cur.checkDays.length}일`, sub: cur.streaks ? `7일 연속 ${cur.streaks}번 · 배지 ${cur.streaks}개` : `${cur.elapsed}일 중`, a: 0, b: cur.checkDays.length, unit: "일", score: 0.4 });
+  if (prevHas && Math.abs(cur.checkDays.length - prev.checkDays.length) >= 3) out.push({ key: "check", ico: "checklist", title: `하루 체크 ${cur.checkDays.length}일`, sub: cur.streaks ? `배지 ${cur.streaks}개${cur.restDays.length ? ` · 쉬는 날 ${cur.restDays.length}번` : ""}` : `${cur.elapsed}일 중`, a: prev.checkDays.length, b: cur.checkDays.length, unit: "일", score: rel(prev.checkDays.length, cur.checkDays.length) + 0.1 });
+  else if (!prevHas && cur.checkDays.length >= 7) out.push({ key: "check", ico: "checklist", title: `하루 체크 ${cur.checkDays.length}일`, sub: cur.streaks ? `배지 ${cur.streaks}개${cur.restDays.length ? ` · 쉬는 날 ${cur.restDays.length}번` : ""}` : `${cur.elapsed}일 중`, a: 0, b: cur.checkDays.length, unit: "일", score: 0.4 });
   if (prevHas && (cur.vetDays.length !== prev.vetDays.length || cur.cost !== prev.cost)) out.push({ key: "vet", ico: "stethoscope", title: `병원 ${cur.vetDays.length}번`, sub: cur.cost || prev.cost ? `병원비 ${cur.cost.toLocaleString()}원 · 지난달보다 ${cur.cost - prev.cost >= 0 ? "+" : "−"}${Math.abs(cur.cost - prev.cost).toLocaleString()}원` : `지난달 ${prev.vetDays.length}번`, a: prev.vetDays.length, b: cur.vetDays.length, unit: "번", score: rel(prev.vetDays.length, cur.vetDays.length) + 0.1 });
   else if (!prevHas && cur.vetDays.length >= 1) out.push({ key: "vet", ico: "stethoscope", title: `병원 ${cur.vetDays.length}번`, sub: cur.cost ? `병원비 ${cur.cost.toLocaleString()}원` : "", a: 0, b: cur.vetDays.length, unit: "번", score: 0.3 });
   const lastKg = cur.weights.at(-1)?.kg, prevKg = prev.weights.at(-1)?.kg;
@@ -135,7 +137,7 @@ export function buildMonthlyReport(dog, month = monthOf(todayKey()), today = tod
   const symptomDates = new Set(cur.symptoms.map((s) => s.date));
   const cells = Array.from({ length: cur.days }, (_, i) => {
     const d = `${month}-${pad(i + 1)}`;
-    return { date: d, day: i + 1, future: d > today, walk: cur.walk.dates.includes(d), mark: symptomDates.has(d) || cur.looseDays.includes(d), vet: cur.vetDays.includes(d), checked: cur.checkDays.includes(d) };
+    return { date: d, day: i + 1, future: d > today, walk: cur.walk.dates.includes(d), mark: symptomDates.has(d) || cur.looseDays.includes(d), vet: cur.vetDays.includes(d), checked: cur.checkDays.includes(d), rest: cur.restDays.includes(d) };
   });
   const firstDow = (new Date(`${month}-01T00:00:00`).getDay() + 6) % 7; // 월요일 시작
   const diffs = diffsOf(cur, prev, { prevHas });

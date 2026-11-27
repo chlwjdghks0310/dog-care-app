@@ -27,3 +27,13 @@ assert.deepEqual(parseReturn("kr.meongcare.app://login#access_token=A&refresh_to
 assert.equal(parseReturn("kr.meongcare.app://login?error=access_denied&error_description=User+cancelled#x=1").error, "User cancelled");
 assert.deepEqual(parseReturn("kr.meongcare.app://login"), { access_token: null, refresh_token: null, error: null });
 console.log("native-auth ok");
+
+// 11/27 하루 체크 알림 문구 돌리기: 날짜마다 다른 말, 16일 안에 같은 말 없음, 숫자·건강 낱말·호칭 없음
+{
+  const { expandAlarms } = await import("../src/services/localNotify.js");
+  const lines = Array.from({ length: 16 }, (_, i) => `문구${i}`);
+  const out = expandAlarms([{ time: "20:00", title: "🐾 여름이", body: "옛 문구", rotate: lines }], new Date(2026, 10, 27, 9, 0), 7, 60);
+  assert.equal(out.length, 7); assert.equal(new Set(out.map((x) => x.body)).size, 7, "7일 치가 모두 다른 말");
+  assert.equal(expandAlarms([{ time: "20:00", title: "t", body: "옛 문구" }], new Date(2026, 10, 27, 9, 0), 2, 60)[0].body, "옛 문구", "rotate가 없으면 예전처럼");
+  console.log("local-notify 문구 돌리기 ok");
+}

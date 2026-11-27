@@ -33,10 +33,11 @@ export function expandAlarms(alarms, now = new Date(), days = 7, max = 60) {
       if (Array.isArray(a.days) && !a.days.includes(day.getDay())) continue;
       const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Number(a.time.slice(0, 2)), Number(a.time.slice(3, 5)));
       if (at <= now) continue;
-      const key = `${date}|${a.time}|${a.title}|${a.body}`;
+      const body = Array.isArray(a.rotate) && a.rotate.length ? a.rotate[Math.floor(Date.parse(`${date}T00:00:00Z`) / 86400000) % a.rotate.length] : a.body; // 날마다 다른 말(notifications.pickByDate와 같은 규칙)
+      const key = `${date}|${a.time}|${a.title}|${body}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ at, title: a.title || "멍케어", body: a.body || "", url: a.url?.replace("%7Bdate%7D", date).replace("{date}", date) });
+      out.push({ at, title: a.title || "멍케어", body: body || "", url: a.url?.replace("%7Bdate%7D", date).replace("{date}", date) });
     }
   }
   return out.sort((x, y) => x.at - y.at).slice(0, max);

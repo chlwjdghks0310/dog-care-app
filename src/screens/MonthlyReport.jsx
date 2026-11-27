@@ -134,7 +134,7 @@ function MonthGrid({ r }) {
       <div className="mr-cal-grid">
         {Array.from({ length: r.firstDow }, (_, i) => <span key={`e${i}`} />)}
         {r.cells.map((c) => (
-          <span key={c.date} className={`mr-cell${c.checked ? " on" : ""}${c.future ? " future" : ""}`} aria-label={`${c.day}일${c.walk ? " 산책" : ""}${c.mark ? " 증상" : ""}${c.vet ? " 병원" : ""}`}>
+          <span key={c.date} className={`mr-cell${c.checked ? " on" : ""}${c.rest ? " rest" : ""}${c.future ? " future" : ""}`} aria-label={`${c.day}일${c.rest ? " 쉬는 날" : ""}${c.walk ? " 산책" : ""}${c.mark ? " 증상" : ""}${c.vet ? " 병원" : ""}`}>
             <i>{c.day}</i>
             {c.walk && <svg viewBox="0 0 24 24" className="mr-paw"><PawGlyph stroke="currentColor" width={2.2} /></svg>}
             {c.mark && <b className="mr-dot" />}
@@ -142,7 +142,7 @@ function MonthGrid({ r }) {
           </span>
         ))}
       </div>
-      <div className="mr-legend"><span><i className="lg-on" /> 하루 체크</span><span><svg viewBox="0 0 24 24"><PawGlyph stroke="currentColor" width={2.2} /></svg> 산책</span><span><b className="mr-dot" /> 증상·무른 변</span><span><b className="mr-vet">+</b> 병원</span></div>
+      <div className="mr-legend"><span><i className="lg-on" /> 하루 체크</span>{r.restDays.length > 0 && <span><i className="lg-rest" /> 쉬는 날</span>}<span><svg viewBox="0 0 24 24"><PawGlyph stroke="currentColor" width={2.2} /></svg> 산책</span><span><b className="mr-dot" /> 증상·무른 변</span><span><b className="mr-vet">+</b> 병원</span></div>
     </div>
   );
 }

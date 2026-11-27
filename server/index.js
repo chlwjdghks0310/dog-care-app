@@ -1408,7 +1408,7 @@ function sanitizeAlarms(list) {
     if (!a || typeof a !== "object") continue;
     if (a.prefs && typeof a.prefs === "object") { out.push({ prefs: a.prefs }); continue; }
     if (!/^\d\d:\d\d$/.test(String(a.time))) continue;
-    out.push({ time: a.time, title: S(a.title, 120) ?? "멍케어", body: S(a.body, 300) ?? "", url: S(a.url, 300), petId: S(a.petId, 64), cat: S(a.cat, 20), skipDate: S(a.skipDate, 10), onlyDate: S(a.onlyDate, 10), from: S(a.from, 10), until: S(a.until, 10), days: Array.isArray(a.days) ? a.days.filter((d) => Number.isInteger(d)).slice(0, 7) : undefined });
+    out.push({ time: a.time, title: S(a.title, 120) ?? "멍케어", body: S(a.body, 300) ?? "", url: S(a.url, 300), petId: S(a.petId, 64), cat: S(a.cat, 20), skipDate: S(a.skipDate, 10), onlyDate: S(a.onlyDate, 10), from: S(a.from, 10), until: S(a.until, 10), days: Array.isArray(a.days) ? a.days.filter((d) => Number.isInteger(d)).slice(0, 7) : undefined, rotate: Array.isArray(a.rotate) ? a.rotate.map((t) => S(t, 200)).filter(Boolean).slice(0, 24) : undefined });
   }
   return out;
 }
@@ -1569,7 +1569,7 @@ function checkPushAlarms() {
       if (alarm.time === now.time && !device.sent.has(key)) {
         device.sent.add(key);
         changed = true;
-        sendPush(device, alarm.title, alarm.body, alarm.url?.replace("%7Bdate%7D", now.date));
+        sendPush(device, alarm.title, alarm.rotate?.length ? alarm.rotate[Math.floor(Date.parse(`${now.date}T00:00:00Z`) / 86400000) % alarm.rotate.length] : alarm.body, alarm.url?.replace("%7Bdate%7D", now.date)); // rotate = 날마다 다른 말(앱 notifications.pickByDate와 같은 규칙, 11/27)
       }
     }
     if (changed) saveDevice(device);
