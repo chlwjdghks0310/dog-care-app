@@ -1828,6 +1828,941 @@ export const GUIDE_CARDS = [
       {"name":"동물병원 안내문(발톱 주기)","url":"https://www.collegemanorvet.com/dog/nail-trimming-ear-cleaning"},
     ],
   },
+  // ── 성견·중년·노령 카드(11/27, ../자료용/자료/2026-11-27-가이드카드-성견-중년-노령.md — merge-guide-cards.py로 넣음) ──
+  { // 5-1
+    id: "s5-food-1", stage: 5, area: "food",
+    title: "하루 2번, 체형 점수 4~5를 지켜요",
+    why: [
+      "다 자란 뒤엔 크는 데 쓰던 열량이 줄어서 같은 양이면 살이 붙어요.",
+      "25% 적게 먹은 래브라도가 수명 중앙값이 길고 만성 질환이 늦었어요(Kealy 2002). AAHA는 이상적인 체형을 9점 중 4.5~5로 봐요.",
+    ],
+    how: [
+      "하루 양을 2번에 나눠 줘요.",
+      "한 달에 한 번 손으로 체형을 봐요. 갈비뼈가 살짝 만져지고, 위에서 보면 허리가 들어가 있으면 좋아요(WSAVA).",
+      "양은 컵이 아니라 저울로 재요(컵은 매번 달라져요).",
+      "산책이 줄어든 달엔 양도 조금 줄여요.",
+    ],
+    avoid: [
+      "포장지 급여표를 정답으로 믿기. 같은 체중이라도 활동량에 따라 달라요.",
+      "\"잘 먹으니 건강하다\"며 양을 계속 늘리기.",
+    ],
+    ask: "\"지금 체형 점수가 몇 점인가요? 하루 열량은 얼마가 맞을까요?\"",
+    sources: [
+      {"name":"WSAVA 체형 점수(BCS)","url":"https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf"},
+      {"name":"Kealy 2002(제한 급여와 수명)","url":"https://pubmed.ncbi.nlm.nih.gov/11991408/"},
+      {"name":"AAHA 2023 시니어 지침 영양(BCS 4.5~5)","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/nutrition/"},
+    ],
+  },
+  { // 5-2
+    id: "s5-treats-1", stage: 5, area: "treats",
+    title: "간식은 하루 열량의 10% 안에서요",
+    why: [
+      "간식이 많아지면 사료로 맞춘 영양 균형이 흐트러져요(WSAVA).",
+      "기준은 개수가 아니라 열량이에요. 작은 개에겐 작은 간식도 커요.",
+    ],
+    how: [
+      "하루 간식은 하루 열량의 10% 미만으로 해요(WSAVA).",
+      "훈련 간식은 콩알만 하게 잘라 써요.",
+      "하루 사료에서 한 줌을 덜어 간식처럼 써도 돼요.",
+      "간식을 많이 준 날은 밥을 조금 줄여요.",
+    ],
+    avoid: [
+      "가족마다 따로 간식 주기. 누가 얼마나 줬는지 모르게 돼요.",
+      "사람 음식을 간식으로 주기. 위험한 음식이 섞일 수 있어요.",
+    ],
+    ask: "\"우리 아이 하루 간식은 몇 kcal까지 괜찮을까요?\"",
+    sources: [
+      {"name":"WSAVA 간식 주기","url":"https://wsava.org/wp-content/uploads/2024/06/Feeding-treats-to-your-dog-v2.pdf"},
+      {"name":"WSAVA 체형 점수(BCS)","url":"https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf"},
+    ],
+  },
+  { // 5-3
+    id: "s5-food-2", stage: 5, area: "food",
+    title: "사료는 광고 말보다 '질문'으로 골라요",
+    why: [
+      "'홀리스틱·프리미엄' 같은 말은 규정된 용어가 아니에요(WSAVA).",
+      "인터넷 레시피 200개 중 95%가 필수 영양소가 하나 이상 부족했어요(UC Davis).",
+    ],
+    how: [
+      "포장에 '성견용(또는 전 연령용) 완전사료' 표시가 있는지 봐요(WSAVA).",
+      "회사에 물어봐요: 수의 영양 전문가가 있나요? 품질 관리는 어떻게 하나요?(WSAVA)",
+      "바꿀 땐 7일 이상 섞어서 바꿔요.",
+      "집밥을 주고 싶으면 수의 영양 전문가에게 레시피를 받아요.",
+    ],
+    avoid: [
+      "날고기 식단. WSAVA는 권하지 않아요.",
+      "인터넷 레시피 그대로 따라 하기.",
+    ],
+    ask: "\"지금 사료가 우리 아이에게 맞는 완전사료인가요?\"",
+    sources: [
+      {"name":"WSAVA 사료 고르기","url":"https://wsava.org/wp-content/uploads/2021/04/Selecting-a-pet-food-for-your-pet-updated-2021_WSAVA-Global-Nutrition-Toolkit.pdf"},
+      {"name":"UC Davis 집밥 레시피 연구","url":"https://www.ucdavis.edu/news/homemade-dog-food-recipes-can-be-risky-business-study-finds"},
+    ],
+  },
+  { // 5-4
+    id: "s5-toys-1", stage: 5, area: "toys",
+    title: "한 끼는 노즈워크로, 장난감은 돌려 가며",
+    why: [
+      "냄새로 먹이를 찾는 놀이를 2주 한 성견들이 더 '낙관적'으로 반응했어요(Duranton 2019).",
+      "장난감은 몇 개씩 바꿔 꺼내 주면 더 오래 좋아해요(휴메인 소사이어티).",
+    ],
+    how: [
+      "노즈워크 매트나 접은 수건에 한 끼를 숨겨요.",
+      "장난감은 일주일마다 몇 개씩 바꿔 꺼내요.",
+      "씹는 장난감은 엄지손톱으로 눌러 자국이 남아야 해요(AAHA).",
+      "새 개인기 하나를 하루 몇 분씩 가르쳐요(AKC 두뇌 게임).",
+    ],
+    avoid: [
+      "뼈·뿔처럼 손톱 자국이 안 나는 딱딱한 것. 이가 부러질 수 있어요(AAHA).",
+      "삑삑이 인형을 혼자 있을 때 주기.",
+    ],
+    ask: "\"이빨이 닳거나 금 간 곳이 있나요? 씹는 장난감은 어느 정도가 좋을까요?\"",
+    sources: [
+      {"name":"Duranton & Horowitz 2019","url":"https://doi.org/10.1016/j.applanim.2018.12.009"},
+      {"name":"휴메인 소사이어티 「Dog Toys」","url":"https://www.thehumanesociety.org/dog-toys/"},
+      {"name":"AAHA 「Don't Chew On This!」","url":"https://www.aaha.org/resources/dont-chew-on-this/"},
+      {"name":"AKC 두뇌 게임","url":"https://www.akc.org/expert-advice/health/fun-cognitive-training-games-for-dogs/"},
+    ],
+  },
+  { // 5-5
+    id: "s5-walk-1", stage: 5, area: "walk",
+    title: "줄 2m·인식표, 다른 개와는 허락받고 인사해요",
+    why: [
+      "3개월이 넘은 개는 외출할 때 줄 길이 2m 이하가 법이에요(동물보호법 시행규칙).",
+      "모든 개가 인사를 반기진 않아요. 억지 인사는 싸움으로 번질 수 있어요(AKC).",
+    ],
+    how: [
+      "줄은 2m 이하, 엘리베이터·복도에선 안거나 짧게 잡아요.",
+      "인식표에 이름·연락처·동물등록번호를 적어요.",
+      "다른 개를 만나면 보호자에게 먼저 물어봐요. 인사는 짧게 하고 불러서 떨어져요(AKC).",
+      "배설물은 바로 치워요.",
+    ],
+    avoid: [
+      "긴 줄을 풀어 두고 걷기. 50만 원 이하 과태료예요(동물보호법).",
+      "몸이 굳거나 꼬리를 마는 신호를 무시하고 인사시키기.",
+    ],
+    ask: "\"다른 개를 보면 흥분하는데, 연습 방법이 있을까요?\"",
+    sources: [
+      {"name":"동물보호법 시행규칙","url":"https://www.law.go.kr/법령/동물보호법시행규칙"},
+      {"name":"서울시 「펫티켓 길라잡이」","url":"https://news.seoul.go.kr/env/archives/552695"},
+      {"name":"AKC 다른 개와 인사","url":"https://www.akc.org/expert-advice/training/dog-to-dog-greetings/"},
+    ],
+  },
+  { // 5-6
+    id: "s5-season-1", stage: 5, area: "season",
+    title: "여름엔 시원한 시간에, 차 안엔 절대 두지 않아요",
+    why: [
+      "개는 땀샘이 발바닥에만 있어 헐떡여서 열을 식혀요. 열사병은 응급이에요(코넬).",
+      "얼굴이 짧은 견종, 나이 든 개, 살찐 개, 털이 두껍거나 검은 개가 더 위험해요(코넬).",
+    ],
+    how: [
+      "산책은 아침·저녁 시원할 때 해요.",
+      "그늘과 물을 자주 챙겨요(코넬).",
+      "덥고 습한 날엔 뛰는 운동을 줄여요.",
+      "헐떡임이 심하고 침을 흘리면 바로 그늘에서 쉬게 해요.",
+    ],
+    avoid: [
+      "잠깐이라도 차 안에 두기. 온도가 빠르게 올라요(코넬).",
+      "더운 날 공 던지기처럼 계속 뛰는 놀이.",
+    ],
+    ask: "\"우리 아이는 열사병 위험이 큰 편인가요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 「Heatstroke」","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-information/heatstroke-medical-emergency"},
+    ],
+  },
+  { // 5-7
+    id: "s5-season-2", stage: 5, area: "season",
+    title: "겨울엔 제설제 길을 피하고 발을 닦아요",
+    why: [
+      "제설제는 발바닥을 자극하고, 핥으면 탈이 날 수 있어요(VCA).",
+      "눈 덩어리를 먹으면 제설제까지 먹게 돼요.",
+    ],
+    how: [
+      "하얀 알갱이가 뿌려진 길은 피해 걸어요.",
+      "산책 뒤 미지근한 물수건으로 발바닥과 발가락 사이를 닦아요.",
+      "발바닥이 갈라졌는지 봐요.",
+    ],
+    avoid: [
+      "발을 안 닦고 그대로 핥게 두기.",
+      "눈 먹게 두기.",
+    ],
+    ask: "\"발바닥이 자꾸 갈라지는데 어떻게 관리할까요?\"",
+    sources: [
+      {"name":"VCA 제설제","url":"https://vcahospitals.com/resources/lifestyle-dog/hazards-safety/dog-be-careful-with-ice-melt"},
+    ],
+  },
+  { // 5-8
+    id: "s5-checkup-1", stage: 5, area: "checkup",
+    title: "병원은 1년에 한 번 이상, 집에선 한 달에 한 번",
+    why: [
+      "VCA는 집에서 한 달에 한 번 몸 구석구석을 확인하라고 해요. 평소 모습을 알면 달라진 걸 빨리 봐요.",
+      "검진 날 병원에서 쌓인 기록은 나이 들었을 때 비교할 기준이 돼요.",
+    ],
+    how: [
+      "1년에 한 번 이상 건강검진을 받아요. 접종·심장사상충 검사와 같은 날 하면 편해요.",
+      "한 달에 한 번 집에서 눈·귀·입·피부·발을 봐요(VCA).",
+      "혹이 만져지면 위치·크기·날짜를 적어요.",
+      "평소 물 마시는 양, 변 모양을 알아 둬요.",
+    ],
+    avoid: [
+      "\"밥 잘 먹으니 괜찮다\"며 검진 미루기.",
+    ],
+    ask: "\"우리 아이 나이와 견종에 맞는 검진 주기와 항목을 알려 주세요.\"",
+    sources: [
+      {"name":"VCA 집에서 하는 건강 체크","url":"https://vcahospitals.com/know-your-pet/giving-your-dog-a-thorough-home-check-up"},
+    ],
+  },
+  { // 5-9
+    id: "s5-vaccine-1", stage: 5, area: "vaccine",
+    title: "핵심 백신은 병원과 간격을, 광견병은 매년",
+    why: [
+      "WSAVA는 핵심 백신을 1살 추가 접종 뒤 '3년보다 자주 하지 않도록' 권해요.",
+      "광견병은 국내에서 매년 맞아요(지자체 안내).",
+    ],
+    how: [
+      "우리 아이가 언제 무엇을 맞았는지 접종 수첩을 앱에 옮겨 둬요.",
+      "핵심 백신 다음 날짜는 병원과 정해요.",
+      "광견병은 1년마다 맞아요. 지자체 일제 접종이 있는지 구청에 물어봐요.",
+    ],
+    avoid: [
+      "핵심 백신을 습관처럼 매년 다 맞기. 병원과 간격을 정해요.",
+      "접종 기록 없이 병원을 옮기기.",
+    ],
+    ask: "\"핵심 백신은 다음에 언제 맞으면 될까요? 항체 검사가 필요한가요?\"",
+    sources: [
+      {"name":"WSAVA 접종 지침","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC7166871/"},
+      {"name":"광견병 지자체 안내","url":"https://www.yeonsu.go.kr/main/part/economy/animal_vaccination.asp"},
+    ],
+  },
+  { // 5-10
+    id: "s5-parasite-1", stage: 5, area: "parasite",
+    title: "심장사상충은 매년 검사, 진드기는 산책 뒤 확인",
+    why: [
+      "심장사상충은 모기로 옮고, 국내 반려견에서도 양성이 나와요(데일리벳).",
+      "진드기는 사람에게도 위험한 SFTS를 옮길 수 있어요(데일리벳).",
+    ],
+    how: [
+      "심장사상충 예방은 1년 내내, 검사는 매년 해요(AHS).",
+      "장내 기생충 변 검사는 1년에 몇 번 할지 병원과 정해요(CAPC).",
+      "풀숲 산책 뒤엔 귀·목줄 아래·겨드랑이·발가락 사이를 손으로 훑어요.",
+      "진드기를 찾으면 맨손으로 떼지 말고 병원에 물어요.",
+    ],
+    avoid: [
+      "\"겨울엔 안 해도 된다\"고 혼자 정하기(AHS·CAPC는 1년 내내).",
+      "큰 개 약을 나눠 먹이기.",
+    ],
+    ask: "\"심장사상충·장내·진드기를 함께 막는 방법이 우리 아이에게 맞나요?\"",
+    sources: [
+      {"name":"AHS 심장사상충 기본","url":"https://www.heartwormsociety.org/pet-owner-resources/heartworm-basics"},
+      {"name":"CAPC 일반 지침","url":"https://capcvet.org/guidelines/general-guidelines/"},
+      {"name":"국내 양성률(데일리벳, 2023-06)","url":"https://www.dailyvet.co.kr/?p=186717"},
+      {"name":"진드기·SFTS(데일리벳)","url":"https://www.dailyvet.co.kr/?p=249684"},
+    ],
+  },
+  { // 5-11
+    id: "s5-teeth-1", stage: 5, area: "teeth",
+    title: "양치는 매일, 스케일링은 마취해서 제대로",
+    why: [
+      "매일 양치가 가장 좋고, 소형견에 잇몸병이 더 많아요(Merck).",
+      "마취 없이 하는 스케일링은 보이는 겉만 닦아서 \"괜찮다\"는 착각을 준다고 AAHA가 말해요.",
+    ],
+    how: [
+      "하루 한 번, 30초라도 칫솔질해요. 못 한 날이 있어도 괜찮아요.",
+      "한 달에 한 번 입술을 들어 잇몸 색과 치석을 봐요.",
+      "검진 때마다 입 안을 봐 달라고 해요.",
+      "덴탈 껌을 고른다면 VOHC 인증을 확인해요.",
+    ],
+    avoid: [
+      "무마취 스케일링. AAHA는 스트레스·부상·흡인 위험과 진단이 안 된다는 이유로 적절하지 않다고 해요.",
+      "사람 치약 쓰기.",
+    ],
+    ask: "\"치석이 어느 정도인가요? 마취 스케일링은 언제쯤 하면 될까요?\"",
+    sources: [
+      {"name":"Merck 개 치과 질환","url":"https://www.merckvetmanual.com/dog-owners/digestive-disorders-of-dogs/dental-disorders-of-dogs"},
+      {"name":"AAHA 무마취 치과","url":"https://www.aaha.org/resources/2019-aaha-dental-care-guidelines-for-dogs-and-cats/nonanesthetic-dentistry/"},
+      {"name":"콜로라도주립대 수의병원 양치법","url":"https://csuveterinaryhealth.org/how-to-brush-your-dogs-teeth/"},
+    ],
+  },
+  { // 5-12
+    id: "s5-behavior-1", stage: 5, area: "behavior",
+    title: "짖음은 이유부터, 훈련은 칭찬으로 이어 가요",
+    why: [
+      "짖는 이유는 경계·심심함·관심·불안 등으로 다르고, 이유에 따라 대처도 달라요(AKC).",
+      "AVSAB는 벌 대신 보상 기반 훈련을 권해요. 벌은 두려움과 공격성을 키울 수 있어요.",
+    ],
+    how: [
+      "언제·어디서·무엇에 짖는지 일주일 적어 봐요.",
+      "조용해지는 순간을 칭찬하고 간식을 줘요.",
+      "심심해서 짖는다면 노즈워크·산책을 늘려요(AKC).",
+      "갑자기 짖음·입질이 늘었다면 먼저 병원에서 아픈 곳이 없는지 봐요(AAHA).",
+    ],
+    avoid: [
+      "소리치기·때리기·전기 충격 목걸이(AVSAB).",
+      "짖을 때마다 쳐다보고 말 걸기. 관심 짖음이 늘 수 있어요(AKC).",
+    ],
+    ask: "\"행동이 갑자기 바뀌었는데, 몸에 아픈 곳이 있는지 봐 주실 수 있나요?\"",
+    sources: [
+      {"name":"AKC 짖음 줄이기","url":"https://www.akc.org/expert-advice/training/how-to-stop-dog-barking/"},
+      {"name":"AVSAB 2021 인도적 훈련 입장문","url":"https://avsab.org/wp-content/uploads/2024/12/AVSAB-Humane-Dog-Training-Position-Statement-2021.pdf"},
+      {"name":"AAHA 2015 행동 관리 지침","url":"https://www.aaha.org/resources/2015-aaha-canine-and-feline-behavior-management-guidelines/"},
+    ],
+  },
+  { // 5-13
+    id: "s5-weight-1", stage: 5, area: "weight",
+    title: "몸무게는 매달 같은 저울로 적어요",
+    why: [
+      "미국 동물병원 평가에서 개의 59%가 과체중이나 비만이었어요(APOP 2022).",
+      "작은 개는 몇백 그램도 몸무게의 큰 비율이에요. 3kg 아이의 300g은 10%예요(계산).",
+    ],
+    how: [
+      "한 달에 한 번, 같은 저울·비슷한 시간에 재요.",
+      "안고 잰 뒤 내 몸무게를 빼는 방법도 괜찮아요.",
+      "체형 점수(BCS)도 같이 적어요(WSAVA).",
+      "줄여야 하면 한 주에 몸무게의 1~2%씩 천천히 해요(코넬).",
+    ],
+    avoid: [
+      "굶겨서 빨리 빼기.",
+      "\"조금 통통한 게 귀엽다\"는 기준.",
+    ],
+    ask: "\"목표 체중을 정해 주실 수 있나요?\"",
+    sources: [
+      {"name":"APOP 2022 조사","url":"https://www.petobesityprevention.org/2022"},
+      {"name":"WSAVA 체형 점수(BCS)","url":"https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf"},
+      {"name":"코넬 Riney 센터 비만·감량","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-topics/obesity-and-weight-loss-dogs"},
+    ],
+  },
+  { // 5-14
+    id: "s5-bath-1", stage: 5, area: "bath",
+    title: "목욕은 필요할 때, 이중모는 밀지 않아요",
+    why: [
+      "너무 자주 씻으면 피부 기름이 빠져 건조해질 수 있어요(AKC).",
+      "이중모를 짧게 밀면 털이 다시 안 자라는 경우가 있어요(미네소타대 수의피부과).",
+    ],
+    how: [
+      "냄새·오염이 있을 때 강아지 전용 샴푸로 씻어요.",
+      "다 씻은 뒤엔 속까지 바짝 말려요.",
+      "빗질은 자주, 짧게 해요.",
+      "발톱·귀는 한 달에 한 번 확인해요.",
+    ],
+    avoid: [
+      "더위를 피하려고 이중모를 바짝 밀기.",
+      "사람 샴푸 쓰기.",
+    ],
+    ask: "\"우리 아이 털에는 목욕을 얼마나 자주 하면 될까요?\"",
+    sources: [
+      {"name":"AKC 목욕","url":"https://www.akc.org/expert-advice/health/bathing-puppy-bath-shampoo-care/"},
+      {"name":"미네소타대 수의피부과 교재(클리핑 후 탈모)","url":"https://open.lib.umn.edu/animaldermatology2/chapter/canine-post-clipping-alopecia/"},
+    ],
+  },
+  { // 6-1
+    id: "s6-food-1", stage: 6, area: "food",
+    title: "덜 움직이면 밥도 조금 덜어요",
+    why: [
+      "개가 하루에 쓰는 열량은 나이가 들수록 대체로 줄어요(AAHA).",
+      "살이 찌면 관절과 몸 속 염증에 부담이 돼요(AAHA).",
+    ],
+    how: [
+      "산책 시간이 줄었다면 하루 양을 조금 줄여요.",
+      "한 달에 한 번 체형 점수(BCS)를 손으로 봐요(WSAVA).",
+      "사료를 바꿀 땐 7일 이상 섞어서 바꿔요.",
+      "\"노령견용\"으로 바꿀지는 병원과 정해요.",
+    ],
+    avoid: [
+      "나이만 보고 사료를 바로 바꾸기.",
+      "줄어든 밥만큼 간식으로 채우기.",
+    ],
+    ask: "\"지금 활동량이면 하루 열량을 얼마로 맞추면 될까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 영양","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/nutrition/"},
+      {"name":"WSAVA 체형 점수(BCS)","url":"https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf"},
+    ],
+  },
+  { // 6-2
+    id: "s6-weight-1", stage: 6, area: "weight",
+    title: "빼야 한다면 한 주에 1~2%씩 천천히",
+    why: [
+      "급하게 빼면 근육이 빠지고 다시 찌기 쉬워요. 코넬은 한 주에 몸무게의 1~2%를 권해요.",
+      "필요한 열량은 수의사가 계산해 주는 게 정확해요(코넬).",
+    ],
+    how: [
+      "목표 체중과 하루 열량을 병원에서 받아요.",
+      "관리 중엔 적어도 2주마다 같은 저울로 재요(코넬).",
+      "간식은 하루 열량의 10% 안으로 줄여요(WSAVA).",
+      "걷는 시간을 조금씩 늘려요.",
+    ],
+    avoid: [
+      "굶기거나 한 끼 거르기.",
+      "가족 중 한 명만 몰래 간식 주기.",
+    ],
+    ask: "\"목표 체중과 하루 열량을 정해 주실 수 있나요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 비만·감량","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-topics/obesity-and-weight-loss-dogs"},
+      {"name":"WSAVA 간식 주기","url":"https://wsava.org/wp-content/uploads/2024/06/Feeding-treats-to-your-dog-v2.pdf"},
+    ],
+  },
+  { // 6-3
+    id: "s6-water-1", stage: 6, area: "water",
+    title: "물 마시는 양이 늘면 재 봐요",
+    why: [
+      "개는 보통 하루에 1kg당 40~60ml를 마셔요(코넬).",
+      "하루 1kg당 100ml가 넘으면 많이 마시는 것으로 보고 병원에 가요(코넬).",
+    ],
+    how: [
+      "물그릇에 정한 양을 붓고 24시간 뒤 남은 양을 빼요.",
+      "더운 날·산책 많이 한 날은 따로 적어요.",
+      "3kg이면 하루 300ml가 100ml/kg이에요(계산).",
+      "소변 양·횟수가 늘었는지도 같이 봐요.",
+    ],
+    avoid: [
+      "많이 마신다고 물을 줄이기. 코넬은 진단 전 물을 제한하지 말라고 해요.",
+    ],
+    ask: "\"요즘 하루에 ○ml쯤 마셔요. 검사가 필요할까요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 다음·다뇨","url":"https://riney.vet.cornell.edu/member-benefits-health-tips/polyuria-polydipsia-april-2024"},
+    ],
+  },
+  { // 6-4
+    id: "s6-toys-1", stage: 6, area: "toys",
+    title: "뛰는 놀이 조금, 머리 쓰는 놀이 조금 더",
+    why: [
+      "냄새 찾기·개인기 같은 두뇌 게임은 관절 부담 없이 지루함을 덜어 줘요(AKC).",
+      "오래 씹어 온 이는 닳거나 금이 갈 수 있어요. 딱딱한 장난감이 원인이 되기도 해요(AAHA).",
+    ],
+    how: [
+      "간식 숨기기·컵 게임 같은 두뇌 게임을 해요(AKC).",
+      "씹는 장난감을 엄지손톱으로 다시 눌러 봐요. 자국이 남아야 해요(AAHA).",
+      "공 던지기는 짧게, 미끄럽지 않은 바닥에서 해요.",
+    ],
+    avoid: [
+      "뼈·뿔처럼 아주 딱딱한 것 주기(AAHA).",
+      "계단·소파에서 뛰어내리는 놀이.",
+    ],
+    ask: "\"이가 닳거나 금 간 곳이 있나요?\"",
+    sources: [
+      {"name":"AKC 두뇌 게임","url":"https://www.akc.org/expert-advice/health/fun-cognitive-training-games-for-dogs/"},
+      {"name":"AAHA 「Don't Chew On This!」","url":"https://www.aaha.org/resources/dont-chew-on-this/"},
+    ],
+  },
+  { // 6-5
+    id: "s6-walk-1", stage: 6, area: "walk",
+    title: "절뚝임·뻣뻣함은 영상으로 남겨요",
+    why: [
+      "보호자는 통증으로 생긴 변화를 '나이 탓'으로 넘기기 쉬워요(AAHA).",
+      "AAHA는 보호자가 찍은 걷는 영상이 진료에 도움이 된다고 해요.",
+    ],
+    how: [
+      "일어날 때, 계단 오를 때, 산책 끝무렵을 10초씩 찍어요.",
+      "절뚝인 날짜와 어느 다리인지 적어요.",
+      "산책을 짧게 여러 번으로 나눠 봐요.",
+      "병원 갈 때 영상을 보여 줘요.",
+    ],
+    avoid: [
+      "사람 진통제 먹이기. 개에게 위험할 수 있어요.",
+      "\"원래 그래\" 하고 넘기기.",
+    ],
+    ask: "\"걷는 영상을 찍어 왔어요. 관절 통증일 수 있을까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 통증 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/pain-management/"},
+      {"name":"AAHA 2023 건강한 시니어 평가","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/evaluating-the-healthy-senior-pet/"},
+    ],
+  },
+  { // 6-6
+    id: "s6-safety-1", stage: 6, area: "safety",
+    title: "미끄러운 바닥엔 깔개, 높은 곳엔 경사로",
+    why: [
+      "AAHA는 깔개·요가 매트로 발 디딜 곳을 만들고, 경사로를 쓰라고 권해요.",
+      "미리 바꿔 두면 관절이 아파지기 전에 습관이 돼요.",
+    ],
+    how: [
+      "자주 다니는 길과 밥 먹는 자리에 미끄럼 방지 깔개를 깔아요.",
+      "소파·침대에 오르는 곳엔 경사로나 계단을 둬요.",
+      "발바닥 털이 패드를 덮으면 다듬어요.",
+    ],
+    avoid: [
+      "높은 곳에서 뛰어내리게 두기.",
+    ],
+    ask: "\"집에서 관절 부담을 줄이려면 무엇부터 바꾸면 좋을까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 통증 관리(집 환경)","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/pain-management/"},
+    ],
+  },
+  { // 6-7
+    id: "s6-walk-2", stage: 6, area: "walk",
+    title: "목줄보다 가슴줄, 거위 소리 기침은 기록해요",
+    why: [
+      "기관이 약해지면 '거위 우는 소리' 같은 마른기침이 나요. 목줄로 목을 누르면 더 심해질 수 있어요(VCA).",
+      "VCA는 목줄 대신 가슴줄을 쓰고, 체중을 관리하라고 해요.",
+    ],
+    how: [
+      "산책엔 가슴줄(하네스)을 써요.",
+      "기침이 언제 나는지 적어요. 흥분할 때, 먹고 마신 직후, 덥고 습할 때, 밤 등(VCA).",
+      "기침 소리를 휴대폰으로 녹음해 둬요.",
+      "담배 연기 같은 자극은 피해요(VCA).",
+    ],
+    avoid: [
+      "줄을 세게 당기기.",
+      "기침이 계속되는데 지켜만 보기.",
+    ],
+    ask: "\"이런 기침을 해요(녹음). 기관 문제일 수 있을까요?\"",
+    sources: [
+      {"name":"VCA 기관지 협착","url":"https://vcahospitals.com/know-your-pet/tracheal-collapse-in-dogs"},
+    ],
+  },
+  { // 6-8
+    id: "s6-checkup-1", stage: 6, area: "checkup",
+    title: "혈액·소변 '건강할 때 기준값'을 만들어요",
+    why: [
+      "AAHA는 시니어에게 1년에 1~2번 혈액·소변 검사를 권해요.",
+      "건강할 때 값이 있으면 나중에 달라진 걸 비교하기 쉬워요.",
+    ],
+    how: [
+      "다음 검진 때 혈액·소변 검사를 같이 할지 상담해요.",
+      "결과지는 사진으로 찍어 앱에 남겨요.",
+      "AAHA는 시니어에게 혈압·심장사상충 검사를 매년 권해요.",
+    ],
+    avoid: [
+      "결과지를 병원에만 두기.",
+    ],
+    ask: "\"지금 나이에 기준값으로 어떤 검사를 해 두면 좋을까요?\"",
+    sources: [
+      {"name":"AAHA 시니어 검사 항목·빈도 표","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/diagnostic-tests-and-recommended-frequencies-for-senior-dogs-and-cats/"},
+      {"name":"AAHA 2023 건강한 시니어 평가","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/evaluating-the-healthy-senior-pet/"},
+    ],
+  },
+  { // 6-9
+    id: "s6-checkup-2", stage: 6, area: "checkup",
+    title: "혹은 위치·크기·날짜를 적어요",
+    why: [
+      "AAHA는 순한 혹과 그렇지 않은 혹이 겉으로 구별이 안 될 수 있어 \"지켜보기\"가 위험하다고 해요.",
+      "병원은 혹의 크기를 재고 세포 검사를 해요(AAHA).",
+    ],
+    how: [
+      "한 달에 한 번 온몸을 손으로 쓸어 봐요(VCA).",
+      "혹이 있으면 위치를 그림에 표시하고, 크기를 동전과 비교해 사진을 찍어요.",
+      "날짜를 적고 병원에 보여 줘요.",
+    ],
+    avoid: [
+      "\"지방 혹이겠지\" 하고 몇 달 두기.",
+      "혹을 짜거나 누르기.",
+    ],
+    ask: "\"이 혹은 세포 검사가 필요할까요?\"",
+    sources: [
+      {"name":"AAHA 2023 건강한 시니어 평가(혹)","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/evaluating-the-healthy-senior-pet/"},
+      {"name":"VCA 집에서 하는 건강 체크","url":"https://vcahospitals.com/know-your-pet/giving-your-dog-a-thorough-home-check-up"},
+    ],
+  },
+  { // 6-10
+    id: "s6-checkup-3", stage: 6, area: "checkup",
+    title: "잘 때 1분 호흡수를 가끔 세어 둬요",
+    why: [
+      "깊이 잘 때 가슴이 오르내리는 횟수는 심장 상태를 볼 수 있는 간단한 숫자예요(코넬).",
+      "쉬거나 잘 때 35회를 넘으면 바로 병원에 가요(코넬).",
+    ],
+    how: [
+      "꿈꾸지 않고 깊이 잘 때 재요.",
+      "15초 세고 ×4 하거나, 1분을 세요(코넬).",
+      "평소 값을 몇 번 적어 두면 달라진 걸 알기 쉬워요.",
+      "심장 진단을 받았다면 수의사가 정한 기준을 따라요.",
+    ],
+    avoid: [
+      "깨어 있거나 더울 때 잰 숫자로 걱정하기.",
+    ],
+    ask: "\"잘 때 호흡수가 평소보다 늘었어요. 진료가 필요할까요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 심잡음(호흡수)","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-information/get-jump-heart-murmurs"},
+      {"name":"VCA 집에서 호흡수 재기","url":"https://vcahospitals.com/know-your-pet/home-breathing-rate-evaluation"},
+    ],
+  },
+  { // 6-11
+    id: "s6-behavior-1", stage: 6, area: "behavior",
+    title: "예민해졌다면 아픈 곳이 있는지부터 봐요",
+    why: [
+      "오래된 통증은 행동 변화로 조용히 나타나 보호자가 알아채기 어려워요(AAHA).",
+      "AAHA는 행동 문제 전에 몸의 원인을 먼저 확인하라고 해요.",
+    ],
+    how: [
+      "만지면 피하는 곳, 으르렁대는 때를 적어요.",
+      "안 하던 행동(숨기, 계단 안 오르기)을 날짜와 함께 적어요.",
+      "병원에서 통증 확인을 먼저 해요.",
+    ],
+    avoid: [
+      "혼내기. 아파서 하는 행동일 수 있어요.",
+    ],
+    ask: "\"요즘 만지면 싫어해요. 통증이 있는지 봐 주실 수 있나요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 통증 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/pain-management/"},
+      {"name":"AAHA 2015 행동 관리 지침","url":"https://www.aaha.org/resources/2015-aaha-canine-and-feline-behavior-management-guidelines/"},
+    ],
+  },
+  { // 6-12
+    id: "s6-behavior-2", stage: 6, area: "behavior",
+    title: "천둥·불꽃놀이엔 미리 안전한 방을 만들어요",
+    why: [
+      "나이가 들며 큰 소리 공포가 심해지기도 해요(코넬).",
+      "무서우면 도망치다 길을 잃을 수 있어요(코넬).",
+    ],
+    how: [
+      "익숙한 방, 창문이 적은 곳에 푹신한 자리를 만들어요(코넬).",
+      "백색소음이나 잔잔한 음악을 틀어요(코넬).",
+      "소리가 나기 전에 산책·배변을 마쳐요(코넬).",
+      "인식표와 등록 정보를 다시 확인해요.",
+    ],
+    avoid: [
+      "혼내기. 더 무서워해요(코넬).",
+      "무서워하는 날 혼자 두기(코넬).",
+    ],
+    ask: "\"소리 공포가 심해요. 미리 할 수 있는 방법이 있을까요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 「Fear of fireworks and thunderstorms」","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-topics/fear-fireworks-and-thunderstorms"},
+    ],
+  },
+  { // 6-13
+    id: "s6-teeth-1", stage: 6, area: "teeth",
+    title: "작은 개일수록 잇몸을 더 챙겨요",
+    why: [
+      "잇몸병은 작은 개, 나이 든 개에게 더 많아요(AAHA).",
+      "입 안을 제대로 치료하려면 마취가 필요해요(AAHA).",
+    ],
+    how: [
+      "양치는 매일 이어 가요.",
+      "한쪽으로만 씹거나 사료를 흘리면 적어 둬요.",
+      "검진 때 입 안을 꼭 봐 달라고 해요.",
+      "스케일링 전 마취 검사는 병원과 상의해요.",
+    ],
+    avoid: [
+      "무마취 스케일링(AAHA: 부적절).",
+    ],
+    ask: "\"잇몸 상태가 어떤가요? 치과 치료가 필요할까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 치과","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/dentistry/"},
+      {"name":"AAHA 무마취 치과","url":"https://www.aaha.org/resources/2019-aaha-dental-care-guidelines-for-dogs-and-cats/nonanesthetic-dentistry/"},
+    ],
+  },
+  { // 6-14
+    id: "s6-alone-1", stage: 6, area: "alone",
+    title: "혼자 있는 시간, 요즘 괜찮은지 다시 봐요",
+    why: [
+      "혼자 있을 때 짖기·뜯기·배변 실수는 분리불안 신호일 수 있어요(ASPCA).",
+      "소리 공포가 있는 개는 분리불안도 함께 있는 경우가 많아요(코넬).",
+    ],
+    how: [
+      "나갈 때 홈캠으로 처음 30분을 봐요.",
+      "나갈 때 오래 걸리는 사료 장난감을 줘요(ASPCA).",
+      "인사는 짧고 조용하게 해요(ASPCA).",
+    ],
+    avoid: [
+      "돌아와서 사고 친 걸 혼내기(ASPCA).",
+    ],
+    ask: "\"혼자 있을 때 불안해하는 것 같아요. 행동 진료가 필요할까요?\"",
+    sources: [
+      {"name":"ASPCA 분리불안","url":"https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/separation-anxiety"},
+      {"name":"코넬 Riney 센터 소리 공포","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-topics/fear-fireworks-and-thunderstorms"},
+    ],
+  },
+  { // 7-1
+    id: "s7-weight-1", stage: 7, area: "weight",
+    title: "몸무게와 함께 '근육'도 봐요",
+    why: [
+      "나이 든 개는 근육이 줄고 지방이 늘다가, 더 나이 들면 몸무게가 빠지기도 해요(AAHA).",
+      "AAHA는 체형 점수와 함께 근육 점수를 보라고 해요.",
+    ],
+    how: [
+      "한 달에 한 번 같은 저울로 재요.",
+      "등뼈 양옆, 어깨, 허벅지 근육을 손으로 만져 봐요.",
+      "전보다 뼈가 도드라지면 날짜와 함께 적어요.",
+      "이유 없이 몸무게가 빠지면 병원에 가요.",
+    ],
+    avoid: [
+      "\"나이 들어 그래\" 하고 체중 감소를 넘기기.",
+    ],
+    ask: "\"근육 점수(MCS)는 몇 점인가요? 단백질을 더 챙겨야 할까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 영양","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/nutrition/"},
+      {"name":"WSAVA 체형 점수(BCS)","url":"https://wsava.org/wp-content/uploads/2020/01/Body-Condition-Score-Dog.pdf"},
+    ],
+  },
+  { // 7-2
+    id: "s7-food-1", stage: 7, area: "food",
+    title: "노령견 사료는 병원과 함께 골라요",
+    why: [
+      "미국 사료 기준(AAFCO)에는 아직 '노령견용' 기준이 따로 없어요(AAHA).",
+      "건강한 노령견은 열량은 조금 낮고, 섬유질과 좋은 단백질은 조금 더 필요해요(AAHA).",
+    ],
+    how: [
+      "사료를 바꾸기 전에 체형·근육 점수를 먼저 봐요.",
+      "씹기 힘들어하면 사료에 물을 섞어 봐요. 물을 섞었더니 노령견의 소화율이 올랐다는 연구가 있어요(AAHA).",
+      "바꿀 땐 7일 이상 섞어서 바꿔요.",
+      "먹는 양이 줄면 날짜와 함께 적어요.",
+    ],
+    avoid: [
+      "포장의 '시니어' 글자만 보고 고르기.",
+      "영양제를 병원에 말하지 않고 먹이기. 약과 부딪칠 수 있어요(AAHA).",
+    ],
+    ask: "\"지금 몸 상태에 맞는 사료와 하루 양을 알려 주세요.\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 영양","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/nutrition/"},
+      {"name":"AAHA 2023 건강한 시니어 평가(영양제)","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/evaluating-the-healthy-senior-pet/"},
+    ],
+  },
+  { // 7-3
+    id: "s7-water-1", stage: 7, area: "water",
+    title: "물·소변이 늘었는지 일주일에 한 번 재요",
+    why: [
+      "하루 1kg당 100ml 넘게 마시면 많이 마시는 것이에요(코넬). 콩팥·호르몬 문제의 신호일 수 있어요.",
+      "AAHA는 시니어에게 6~12개월마다 소변 검사를 권해요.",
+    ],
+    how: [
+      "일주일에 한 번, 24시간 마신 양을 재요.",
+      "실내 배변 실수, 밤에 소변이 늘었는지 적어요.",
+      "많이 마시는 날이 며칠 이어지면 병원에 가요.",
+      "병원 갈 때 아침 첫 소변을 받아 갈지 물어봐요.",
+    ],
+    avoid: [
+      "실수가 잦다고 물을 줄이기(코넬: 진단 전 제한 금지).",
+    ],
+    ask: "\"물을 하루 ○ml 마셔요. 소변 검사가 필요할까요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 다음·다뇨","url":"https://riney.vet.cornell.edu/member-benefits-health-tips/polyuria-polydipsia-april-2024"},
+      {"name":"AAHA 시니어 검사 항목·빈도 표","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/diagnostic-tests-and-recommended-frequencies-for-senior-dogs-and-cats/"},
+    ],
+  },
+  { // 7-4
+    id: "s7-teeth-1", stage: 7, area: "teeth",
+    title: "씹기 힘들어하면 입이 아픈 건 아닌지 봐요",
+    why: [
+      "사료를 물기·씹기·삼키기 힘들어하면 입 안 검사가 필요해요(AAHA).",
+      "나이 든 개는 입 안 혹도 더 많아서 일찍 찾는 게 중요해요(AAHA).",
+    ],
+    how: [
+      "밥 먹는 모습을 영상으로 찍어 병원에 보여 줘요(AAHA).",
+      "한쪽으로만 씹기, 사료 흘리기, 입 냄새 변화를 적어요.",
+      "양치는 아파하지 않는 만큼만 이어 가요.",
+      "병원 갈 때마다 입 안을 봐 달라고 해요(AAHA).",
+    ],
+    avoid: [
+      "\"나이 들어 입맛이 없다\"고 넘기기.",
+      "무마취 스케일링(AAHA: 부적절).",
+    ],
+    ask: "\"밥을 흘리고 한쪽으로 씹어요. 치과 검사가 필요할까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 치과","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/dentistry/"},
+      {"name":"AAHA 무마취 치과","url":"https://www.aaha.org/resources/2019-aaha-dental-care-guidelines-for-dogs-and-cats/nonanesthetic-dentistry/"},
+    ],
+  },
+  { // 7-5
+    id: "s7-toys-1", stage: 7, area: "toys",
+    title: "냄새 놀이를 짧게, 자주 해요",
+    why: [
+      "새 장난감·두뇌 게임 같은 자극은 인지 변화 관리에 함께 쓰여요(AAHA).",
+      "냄새 찾기는 많이 뛰지 않아도 돼요(AKC 두뇌 게임).",
+    ],
+    how: [
+      "간식 몇 알을 바닥에 숨겨 찾게 해요.",
+      "한 번에 몇 분씩, 하루 여러 번 나눠요.",
+      "씹는 장난감은 부드러운 것으로 바꿔요.",
+      "예전에 배운 쉬운 신호를 다시 해 보고 칭찬해요.",
+    ],
+    avoid: [
+      "지쳐서 엎드리는데 계속하기.",
+    ],
+    ask: "\"집에서 해 줄 수 있는 두뇌 놀이를 추천해 주세요.\"",
+    sources: [
+      {"name":"AAHA 2023 인지기능장애·불안 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/managing-cognitive-dysfunction-and-behavioral-anxiety/"},
+      {"name":"AKC 두뇌 게임","url":"https://www.akc.org/expert-advice/health/fun-cognitive-training-games-for-dogs/"},
+    ],
+  },
+  { // 7-6
+    id: "s7-walk-1", stage: 7, area: "walk",
+    title: "일어나기 힘들어하면 '나이'보다 '통증'을 의심해요",
+    why: [
+      "보호자는 통증을 나이 탓으로 보기 쉬워요(AAHA).",
+      "통증은 일찍 다룰수록 결과가 좋아요(AAHA).",
+    ],
+    how: [
+      "눕고 일어날 때, 계단, 차 타기를 힘들어하는지 봐요.",
+      "걷는 모습을 영상으로 찍어 병원에 보여 줘요(AAHA).",
+      "산책은 짧게, 평평한 길로 나눠 가요.",
+      "체중 관리도 통증 관리의 하나예요(AAHA).",
+    ],
+    avoid: [
+      "사람 진통제 먹이기.",
+      "아파하는데 억지로 오래 걷기.",
+    ],
+    ask: "\"일어날 때 힘들어해요(영상). 통증 관리가 필요할까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 통증 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/pain-management/"},
+      {"name":"VCA 집에서 하는 건강 체크","url":"https://vcahospitals.com/know-your-pet/giving-your-dog-a-thorough-home-check-up"},
+    ],
+  },
+  { // 7-7
+    id: "s7-safety-1", stage: 7, area: "safety",
+    title: "깔개·경사로·그릇 높이로 집을 바꿔요",
+    why: [
+      "AAHA는 깔개나 요가 매트, 경사로, 높인 밥·물그릇, 맞는 침대를 권해요.",
+      "눈·귀가 어두워지면 계단이나 물가가 위험해져요(AAHA).",
+    ],
+    how: [
+      "다니는 길에 미끄럼 방지 깔개를 깔아요.",
+      "소파·침대엔 경사로를 두거나 올라가지 않게 해요.",
+      "밥·물그릇을 조금 높여요.",
+      "계단 입구엔 안전문을 달아요.",
+    ],
+    avoid: [
+      "가구 배치를 자주 바꾸기. 눈이 어두운 아이는 길을 외워 다녀요.",
+    ],
+    ask: "\"우리 집에서 위험한 곳이 어디일까요?\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침 통증 관리(집 환경)","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/pain-management/"},
+    ],
+  },
+  { // 7-8
+    id: "s7-checkup-1", stage: 7, area: "checkup",
+    title: "검진은 1년에 1~2번, 검사 항목은 함께 정해요",
+    why: [
+      "AAHA는 시니어에게 1년에 1~2번 혈액·소변 등 검사를 권해요.",
+      "혈액·소변 검사는 6~12개월마다, 혈압·심장사상충은 매년이에요(AAHA 표).",
+    ],
+    how: [
+      "6개월마다 검진 알림을 맞춰요.",
+      "먹는 약·영양제·연고를 모두 적어 가요(AAHA).",
+      "걷는 영상, 물 마신 양, 호흡수 기록을 챙겨 가요.",
+      "결과지는 사진으로 남겨요.",
+    ],
+    avoid: [
+      "아플 때만 병원 가기.",
+    ],
+    ask: "\"이번 검진에 어떤 검사가 필요할까요? 다음은 언제 올까요?\"",
+    sources: [
+      {"name":"AAHA 2023 건강한 시니어 평가","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/evaluating-the-healthy-senior-pet/"},
+      {"name":"AAHA 시니어 검사 항목·빈도 표","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/diagnostic-tests-and-recommended-frequencies-for-senior-dogs-and-cats/"},
+    ],
+  },
+  { // 7-9
+    id: "s7-checkup-2", stage: 7, area: "checkup",
+    title: "나이는 병이 아니에요",
+    why: [
+      "AAHA는 \"나이는 병이 아니다\"라고 해요. 나이 들며 생기는 변화 중엔 치료하거나 편하게 해 줄 수 있는 것이 많아요.",
+      "보호자는 이런 변화를 피할 수 없는 노화로 여기기 쉬워요(AAHA).",
+    ],
+    how: [
+      "\"나이 들어서\"라는 생각이 들면 한 번 적어 둬요.",
+      "다음 검진 때 그 목록을 보여 줘요.",
+      "물·밥·잠·걸음·배변 변화를 날짜와 함께 남겨요.",
+    ],
+    avoid: [
+      "달라진 걸 그냥 넘기기.",
+    ],
+    ask: "\"이 변화가 나이 때문인지, 도울 방법이 있는지 봐 주세요.\"",
+    sources: [
+      {"name":"AAHA 2023 시니어 지침","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/"},
+    ],
+  },
+  { // 7-10
+    id: "s7-behavior-1", stage: 7, area: "behavior",
+    title: "집에서 헤매거나 실수가 늘면 적어 두세요",
+    why: [
+      "8살 넘은 개의 약 14~22.5%가 나이와 관련된 인지 저하를 겪어요(AAHA).",
+      "일찍 알아챌수록 관리 효과가 좋아요(AAHA).",
+    ],
+    how: [
+      "이런 변화를 날짜와 함께 적어요(AAHA): 집에서 길 잃음, 가족 반응 줄어듦, 밤낮 바뀜, 배변 실수, 활동 변화, 불안 늘어남.",
+      "구석에 끼어 못 나오거나 같은 곳을 맴도는지 봐요.",
+      "갑자기 생겼다면 병원부터 가요. 통증·다른 병도 비슷하게 보여요(AAHA).",
+    ],
+    avoid: [
+      "실수했다고 혼내기.",
+      "\"치매니까 어쩔 수 없다\"고 단정하기.",
+    ],
+    ask: "\"이런 변화가 있어요(기록). 인지 검사를 받아 볼 수 있을까요?\"",
+    sources: [
+      {"name":"AAHA 2023 인지기능장애·불안 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/managing-cognitive-dysfunction-and-behavioral-anxiety/"},
+    ],
+  },
+  { // 7-11
+    id: "s7-sleep-1", stage: 7, area: "sleep",
+    title: "낮엔 자고 밤엔 서성인다면 기록해요",
+    why: [
+      "낮잠이 늘고 밤에 안절부절못하는 것은 인지 변화에서 가장 흔한 모습이에요(AAHA).",
+      "통증·소변 문제로 밤에 깨기도 해요.",
+    ],
+    how: [
+      "밤에 몇 번 깨는지, 몇 시쯤인지 일주일 적어요.",
+      "낮에 짧은 산책·냄새 놀이로 깨어 있는 시간을 만들어요.",
+      "잠자리는 조용하고 미끄럽지 않은 곳에 둬요.",
+      "자기 전 배변을 한 번 더 시켜요.",
+    ],
+    avoid: [
+      "사람 수면제·진정제 먹이기.",
+    ],
+    ask: "\"밤에 자꾸 깨서 돌아다녀요(기록). 도울 방법이 있을까요?\"",
+    sources: [
+      {"name":"AAHA 2023 인지기능장애·불안 관리","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/managing-cognitive-dysfunction-and-behavioral-anxiety/"},
+    ],
+  },
+  { // 7-12
+    id: "s7-checkup-3", stage: 7, area: "checkup",
+    title: "잘 때 호흡수를 주 1번 적어요",
+    why: [
+      "잘 때 호흡수가 평소보다 늘면 심장 상태가 변했다는 신호일 수 있어요(코넬).",
+      "쉬거나 잘 때 35회를 넘으면 바로 병원에 가요(코넬).",
+    ],
+    how: [
+      "깊이 잘 때 15초 세고 ×4 해요(코넬).",
+      "주 1번, 비슷한 시간에 재서 적어요.",
+      "숨이 가쁘거나 기침이 늘면 함께 적어요.",
+      "심장 진단을 받았다면 수의사 기준을 따라요.",
+    ],
+    avoid: [
+      "덥거나 깨어 있을 때 잰 값을 기준으로 삼기.",
+    ],
+    ask: "\"잘 때 호흡수가 ○회예요. 괜찮은 범위인가요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 심잡음(호흡수)","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-information/get-jump-heart-murmurs"},
+      {"name":"VCA 집에서 호흡수 재기","url":"https://vcahospitals.com/know-your-pet/home-breathing-rate-evaluation"},
+    ],
+  },
+  { // 7-13
+    id: "s7-season-1", stage: 7, area: "season",
+    title: "더위엔 더 일찍 쉬게, 추위엔 따뜻하게",
+    why: [
+      "나이 든 개는 열사병 위험이 더 커요(코넬).",
+      "추위에 약해지는 경우도 많아 산책 시간을 조절해요.",
+    ],
+    how: [
+      "여름엔 해 뜬 직후·해 진 뒤에 짧게 걸어요.",
+      "물과 그늘을 자주 챙겨요(코넬).",
+      "겨울엔 옷을 입히고, 젖으면 바로 말려요.",
+      "헐떡임이 심하면 바로 쉬어요.",
+    ],
+    avoid: [
+      "차 안에 두기(코넬).",
+      "덥거나 추운 날 평소만큼 걷기.",
+    ],
+    ask: "\"우리 아이는 하루 산책을 어느 정도가 적당할까요?\"",
+    sources: [
+      {"name":"코넬 Riney 센터 「Heatstroke」","url":"https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-information/heatstroke-medical-emergency"},
+    ],
+  },
+  { // 7-14
+    id: "s7-checkup-4", stage: 7, area: "checkup",
+    title: "편안함을 지키는 돌봄도 미리 이야기해요",
+    why: [
+      "완화 돌봄은 통증과 증상을 덜어 주는 돌봄이에요. 치료와 함께 할 수 있어요(AAHA).",
+      "AAHA는 보호자와 함께 일상 계획과 갑자기 나빠질 때의 계획을 세우라고 해요.",
+    ],
+    how: [
+      "좋아하는 일(밥, 산책, 가족 곁)을 아직 즐기는지 주마다 적어요.",
+      "아플 때 연락할 병원과 야간 병원을 정해 둬요.",
+      "궁금한 점은 미리 수의사와 이야기해요.",
+    ],
+    avoid: [
+      "혼자 고민하기. 가족·병원과 나눠요.",
+    ],
+    ask: "\"우리 아이가 편하게 지내려면 집에서 무엇을 해 주면 될까요?\"",
+    sources: [
+      {"name":"AAHA 2023 완화 돌봄·호스피스","url":"https://www.aaha.org/resources/2023-aaha-senior-care-guidelines-for-dogs-and-cats/palliative-care-or-hospice/"},
+    ],
+  },
 ];
 // 시기 5~7은 뼈대만(주제 목록). 2단계에서 카드로 채운다.
 export const LATER_STAGES = [
