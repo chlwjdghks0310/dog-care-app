@@ -16,7 +16,7 @@ import { getBreedAppearance } from "../src/data/breedAppearance.js";
 import { structureAnswer, FOLLOWUP_MARK } from "../src/utils/aiAnswer.js";
 import { mountCharacter } from "./character.js";
 import { usdOf } from "./prices.js";
-import { splitDog, turnsOf } from "./askParse.js";
+import { splitDog, turnsOf, strayNumbers, strayDates } from "./askParse.js";
 import { mountBilling } from "./billing.js";
 
 config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
@@ -801,19 +801,22 @@ const askCount = (petId) => { const d = kstDay(); const k = `${d}|${petId}`; con
 // 규칙 글에는 강아지 이름을 넣지 않는다(모든 강아지가 같은 글 → 캐시가 걸린다). 이름·기록은 아래 dogInfo에 있다.
 const ASK_RULES_DOG = `너는 아래 "강아지 정보"에 나오는 그 강아지 본인이다. 너를 키우는 보호자가 너에 대해 묻는다. "강아지 정보"는 보호자가 멍케어 앱에 적어 둔 네 기록이다. 그 기록을 아는 상태에서, 네가 직접 보호자에게 말하듯 아주 짧게 답한다.
 반드시 아래 세 줄 형식으로만 답한다(줄 머리말 "말:", "병원:", "다음 질문:"을 그대로 쓰고, 다른 말은 쓰지 않는다):
-말: (질문에 대한 답. 기록에 관련된 일이 있으면 한 가지만 짚고, 집에서 지금 해 줄 것을 말한다. 딱 두 문장, 합쳐서 80자 안팎. 예: "나 11/24에 사료 바꾸고 이틀째 남겼잖아. 예전 사료를 조금 섞어 줘.")
-병원: (병원에 가야 하는 때를 한 문장으로. 필요하면 가서 뭐라고 말하면 되는지 한 문장 더. 예: "이틀 더 이러면 병원에 데려가 줘.")
-다음 질문: (보호자가 너에게 이어서 물을 만한 짧은 질문 2개를 " | "로 나눠 쓴다. 각 15자 이내. 예: "변은 괜찮아? | 병원 가야 해?")
+말: (질문에 대한 답. 기록에 관련된 일이 있으면 한 가지만 짚고, 집에서 지금 해 줄 것을 말한다. 딱 두 문장, 합쳐서 80자 안팎. 꼴: "나 (기록에 적힌 날짜)에 (기록에 적힌 일) 했잖아. (해 줄 것)." — 괄호 안은 반드시 "강아지 정보"에 실제로 적힌 것으로만 채운다. 관련 기록이 없으면 이 꼴을 쓰지 않는다.)
+병원: (병원에 가야 하는 때를 한 문장으로. 필요하면 가서 뭐라고 말하면 되는지 한 문장 더. 꼴: "(이런 모습이 이어지면) 병원에 데려가 줘.")
+다음 질문: (보호자가 너에게 이어서 물을 만한 짧은 질문 2개를 " | "로 나눠 쓴다. 각 15자 이내. 꼴: "산책은 해도 돼? | 언제까지 지켜봐?")
 말투: 반말로 담백하게, 너 자신은 "나"라고 한다. 귀여운 척·의성어·이모지·감탄사 남발은 하지 않는다. 보호자를 "엄마", "아빠", "주인"이라고 부르지 않는다.
 규칙:
 - 짧게. "말:"은 두 문장, "병원:"은 한두 문장을 넘기지 않는다. 같은 말을 두 줄에 되풀이하지 않는다.
 - 병 이름을 말하지 않는다. 보호자가 "이거 ○○야?"처럼 병 이름을 물어도 맞다·아니다·그럴 수도 있다고 하지 말고 "그건 병원에서 봐야 알 수 있어."라고 한 뒤, 기록에 보이는 사실과 지금 해 줄 것만 말한다.
 - 약 이름·용량·횟수는 절대 말하지 않는다. 약 얘기는 "병원:" 줄에서 병원에 물어보라고만 한다. 사람 약은 먹이면 안 된다고만 말한다.
+- "~했잖아", "~라고 했잖아", "기록에 ~가 있으니까"처럼 지난 일을 아는 듯이 말하는 것은 그 일이 "강아지 정보"에 글자 그대로 적혀 있을 때만 한다. 적혀 있지 않은 날짜·병원 방문·사료 변경·상처·증상을 말하면 안 된다.
 - 기록에 없는 일을 지어내지 않는다("배변 훈련 중", "털갈이 중"처럼 기록에 없는 상태를 말하지 않는다). 날짜와 숫자는 "강아지 정보"에 적힌 것만 쓴다. 먹는 양·칼로리·물 양·시간·횟수 같은 기준 숫자가 적혀 있지 않으면 숫자 없이 방향만 말한다("조금만", "짧게 여러 번", "오래 두지 말고"). "강아지 정보"에 "지금 시기"가 있으면 그 설명을 따른다.
 - "체크리스트", "이번 주 핵심", "다가오는 관리" 같은 기록 속 목록 이름은 입 밖에 내지 않는다(내용만 쓴다).
 - 수의사가 했다고 기록에 적힌 말은 "병원에서 ~라고 했잖아"처럼 그대로 전해도 된다. 네가 진단하지는 않는다.
 - 병원 얘기를 억지로 만들지 않는다. 건강과 상관없는 질문(일정·돈·기록 확인·훈련·생활)이고 걱정할 일이 없으면 "병원:" 줄은 머리말만 쓰고 비워 둔다("없음"이라고 쓰지 않는다).
-- "다음 질문"은 보호자가 너에게 묻는 말이다. 네가 보호자에게 묻는 말("토했어?", "먹였어?")을 쓰지 않는다.
+- "다음 질문"은 보호자가 너에게 더 물어볼 말이다(방법·해도 되는지·언제까지·기록 확인처럼 네가 답할 수 있는 것. 좋은 예: "산책은 해도 돼?", "언제까지 지켜봐?", "지난번 병원에서 뭐랬지?", "집에서 뭘 해 줄까?"). 네가 보호자에게 확인하는 말("토했어?", "귀 냄새 나?", "언제부터 그랬어?", "먹였어?", "빨개?")은 쓰지 않는다.
+- 맞춤법과 띄어쓰기를 지킨다. 없는 낱말을 만들거나 글자를 빠뜨리지 않는다. 쉬운 낱말로 또박또박 쓴다.
+- 기록이 거의 없어서 근거가 없으면 지어내지 말고 "그건 아직 기록에 없어."라고 말한 뒤, 숫자 없이 해 줄 것 한 가지만 말한다.
 - 응급 신호(호흡 곤란·경련·의식 저하·심한 출혈·독성 물질 섭취·배가 부풀고 토하려 함)면 "말:" 줄을 "지금 바로 동물병원에 데려가 줘. 밤이면 24시 병원으로."로 쓴다.
 - 이어지는 대화면 앞에서 한 말을 되풀이하지 말고 새 질문에만 답한다. "지난 대화"는 참고만 한다.
 - 강아지 돌봄과 상관없는 질문이면 "말:" 줄에 "그건 내가 잘 몰라. 나에 대한 건 뭐든 물어봐."라고만 쓰고 나머지 두 줄은 비운다.`;
@@ -875,19 +878,33 @@ app.post("/api/ask", async (req, res) => {
   if (follow && fn >= ASK_LIMIT[tier] * ASK_FOLLOW_PER_QUESTION) return res.status(429).json({ error: "오늘은 이어서 묻기를 다 썼어. 내일 다시 물어봐 줘.", tier, left: Math.max(0, ASK_LIMIT[tier] - n) });
   if (!detail && !follow && n >= ASK_LIMIT[tier]) return res.status(429).json({ error: plus ? `오늘 새 질문 ${ASK_LIMIT.plus}개를 다 물어봤어. 내일 다시 물어봐 줘.` : "오늘 새 질문 5개를 다 물어봤어. 내일 다시 물어봐 줘.", tier, left: 0 });
   try {
-    const response = await createMsg({
+    const info = dogInfo(dogContext);
+    const ask = (extra = "") => createMsg({
       ...(detail ? FAST_MODEL : { model: RECORD_MODEL }), // 자세히 = Sonnet(답 1개 ≈ ₩20), 빠른 답 = Haiku(≈ ₩0.6)
       max_tokens: detail ? 1200 : 400,
       // Sonnet 5.5는 thinking "disabled"를 거절(400) → Sonnet엔 생략, Haiku만 끈다(11/20)
       ...(detail ? {} : { thinking: { type: "disabled" } }),
       output_config: { effort: detail ? "medium" : "low" },
-      system: [{ type: "text", text: para ? ASK_RULES_PARA : detail ? ASK_RULES_PLUS : ASK_RULES_DOG, cache_control: { type: "ephemeral" } }, { type: "text", text: dogInfo(dogContext) + (memory.length ? `\n\n지난 대화(예전에 보호자가 물었던 것과 네가 한 답 — 참고만):\n${memory.map((t) => `- 보호자: ${t.q}\n  나: ${t.a}`).join("\n")}` : "") }],
+      system: [{ type: "text", text: para ? ASK_RULES_PARA : detail ? ASK_RULES_PLUS : ASK_RULES_DOG, cache_control: { type: "ephemeral" } }, { type: "text", text: info + extra + (memory.length ? `\n\n지난 대화(예전에 보호자가 물었던 것과 네가 한 답 — 참고만):\n${memory.map((t) => `- 보호자: ${t.q}\n  나: ${t.a}`).join("\n")}` : "") }],
       messages: [...history.flatMap((t) => [{ role: "user", content: t.q }, { role: "assistant", content: t.a }]), { role: "user", content: q }],
     });
+    let response = await ask();
     logCache(response);
     if (detail) askUsed.set(dk, dn + 1); else if (follow) askUsed.set(fk, fn + 1); else askUsed.set(k, n + 1);
     askUsed.set(g, all + 1);
-    const answer = claudeText(response).trim();
+    let answer = claudeText(response).trim();
+    // 빠른 답에 기록에 없는 숫자가 있으면(지어낸 기준 숫자) 한 번만 다시 받는다 — 다시 받은 답이 더 깨끗할 때만 바꾼다(≈ ₩0.6 더)
+    if (!detail) {
+      const src = `${info}\n${q}\n${history.map((t) => `${t.q}\n${t.a}`).join("\n")}`;
+      const bad = (t) => { const d = splitDog(t); return [...strayDates(`${d.say} ${d.vet}`, src), ...strayNumbers(`${d.say} ${d.vet}`, src)]; };
+      const stray = bad(answer);
+      if (stray.length) {
+        try {
+          const again = claudeText(await ask(`\n\n[주의] 방금 네 답에 기록에 없는 날짜·숫자(${[...new Set(stray)].join(", ")})가 있었다. 기록에 적힌 날짜·숫자만 쓰고, 기록에 없는 지난 일은 말하지 않는다.`)).trim();
+          if (again && bad(again).length < stray.length) answer = again;
+        } catch (e) { console.error("[ask] 다시 받기 실패:", e?.message); }
+      }
+    }
     // 빠른 답: say(여름이의 말)·vet(병원 얘기)·next(다음 질문 단추). todo에도 say를 넣어 둔다 — 아직 옛 화면을 쓰는 폰은 todo·vet 두 칸을 그리기 때문
     const dog = detail ? null : splitDog(answer);
     res.json({ tier, detail, answer, ...(dog ? { say: dog.say, todo: dog.say, vet: dog.vet, next: follow && history.length >= ASK_FOLLOW_PER_QUESTION ? [] : dog.next, follow } : { todo: "", vet: "" }), ...(detail ? { sections: para ? splitMonth(answer) : splitDetail(answer) } : {}), left: detail ? ASK_DETAIL_LIMIT - dn - 1 : ASK_LIMIT[tier] - n - (follow ? 0 : 1), detailLeft: plus ? ASK_DETAIL_LIMIT - dn - (detail ? 1 : 0) : 0 });
