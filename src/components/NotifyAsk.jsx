@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Ico from "./Ico";
-import { getPermission, isPushSupported, subscribeToPush } from "../services/notifications";
+import { getPermission, isPushSupported, requestPermission, subscribeToPush, syncPushAlarms } from "../services/notifications";
+import { isNative } from "../services/native";
 import { readJSON, writeJSON } from "../services/storage";
 import { checkAlarmPlan } from "../services/routine";
 
@@ -18,7 +19,7 @@ const when = (t) => {
 };
 
 export const notifyAskPending = (dogId) =>
-  !readJSON(KEY, false) && everChecked(dogId) && isPushSupported() && isStandalone() && getPermission() === "default";
+  !readJSON(KEY, false) && everChecked(dogId) && (isNative() || (isPushSupported() && isStandalone())) && getPermission() === "default"; // 스토어 앱은 홈 화면 웹앱이 아니라서 이 질문이 아예 안 나왔다(11/27 실기기)
 
 export default function NotifyAsk({ dog, onDone }) {
   const [busy, setBusy] = useState(false);
@@ -29,7 +30,10 @@ export default function NotifyAsk({ dog, onDone }) {
     setBusy(true);
     setError("");
     try {
-      await subscribeToPush();
+      if (isNative()) { // 스토어 앱: 아이폰 허락 창 → 알림을 휴대폰에 예약
+        if ((await requestPermission()) !== "granted") throw new Error("알림을 허용해야 켤 수 있어요. 아이폰 설정 → 멍케어 → 알림에서 켤 수 있어요.");
+        await syncPushAlarms();
+      } else await subscribeToPush();
       close();
     } catch (err) {
       setError(err.message);

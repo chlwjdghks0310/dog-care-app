@@ -14,6 +14,7 @@ import SpeechBubble from "../components/SpeechBubble";
 import { supabase } from "../services/supabase";
 import { readJSON, writeJSON } from "../services/storage";
 import { acceptInvite } from "../services/sync/family";
+import { signOut } from "../services/sync";
 
 import Ico from "../components/Ico";
 // 첫 실행 온보딩: ① 로그인(또는 로그인 없이) → ② 앱 소개 2장(옆으로 넘김) → ③ 강아지 정보를 한 화면에 하나씩(이름 아래 가족 초대 코드) → ④ 인사. 알림 허락은 첫 하루 체크 뒤(NotifyAsk).
@@ -85,7 +86,7 @@ function Intro({ onDone }) {
           {last ? "우리 아이 소개하기" : "다음"}
         </button>
         {/* 스토어 앱: 홈 화면 앱을 쓰던 사람이 새로 받았을 때 — 로그인하면 기록·사진이 그대로 온다 */}
-        {isNative() && <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={() => setLoginOpen(true)}>쓰던 기록 불러오기</button>}
+        {isNative() && <Restore open={() => setLoginOpen(true)} button />}
         {loginOpen && <LoginSheet onClose={() => setLoginOpen(false)} />}
         <PolicyLine />
       </div>
@@ -153,6 +154,30 @@ const ONB_HINT = (key, form, breedQuery) =>
     extras: form.nextVaccine && form.nextVaccine < todayKey() ? "다음 접종일은 오늘 이후 날짜로 골라 주세요" : "",
   })[key] || "";
 const QUESTION_STEPS = 6; // 진행 막대에 보이는 질문 수(name~extras)
+
+// 쓰던 기록 불러오기(11/27 실기기에서 발견): 로그인은 됐는데 그 계정에 기록이 없으면 아무 말 없이 첫 화면에 남고, 다시 눌러도 시트가 바로 닫혀
+// "안 눌리는" 것처럼 보였다. 로그인 상태를 여기서 말해 준다 — 찾는 중 / 이 계정엔 기록 없음(+ 다른 계정으로) / 오류. 기록이 있으면 App이 바로 앱 화면으로 넘긴다.
+const PROVIDER = { apple: "Apple", kakao: "카카오", email: "이메일" };
+function Restore({ open, button }) {
+  const st = useSyncStatus();
+  const [busy, setBusy] = useState(false);
+  if (!supabase) return null;
+  if (!st.user) {
+    return button
+      ? <button type="button" className="btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={open}>쓰던 기록 불러오기</button>
+      : <button type="button" className="onb-skip" style={{ display: "block", margin: "14px auto 0", textDecoration: "underline" }} onClick={open}>예전에 쓰던 기록이 있나요? 로그인해서 불러오기</button>;
+  }
+  const who = PROVIDER[st.user.app_metadata?.provider] || "이";
+  const other = async () => { setBusy(true); try { await signOut(); } finally { setBusy(false); } open(); };
+  return (
+    <div className="onb-restore" role="status">
+      {st.error ? <p>{st.error}</p>
+        : st.syncing || !st.lastSyncedAt ? <p>{who} 계정에서 기록을 찾는 중이에요…</p>
+        : <p><b>{who} 계정에는 저장된 기록이 없어요.</b><br />예전에 다른 방법(카카오·이메일)으로 로그인했다면 그 계정으로 불러올 수 있어요. 새로 시작하면 앞으로의 기록은 이 계정에 백업돼요.</p>}
+      <button type="button" className="link-btn" disabled={busy} onClick={other}>다른 계정으로 로그인</button>
+    </div>
+  );
+}
 
 function Setup({ onRegistered, restore }) {
   const saved = restore ? loadProgress() : {};
@@ -301,11 +326,7 @@ function Setup({ onRegistered, restore }) {
             </div>
           )}
           {/* 새 폰: 로그인하면 서버의 기록을 받아 오고, 받은 강아지가 있으면 App이 바로 앱 화면으로 넘긴다(dogcare-synced) */}
-          {key === "name" && supabase && !user && (
-            <button type="button" className="onb-skip" style={{ display: "block", margin: "14px auto 0", textDecoration: "underline" }} onClick={() => setLoginOpen(true)}>
-              예전에 쓰던 기록이 있나요? 로그인해서 불러오기
-            </button>
-          )}
+          {key === "name" && supabase && <Restore open={() => setLoginOpen(true)} />}
           {loginOpen && <LoginSheet onClose={() => setLoginOpen(false)} />}
 
           {key === "breed" && (
