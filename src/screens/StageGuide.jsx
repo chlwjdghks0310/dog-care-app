@@ -11,6 +11,7 @@ import { trackAct } from "../services/analytics";
 // 월령별 가이드(11/15, 사용자: "이 시기에 필요한 것을 자세히, 찾아가지 않아도 보이게"): 지금 시기 → 영역 칩 → 카드(왜·이렇게·피해요·병원에 물어볼 때·출처).
 // 강아지 나이·크기·몸무게·중성화로 시기와 맞춤 한 줄을 정한다(services/stageGuide). 카드는 정적 데이터(data/stageGuide), AI 없음.
 // 다른 시기도 미리 볼 수 있고, 맨 아래에서 더 궁금한 건 ChatGPT로 넘긴다(멍케어 밖 AI, 이름은 안 넣음).
+const CARRY = new Set(["vaccine", "parasite", "treats", "bath"]);
 export default function StageGuide({ dog, onBack }) {
   const st = useMemo(() => getStage(dog), [dog]);
   const [view, setView] = useState(st.id); // 보고 있는 시기(기본 = 지금 시기)
@@ -23,7 +24,11 @@ export default function StageGuide({ dog, onBack }) {
   // 지금 시기 + 입양 14일 안이면 "집에 온 첫 2주" 카드도 같이(퍼피일 때만 — 성견 입양은 띠 문구만)
   const cards = useMemo(() => {
     const ids = view === 1 ? [1] : view === st.id && st.settle && st.id <= 3 ? [1, view] : [view];
-    return GUIDE_CARDS.filter((c) => ids.includes(c.stage));
+    const own = GUIDE_CARDS.filter((c) => ids.includes(c.stage));
+    if (view < 6) return own;
+    // 중년·노령: 성견 때부터 이어 가는 기본(접종·구충·간식·목욕)은 그 시기 카드에 없으면 성견 카드를 이어서 보여 준다 — 8살 아이에게 접종·구충 카드가 하나도 없던 것(11/27 검토)
+    const has = new Set(own.map((c) => c.area));
+    return [...own, ...GUIDE_CARDS.filter((c) => c.stage === 5 && CARRY.has(c.area) && !has.has(c.area))];
   }, [view, st]);
   const areas = useMemo(() => GUIDE_AREAS.filter((a) => cards.some((c) => c.area === a.id)), [cards]);
   const shown = area === "all" ? cards : cards.filter((c) => c.area === area);
