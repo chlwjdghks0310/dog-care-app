@@ -421,3 +421,7 @@ button, input, select, textarea { font-family: inherit; }
 .biz { line-height: 1.8; }
 .steps .step-num { color: var(--ink); } /* li 안 span 규칙에 눌려 흐린 글자(2.98:1)가 되던 것 */
 a[href^="mailto"], .faq p a { display: inline-block; padding-block: 5px; }
+/* 플러스 한 장(11/28 사용자 확정 — 가격 카드·비교표·자세한 카드·단품가·규칙은 기능 설명서 07로) */
+.pl-one { text-align: center; margin: 6px 0 16px; font-size: 17px; color: var(--ink); }
+.pl-one span { display: block; font-size: 13.5px; color: var(--ink-soft); margin-top: 2px; }
+.pl-more { text-align: center; margin: 0; }
