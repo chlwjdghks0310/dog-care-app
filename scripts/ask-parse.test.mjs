@@ -19,14 +19,16 @@ assert.equal(turnsOf([{ q: "1", a: "1" }, { q: "2", a: "2" }, { q: "3", a: "3" }
 assert.equal(splitDog("말: 오래 두지 말아 줘.\n병원: 없음\n다음 질문: 산책은?").vet, ""); // "없음"은 빈칸으로
 console.log("ask-parse ok");
 
-// 11/27 다음 질문은 보호자가 묻는 말만, 기록에 없는 숫자 찾기
+// 11/27 다음 질문은 보호자가 묻는 말만
 {
-  const { ownerAsks, strayNumbers, splitDog } = await import("../server/askParse.js");
+  const { ownerAsks, splitDog } = await import("../server/askParse.js");
   for (const q of ["산책은 해도 돼?", "언제까지 지켜봐?", "왜 그러는 걸까?", "귀 세정은 어떻게 해?", "지난번 병원에서 뭐랬지?", "병원 가야 해?".replace("가야 해", "가야 돼"), "다음 접종 언제야?"]) assert.ok(ownerAsks(q), q);
   for (const q of ["귀 냄새 나?", "토했어?", "먹였어?", "귀가 빨개?", "목욕했어?"]) assert.ok(!ownerAsks(q), q);
   assert.deepEqual(splitDog("말: 응.\n병원:\n다음 질문: 귀 냄새 나? | 산책은 해도 돼?").next, ["산책은 해도 돼?"]);
-  assert.deepEqual(strayNumbers("7일에 걸쳐 25%씩 바꿔 줘. 24시 병원", "11/24 사료 바꿈 2.4kg"), ["7", "25"]);
-  assert.deepEqual(strayNumbers("나 11/24에 바꿨잖아. 2.4kg이야", "11/24 사료 바꿈 2.4kg"), []);
+  // 11/28 긴 답: 말 칸이 여러 줄("- " 할 일 줄)이어도 병원 칸 앞까지 통째로
+  const long = splitDog("말: 괜찮아.\n배가 비면 그래.\n- 조금씩 자주 줘\n- 물 챙겨 줘\n병원: 하루 여러 번 토하면 데려가 줘.\n다음 질문: 왜 그런 거야? | 언제까지 지켜봐?");
+  assert.equal(long.say, "괜찮아.\n배가 비면 그래.\n- 조금씩 자주 줘\n- 물 챙겨 줘");
+  assert.equal(long.vet, "하루 여러 번 토하면 데려가 줘.");
   console.log("ask-parse 11/27 ok");
 }
 {

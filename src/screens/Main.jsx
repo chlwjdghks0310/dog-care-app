@@ -782,7 +782,7 @@ function AssistantAnswer({ dog, said, history, memory, active, onAsk, onAnswered
     <div className="asst">
       {res.say ? (
         <>
-          <div className="asst-say pop-in">{res.say}</div>
+          <div className="asst-say pop-in">{res.say.split("\n").map((l, i) => (/^[-•]\s/.test(l) ? <div key={i} className="asst-li">{l.replace(/^[-•]\s+/, "")}</div> : <div key={i}>{l}</div>))}</div>{/* 11/28 긴 답: "- " 할 일 줄은 점 + 들여쓰기 */}
           {res.vet && <div className="asst-say">{res.vet}</div>}
           <span className="faint asst-note">진단이 아니에요 · 걱정되면 동물병원에 물어보세요</span>
           {active && res.next.length > 0 && (

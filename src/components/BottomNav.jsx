@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { startTransition, useEffect, useOptimistic, useRef } from "react";
 // 움직이는 아이콘(animateicons.in, MIT · Lucide 모양 기반 — 저작권 표시는 public/licenses.txt)
 import { DogIcon, NotebookPenIcon, PawPrintIcon, SproutIcon, StethoscopeIcon } from "@animateicons/react/lucide";
 
@@ -21,6 +21,8 @@ export default function BottomNav({ active, onChange, onItemLongPress, onItemDou
   const iconRefs = useRef({}); // 탭을 누르면 그 아이콘이 한 번 움직인다(폰엔 마우스 올리기가 없어서 직접 시작)
   // 탭 높이(아이폰 하단 여백 포함)를 CSS에 알려 둔다 — 비서 답변 읽기 때 이만큼 아래로 내려 숨긴다(index.css .reading)
   const navRef = useRef(null);
+  // 누르는 순간 막대부터 옮긴다(11/28 끊김): 탭 화면 바꾸기는 급하지 않은 일로 넘기고, 그동안 막대는 누른 탭을 보여 준다
+  const [shown, showTab] = useOptimistic(active);
   useEffect(() => {
     const el = navRef.current;
     const ro = new ResizeObserver(() => document.documentElement.style.setProperty("--nav-h", `${el.offsetHeight}px`));
@@ -57,7 +59,7 @@ export default function BottomNav({ active, onChange, onItemLongPress, onItemDou
       onItemDoubleTap?.(key);
     } else {
       state.lastTapAt = now;
-      onChange(key);
+      startTransition(() => { showTab(key); onChange(key); });
     }
   }
 
@@ -68,11 +70,11 @@ export default function BottomNav({ active, onChange, onItemLongPress, onItemDou
   return (
     <nav ref={navRef} className="bottom-nav">
       {/* 슬라이딩 필(11/15): 켜진 탭 뒤의 둥근 판이 탭 사이를 미끄러져 간다. 탭 수로 폭을 나눈다 */}
-      <span className="nav-pill" aria-hidden="true" style={{ width: `calc((100% - 12px) / ${TABS.length})`, transform: `translateX(${Math.max(0, TABS.findIndex((t) => t.key === active)) * 100}%)` }} />
+      <span className="nav-pill" aria-hidden="true" style={{ width: `calc((100% - 12px) / ${TABS.length})`, transform: `translateX(${Math.max(0, TABS.findIndex((t) => t.key === shown)) * 100}%)` }} />
       {TABS.map((tab) => (
         <button
           key={tab.key}
-          className={`nav-item${active === tab.key ? " active" : ""}`}
+          className={`nav-item${shown === tab.key ? " active" : ""}`}
           style={{ touchAction: "manipulation" }}
           onPointerDown={() => handlePointerDown(tab.key)}
           onPointerUp={() => handlePointerUp(tab.key)}

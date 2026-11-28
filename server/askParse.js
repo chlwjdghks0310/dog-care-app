@@ -13,11 +13,6 @@ export function fillNext(next, { question = "", say = "" } = {}) {
   for (const q of pool) { if (out.length >= 2) break; if (!out.some((x) => norm(x) === norm(q)) && norm(q) !== norm(question)) out.push(q); }
   return out.slice(0, 2);
 }
-// 답 속 숫자 가운데 근거(강아지 정보·질문·앞 대화)에 없는 것. 24(24시 병원)는 봐준다 — 기록에 없는 기준 숫자를 지어내는지 보는 용도
-export function strayNumbers(text, source) {
-  const have = new Set(String(source).match(/\d+(?:\.\d+)?/g) || []);
-  return [...new Set(String(text).match(/\d+(?:\.\d+)?/g) || [])].filter((n) => n !== "24" && !have.has(n));
-}
 // 답 속 날짜("11/24", "11월 24일") 가운데 근거에 그 날짜가 없는 것 — 기록에 없는 지난 일을 지어냈다는 신호(11/27)
 export function strayDates(text, source) {
   const norm = (t) => new Set([...String(t).replace(/\d{4}[-.](\d{1,2})[-.](\d{1,2})/g, " $1/$2 ").matchAll(/(?<!\d)(\d{1,2})\s*(?:\/|월\s*)(\d{1,2})(?!\d)/g)].map((m) => `${Number(m[1])}/${Number(m[2])}`));

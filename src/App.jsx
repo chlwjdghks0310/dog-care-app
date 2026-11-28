@@ -1,4 +1,4 @@
-import { Fragment, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, Suspense, lazy, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { trackAct } from "./services/analytics";
 import Toaster from "./components/Toaster";
 import { flushSync } from "react-dom";
@@ -175,6 +175,7 @@ export default function App() {
   const touchingRef = useRef(false);
   const settleTimerRef = useRef(null);
   const [pageVersion, setPageVersion] = useState(0);
+  const [visit, setVisit] = useState({}); // 탭마다 들어간 횟수 — 바뀌면 그 탭 화면만 새로 그린다
   // 11/11 점검 #3: 자정을 넘겨 돌아오면 어제 날짜로 동작하던 것 → 날짜가 바뀌면(적는 중이 아닐 때) 화면을 새로 그린다
   const dayRef = useRef(todayKey());
   useEffect(() => {
@@ -203,8 +204,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    setPageVersion((v) => v + 1);
     window.scrollTo(0, 0); // 혹시 문서가 밀려 있었어도(키보드 등) 다른 탭 위쪽이 잘리지 않게
+    // 들어간 탭 화면만 새 기록으로 다시 그린다 — 급하지 않은 일로 미뤄서 하단 탭 막대가 먼저 움직이게
+    // (11/28 사용자: 막대가 끊김 — 예전엔 탭마다 네 화면을 전부 다시 그려 0.1초 넘게 화면이 멈췄음)
+    startTransition(() => setVisit((v) => ({ ...v, [pageKey]: (v[pageKey] || 0) + 1 })));
   }, [pageKey]);
 
   const [visibleIndex, setVisibleIndex] = useState(pageIndex);
@@ -618,10 +621,10 @@ export default function App() {
       </>
     ),
     // 강아지를 바꾸면(dog.id) 화면을 새로 그려 앞 강아지의 상태(숨긴 할 일·수치 칸 등)가 남지 않게
-    care: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(careScreens, "care")}</Fragment>,
-    records: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(recordScreens, "records")}</Fragment>,
-    hospital: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(hospitalScreens, "hospital")}</Fragment>,
-    profile: <Fragment key={`${dog.id}-${pageVersion}`}>{renderStack(profileScreens, "profile")}</Fragment>,
+    care: <Fragment key={`${dog.id}-${pageVersion}-${visit.care || 0}`}>{renderStack(careScreens, "care")}</Fragment>,
+    records: <Fragment key={`${dog.id}-${pageVersion}-${visit.records || 0}`}>{renderStack(recordScreens, "records")}</Fragment>,
+    hospital: <Fragment key={`${dog.id}-${pageVersion}-${visit.hospital || 0}`}>{renderStack(hospitalScreens, "hospital")}</Fragment>,
+    profile: <Fragment key={`${dog.id}-${pageVersion}-${visit.profile || 0}`}>{renderStack(profileScreens, "profile")}</Fragment>,
   };
 
   return (
