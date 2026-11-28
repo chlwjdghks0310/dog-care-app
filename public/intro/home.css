@@ -6,7 +6,7 @@
 
 :root {
   --paper: #fffaf3; --paper-2: #fbf1e4; --surface: #fffdf9;
-  --ink: #47392e; --ink-soft: #7a6a5c; --ink-20: rgba(71, 57, 46, 0.2); --ink-10: rgba(71, 57, 46, 0.1);
+  --ink: #47392e; --ink-soft: #6f6053; /* 11/28: 크림 바탕 4.46:1 → 5:1 넘게 */ --ink-20: rgba(71, 57, 46, 0.2); --ink-10: rgba(71, 57, 46, 0.1);
   --line: #e9dac8; --line-strong: #d9c4ab;
   --apricot: #f6b78a; --apricot-bg: #fdeee2; --apricot-text: #9c4f1b;
   --sky: #81abcc; --sky-bg: #e6eff7; --sky-text: #3b6a8f;
@@ -395,3 +395,29 @@ section { padding: 44px 0; }
 @media (min-width: 720px) { .plus-grid { grid-template-columns: repeat(3, 1fr); gap: 22px; } .plus-card { padding: 30px 22px 24px; } .plus-price { grid-template-columns: 1fr 1fr; align-items: center; padding: 26px 28px; } }
 
 .sk-defs { position: absolute; }
+
+/* ── 11/28 점검·출시 준비 ── */
+/* 출시 스위치: <html class="launched">면 data-when="after"가 켜지고 "before"가 꺼진다(index.html 머리 주석 참고) */
+html:not(.launched) [data-when="after"], html.launched [data-when="before"] { display: none !important; }
+/* App Store 공식 배지: 높이 40px 이상, 둘레 여백 = 높이의 1/4, 변형·애니메이션 없음(애플 배지 가이드라인) */
+.store-badge { display: inline-block; padding: 12px; line-height: 0; }
+.store-badge img { height: 48px; width: auto; display: block; }
+.steps .store-badge { padding: 10px 0; } .steps .store-badge img { height: 40px; }
+/* 글자 링크는 한 단계 진하게(흐린 파랑 3.96:1 → 진한 파랑), 줄 안 링크도 누르기 쉽게 위아래 여유 */
+a:not(.btn):not(.store-badge):not(.brand):not(.pl-tile):not(.g-next) { color: var(--btn-shade); }
+.appbar a, .note a, .steps span a, .foot a[href^="mailto"], .faq-more a { display: inline-block; padding-block: 5px; }
+button, input, select, textarea { font-family: inherit; }
+/* 자주 묻는 질문 → 설명서 안내 */
+.faq-more { text-align: center; margin: -14px 0 18px; font-size: 14.5px; color: var(--ink-soft); }
+/* 써 본 보호자 후기 */
+.voices { padding: 56px 0 8px; }
+.voice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.voice { margin: 0; padding: 22px 20px 16px; background: var(--surface); border: 2px solid var(--ink); border-radius: 22px 18px 24px 20px / 20px 24px 18px 22px; box-shadow: 4px 5px 0 var(--ink-10); display: flex; flex-direction: column; gap: 12px; }
+.voice blockquote { margin: 0; font-size: 16px; line-height: 1.7; color: var(--ink); }
+.voice blockquote::before { content: "“"; display: block; font-family: var(--font-title); font-size: 34px; line-height: .8; color: var(--apricot); }
+.voice figcaption { font-size: 13.5px; color: var(--ink-soft); }
+@media (max-width: 760px) { .voice-grid { grid-template-columns: minmax(0, 1fr); } }
+/* 푸터 사업자 정보 */
+.biz { line-height: 1.8; }
+.steps .step-num { color: var(--ink); } /* li 안 span 규칙에 눌려 흐린 글자(2.98:1)가 되던 것 */
+a[href^="mailto"], .faq p a { display: inline-block; padding-block: 5px; }

@@ -37,8 +37,10 @@
   <link rel="preload" href="/fonts/bagelfatone-subset.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <!-- 2026-11-14 개편: 스티커 아이콘(/sk/stickers.svg)과 같은 손그림 느낌. 설명서·자료실도 home.css 위에 각자 css -->
-  <link rel="stylesheet" href="/intro/home.css?v=4" />
+  <link rel="stylesheet" href="/intro/home.css?v=5" />
   <noscript><link rel="stylesheet" href="/intro/nojs.css?v=2" /></noscript>
+  <!-- 출시 날(11/28 준비): ① 아래 meta 주석 풀기 ② <html> 태그에 class="launched" 붙이기 ③ /intro/img/appstore-badge-ko.svg(애플 공식 한국어 배지) 넣기 — 그러면 data-when="after" 문구·배지가 켜지고 "before"가 꺼진다
+  <meta name="apple-itunes-app" content="app-id=6839963072" /> -->
 </head>
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -51,7 +53,8 @@
   </svg>
 
   <!-- 0. 안내 띠: 검색으로 온 사람에게 "여기는 소개 페이지, 앱은 버튼으로 열고 홈 화면에 추가" -->
-  <p class="appbar"><span>여기는 멍케어 <b>소개 페이지</b>예요. 앱은 앱스토어 없이 <b>홈 화면에 추가</b>해서 써요.</span> <a href="/?app">앱 열고 설치하기 →</a></p>
+  <p class="appbar" data-when="before"><span>여기는 멍케어 <b>소개 페이지</b>예요. 앱은 앱스토어 없이 <b>홈 화면에 추가</b>해서 써요.</span> <a href="/?app">앱 열고 설치하기 →</a></p>
+  <p class="appbar" data-when="after"><span>여기는 멍케어 <b>소개 페이지</b>예요. 아이폰은 <b>App Store</b>에서 받아요.</span> <a href="https://apps.apple.com/kr/app/id6839963072">App Store에서 보기 →</a></p>
 
   <!-- 1. 헤더 -->
   <header class="top">
@@ -84,18 +87,23 @@
           <p class="eyebrow"><svg class="d" aria-hidden="true"><use href="#d-paw"/></svg>강아지 건강 기록 앱 · 멍케어</p>
           <p class="ask" aria-hidden="true">오늘 나 어땠어?</p>
           <h1><span class="h1-a">병원 가기 전,</span><span class="h1-b"><em>한 장</em>이면 돼요</span></h1>
-          <p class="lead">진료실에서 “평소엔 어땠어요?”에 말문이 막히지 않게. 강아지가 물으면 <b>[평소와 같아요]</b> 한 번, 하루 10초. 그 체크가 모여 수의사에게 보여 줄 <b>병원용 기록 한 장</b>이 되고, 다녀오면 <b>영수증 사진으로 진료 정리</b>까지 이어져요.</p>
+          <p class="lead">진료실에서 “평소엔 어땠어요?”에 말문이 막히지 않게. 강아지가 물으면 <b>[평소와 같아요]</b> 한 번, 하루 10초. 그 체크가 모여 수의사에게 보여 줄 <b>병원용 기록 한 장</b>이 되고, 다녀오면 <b>영수증 사진으로 진료 정리</b>까지 이어져요. 궁금한 건 <b>우리 아이를 아는 AI 비서</b>에게 물어보세요.</p>
           <ul class="hero-points">
+            <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-chatHeart"/></svg>우리 아이를 아는 AI 비서</li>
             <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-clipboard"/></svg>병원용 기록 한 장</li>
             <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-checklist"/></svg>하루 10초 체크</li>
             <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-media"/></svg>진료 정리</li>
-            <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-bell"/></svg>병원·약 알림</li>
           </ul>
-          <div class="cta-row">
+          <div class="cta-row" data-when="before">
             <a class="btn btn-lg" href="/?app">무료로 시작하기</a>
             <a class="btn btn-lg btn-ghost" href="#demo">휴대폰으로 둘러보기</a>
           </div>
-          <p class="note">기록·병원용 기록·가이드는 무료 · 앱스토어 없이 홈 화면에 설치해 써요 · 로그인 없이 시작</p>
+          <p class="note" data-when="before">기록·병원용 기록·가이드는 무료 · 앱스토어 없이 홈 화면에 설치해 써요 · 로그인 없이 시작</p>
+          <div class="cta-row" data-when="after">
+            <a class="store-badge" href="https://apps.apple.com/kr/app/id6839963072"><img src="/intro/img/appstore-badge-ko.svg" alt="App Store에서 다운로드" height="48" /></a>
+            <a class="btn btn-lg btn-ghost" href="/?app">안드로이드·PC는 웹으로</a>
+          </div>
+          <p class="note" data-when="after">기록·병원용 기록·가이드는 무료 · 아이폰은 App Store, 안드로이드·PC는 웹에서 바로 · 로그인 없이 시작</p>
           <div class="qr" aria-hidden="true">
             <img src="/intro/img/qr.svg" alt="" width="88" height="88" />
             <span>휴대폰 카메라로 찍으면<br /><b>바로 열려요</b></span>
@@ -104,9 +112,9 @@
         <div class="demo" id="demo">
           <p class="demo-hint" aria-hidden="true"><span class="hand">👆</span> 아래 탭을 눌러 보세요</p>
           <div class="phone demo-phone">
-            <div class="screens"><img class="scr" src="/intro/img/care.jpg?v=14" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/records.jpg?v=14" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/today.jpg?v=14" alt="" width="300" height="649" loading="lazy" /><img class="scr on" src="/intro/img/hospital.jpg?v=14" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/profile.jpg?v=14" alt="" width="300" height="649" loading="lazy" /></div>
+            <div class="screens"><img class="scr" src="/intro/img/care.jpg?v=15" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/records.jpg?v=15" alt="" width="300" height="649" loading="lazy" /><img class="scr" src="/intro/img/today.jpg?v=15" alt="" width="300" height="649" loading="lazy" /><img class="scr on" src="/intro/img/hospital.jpg?v=15" alt="" width="300" height="649" fetchpriority="high" /><img class="scr" src="/intro/img/profile.jpg?v=15" alt="" width="300" height="649" loading="lazy" /></div>
             <span class="tag">간략 미리보기</span>
-            <div class="nav-glow" aria-hidden="true"><span>여기를 눌러 보세요</span></div>
+            <div class="nav-glow" aria-hidden="true"></div>
             <div class="hots" role="tablist" aria-label="멍케어 다섯 탭 둘러보기"><button type="button" role="tab" id="tab-care" class="hot" aria-selected="false" aria-controls="panel-care" tabindex="-1"><span class="sr">케어 탭 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-records" class="hot" aria-selected="false" aria-controls="panel-records" tabindex="-1"><span class="sr">기록 탭 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-assistant" class="hot" aria-selected="false" aria-controls="panel-assistant" tabindex="-1"><span class="sr">비서 탭 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-hospital" class="hot" aria-selected="true" aria-controls="panel-hospital" tabindex="0"><span class="sr">병원 탭 설명 보기</span><i class="ping" aria-hidden="true"></i></button><button type="button" role="tab" id="tab-profile" class="hot" aria-selected="false" aria-controls="panel-profile" tabindex="-1"><span class="sr">우리 아이 탭 설명 보기</span><i class="ping" aria-hidden="true"></i></button></div>
           </div>
           <div class="floats" data-for="assistant" aria-hidden="true"><div class="float f1"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-checklist"/></svg>[평소와 같아요] → 10초면 끝</div><div class="float f2"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-mic"/></svg>“산책 30분 했어” 바로 저장</div><div class="float f3"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-house"/></svg>[다녀올게] 혼자 있는 시간</div></div><div class="floats" data-for="care" aria-hidden="true"><div class="float f1"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-handHeart"/></svg>지금 시기 → 챙길 것이 먼저</div><div class="float f2"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-bone"/></svg>간식 열량·물 양은 우리 아이 숫자로</div><div class="float f3"><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-idea"/></svg>왜 지금인지 → 이렇게 해요 → 피해요</div></div>
@@ -138,7 +146,7 @@
               </ul>
               <p class="svc-note">멍케어는 진단하지 않아요. 걱정되는 모습이 계속되면 동물병원에 물어보세요. AI에 보내기 전에는 먼저 동의를 받아요.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/today.jpg?v=14" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg?v=14" alt="말로 기록한 결과 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/today.jpg?v=15" alt="비서 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/chat.jpg?v=15" alt="말로 기록한 결과 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#assistant">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -164,7 +172,7 @@
               </ul>
               <p class="svc-note">카드는 AAHA·WSAVA·AVSAB·Merck 수의학 매뉴얼·AKC 같은 공개 자료를 바탕으로 쓴 일반 참고 정보예요. 상품·브랜드는 추천하지 않고, 진단하지 않아요.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/care.jpg?v=14" alt="케어 탭 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/guide.jpg?v=14" alt="월령별 가이드 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/care.jpg?v=15" alt="케어 탭 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/guide.jpg?v=15" alt="월령별 가이드 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#care">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -201,7 +209,7 @@
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-scan"/></svg><div><b>건강 체크</b><span>병원 탭에 있어요. <b>변 체크</b>는 모양(1~7)·색·신호를, <b>컨디션 체크</b>는 항목을 보호자가 직접 골라요. 원하면 AI 사진·영상 확인도 할 수 있어요(참고용, 하루 2번).</span></div></li>
               </ul>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/records.jpg?v=14" alt="기록 달력 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/newrec.jpg?v=14" alt="새 기록에서 종류를 고르는 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/records.jpg?v=15" alt="기록 달력 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/newrec.jpg?v=15" alt="새 기록에서 종류를 고르는 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#profile">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -226,7 +234,7 @@
               </ul>
               <p class="svc-note">멍케어는 진료를 하지 않아요. 기록을 정리해 보호자와 수의사의 대화를 돕습니다.</p>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/hospital.jpg?v=14" alt="병원 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/vet.jpg?v=14" alt="병원용 기록 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/hospital.jpg?v=15" alt="병원 화면 예시" width="300" height="649" loading="lazy" /></figure><figure class="phone mini"><img src="/intro/img/vet.jpg?v=15" alt="병원용 기록 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#calendar">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -252,7 +260,7 @@
                 <li><svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-settings"/></svg><div><b>설정</b><span>백업·로그인, 다크 모드·배경 테마, 기록 내보내기(병원용 PDF·엑셀용 CSV·전체 백업), AI 동의 확인·철회, 의견 보내기.</span></div></li>
               </ul>
             </div>
-            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/profile.jpg?v=14" alt="우리 아이 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
+            <div class="svc-shots"><figure class="phone mini"><img src="/intro/img/profile.jpg?v=15" alt="우리 아이 화면 예시" width="300" height="649" loading="lazy" /></figure><span class="tag">예시 화면</span></div>
             <div class="svc-foot">
               <a class="btn btn-lg btn-ghost" href="/intro/guide/#profile">자세한 설명서 보기</a>
               <button type="button" class="btn btn-lg svc-back">휴대폰으로 돌아가기</button>
@@ -283,7 +291,7 @@
         <p class="kicker center">3분이면 돼요</p>
         <h2 id="start-title" class="sec-title">이렇게 <em>시작</em>해요</h2>
         <ol class="steps">
-          <li>
+          <li data-when="before">
             <span class="step-num">1</span>
             <svg class="sk step-sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-tap"/></svg>
             <b>홈 화면에 설치</b>
@@ -306,6 +314,13 @@
               <p class="howto-os">카카오톡·인스타그램·스레드에서 열었다면</p>
               <ol><li>안에서는 설치가 안 돼요. ··· 메뉴 → <em>다른 브라우저로 열기</em>(사파리·크롬)를 누른 뒤 다시 해요. 앱이 먼저 알아보고 안내해 줘요.</li></ol>
             </details>
+          </li>
+          <li data-when="after">
+            <span class="step-num">1</span>
+            <svg class="sk step-sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-tap"/></svg>
+            <b>앱 받기</b>
+            <span>아이폰은 App Store에서 받아요. 안드로이드·PC는 <a href="/?app">웹에서 바로</a> 시작하고 홈 화면에 설치해요.</span>
+            <a class="store-badge" href="https://apps.apple.com/kr/app/id6839963072"><img src="/intro/img/appstore-badge-ko.svg" alt="App Store에서 다운로드" height="40" /></a>
           </li>
           <li>
             <span class="step-num">2</span>
@@ -352,6 +367,19 @@
           </div>
         </div>
         <p class="center small"><a class="pad-link" href="/?privacy">개인정보 처리방침 보기</a></p>
+      </div>
+    </section>
+
+    <!-- 5-1. 써 본 보호자 후기(11/28 테스터 3명, 허락받은 실제 후기 — 맞춤법만 손봄) -->
+    <section class="voices" aria-labelledby="voices-title">
+      <div class="wrap">
+        <p class="kicker center">먼저 써 본 보호자들</p>
+        <h2 id="voices-title" class="sec-title">“<em>한 앱</em>에서 끝나서 편해요”</h2>
+        <div class="voice-grid">
+          <figure class="voice"><blockquote>맨날 강아지 정보를 검색할 때 우리 강아지한테 맞는 걸 찾느라 귀찮았는데, 한 방에 해결돼서 편해요.</blockquote><figcaption>베타 테스터 보호자</figcaption></figure>
+          <figure class="voice"><blockquote>강아지 관련된 걸 한 앱에서 끝내서 편해요.</blockquote><figcaption>베타 테스터 보호자</figcaption></figure>
+          <figure class="voice"><blockquote>기록할 것도 많아서 귀찮을 것 같았는데, 비서랑 대화로 다 끝내니까 너무 편하네요. 굳굳</blockquote><figcaption>베타 테스터 보호자</figcaption></figure>
+        </div>
       </div>
     </section>
 
@@ -405,7 +433,7 @@
             </div>
           </article>
           <article class="plus-card" id="pl-month">
-            <figure class="phone mini"><img src="/intro/img/month.jpg?v=14" alt="한 달 리포트 화면 — 달력 한 장과 체중 곡선" width="300" height="649" loading="lazy" /></figure>
+            <figure class="phone mini"><img src="/intro/img/month.jpg?v=15" alt="한 달 리포트 화면 — 달력 한 장과 체중 곡선" width="300" height="649" loading="lazy" /></figure>
             <div class="plus-text">
               <svg class="sk" aria-hidden="true"><use href="/sk/stickers.svg?v=3#sk-calendar"/></svg>
               <b>한 달 리포트</b>
@@ -488,6 +516,7 @@
     <section class="faq" id="faq" aria-labelledby="faq-title">
       <div class="wrap faq-in">
         <h2 id="faq-title" class="sec-title">자주 묻는 <em>질문</em></h2>
+        <p class="faq-more">알림·가족 공유·캐릭터 같은 더 자세한 질문은 <a href="/intro/guide/#more">기능 설명서</a>에 있어요.</p>
         <details>
           <summary>정말 무료인가요?</summary>
           <p>하루 체크·기록·병원용 기록·알림·가이드·가족 공유는 무료예요. 카드 등록도 필요 없고 광고도 없어요. 멍케어 플러스와 우리 아이 캐릭터는 유료이고, 결제는 2027년 1월에 열려요. 설정 → <b>멍케어 플러스</b>에서 <b>[열리면 알려 주세요]</b>를 켜 두면 열리는 날 알림을 보내 드려요.</p>
@@ -497,10 +526,6 @@
           <p>매일 적지 않아도 돼요. 강아지가 묻는 <b>“오늘 나 어땠어?”</b>에 평소면 한 번, 다른 날만 달랐던 것을 골라요. 그 기록이 <b>병원용 기록 한 장</b>으로 정리되고, 다녀오면 영수증 사진으로 <b>진료 기록·병원비·다음 진료일</b>이 채워지고, 약과 재검은 알림으로 이어져요. 기록이 흩어지지 않고 병원까지 가는 게 다른 점이에요.</p>
         </details>
         <details>
-          <summary>낮에는 일하느라 집에 없는데 쓸모가 있나요?</summary>
-          <p>네. 나갈 때 <b>[다녀올게]</b>를 누르면 혼자 있는 시간을 챙겨 주고, 평소 외출 시간을 정해 두면 들어오는 시각 30분 뒤에 하루 체크 알림이 와요. 하루 기록은 <b>한 번</b>이면 되고, 일요일 저녁엔 한 주를 모은 <b>주간 리포트</b>가 와요. 사료가 떨어지기 5일 전 점심에도 미리 알려 줘요.</p>
-        </details>
-        <details>
           <summary>AI는 어디에 쓰이나요?</summary>
           <p>네 가지예요. ① 말한 문장을 기록으로 바꾸기(짧은 문장은 AI 없이 바로 저장) ② 진료 정리에서 영수증·처방전 사진의 글자 읽기 ③ 보호자가 고른 변·컨디션 사진·영상을 참고용으로 정리하기 ④ <b>멍케어 비서</b> — 질문하면 우리 아이가 기록(진료 기록·약·체중·하루 체크, 길게는 1년 치)을 보고 이유·할 일·병원 신호까지 칸으로 나눠 답해요(플러스는 [자세히 듣기] 다섯 칸) ⑤ 우리 아이 캐릭터 그림·영상 만들기(선택, 사진은 완성되면 지워요). 어느 것도 진단을 단정하거나 약 용량을 바꾸지 않아요. AI에 보내기 전에 먼저 동의를 받아요.</p>
         </details>
@@ -508,17 +533,17 @@
           <summary>멍케어 플러스는 뭐예요? 꼭 사야 하나요?</summary>
           <p>아니요. 하루 체크·기록·병원용 기록·이상 신호·알림·이번 주 리포트·가이드·가족 공유는 <b>계속 무료</b>예요. 플러스는 <b>플러스 비서([자세히 듣기] 다섯 칸, 하루 20번) · 한 달 리포트 · 우리 아이 캐릭터(연간엔 기본 1번 포함, 정성 올리기·그림체 추가 할인)</b> 세 가지를 더해요. 가격은 월 3,900원 또는 연 38,900원이고, 결제는 2027년 1월에 열려요.</p>
         </details>
-        <details>
-          <summary>우리 아이 캐릭터는 어떻게 만들어요? 사진은 어디로 가요?</summary>
-          <p>설정 → 멍케어 플러스 → <b>우리 아이 캐릭터</b>에서 그림체(3D 영화풍 / 손그림 크레파스)를 고르고 사진 2~4장을 올려요. 후보 4장이 나오면 가장 닮은 하나를 고르고(다시 뽑기 2번), 10분쯤 뒤 기다리기·고민하기 영상 2편이 첫 화면 강아지 자리에 들어가요. 정성은 기쁨·밥 기다림·졸림 세 편을 더하고, 캐릭터 화면에서 켜고 끄고 시간을 맞출 수 있어요. 사진은 위치 정보를 지운 뒤 그림·영상 AI(해외 서버)로 보내고, <b>캐릭터를 만든 뒤 바로 지워요</b>. 시작할 때 만 19세 이상 확인과 국외 전송 동의를 받고, 생성이 시작되면 취소할 수 없어요. 지금은 곧 출시 상태라 “출시되면 알려 주세요”를 켜 두거나 초대 코드로 먼저 써 볼 수 있어요.</p>
-        </details>
-        <details>
+        <details data-when="before">
           <summary>앱스토어에 없나요?</summary>
           <p>멍케어는 휴대폰 홈 화면에 설치해 쓰는 웹앱이에요. 아이폰은 사파리에서 공유(또는 ⋯ → 공유) → 홈 화면에 추가, 안드로이드는 크롬 메뉴 → 설치(기기에 따라 "홈 화면에 추가")를 누르면 돼요. 처음 열면 앱이 단계별로 안내해 줘요. <a href="/intro/install/">그림으로 보는 설치 방법</a>도 있어요.</p>
         </details>
-        <details>
+        <details data-when="before">
           <summary>카카오톡·인스타그램·스레드에서 링크를 열었는데 설치가 안 돼요</summary>
           <p>그 앱 안의 브라우저에서는 홈 화면에 설치할 수 없어요. 멍케어가 먼저 알아보고 “사파리(또는 크롬)로 열어 주세요”라고 안내해요. 오른쪽 위 ··· 메뉴 → <b>다른 브라우저로 열기</b>를 누른 뒤 다시 설치해 주세요.</p>
+        </details>
+        <details data-when="after">
+          <summary>앱과 웹은 뭐가 달라요? 쓰던 기록은 옮겨지나요?</summary>
+          <p>아이폰은 App Store 앱을 권해요. 알림이 잘 오고 Apple 로그인도 돼요. 안드로이드·PC는 지금처럼 웹(meongcare.kr)에서 써요. 웹에서 쓰던 기록은 웹에서 <b>로그인해 백업</b>한 뒤, 앱 첫 화면의 <b>[쓰던 기록 불러오기]</b>에서 같은 계정으로 로그인하면 그대로 옮겨져요.</p>
         </details>
         <details>
           <summary>로그인을 꼭 해야 하나요?</summary>
@@ -532,18 +557,6 @@
           <summary>멍케어가 수의사 진료를 대신하나요?</summary>
           <p>아니요. 멍케어는 진료를 하지 않고, 보호자가 기록과 정보를 편하게 챙기도록 돕는 앱이에요. 정보 카드와 AI 사진·영상 확인은 참고용이고, 병명을 판단하거나 처방하지 않아요. 아프거나 걱정되면 동물병원에 문의해 주세요. 진료실에서 보여 줄 병원용 기록을 만드는 데 도움이 돼요.</p>
         </details>
-        <details>
-          <summary>알림이 안 와요</summary>
-          <p>아이폰은 홈 화면에 설치한 멍케어로 열었을 때만 알림을 받을 수 있어요. 앱의 알림·알람 화면에서 알림을 켜 주세요. 한 번 거절했다면 아이폰 설정 → 알림 → 멍케어에서 켤 수 있어요.</p>
-        </details>
-        <details>
-          <summary>정보 카드는 무엇을 바탕으로 하나요?</summary>
-          <p>WSAVA(세계소동물수의사회)·Merck 수의학 매뉴얼 같은 공개 수의학 자료를 바탕으로 만들고, 사실을 하나씩 확인했어요. 초콜릿·포도를 먹었거나 경련, 숨쉬기 이상처럼 응급일 수 있는 말이 보이면 <b>지금 바로 동물병원에 연락</b>하라고 먼저 알려 드리고, 24시 동물병원 찾기를 보여 드려요. 약 이름이나 용량은 알려 드리지 않아요.</p>
-        </details>
-        <details>
-          <summary>여러 마리나 가족과 함께 쓸 수 있나요?</summary>
-          <p>네. 강아지를 여러 마리 등록해 따로 관리할 수 있고, 로그인하면 가족을 초대해 같은 기록을 함께 볼 수 있어요. 강아지가 본가에 있으면 가족이 적은 “다른 게 있었어요”를 알림으로 받아요. 지금은 강아지만 지원해요.</p>
-        </details>
       </div>
     </section>
 
@@ -552,8 +565,9 @@
       <div class="wrap final-in">
         <p class="ask ask-lg" aria-hidden="true">오늘 나 어땠어?</p>
         <h2 id="final-title">한 번만 눌러도<br /><em>우리 아이 건강 수첩</em>이 시작돼요</h2>
-        <a class="btn btn-lg" href="/?app">무료로 시작하기</a>
-        <p class="note">로그인 없이도 시작할 수 있어요</p>
+        <a class="btn btn-lg" href="/?app" data-when="before">무료로 시작하기</a>
+        <a class="store-badge" href="https://apps.apple.com/kr/app/id6839963072" data-when="after"><img src="/intro/img/appstore-badge-ko.svg" alt="App Store에서 다운로드" height="48" /></a>
+        <p class="note">로그인 없이도 시작할 수 있어요<span data-when="after"> · 안드로이드·PC는 <a href="/?app">웹으로 시작</a></span></p>
       </div>
     </section>
   </main>
@@ -563,7 +577,7 @@
     <div class="wrap foot-in">
       <div>
         <p class="brand foot-brand"><img src="/icon-192.png?v=6" alt="" width="24" height="24" loading="lazy" /> 멍케어</p>
-        <p>운영: 멍케어(대표 최정환)<br />문의: <a href="mailto:meongcare.app@gmail.com">meongcare.app@gmail.com</a></p>
+        <p class="biz">상호: 멍케어 · 대표: 최정환 · 사업자등록번호: 409-37-70752<br />주소: 경기도 시흥시 은행동<br />문의: <a href="mailto:meongcare.app@gmail.com">meongcare.app@gmail.com</a></p>
         <p class="disclaimer">멍케어는 보호자가 기록·일정·정보를 편하게 챙기도록 돕는 기록 도우미 서비스예요. 진료(진찰·진단·처방·치료)를 하지 않으며, 수의사의 진료를 대신하지 않아요.</p>
       </div>
       <nav class="foot-links" aria-label="정책·문의">

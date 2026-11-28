@@ -120,3 +120,6 @@ html { scroll-padding-top: calc(var(--head) + 64px); }
 .g-side-sec .sk { width: 26px; height: 26px; }
 .g-sec-head h2 .sk { width: 42px; height: 42px; }
 .g-tip .sk, .g-note .sk { width: 28px; height: 28px; margin-top: -2px; }
+
+/* 문단 안 예시 그림(11/28: 인라인 style이 CSP에 막혔던 것) */
+.g-inline-shot { display: block; width: 100%; max-width: 260px; height: auto; border-radius: 14px; margin: 6px 0 8px; }
