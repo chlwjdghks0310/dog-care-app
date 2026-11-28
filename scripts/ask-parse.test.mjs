@@ -29,6 +29,14 @@ console.log("ask-parse ok");
   const long = splitDog("말: 괜찮아.\n배가 비면 그래.\n- 조금씩 자주 줘\n- 물 챙겨 줘\n병원: 하루 여러 번 토하면 데려가 줘.\n다음 질문: 왜 그런 거야? | 언제까지 지켜봐?");
   assert.equal(long.say, "괜찮아.\n배가 비면 그래.\n- 조금씩 자주 줘\n- 물 챙겨 줘");
   assert.equal(long.vet, "하루 여러 번 토하면 데려가 줘.");
+  // 11/28 칸 나눈 답: 한마디 · 이유 · 해 줄 것. 예전 화면용 say에는 다 합쳐 둔다
+  const sec = splitDog("말: 흔한 일이야.\n이유:\n- 가려워서\n- 심심해서\n해 줄 것:\n1. 발을 닦아 줘\n병원: 붓으면 데려가 줘.\n다음 질문: 왜 그런 거야? | 언제까지 지켜봐?");
+  assert.equal(sec.lead, "흔한 일이야.");
+  assert.deepEqual(sec.why, ["가려워서", "심심해서"]);
+  assert.deepEqual(sec.acts, ["발을 닦아 줘"]);
+  assert.equal(sec.vet, "붓으면 데려가 줘.");
+  assert.equal(sec.say, "흔한 일이야.\n- 가려워서\n- 심심해서\n- 발을 닦아 줘");
+  assert.deepEqual(splitDog("말: 12월 20일이야.\n이유:\n해 줄 것:\n병원:\n다음 질문: 산책은 해도 돼?").why, []);
   console.log("ask-parse 11/27 ok");
 }
 {

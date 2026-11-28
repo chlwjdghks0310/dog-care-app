@@ -437,7 +437,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
                 </div>
               );
             }
-            if (m.kind === "info") return <InfoAnswer key={i} msg={m} dog={dog} active={i === messages.length - 1 && !pending} onAsk={(q) => sendRef.current(q)} onAnswered={(turn) => threadRef.current.turns.push(turn)} />;
+            if (m.kind === "info") return <InfoAnswer key={i} msg={m} dog={dog} active={i === messages.length - 1 && !pending} onAsk={(q) => sendRef.current(q)} onAnswered={(turn) => threadRef.current.turns.push(turn)} onThinking={(on) => (on ? (clearTimeout(talkTimerRef.current), setAvatarState("thinking")) : speak())} />;
             if (m.kind === "more") return <div key={i} className="rec-card">{m.text}</div>;
             return (
               <div key={i} className="rec-card">
@@ -570,7 +570,7 @@ export default function Main({ dog, resetSignal, onReadingChange, onOpenGuide, o
 }
 
 // 질문에 대한 안내: 응급이면 응급 카드가 먼저, 그다음 우리 정보 카드·가이드북. 진단·판단 없이 일반 참고 + 병원 안내만.
-function InfoAnswer({ msg, dog, active, onAsk, onAnswered }) {
+function InfoAnswer({ msg, dog, active, onAsk, onAnswered, onThinking }) {
   const { emergency, situation, results, said } = msg;
   return (
     <div className="rec-card">
@@ -586,7 +586,7 @@ function InfoAnswer({ msg, dog, active, onAsk, onAnswered }) {
           </div>
         </div>
       )}
-      {!emergency && said && <AssistantAnswer dog={dog} said={said} history={msg.history} memory={msg.memory} active={active} onAsk={onAsk} onAnswered={onAnswered} />}
+      {!emergency && said && <AssistantAnswer dog={dog} said={said} history={msg.history} memory={msg.memory} active={active} onAsk={onAsk} onAnswered={onAnswered} onThinking={onThinking} />}
       {!emergency && results.length > 0 && <p className="info-lead">멍케어 자료에서 관련 내용도 찾아봤어요.</p>}
       {results.map((r) =>
         r.type === "card" ? <InfoCard key={r.card.id} card={r.card} /> : <GuideLink key={r.chapter.chapter} chapter={r.chapter} />
@@ -756,24 +756,27 @@ function FirstSteps({ dog, onWeight, onUsual, onVet, onLater }) {
 
 // 멍케어 비서(11/17 재도입 → 11/20 두 단계 → 11/26 여름이 말투): 빠른 답은 강아지가 직접 말한다(말 · 병원 얘기, Haiku) + 다음 질문 단추(이어 묻기 두 번까지).
 // 플러스는 그 아래 [자세히 듣기](Sonnet 다섯 칸 — 설명이 길어 예전 말투 그대로, 하루 20번). 응급은 위 응급 카드가 대신한다.
-function AssistantAnswer({ dog, said, history, memory, active, onAsk, onAnswered }) {
+function AssistantAnswer({ dog, said, history, memory, active, onAsk, onAnswered, onThinking }) {
   const [res, setRes] = useState(null); // { tier, answer, say, vet, next, left, detailLeft } | { error, status }
   const [more, setMore] = useState(null); // 자세한 답 { answer, left } | { error } | "loading"
   const answered = useRef(onAnswered); answered.current = onAnswered;
+  const thinking = useRef(onThinking); thinking.current = onThinking; // 11/28 사용자: 답을 만드는 동안 위 동그라미 강아지가 엎드려 고민하게
   useEffect(() => {
     const controller = new AbortController();
     setRes(null); setMore(null);
+    thinking.current?.(true);
     askAssistant(dog, said, { signal: controller.signal, history, memory }).then((r) => {
+      thinking.current?.(false);
       setRes(r);
       const a = [r.say || r.todo, r.vet].filter(Boolean).join(" ") || r.answer;
       rememberChat(dog.id, said, a); // 다음 질문 때 "지난 대화"로 참고 + 병원용 기록의 "최근 상담 질문"
       answered.current?.({ q: said, a });
-    }).catch((e) => e.name !== "AbortError" && setRes({ error: e.message, status: e.status }));
+    }).catch((e) => { if (e.name !== "AbortError") { thinking.current?.(false); setRes({ error: e.message, status: e.status }); } });
     return () => controller.abort();
   }, [dog.id, said]); // eslint-disable-line react-hooks/exhaustive-deps -- history·memory는 질문을 보낼 때 정해진 값
   const saidRef = useRef(said);
   useEffect(() => { saidRef.current = said; }, [said]);
-  const askMore = () => { const q = said; setMore("loading"); askAssistant(dog, q, { detail: true }).then((a) => saidRef.current === q && setMore(a)).catch((e) => saidRef.current === q && setMore({ error: e.message })); }; // 그사이 질문이 바뀌면 버림
+  const askMore = () => { const q = said; setMore("loading"); thinking.current?.(true); askAssistant(dog, q, { detail: true }).then((a) => saidRef.current === q && setMore(a)).catch((e) => saidRef.current === q && setMore({ error: e.message })).finally(() => thinking.current?.(false)); }; // 그사이 질문이 바뀌면 버림
   const openPlus = () => window.dispatchEvent(new CustomEvent("dogcare-open-settings", { detail: { sub: "plus" } }));
   if (!res) return <p className="info-lead"><span className="avatar-loading" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}><Ico name="paw" size={16} /></span>{dog.name}가 기록을 떠올리는 중…</p>;
   if (res.error) return <p className="info-lead">{res.error}</p>;
@@ -782,8 +785,20 @@ function AssistantAnswer({ dog, said, history, memory, active, onAsk, onAnswered
     <div className="asst">
       {res.say ? (
         <>
-          <div className="asst-say pop-in">{res.say.split("\n").map((l, i) => (/^[-•]\s/.test(l) ? <div key={i} className="asst-li">{l.replace(/^[-•]\s+/, "")}</div> : <div key={i}>{l}</div>))}</div>{/* 11/28 긴 답: "- " 할 일 줄은 점 + 들여쓰기 */}
-          {res.vet && <div className="asst-say">{res.vet}</div>}
+          {res.lead ? (
+            // 11/28 사용자("다 똑같은 글씨로 쭉 말로만 해서 눈에 안 들어온다"): 강아지 한마디는 말풍선 글씨, 이유·할 일·병원은 스티커 칸 + 본문 글씨(자세히 듣기와 같은 칸)
+            <>
+              <div className="asst-say pop-in">{res.lead}</div>
+              {res.why.length > 0 && <div className="ad-sec"><Ico name="search" size={18} sticker /><div><b>왜 그럴까</b><ul className="ad-reasons">{res.why.map((c, i) => <li key={i}>{c}</li>)}</ul></div></div>}
+              {res.acts.length > 0 && <div className="ad-sec"><Ico name="checklist" size={18} sticker /><div><b>지금 해 줄 것</b><ul className="ad-check">{res.acts.map((c, i) => <li key={i}>{c}</li>)}</ul></div></div>}
+              {res.vet && <div className="ad-sec ad-sign"><Ico name="stethoscope" size={18} sticker /><div><b>이럴 땐 병원에</b><p>{res.vet}</p></div></div>}
+            </>
+          ) : (
+            <>
+              <div className="asst-say pop-in">{res.say.split("\n").map((l, i) => (/^[-•]\s/.test(l) ? <div key={i} className="asst-li">{l.replace(/^[-•]\s+/, "")}</div> : <div key={i}>{l}</div>))}</div>
+              {res.vet && <div className="asst-say">{res.vet}</div>}
+            </>
+          )}
           <span className="faint asst-note">진단이 아니에요 · 걱정되면 동물병원에 물어보세요</span>
           {active && res.next.length > 0 && (
             <div className="asst-next">{res.next.map((q) => <button key={q} type="button" className="summary-go" onClick={() => onAsk?.(q)}>{q}</button>)}</div>

@@ -10,6 +10,7 @@ import { trackHeaders } from "./analytics";
 import { toDateKey } from "../utils/date";
 
 // env?.: 노드로 테스트를 돌릴 땐 import.meta.env가 없다
+const strList = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).slice(0, 4) : []); // 비서 빠른 답의 칸(이유·해 줄 것, 11/28)
 export const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8787";
 
 // 요약을 만들다 오류가 나도 채팅은 되게
@@ -89,7 +90,7 @@ export async function askAssistant(dog, text, { signal, detail = false, format, 
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error((data.error || "비서가 답을 만들지 못했어요.") + (data.detail ? ` (원인: ${data.detail})` : "")), { status: res.status, tier: data.tier });
-  return { tier: data.tier === "plus" ? "plus" : "free", detail: Boolean(data.detail), answer: String(data.answer || ""), say: String(data.say || ""), next: Array.isArray(data.next) ? data.next.filter((q) => typeof q === "string").slice(0, 2) : [], follow: Boolean(data.follow), todo: String(data.todo || ""), vet: String(data.vet || ""), sections: data.sections || null, left: Number(data.left ?? 0), detailLeft: Number(data.detailLeft ?? 0) };
+  return { tier: data.tier === "plus" ? "plus" : "free", detail: Boolean(data.detail), answer: String(data.answer || ""), say: String(data.say || ""), lead: String(data.lead || ""), why: strList(data.why), acts: strList(data.acts), next: Array.isArray(data.next) ? data.next.filter((q) => typeof q === "string").slice(0, 2) : [], follow: Boolean(data.follow), todo: String(data.todo || ""), vet: String(data.vet || ""), sections: data.sections || null, left: Number(data.left ?? 0), detailLeft: Number(data.detailLeft ?? 0) };
 }
 
 // 사진 분석도 실패하면 대체 결과 없이 에러를 그대로 알린다(건강 관련 허위 안심/허위 경고 위험).
