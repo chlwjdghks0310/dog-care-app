@@ -82,13 +82,15 @@ export function getWeightChangeSummary(dogId) {
 }
 
 // 증가/감소 자체만으로 건강 여부를 판단하지 않는, 중립적인 안내 문구.
-export function getWeightChangeAdvice(deltaPercent) {
+// growing = 아직 자라는 아이(1살 아래): 몸무게가 느는 게 보통이라 "변화 확인" 대신 꾸준히 재자는 말(11/28 점검: 5개월 퍼피에게 걱정 문구가 나왔음)
+export function getWeightChangeAdvice(deltaPercent, { growing = false } = {}) {
   if (deltaPercent == null) return null;
+  if (growing && deltaPercent > -5) return "자라는 시기라 몸무게가 느는 게 보통이에요. 같은 시간에 꾸준히 재면 자라는 모습을 그래프로 볼 수 있어요.";
   if (deltaPercent <= -5) {
-    return "이전 기록보다 체중이 줄었어요. 최근 식욕과 활동성에도 변화가 있는지 확인해 주세요. 변화가 크거나 다른 증상이 같이 보이면 수의사에게 문의해보세요.";
+    return "이전 기록보다 체중이 줄었어요. 최근 식욕과 활동성에도 변화가 있는지 확인해 주세요. 변화가 크거나 다른 증상이 같이 보이면 수의사에게 물어보세요.";
   }
   if (deltaPercent >= 5) {
-    return "이전 기록보다 체중이 늘었어요. 최근 급여량·간식·활동량에 변화가 있었는지 확인해보세요.";
+    return "이전 기록보다 체중이 늘었어요. 최근 급여량·간식·활동량에 변화가 있었는지 확인해 보세요.";
   }
   return "이전 기록과 비슷한 수준으로 유지되고 있어요.";
 }

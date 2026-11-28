@@ -91,7 +91,7 @@ export default function RecordCalendar({ dog, items, initialDate, onChanged, onA
             );
           }}
         />
-        <p className="faint rc-legend"><span><span className="rc-dot">●</span> 평소</span><span><span className="rc-badge">소변</span> 평소와 달랐던 것{legendTip}</span><span><span className="rc-vet">＋</span> 병원</span></p>
+        <p className="faint rc-legend"><span><span className="rc-dot">●</span> 평소</span><span><span className="rc-badge">밥</span> 평소와 달랐던 것{legendTip}</span><span><span className="rc-vet">＋</span> 병원</span></p>
         {legendText}
       </div>
 

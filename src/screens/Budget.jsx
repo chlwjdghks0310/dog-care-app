@@ -222,7 +222,7 @@ export default function Budget({ dog, onBack }) {
               inputMode="numeric"
               placeholder="금액 넣기"
               aria-label={`${monthDate.getMonth() + 1}월 ${dog.name} 용돈`}
-              style={{ width: inputWidth(allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")), maxWidth: "100%", minWidth: 0, border: "none", background: "none", padding: 0, fontSize: 17, fontWeight: 700, textAlign: "right", color: "var(--text)" }}
+              style={{ width: inputWidth(allowanceText ?? (allowance ? allowance.toLocaleString("ko-KR") : "")), maxWidth: "100%", minWidth: 0, border: "none", background: "none", padding: "10px 0", margin: "-10px 0", fontSize: 17, fontWeight: 700, textAlign: "right", color: "var(--text)" }}
             />
             {(allowanceText ?? allowance) ? <strong style={{ fontSize: 17 }}>원</strong> : null}
           </span>

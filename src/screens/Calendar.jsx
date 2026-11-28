@@ -119,7 +119,7 @@ export default function Calendar({ dog, onRecordVisit, onOpenVet, onOpenBudget, 
           </span>
         </button>
       ); })()}
-      <div className="quick-actions" style={{ marginBottom: 14 }}>{/* 11/14: 색 상자 제거(사용자), 기록 타일과 같은 흰 타일 + 스티커 */}
+      <div className="quick-actions two" style={{ marginBottom: 14 }}>{/* 11/14: 색 상자 제거(사용자), 기록 타일과 같은 흰 타일 + 스티커 · 11/28 점검: 세 칸 줄에 둘만 있어 오른쪽이 비어 → 케어 탭 알림·외출과 같은 두 칸 */}
         <button className="quick-tile" onClick={() => setDocOpen(true)}>
           <span className="quick-tile-icon" aria-hidden="true"><Ico name="camera" size={24} sticker /></span>
           <span className="quick-tile-label">진료 정리</span>

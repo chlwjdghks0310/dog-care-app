@@ -104,7 +104,7 @@ export default function FeedingPlan({ dog, onBack, backLabel = "← 케어로" }
           + 급여 시각 추가 (추천 {plan.mealsPerDay}회)
         </button>
         <button className="btn-primary" onClick={handleSave} disabled={nothingToSave}>
-          {saved ? "저장됨 ✓" : settings.times.length === 0 ? "급여 시각 모두 지우기" : "저장하기"}
+          {saved ? "저장됨 ✓" : settings.times.length === 0 && !nothingToSave ? "급여 시각 모두 지우기" : "저장하기"}{/* 11/28 점검: 지울 게 없을 때도 "모두 지우기"로 보였음 */}
         </button>
         {nothingToSave && <p className="faint" style={{ margin: "6px 0 0", textAlign: "center" }}>시각을 하나 이상 추가하면 저장할 수 있어요.</p>}
       </div>

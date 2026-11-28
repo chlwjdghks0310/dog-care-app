@@ -124,7 +124,7 @@ function Trends({ dog, items, onAdd, onPick }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="h2"><Ico name="scales" size={18} /> 체중 <span className="faint">측정값</span></div>
         {!latest ? (
-          <Empty text="아직 체중 기록이 없습니다." onAdd={onAdd} />
+          <Empty text="아직 체중 기록이 없어요." onAdd={onAdd} />
         ) : (
           <>
             <p className="subtle" style={{ marginTop: 0 }}>

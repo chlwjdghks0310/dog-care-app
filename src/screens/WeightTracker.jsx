@@ -244,7 +244,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
               최근 측정: {recordDateTime(latest)} · 다음 측정 예정일: {formatKoreanDate(nextDueDateKey)}
             </p>
             {changeSummary?.deltaPercent != null && (
-              <p className="subtle" style={{ marginBottom: 12 }}>{getWeightChangeAdvice(changeSummary.deltaPercent)}</p>
+              <p className="subtle" style={{ marginBottom: 12 }}>{getWeightChangeAdvice(changeSummary.deltaPercent, { growing: age.ageInMonths < 12 })}</p>
             )}
             <button className="btn-primary" onClick={openAddForm}>체중 기록하기</button>
           </>
@@ -386,7 +386,8 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
         <p className="subtle" style={{ marginBottom: 8 }}>
           기본값은 나이에 따라 자동으로 정해져요(지금은 {effectiveCadence}일 간격). 수의사가 다른 주기를 알려줬다면 아래에서 바꿀 수 있어요.
         </p>
-        <select value={cadenceDraft ?? "auto"} onChange={handleCadenceChange}>
+        <div className="field" style={{ margin: 0 }}>{/* 11/28 점검: 기본 모양 그대로 작게 나와 다른 칸과 달랐음 */}
+        <select value={cadenceDraft ?? "auto"} onChange={handleCadenceChange} aria-label="체중 재는 주기">
           <option value="auto">자동(나이 기준)</option>
           {CADENCE_OPTIONS.map((d) => (
             <option key={d} value={d}>
@@ -394,6 +395,7 @@ export default function WeightTracker({ dog, onUpdateDog, onBack }) {
             </option>
           ))}
         </select>
+        </div>
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>

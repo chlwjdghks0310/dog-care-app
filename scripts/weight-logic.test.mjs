@@ -100,6 +100,9 @@ test("변화 안내 문구는 증가/감소 자체로 건강을 단정하지 않
   const up = getWeightChangeAdvice(10);
   const flat = getWeightChangeAdvice(1);
   assert.ok(!/건강|비만|질병/.test(down + up + flat));
+  // 자라는 아이는 늘어도 걱정 문구가 아니다, 줄면 그대로 확인 문구
+  assert.match(getWeightChangeAdvice(10, { growing: true }), /자라는 시기/);
+  assert.match(getWeightChangeAdvice(-10, { growing: true }), /줄었어요/);
 });
 
 test("기록 삭제 — 같은 날 다른 기록이 남아있으면 그날 완료 상태는 유지된다", () => {

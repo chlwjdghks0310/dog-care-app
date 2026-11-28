@@ -240,7 +240,7 @@ export default function EventSheet({ dog, initial, onClose, onSaved, onRecordVis
           {ev.id ? (
             <button type="button" className="link-btn" style={{ color: "var(--danger)", margin: 0 }} onClick={remove}>삭제</button>
           ) : (
-            <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (setKind(""), setTitle(""), setMemo(""), setEnd(""), setMulti(false), setTime(""), setRepeat(""), setAlarm(""), setOpen("what"))}>전체 지우기</button>
+            <button type="button" className="link-btn" style={{ margin: 0 }} onClick={() => (setKind(""), setTitle(""), setMemo(""), setEnd(""), setMulti(false), setTime(""), setRepeat(""), setAlarm(""), setOpen("what"))}>다시 적기</button>
           )}
           <button type="button" className="btn-primary es-save" onClick={save}>저장</button>
         </div>

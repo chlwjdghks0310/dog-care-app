@@ -21,7 +21,7 @@ export default class ErrorBoundary extends Component {
           <div className="h2">이 화면을 그리다 문제가 생겼어요</div>
           <p className="subtle" style={{ margin: "6px 0 14px" }}>기록은 그대로 있어요. 다시 시도해도 안 되면 설정 → 의견 보내기로 알려 주세요.</p>
           <button type="button" className="btn-primary" onClick={() => this.setState({ error: null })}>다시 시도</button>
-          {this.props.onHome && <button type="button" className="btn-ghost" style={{ marginTop: 8 }} onClick={() => (this.setState({ error: null }), this.props.onHome())}>오늘 화면으로</button>}
+          {this.props.onHome && <button type="button" className="btn-ghost" style={{ marginTop: 8 }} onClick={() => (this.setState({ error: null }), this.props.onHome())}>비서 화면으로</button>}
         </div>
       </div>
     );

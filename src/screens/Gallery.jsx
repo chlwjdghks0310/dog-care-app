@@ -67,9 +67,9 @@ export default function Gallery({ dog, onBack, onUpdateDog, backLabel = "← 우
   return (
     <div className="screen">
       <button className="btn-ghost" style={{ marginBottom: 12 }} onClick={onBack}>{backLabel}</button>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <div className="h1" style={{ margin: 0 }}>{dog.name} 성장 추억{galTip}</div>
-        <label className="btn-primary small" style={{ cursor: "pointer" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>{/* 11/28 점검: 긴 이름이면 [＋ 사진]이 두 줄로 찌그러졌음 */}
+        <div className="h1" style={{ margin: 0, minWidth: 0 }}>{dog.name} 성장 추억{galTip}</div>
+        <label className="btn-primary small" style={{ cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
           ＋ 사진
           <input type="file" accept="image/*" multiple hidden onChange={add} />
         </label>

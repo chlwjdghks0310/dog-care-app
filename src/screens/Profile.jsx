@@ -653,7 +653,7 @@ function HealthServices({ dog, onOpenMeds, onOpenVet, onOpenReport, onOpenMonth,
       </div>
       {help}
       {recs.length === 0 && meds.length === 0 && (
-        <p className="first-hint">기록 탭 [＋ 새 기록]에서 적거나, 오늘 화면에서 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
+        <p className="first-hint">기록 탭 [＋ 새 기록]에서 적거나, 비서 탭에서 "밥 다 먹었어"처럼 말로 기록해도 돼요.</p>
       )}
       {SERVICES.filter((svc) => more || MAIN_SERVICES.includes(svc.key)).map((svc) => (
         <div key={svc.key} className="sv-row">
