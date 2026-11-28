@@ -16,7 +16,7 @@ export default function RemoteAsk({ dog, user, onInvite }) {
   return (
     <span className="summary dc-ask">
       <span className="summary-open">
-        <span className="summary-role">기록 친구 · {dog.name}</span>
+        <span className="summary-role">AI 비서 · {dog.name}</span>
         {user ? "가족을 초대해 줘!" : "나는 가족 집에 있지?"}
       </span>
       <span className="summary-more">{user ? "가족이 하루 체크를 하면, 다른 게 있는 날만 내가 알려 줄게" : "로그인하고 가족을 초대하면, 가족이 체크하고 나는 소식을 전해 줄게"}</span>

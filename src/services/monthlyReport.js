@@ -139,7 +139,7 @@ export function buildMonthlyReport(dog, month = monthOf(todayKey()), today = tod
     const d = `${month}-${pad(i + 1)}`;
     return { date: d, day: i + 1, future: d > today, walk: cur.walk.dates.includes(d), mark: symptomDates.has(d) || cur.looseDays.includes(d), vet: cur.vetDays.includes(d), checked: cur.checkDays.includes(d), rest: cur.restDays.includes(d) };
   });
-  const firstDow = (new Date(`${month}-01T00:00:00`).getDay() + 6) % 7; // 월요일 시작
+  const firstDow = new Date(`${month}-01T00:00:00`).getDay(); // 일요일 시작(11/28 사용자: 기록 탭 달력과 같게)
   const diffs = diffsOf(cur, prev, { prevHas });
   const overlaps = overlapsOf(cur);
   const weight = weightTrend(cur, prev.weights.at(-1)?.kg ?? null);

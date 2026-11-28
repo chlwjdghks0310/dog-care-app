@@ -15,7 +15,7 @@ import { todayKey } from "../utils/date";
 import { josa } from "../utils/text";
 
 const NOTE_KEY = "dogcare-month-note-v1"; // { [dogId]: { [month]: { text, at } } } — 비서 해설은 달마다 한 번만 받는다
-const DOW = ["월", "화", "수", "목", "금", "토", "일"];
+const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 한 달 리포트(멍케어 플러스) — 11/20 2차: 한 달에만 보이는 것부터. ① 달라진 것 세 줄(규칙) + 플러스 비서 한 문단 ② 겹쳐 보기 ③ 달력 ④ 체중 흐름 ⑤ 자랑 카드 ⑥ 숫자 네 칸.
 // 판단·점수 없음: "a → b"와 "n번 중 m번 겹침"까지만.

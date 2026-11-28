@@ -668,7 +668,7 @@ function TodaySummary({ dog, onOpen, onOpenVet, onEditCheck, outing }) {
   return (
     <span className="summary">
       <span className="summary-open">
-        <span className="summary-role">기록 친구 · {dog.name}</span>
+        <span className="summary-role">AI 비서 · {dog.name}</span>
         <span className="pop-in" style={{ display: "block" }} key={remark?.text || "idle"}>{remark ? remark.text : "말로 하면 내가 기록해 줄게"}</span>
       </span>
       {lines.length ? (

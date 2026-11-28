@@ -35,7 +35,7 @@ assert.equal(r.symptoms.length, 2, "11/1 증상은 다음 달");
 assert.deepEqual(r.topKinds[0], ["구토", 2]);
 assert.deepEqual([r.weight.last, r.weight.prevLast, r.weight.diff, r.weight.pct], [3.25, 3.1, 0.15, 5]);
 assert.equal(r.weight.avg, 3.23, "30일 평균"); assert.equal(r.weight.dirLabel, "천천히 오르는 중");
-assert.equal(r.checkDays.length, 4); assert.equal(r.firstDow, 3, "2026-10-01은 목요일");
+assert.equal(r.checkDays.length, 4); assert.equal(r.firstDow, 4, "2026-10-01은 목요일(일요일 시작)");
 assert.deepEqual([r.cells[8].day, r.cells[8].mark, r.cells[8].checked, r.cells[8].walk], [9, true, true, false]);
 assert.ok(r.cells[11].vet, "10/12 병원");
 // 달라진 것: 9월엔 산책 1·체중 3.1뿐 → 산책(1→2는 3일 미만이라 빠짐), 무른 변 0→1, 증상 0→2, 병원 0→1, 체중 +5%

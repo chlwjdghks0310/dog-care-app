@@ -31,7 +31,7 @@ export default function BackupAsk({ dog, onBackup, onDone }) {
   return (
     <span className="summary dc-ask">
       <span className="summary-open">
-        <span className="summary-role">기록 친구 · {dog.name}</span>
+        <span className="summary-role">AI 비서 · {dog.name}</span>
         기록이 쌓였네! 백업해 둘까?
       </span>
       <span className="summary-more">폰을 바꾸거나 앱을 지워도 기록이 남고, 가족과 같이 볼 수도 있어</span>
